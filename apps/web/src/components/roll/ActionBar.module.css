@@ -94,16 +94,6 @@
   color: var(--muted);
 }
 
-.hint {
-  grid-column: 1 / -1;
-  margin: 0;
-  padding: var(--s-2) var(--s-3);
-  background: var(--paper);
-  color: var(--ink);
-  border-left: 4px solid var(--gold);
-  font-size: var(--fs-sm);
-}
-
 @media (max-width: 760px) {
   .bar {
     grid-template-columns: 1fr;
@@ -123,5 +113,30 @@
   }
   .space {
     display: none;
+  }
+}
+
+/* 체험 안내가 가리키는 곳 */
+.bar [data-focus] {
+  border-radius: var(--r-card);
+  animation: focus-glow 1.4s ease-in-out infinite;
+}
+
+@keyframes focus-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px var(--gold);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px var(--gold-hi),
+      0 0 24px 4px rgb(214 182 110 / 0.55);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar [data-focus] {
+    animation: none;
+    box-shadow: 0 0 0 3px var(--gold-hi);
   }
 }

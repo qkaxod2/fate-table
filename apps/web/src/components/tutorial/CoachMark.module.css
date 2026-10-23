@@ -1,0 +1,119 @@
+.coach {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 5;
+  width: min(560px, 100%);
+  padding: var(--s-4) var(--s-5) var(--s-5);
+  border: 1px solid var(--gold);
+  border-radius: var(--r-card);
+  background: rgb(246 240 228 / 0.97);
+  color: var(--ink);
+  box-shadow:
+    0 0 0 4px rgb(214 182 110 / 0.25),
+    0 18px 48px rgb(0 0 0 / 0.55);
+  transform: translateX(-50%);
+  animation: coach-in 320ms var(--ease) both;
+}
+
+@keyframes coach-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -8px);
+  }
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin-bottom: var(--s-2);
+}
+
+.step {
+  font-family: var(--f-num);
+  font-size: var(--fs-xs);
+  letter-spacing: 2px;
+  color: #8a6a24;
+}
+
+.dots {
+  display: flex;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dots li {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgb(27 23 51 / 0.18);
+}
+
+.dots li[data-on] {
+  background: var(--gold);
+}
+
+.hide {
+  margin-left: auto;
+  border: 0;
+  background: none;
+  color: rgb(27 23 51 / 0.6);
+  font: inherit;
+  font-size: var(--fs-xs);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.title {
+  margin: 0 0 var(--s-1);
+  font-family: var(--f-story);
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.body {
+  margin: 0;
+  font-size: var(--fs-md);
+  line-height: 1.6;
+}
+
+.keys {
+  margin: var(--s-3) 0 0;
+  font-size: var(--fs-sm);
+  color: rgb(27 23 51 / 0.7);
+}
+
+.keys kbd {
+  display: inline-block;
+  min-width: 24px;
+  margin-left: 4px;
+  padding: 1px 6px;
+  border: 1px solid rgb(27 23 51 / 0.3);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: #fff;
+  font-family: var(--f-num);
+  font-size: var(--fs-xs);
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coach {
+    animation: none;
+  }
+}
+
+@media (max-width: 1100px) {
+  .coach {
+    position: sticky;
+    top: var(--s-2);
+    left: auto;
+    transform: none;
+    margin: 0 auto var(--s-4);
+    animation: none;
+  }
+}
