@@ -47,7 +47,7 @@ function name(state: RoomState, id: string | null | undefined): string {
 
 export interface LogLine {
   seq: number;
-  kind: 'system' | 'roll' | 'fate' | 'gm' | 'chat';
+  kind: 'system' | 'scene' | 'roll' | 'fate' | 'gm' | 'chat';
   text: string;
   /** 되돌리기 버튼을 달지 않는 줄 */
   undoable?: false;
@@ -58,7 +58,7 @@ export function describe(e: RoomEvent, state: RoomState): LogLine | null {
   const line = (kind: LogLine['kind'], text: string): LogLine => ({ seq: e.seq, kind, text });
   switch (e.type) {
     case 'scene.started':
-      return line('system', `장면 시작: ${e.payload.name}`);
+      return line('scene', `장면 시작: ${e.payload.name}`);
     case 'roll.opposition_requested':
       return line(
         'roll',
@@ -135,14 +135,14 @@ export function describe(e: RoomEvent, state: RoomState): LogLine | null {
     case 'character.created':
       return line('system', `새 캐릭터: ${e.payload.character.name}`);
     case 'scene.ended':
-      return line('system', '장면이 끝났어요. 스트레스가 모두 회복돼요');
+      return line('scene', '장면이 끝났어요. 스트레스가 모두 회복돼요');
     case 'session.started':
       return line(
-        'system',
+        'scene',
         `세션 ${e.payload.number} 시작! ${term('fatePoint')}가 ${term('refresh')}돼요`,
       );
     case 'session.ended':
-      return line('system', '세션이 끝났어요');
+      return line('scene', '세션이 끝났어요');
     case 'conflict.started':
       return line(
         'roll',
@@ -224,10 +224,10 @@ export function describe(e: RoomEvent, state: RoomState): LogLine | null {
     case 'aspect.removed':
       return line('system', `${term('aspect')}이 사라졌어요`);
     case 'gm.note':
-      return { ...line('gm', `📝 ${e.payload.text}`), undoable: false };
+      return { ...line('system', `📝 메모: ${e.payload.text}`), undoable: false };
     case 'event.undone':
       return {
-        ...line('gm', `↶ GM이 ${e.payload.seqs.length}개 기록을 되돌렸어요`),
+        ...line('system', `↶ GM이 방금 일을 되돌렸어요`),
         undoable: false,
       };
     default:

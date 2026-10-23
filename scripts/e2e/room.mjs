@@ -84,10 +84,7 @@ try {
   await gm.getByRole('button', { name: '만들기', exact: true }).click();
   await gm.locator('aside').getByText('밀수꾼').waitFor({ timeout: T });
   await gm.keyboard.press('3');
-  await gm
-    .locator('select')
-    .filter({ has: gm.locator('option', { hasText: '고르기' }) })
-    .selectOption({ label: '세라' });
+  await gm.locator('[aria-label="공격 대상"]').getByRole('button', { name: '세라' }).click();
   await gm.locator('h1').click();
   await gm.keyboard.press('a');
   await gm.keyboard.press('Space');

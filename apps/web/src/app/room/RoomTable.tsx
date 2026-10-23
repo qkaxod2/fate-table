@@ -141,7 +141,7 @@ export function RoomTable({
   const busyRoll = !!roll && roll.status !== 'final';
 
   const targets = Object.values(state.characters).filter((c) => c.id !== me?.id && !c.takenOut);
-  const onRoll = useCallback(() => {
+  const onRoll = () => {
     if (!me || !action || !approach || busyRoll) return;
     const needsTarget = action === 'attack';
     if (needsTarget && !targetId) {
@@ -158,7 +158,7 @@ export function RoomTable({
         ...(needsTarget ? { targetId } : { difficulty }),
       },
     });
-  }, [me, action, approach, busyRoll, targetId, difficulty, run]);
+  };
 
   const choices: InvokeChoice[] = useMemo(() => {
     if (!roll || roll.status !== 'open' || !activeChar) return [];
@@ -417,7 +417,13 @@ export function RoomTable({
         <div className={tryStyles.left}>
           {party.length > 0 ? (
             <PartyRail
-              onSelect={setSheetId}
+              onSelect={(id) =>
+                controllable.some((c) => c.id === id) ? setActingId(id) : setSheetId(id)
+              }
+              onSheet={setSheetId}
+              selectHint={(id) =>
+                controllable.some((c) => c.id === id) ? '(으)로 움직이기' : '시트 보기'
+              }
               members={party.map((c) => ({
                 character: c,
                 ...(c.portraitUrl ? { image: c.portraitUrl } : {}),
@@ -427,19 +433,6 @@ export function RoomTable({
             />
           ) : (
             <p className={styles.empty}>아직 테이블에 캐릭터가 없어요.</p>
-          )}
-          {controllable.length > 1 && (
-            <label className={styles.acting}>
-              지금 움직일 캐릭터
-              <select value={me?.id ?? ''} onChange={(e) => setActingId(e.target.value)}>
-                {controllable.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                    {c.isNpc ? ' (NPC)' : ''}
-                  </option>
-                ))}
-              </select>
-            </label>
           )}
           {role === 'player' && <BringCharacter run={run} has={controllable.length > 0} />}
         </div>
@@ -802,35 +795,72 @@ export function RoomTable({
         </div>
         {me && (
           <div className={styles.actionWrap}>
-            {action && (
-              <div className={styles.rollOptions}>
-                {action === 'attack' ? (
-                  <label>
-                    대상
-                    <select value={targetId} onChange={(e) => setTargetId(e.target.value)}>
-                      <option value="">고르기</option>
-                      {targets.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                ) : (
-                  <label>
-                    난이도
-                    <select
-                      value={difficulty}
-                      onChange={(e) => setDifficulty(Number(e.target.value))}
+            {controllable.length > 1 && (
+              <div className={styles.chipRow} role="radiogroup" aria-label="움직일 캐릭터">
+                <span className={styles.chipLabel}>누구로?</span>
+                {controllable
+                  .filter((c) => !c.takenOut)
+                  .map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={c.id === me.id}
+                      className={styles.who}
+                      disabled={busyRoll}
+                      onClick={() => {
+                        setActingId(c.id);
+                        setTargetId('');
+                      }}
                     >
-                      {[0, 1, 2, 3, 4, 5, 6].map((n) => (
-                        <option key={n} value={n}>
-                          {formatRating(n)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                )}
+                      {c.portraitUrl ? (
+                        <img src={c.portraitUrl} alt="" />
+                      ) : (
+                        <span>{c.name.slice(0, 1)}</span>
+                      )}
+                      {c.name}
+                    </button>
+                  ))}
+              </div>
+            )}
+            {action && (
+              <div
+                className={styles.chipRow}
+                aria-label={action === 'attack' ? '공격 대상' : '난이도'}
+              >
+                <span className={styles.chipLabel}>
+                  {action === 'attack' ? '누구를?' : '난이도'}
+                </span>
+                {action === 'attack'
+                  ? targets.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        aria-pressed={targetId === c.id}
+                        className={styles.who}
+                        data-npc={c.isNpc || undefined}
+                        onClick={() => setTargetId(c.id)}
+                      >
+                        {c.portraitUrl ? (
+                          <img src={c.portraitUrl} alt="" />
+                        ) : (
+                          <span>{c.name.slice(0, 1)}</span>
+                        )}
+                        {c.name}
+                      </button>
+                    ))
+                  : [0, 1, 2, 3, 4, 5, 6].map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        aria-pressed={difficulty === n}
+                        className={styles.level}
+                        title={formatRating(n)}
+                        onClick={() => setDifficulty(n)}
+                      >
+                        +{n} <small>{formatRating(n).split(' ')[0]}</small>
+                      </button>
+                    ))}
               </div>
             )}
             <ActionBar

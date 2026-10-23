@@ -96,3 +96,48 @@
     opacity: 0.6;
   }
 }
+
+.tabs {
+  display: flex;
+  gap: var(--s-1);
+  margin-bottom: var(--s-2);
+  border-bottom: 1px solid var(--line);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: var(--s-1) var(--s-2);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--muted);
+  font-family: var(--f-num);
+  font-size: 11px;
+  letter-spacing: 3px;
+  cursor: pointer;
+}
+
+.tab[aria-selected='true'] {
+  border-bottom-color: var(--gold);
+  color: var(--gold);
+}
+
+.badge {
+  min-width: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--hi);
+  color: var(--ink);
+  font-family: var(--f-ui);
+  font-size: 10px;
+  letter-spacing: 0;
+}
+
+.line[data-kind='scene'] {
+  border-color: var(--gold);
+  color: var(--gold-hi);
+  font-family: var(--f-story);
+  font-weight: 700;
+}
