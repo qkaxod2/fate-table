@@ -49,5 +49,7 @@ jobs:
           echo "::notice::nai key starts with pst-=$p, raw length=${#NAI_API_KEY}, cleaned length=${#k}"
           s=$(curl -sS -o /tmp/n.json -w '%{http_code}' -H "Authorization: Bearer $k" https://api.novelai.net/user/subscription)
           echo "::notice::novelai=$s tier=$(jq -r .tier /tmp/n.json 2>/dev/null) active=$(jq -r .active /tmp/n.json 2>/dev/null)"
+          s=$(curl -sS -o /tmp/g.json -w '%{http_code}' -X POST https://image.novelai.net/ai/generate-image -H "Authorization: Bearer $k" -H 'Content-Type: application/json' -d '{}')
+          echo "::notice::novelai image (빈 요청이라 400 검증 오류면 키 통과, 401이면 키 거절)=$s $(jq -r .message /tmp/g.json 2>/dev/null | head -c 200)"
           s=$(curl -sS -o /dev/null -w '%{http_code}' -X POST https://api.elevenlabs.io/v1/sound-generation -H "xi-api-key: $ELEVENLABS_API_KEY" -H 'Content-Type: application/json' -d '{}')
           echo "::notice::elevenlabs (빈 요청이라 422면 키 통과)=$s"
