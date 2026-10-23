@@ -68,10 +68,14 @@ try {
   await pl.keyboard.press('Space');
   await pl.getByRole('button', { name: '이대로 확정' }).click({ timeout: T });
   await gm
+    .locator('section[aria-label="이야기 기록"]')
     .getByText(/결과: /)
     .first()
     .waitFor({ timeout: T });
   note('player rolled and finalized; GM log updated');
+  // 대성공·동점이면 이름 짓기 창이 뜨므로 닫아 둔다 (방어 창을 가리지 않게)
+  const skip = pl.getByRole('button', { name: '건너뛰기' });
+  if (await skip.isVisible().catch(() => false)) await skip.click();
 
   // 5. GM이 NPC를 만들어 플레이어를 공격 → 플레이어가 방어
   await gm.getByText('NPC 만들기').click();
@@ -89,6 +93,7 @@ try {
   await gm.keyboard.press('Space');
   await pl.getByRole('button', { name: /^신속/ }).click({ timeout: T });
   await gm
+    .locator('section[aria-label="이야기 기록"]')
     .getByText(/두 결과 공개/)
     .first()
     .waitFor({ timeout: T });
@@ -97,7 +102,7 @@ try {
   // 6. 갈등 시작 → 플레이어 화면에 차례 띠
   await gm.getByText(/갈등 · 경합 · 도전/).click();
   await gm.getByRole('button', { name: '갈등 시작' }).click();
-  await pl.getByText(/물리 갈등/).waitFor({ timeout: T });
+  await pl.getByText(/물리 갈등/).first().waitFor({ timeout: T });
   note('conflict started; player sees the turn tracker');
 
   // 7. 구역 추가 → 플레이어 지도에 보임
