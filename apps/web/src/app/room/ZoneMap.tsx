@@ -103,7 +103,7 @@ export function ZoneMap({ state, run, isGm, canControl, pending, auto = 'full' }
   };
 
   const sel = selected ? scene.zones[selected] : undefined;
-  const open = editing || (userOpen ?? auto !== 'hidden');
+  const open = editing || (userOpen ?? (auto !== 'hidden' && zones.length > 0));
   const compact = !editing && userOpen === null && auto === 'compact';
 
   const token = (c: Character) => {

@@ -295,3 +295,48 @@
     top: 0;
   }
 }
+
+.stageAspect {
+  position: relative;
+}
+
+.stageAspect[data-hidden] {
+  opacity: 0.6;
+}
+
+.aspectTools {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.stageAspect:hover .aspectTools,
+.stageAspect:focus-within .aspectTools {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .aspectTools {
+    opacity: 1;
+  }
+}
+
+.aspectTools button {
+  padding: 1px var(--s-2);
+  border: 1px solid var(--ink);
+  border-radius: var(--r-ctl);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.aspectTools button:hover {
+  background: var(--gold);
+}

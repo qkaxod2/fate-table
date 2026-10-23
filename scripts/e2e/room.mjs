@@ -30,9 +30,9 @@ try {
   note(`room created, code=${code}`);
 
   // 2. 장면 시작
-  await gm.getByPlaceholder('장면 이름 (예: 불타는 곡물 창고)').fill('안개 낀 부두');
-  await gm.getByPlaceholder(/장면 특성 1/).fill('미끄러운 갑판');
-  await gm.getByRole('button', { name: '장면 시작' }).click();
+  await gm.getByPlaceholder('예: 불타는 곡물 창고').fill('안개 낀 부두');
+  await gm.getByPlaceholder('짙은 안개').fill('미끄러운 갑판');
+  await gm.getByRole('button', { name: /^장면 시작/ }).click();
   await gm.getByRole('heading', { name: '안개 낀 부두' }).waitFor({ timeout: T });
   note('scene started');
 
@@ -78,10 +78,10 @@ try {
   if (await skip.isVisible().catch(() => false)) await skip.click();
 
   // 5. GM이 NPC를 만들어 플레이어를 공격 → 플레이어가 방어
-  await gm.getByText('NPC 만들기').click();
-  await gm.getByPlaceholder('이름').fill('밀수꾼');
-  await gm.getByPlaceholder('핵심 컨셉').fill('부두의 칼잡이');
-  await gm.getByRole('button', { name: '만들기' }).click();
+  await gm.getByRole('button', { name: 'NPC', exact: true }).click();
+  await gm.getByPlaceholder('예: 밀수꾼').fill('밀수꾼');
+  await gm.getByPlaceholder('예: 부두의 칼잡이').fill('부두의 칼잡이');
+  await gm.getByRole('button', { name: '만들기', exact: true }).click();
   await gm.locator('aside').getByText('밀수꾼').waitFor({ timeout: T });
   await gm.keyboard.press('3');
   await gm
@@ -100,9 +100,12 @@ try {
   note('opposed roll: player defended, both revealed');
 
   // 6. 갈등 시작 → 플레이어 화면에 차례 띠
-  await gm.getByText(/갈등 · 경합 · 도전/).click();
+  await gm.getByRole('button', { name: '갈등·경합' }).click();
   await gm.getByRole('button', { name: '갈등 시작' }).click();
-  await pl.getByText(/물리 갈등/).first().waitFor({ timeout: T });
+  await pl
+    .getByText(/물리 갈등/)
+    .first()
+    .waitFor({ timeout: T });
   note('conflict started; player sees the turn tracker');
 
   // 7. 구역 추가 → 플레이어 지도에 보임
@@ -119,8 +122,7 @@ try {
 
   // 8. GM 되돌리기 → 구역이 사라진다 (서버 replay)
   await gm.getByRole('button', { name: '편집 끝' }).click();
-  await gm.getByText('되돌리기 · 메모').click();
-  await gm.getByRole('button', { name: /마지막 기록 되돌리기/ }).click();
+  await gm.getByRole('button', { name: '↶ 되돌리기' }).click();
   await pl.locator('[data-zone="선착장"]').waitFor({ state: 'detached', timeout: T });
   note('undo removed the zone for everyone');
 

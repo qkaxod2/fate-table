@@ -77,6 +77,23 @@ export function CharacterSheet({ character: c, state, run, isGm, mine, pending, 
               <p className={styles.fate}>
                 {term('fatePoint')} <FatePointToken count={c.fatePoints} /> · {term('refresh')}{' '}
                 {c.refresh}
+                {isGm && (
+                  <span className={styles.fateBtns}>
+                    {[-1, 1].map((d) => (
+                      <button
+                        key={d}
+                        type="button"
+                        disabled={pending}
+                        aria-label={`${term('fatePoint')} ${d > 0 ? '+1' : '−1'}`}
+                        onClick={() =>
+                          void run({ type: 'fate.adjust', payload: { target: c.id, delta: d } })
+                        }
+                      >
+                        {d > 0 ? '+' : '−'}
+                      </button>
+                    ))}
+                  </span>
+                )}
               </p>
             )}
           </div>
