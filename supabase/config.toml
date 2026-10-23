@@ -1,0 +1,5 @@
+# supabase link 이 project_id를 채운다. 함수 설정만 여기서 관리한다.
+project_id = "fate-table"
+
+[functions.media-image]
+verify_jwt = true
