@@ -9,7 +9,8 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "format": "prettier --write .",
-    "bundle:shared": "node scripts/bundle-shared.mjs"
+    "bundle:shared": "node scripts/bundle-shared.mjs",
+    "gen:sfx": "NODE_USE_ENV_PROXY=1 node scripts/gen-sfx.mjs"
   },
   "devDependencies": {
     "esbuild": "^0.25.12",

@@ -15,8 +15,8 @@ export default function Landing() {
           테이블이에요.
         </p>
         <div className={styles.ctas}>
-          <Link href="/try/" className={styles.primary}>
-            바로 해보기
+          <Link href="/tutorial/" className={styles.primary}>
+            튜토리얼
           </Link>
           <Link href="/create/" className={styles.secondary}>
             캐릭터 만들기

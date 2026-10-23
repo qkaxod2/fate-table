@@ -2,6 +2,7 @@
 
 import { term } from '@fate/glossary';
 import {
+  type Outcome,
   absorbOptions,
   canInvoke,
   CommandError,
@@ -27,11 +28,13 @@ import { AspectCard } from '@/components/aspect/AspectCard';
 import { CompelOffer } from '@/components/compel/CompelOffer';
 import { StoryLog } from '@/components/log/StoryLog';
 import { PartyRail } from '@/components/party/PartyRail';
-import { ActionBar } from '@/components/roll/ActionBar';
+import { ActionBar, type CoachFocus } from '@/components/roll/ActionBar';
 import { DiceTray, type DiceMode } from '@/components/roll/DiceTray';
 import { InvokeTray, type InvokeChoice } from '@/components/roll/InvokeTray';
 import { OutcomeBanner } from '@/components/roll/OutcomeBanner';
+import { CoachMark, type Coach } from '@/components/tutorial/CoachMark';
 import { BOSS, SAMPLE_CHARACTERS, SCENE, type SampleCharacter } from '@/content/oneshot';
+import { playSfx, setSfxEnabled, sfxEnabled, sfxForEvent, sfxForOutcome } from '@/fx/sfx';
 import { asset } from '@/lib/asset';
 import { describe, ERROR_COPY } from '@/lib/copy';
 import { LocalRoom } from '@/state/localRoom';
@@ -64,7 +67,7 @@ function setupRoom(pick: SampleCharacter): LocalRoom {
       payload: { ...s.create, ownerId: s.key === pick.key ? ME.userId : 'bot' },
     });
   }
-  room.run(GM, { type: 'session.start', payload: { title: '체험 원샷' } });
+  room.run(GM, { type: 'session.start', payload: { title: '튜토리얼' } });
   room.run(GM, { type: 'scene.start', payload: { name: SCENE.name, aspects: SCENE.aspects } });
   room.run(GM, { type: 'narration.post', payload: { text: SCENE.opening } });
   return room;
@@ -129,6 +132,26 @@ function Table({
   const [diceMode, setDiceMode] = useState<DiceMode>('flicker');
   const [error, setError] = useState<string | null>(null);
   const compelled = useRef(false);
+  // 캐릭터를 고른 뒤에만 그려지는 화면이라 처음부터 브라우저 설정을 읽어도 된다
+  const [sfxOn, setSfxOn] = useState(sfxEnabled);
+
+  // 새 이벤트마다 어울리는 효과음 (한 번에 같은 소리는 한 번만)
+  const heard = useRef(-1);
+  useEffect(() => {
+    const last = events.at(-1)?.seq ?? -1;
+    if (heard.current < 0) {
+      heard.current = last;
+      return;
+    }
+    const names = new Set(
+      events
+        .filter((e) => e.seq > heard.current)
+        .map(sfxForEvent)
+        .filter((n) => n !== null),
+    );
+    heard.current = last;
+    names.forEach((n) => playSfx(n));
+  }, [events]);
 
   const roll: RollState | undefined = rollId ? state.rolls[rollId] : undefined;
   const final = roll?.status === 'final';
@@ -346,23 +369,63 @@ function Table({
 
   const myOutcomeNow =
     roll?.status === 'open' && roll.active.dice ? outcomeFor(roll, 'active') : null;
-  const hint = useMemo(() => {
-    if (compel) return undefined;
-    if (prompt) return undefined;
-    if (!action) return '1. 행동을 골라요. 처음이라면 "극복"으로 불길을 뚫어 봐요 (숫자키 1~4)';
+  const coach = useMemo((): (Coach & { focus?: CoachFocus }) | undefined => {
+    if (compel || prompt) return undefined;
+    const total = 4;
+    if (!action)
+      return {
+        step: 1,
+        total,
+        focus: 'action',
+        title: '먼저 무엇을 할지 골라요',
+        body: `아래 행동 버튼 중 하나를 눌러요. 처음이라면 "${term('overcome')}"으로 불길을 뚫어 봐요.`,
+        keys: ['1', '2', '3', '4'],
+      };
     if (!approach)
-      return `2. 어떻게 할까요? ${term('approach')}을 골라요. 숫자가 높을수록 잘하는 방식이에요 (Q·W·E·A·S·D)`;
-    if (!roll || final) return '3. 굴려 볼까요? 주사위 4개의 합에 접근법 수치를 더해요 (Space)';
+      return {
+        step: 2,
+        total,
+        focus: 'approach',
+        title: `어떻게 할지 ${term('approach')}을 골라요`,
+        body: '숫자가 높을수록 그 방식에 능숙해요. 캐릭터에게 어울리는 방식을 골라 보세요.',
+        keys: ['Q', 'W', 'E', 'A', 'S', 'D'],
+      };
+    if (!roll || final)
+      return {
+        step: 3,
+        total,
+        focus: 'roll',
+        title: '주사위를 굴려 볼까요?',
+        body: `${term('fateDice')} 4개의 합에 ${term('approach')} 수치를 더해 결과가 정해져요.`,
+        keys: ['Space'],
+      };
     if (settled && (myOutcomeNow === 'fail' || myOutcomeNow === 'tie'))
-      return `4. ${term('aspect')}을 ${term('invoke')}하면 +2! 강조된 카드를 눌러 보세요. ${term('fatePoint')} 1이 들어요`;
+      return {
+        step: 4,
+        total,
+        title: `${term('aspect')}을 ${term('invoke')}해서 뒤집어요`,
+        body: `빛나는 ${term('aspect')} 카드를 누르면 +2를 받아요. ${term('fatePoint')} 1개가 들어요.`,
+      };
     return undefined;
   }, [action, approach, roll, final, compel, prompt, settled, myOutcomeNow]);
+  const [coachHidden, setCoachHidden] = useState(false);
 
   const result =
     roll && roll.active.dice && (roll.defense?.dice ?? roll.targetId === null)
       ? resolveRoll(roll)
       : null;
   const myOutcome = roll && result ? outcomeFor(roll, 'active') : null;
+  const outcomeKey =
+    settled && myOutcome && roll ? `${roll.id}:${roll.active.animSeed}:${myOutcome}` : null;
+  useEffect(() => {
+    if (!outcomeKey) return;
+    playSfx('dice-settle', 0.5);
+    const t = setTimeout(
+      () => playSfx(sfxForOutcome(outcomeKey.split(':').at(-1) as Outcome)),
+      220,
+    );
+    return () => clearTimeout(t);
+  }, [outcomeKey]);
   const showBoss = roll?.targetId === bossId || action === 'attack';
 
   return (
@@ -374,7 +437,7 @@ function Table({
     >
       <header className={styles.top}>
         <div>
-          <div className={styles.kicker}>SCENE 01 · 체험 원샷</div>
+          <div className={styles.kicker}>TUTORIAL · 첫 장면</div>
           <h1 className={styles.sceneName}>{state.scene?.name}</h1>
         </div>
         <div className={styles.topRight}>
@@ -385,6 +448,17 @@ function Table({
               <option value="instant">없음</option>
             </select>
           </label>
+          <button
+            type="button"
+            className={styles.restart}
+            aria-pressed={sfxOn}
+            onClick={() => {
+              setSfxEnabled(!sfxOn);
+              setSfxOn(!sfxOn);
+            }}
+          >
+            효과음 {sfxOn ? '켜짐' : '꺼짐'}
+          </button>
           <button type="button" className={styles.restart} onClick={onRestart}>
             처음부터
           </button>
@@ -410,6 +484,7 @@ function Table({
         </div>
 
         <div className={styles.center}>
+          {coach && !coachHidden && <CoachMark coach={coach} onHide={() => setCoachHidden(true)} />}
           <img className={styles.standee} src={asset(pick.image)} alt={pick.name} />
           {showBoss && (
             <img className={styles.bossStandee} src={asset(SCENE.bossImage)} alt={boss.name} />
@@ -600,7 +675,7 @@ function Table({
           action={action}
           approach={approach}
           disabled={busy || !!compel || !!prompt || me.takenOut === true}
-          {...(hint ? { hint } : {})}
+          {...(coach?.focus && !coachHidden ? { focus: coach.focus } : {})}
           onAction={setAction}
           onApproach={setApproach}
           onRoll={onRoll}

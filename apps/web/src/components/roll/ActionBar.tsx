@@ -15,6 +15,8 @@ const APPROACH_KEYS: Record<Approach, string> = {
   sneaky: 'D',
 };
 
+export type CoachFocus = 'action' | 'approach' | 'roll';
+
 interface Props {
   character: Character;
   action: Action | null;
@@ -22,7 +24,8 @@ interface Props {
   disabled?: boolean;
   /** 방어는 상대가 공격할 때만 굴린다 */
   canDefend?: boolean;
-  hint?: string;
+  /** 체험 안내가 가리키는 곳을 빛나게 한다 */
+  focus?: CoachFocus;
   onAction: (a: Action) => void;
   onApproach: (a: Approach) => void;
   onRoll: () => void;
@@ -34,7 +37,7 @@ export function ActionBar({
   approach,
   disabled,
   canDefend = false,
-  hint,
+  focus,
   onAction,
   onApproach,
   onRoll,
@@ -62,7 +65,12 @@ export function ActionBar({
 
   return (
     <div className={styles.bar} data-disabled={disabled || undefined}>
-      <div className={styles.actions} role="radiogroup" aria-label="행동">
+      <div
+        className={styles.actions}
+        role="radiogroup"
+        aria-label="행동"
+        data-focus={focus === 'action' || undefined}
+      >
         {ACTIONS.map((a, i) => (
           <button
             key={a}
@@ -80,7 +88,12 @@ export function ActionBar({
         ))}
       </div>
       {action && (
-        <div className={styles.approaches} role="radiogroup" aria-label={term('approach')}>
+        <div
+          className={styles.approaches}
+          role="radiogroup"
+          aria-label={term('approach')}
+          data-focus={focus === 'approach' || undefined}
+        >
           {APPROACHES.map((ap) => (
             <button
               key={ap}
@@ -99,7 +112,7 @@ export function ActionBar({
           ))}
         </div>
       )}
-      <div className={styles.rollCol}>
+      <div className={styles.rollCol} data-focus={focus === 'roll' || undefined}>
         <button
           type="button"
           className={styles.roll}
@@ -110,7 +123,6 @@ export function ActionBar({
         </button>
         <span className={styles.space}>SPACE</span>
       </div>
-      {hint && <p className={styles.hint}>{hint}</p>}
     </div>
   );
 }
