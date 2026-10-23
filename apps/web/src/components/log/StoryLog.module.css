@@ -51,3 +51,48 @@
 .line[data-kind='roll'] {
   border-color: var(--great);
 }
+
+.line {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-1);
+}
+
+.line > span {
+  flex: 1;
+}
+
+.line[data-kind='chat'] {
+  border-color: var(--muted);
+}
+
+.line[data-undone] > span {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.undo {
+  flex: none;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  opacity: 0;
+}
+
+.line:hover .undo,
+.undo:focus-visible {
+  opacity: 1;
+}
+
+.undo:hover {
+  color: var(--gold-hi);
+}
+
+@media (hover: none) {
+  .undo {
+    opacity: 0.6;
+  }
+}

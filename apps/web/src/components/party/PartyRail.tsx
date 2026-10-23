@@ -10,7 +10,14 @@ export interface PartyMember {
   active?: boolean;
 }
 
-export function PartyRail({ members }: { members: PartyMember[] }) {
+export function PartyRail({
+  members,
+  onSelect,
+}: {
+  members: PartyMember[];
+  /** 누르면 캐릭터 시트를 연다 */
+  onSelect?: (id: string) => void;
+}) {
   return (
     <aside className={styles.rail} aria-label="파티">
       <div className={styles.head}>PARTY · FATE</div>
@@ -18,6 +25,17 @@ export function PartyRail({ members }: { members: PartyMember[] }) {
         <div
           key={c.id}
           className={styles.member}
+          {...(onSelect
+            ? {
+                role: 'button',
+                tabIndex: 0,
+                title: `${c.name} 시트 보기`,
+                onClick: () => onSelect(c.id),
+                onKeyDown: (e: { key: string }) => {
+                  if (e.key === 'Enter') onSelect(c.id);
+                },
+              }
+            : {})}
           data-active={active || undefined}
           data-out={c.takenOut || undefined}
         >
@@ -45,6 +63,7 @@ export function PartyRail({ members }: { members: PartyMember[] }) {
                   .join(' · ')}
               </div>
             )}
+            {c.milestone && <div className={styles.milestone}>{term('milestone')}!</div>}
           </div>
         </div>
       ))}

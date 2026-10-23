@@ -3,10 +3,21 @@ import type { Command, CommandOf, CommandType } from './commands';
 import { turnOrder, CONTEST_VICTORIES_TO_WIN } from './conflict';
 import { absorbOptions, concedeReward, isValidAbsorb } from './damage';
 import { rollFateDice } from './dice';
-import type { EventPayloads, EventType, NewEvent, SealedSide } from './events';
+import type { EventPayloads, EventType, NewEvent, RoomEvent, SealedSide } from './events';
+import { undoneSeqs } from './reducer';
 import { canInvoke } from './invoke';
 import { resolveRoll, rewardsFor } from './resolve';
-import type { Actor, Aspect, Character, Rng, RollState, RoomState, Visibility } from './types';
+import { APPROACHES } from './types';
+import type {
+  Actor,
+  Approach,
+  Aspect,
+  Character,
+  Rng,
+  RollState,
+  RoomState,
+  Visibility,
+} from './types';
 
 export type CommandErrorCode =
   | 'FORBIDDEN_ROLE'
@@ -36,7 +47,35 @@ export interface ResolveContext {
   animSeed: () => number;
   /** 서버가 봉인해 둔 공격자 굴림 조회 (sealed_rolls) */
   sealed?: (rollId: string) => SealedSide | undefined;
+  /** 되돌리기 검증용: 지금까지의 이벤트 */
+  history?: readonly RoomEvent[];
+  /** 되돌리기: 이 seq를 만든 명령의 이벤트 범위 [first, last] (command_log) */
+  groupOf?: (seq: number) => readonly [number, number] | undefined;
 }
+
+/**
+ * 이정표 성장: 소(minor)는 접근법 값 맞바꾸기만, 중·대는 하나를 +1까지 올릴 수 있다 (최대 +5).
+ */
+function isGrowth(
+  c: Character,
+  next: Record<Approach, number>,
+  size: 'minor' | 'significant' | 'major',
+): boolean {
+  const before = APPROACHES.map((k) => c.approaches[k]).sort((x, y) => x - y);
+  const after = APPROACHES.map((k) => next[k]).sort((x, y) => x - y);
+  if (after.some((v) => v > 5 || v < 0)) return false;
+  const diff = after.reduce((t, v) => t + v, 0) - before.reduce((t, v) => t + v, 0);
+  if (diff === 0) return after.every((v, i) => v === before[i]);
+  if (diff !== 1 || size === 'minor') return false;
+  // 정확히 한 값만 1 올랐는지
+  return before.some((_, i) => {
+    const raised = before.map((v, j) => (j === i ? v + 1 : v)).sort((x, y) => x - y);
+    return raised.every((v, j) => v === after[j]);
+  });
+}
+
+/** 되돌릴 수 없는 이벤트: 입장 기록 */
+const NOT_UNDOABLE: ReadonlySet<EventType> = new Set<EventType>(['room.member_joined']);
 
 export interface ResolveResult {
   events: NewEvent[];
@@ -55,7 +94,6 @@ const GM_ONLY: ReadonlySet<CommandType> = new Set<CommandType>([
   'compel.offer',
   'compel.withdraw',
   'conflict.start',
-  'conflict.next',
   'conflict.end',
   'consequence.clear',
   'contest.start',
@@ -66,6 +104,8 @@ const GM_ONLY: ReadonlySet<CommandType> = new Set<CommandType>([
   'challenge.end',
   'zone.add',
   'zone.link',
+  'zone.unlink',
+  'zone.update',
   'zone.remove',
   'gm.note',
   'narration.post',
@@ -227,14 +267,22 @@ const resolvers: Resolvers = {
   },
   'character.update': (s, p, a) => {
     const c = controlled(s, a, p.id);
+    // 플레이어는 이정표를 받았을 때만 성장한다 (GM은 언제든 고칠 수 있다)
+    const growth = a.role !== 'gm' && !c.isNpc;
+    if (growth) {
+      if (!c.milestone) throw new CommandError('FORBIDDEN_ROLE', 'needs a milestone');
+      if (p.patch.approaches && !isGrowth(c, p.patch.approaches, c.milestone))
+        throw new CommandError('INVALID_CHARACTER', 'APPROACH_SPREAD');
+      if (p.patch.stunts && c.milestone === 'minor' && p.patch.stunts.length > c.stunts.length)
+        throw new CommandError('INVALID_CHARACTER', 'TOO_MANY_STUNTS');
+    }
     const patch = {
       ...p.patch,
       ...(p.patch.stunts ? { refresh: refreshFor(p.patch.stunts.length) } : {}),
     };
-    const merged = { ...c, ...patch };
-    const check = validateCharacter(merged);
-    if (!check.ok) throw new CommandError('INVALID_CHARACTER', check.issues.join(','));
-    return one(ev('character.updated', a, { id: c.id, patch }));
+    return one(
+      ev('character.updated', a, { id: c.id, patch, ...(growth ? { milestoneUsed: true } : {}) }),
+    );
   },
   'milestone.grant': (s, p, a) => {
     for (const id of p.characterIds) need(s.characters[id], 'character');
@@ -471,6 +519,10 @@ const resolvers: Resolvers = {
   },
   'conflict.next': (s, _p, a) => {
     const c = need(s.conflict, 'conflict');
+    // GM 또는 지금 차례인 캐릭터를 움직이는 사람이 차례를 넘긴다
+    const current = s.characters[c.order[c.index] ?? ''];
+    if (a.role !== 'gm' && !(current && canControl(s, a, current)))
+      throw new CommandError('FORBIDDEN_ROLE');
     const active = (id: string) => !s.characters[id]?.takenOut;
     if (!c.order.some(active)) throw new CommandError('INVALID', 'no one left');
     let index = c.index;
@@ -577,6 +629,15 @@ const resolvers: Resolvers = {
     if (p.from === p.to) throw new CommandError('INVALID');
     return one(ev('zone.linked', a, p));
   },
+  'zone.unlink': (s, p, a) => {
+    const zones = need(s.scene, 'scene').zones;
+    if (!need(zones[p.from], 'zone').links.includes(p.to)) throw new CommandError('INVALID');
+    return one(ev('zone.unlinked', a, p));
+  },
+  'zone.update': (s, p, a) => {
+    need(need(s.scene, 'scene').zones[p.zoneId], 'zone');
+    return one(ev('zone.updated', a, p));
+  },
   'zone.remove': (s, p, a) => {
     need(need(s.scene, 'scene').zones[p.zoneId], 'zone');
     return one(ev('zone.removed', a, p));
@@ -594,11 +655,26 @@ const resolvers: Resolvers = {
   'gm.note': (_s, p, a) => one(ev('gm.note', a, p, 'gm')),
   'narration.post': (_s, p, a) => one(ev('narration.posted', a, p)),
   'sfx.play': (_s, p, a) => one(ev('sfx.played', a, p)),
-  'event.undo': (s, p, a) => {
+  'event.undo': (s, p, a, ctx) => {
     if (p.targetSeq > s.seq) throw new CommandError('NOT_FOUND', 'event not found');
-    return one(
-      ev('event.undone', a, { targetSeq: p.targetSeq, ...(p.reason ? { reason: p.reason } : {}) }),
-    );
+    const history = ctx.history;
+    if (!history) {
+      return one(
+        ev('event.undone', a, { seqs: [p.targetSeq], ...(p.reason ? { reason: p.reason } : {}) }),
+      );
+    }
+    const bySeq = new Map(history.map((e) => [e.seq, e]));
+    const target = need(bySeq.get(p.targetSeq), 'event');
+    if (NOT_UNDOABLE.has(target.type)) throw new CommandError('INVALID', 'cannot undo this');
+    const undone = undoneSeqs(history);
+    if (undone.has(target.seq)) throw new CommandError('INVALID', 'already undone');
+    const [first, last] = ctx.groupOf?.(target.seq) ?? [target.seq, target.seq];
+    const seqs: number[] = [];
+    for (let q = first; q <= last; q++) {
+      const e = bySeq.get(q);
+      if (e && !NOT_UNDOABLE.has(e.type) && !undone.has(q)) seqs.push(q);
+    }
+    return one(ev('event.undone', a, { seqs, ...(p.reason ? { reason: p.reason } : {}) }));
   },
 };
 

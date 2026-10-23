@@ -49,6 +49,8 @@ export interface LogLine {
   seq: number;
   kind: 'system' | 'roll' | 'fate' | 'gm' | 'chat';
   text: string;
+  /** 되돌리기 버튼을 달지 않는 줄 */
+  undoable?: false;
 }
 
 /** 이벤트 하나를 로그 문장으로 바꾼다. 로그에 남길 필요 없는 이벤트는 null. */
@@ -123,14 +125,111 @@ export function describe(e: RoomEvent, state: RoomState): LogLine | null {
       return line('chat', who ? `${who}: ${e.payload.text}` : e.payload.text);
     }
     case 'room.member_joined':
-      return line(
-        'system',
-        `${e.payload.nickname}님이 들어왔어요${e.payload.role === 'gm' ? ' (GM)' : ''}`,
-      );
+      return {
+        ...line(
+          'system',
+          `${e.payload.nickname}님이 들어왔어요${e.payload.role === 'gm' ? ' (GM)' : ''}`,
+        ),
+        undoable: false,
+      };
     case 'character.created':
       return line('system', `새 캐릭터: ${e.payload.character.name}`);
     case 'scene.ended':
       return line('system', '장면이 끝났어요. 스트레스가 모두 회복돼요');
+    case 'session.started':
+      return line(
+        'system',
+        `세션 ${e.payload.number} 시작! ${term('fatePoint')}가 ${term('refresh')}돼요`,
+      );
+    case 'session.ended':
+      return line('system', '세션이 끝났어요');
+    case 'conflict.started':
+      return line(
+        'roll',
+        `${e.payload.kind === 'physical' ? '물리' : '정신'} ${term('conflict')} 시작! 차례: ${e.payload.order.map((id) => name(state, id)).join(' → ')}`,
+      );
+    case 'conflict.turn_advanced': {
+      const id = state.conflict?.order[e.payload.index];
+      return line('roll', `${e.payload.round}라운드 · ${name(state, id)}의 차례`);
+    }
+    case 'conflict.ended':
+      return line('roll', `${term('conflict')}이 끝났어요`);
+    case 'character.conceded':
+      return line(
+        'fate',
+        `${name(state, e.payload.characterId)} ${term('concede')}. ${term('fatePoint')} +${e.payload.fpGained}`,
+      );
+    case 'consequence.recovery_started':
+      return line(
+        'system',
+        `${name(state, e.payload.characterId)}의 ${term(e.payload.slot)} 회복 시작`,
+      );
+    case 'consequence.cleared':
+      return line(
+        'system',
+        `${name(state, e.payload.characterId)}의 ${term(e.payload.slot)}이 나았어요`,
+      );
+    case 'milestone.granted': {
+      const size = { minor: '작은', significant: '중요한', major: '큰' }[e.payload.size];
+      return line(
+        'gm',
+        `${e.payload.characterIds.map((id) => name(state, id)).join(', ')}: ${size} ${term('milestone')} 도달!`,
+      );
+    }
+    case 'character.updated':
+      return line('system', `${name(state, e.payload.id)}의 시트가 바뀌었어요`);
+    case 'contest.started':
+      return line(
+        'roll',
+        `${term('contest')} 시작: ${e.payload.sides.map((id) => name(state, id)).join(' vs ')}`,
+      );
+    case 'contest.exchange':
+      return line(
+        'roll',
+        e.payload.winnerId
+          ? `${term('contest')}: ${name(state, e.payload.winnerId)} ${e.payload.victories}승`
+          : `${term('contest')}: 무승부, 판이 뒤집혀요`,
+      );
+    case 'contest.ended':
+      return line(
+        'roll',
+        e.payload.winnerId
+          ? `${term('contest')} 끝! ${name(state, e.payload.winnerId)} 승리`
+          : `${term('contest')} 끝`,
+      );
+    case 'challenge.started':
+      return line('roll', `${term('challenge')} 시작: ${e.payload.title}`);
+    case 'challenge.step':
+      return line(
+        'roll',
+        `${term('challenge')} · ${state.challenge?.steps[e.payload.index]?.label ?? `${e.payload.index + 1}단계`}: ${term(e.payload.outcome)}`,
+      );
+    case 'challenge.ended':
+      return line('roll', `${term('challenge')}이 끝났어요`);
+    case 'zone.added':
+      return line('system', `새 ${term('zone')}: ${e.payload.zone.name}`);
+    case 'zone.removed':
+      return line('system', `${term('zone')}이 사라졌어요`);
+    case 'token.moved': {
+      const zone = e.payload.zoneId ? state.scene?.zones[e.payload.zoneId]?.name : null;
+      return line(
+        'system',
+        zone
+          ? `${name(state, e.payload.characterId)} → ${zone}`
+          : `${name(state, e.payload.characterId)}이(가) 지도에서 빠졌어요`,
+      );
+    }
+    case 'aspect.revealed':
+      return line('gm', `숨은 ${term('aspect')} 발견: 「${e.payload.aspect.text}」`);
+    case 'aspect.removed':
+      return line('system', `${term('aspect')}이 사라졌어요`);
+    case 'gm.note':
+      return { ...line('gm', `📝 ${e.payload.text}`), undoable: false };
+    case 'event.undone':
+      return {
+        ...line('gm', `↶ GM이 ${e.payload.seqs.length}개 기록을 되돌렸어요`),
+        undoable: false,
+      };
     default:
       return null;
   }

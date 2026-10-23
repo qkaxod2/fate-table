@@ -94,6 +94,29 @@ try {
     .waitFor({ timeout: T });
   note('opposed roll: player defended, both revealed');
 
+  // 6. 갈등 시작 → 플레이어 화면에 차례 띠
+  await gm.getByText(/갈등 · 경합 · 도전/).click();
+  await gm.getByRole('button', { name: '갈등 시작' }).click();
+  await pl.getByText(/물리 갈등/).waitFor({ timeout: T });
+  note('conflict started; player sees the turn tracker');
+
+  // 7. 구역 추가 → 플레이어 지도에 보임
+  await gm.getByRole('button', { name: '지도 편집' }).click();
+  const map = gm.locator('[data-map]');
+  const box = await map.boundingBox();
+  await gm.mouse.click(box.x + box.width * 0.3, box.y + box.height * 0.5);
+  await gm.getByPlaceholder('구역 이름').fill('선착장');
+  await gm.getByRole('button', { name: '놓기' }).click();
+  await pl.locator('[data-zone="선착장"]').waitFor({ timeout: T });
+  note('zone added; player map updated live');
+
+  // 8. GM 되돌리기 → 구역이 사라진다 (서버 replay)
+  await gm.getByRole('button', { name: '편집 끝' }).click();
+  await gm.getByText('되돌리기 · 메모').click();
+  await gm.getByRole('button', { name: /마지막 기록 되돌리기/ }).click();
+  await pl.locator('[data-zone="선착장"]').waitFor({ state: 'detached', timeout: T });
+  note('undo removed the zone for everyone');
+
   if (errors.length) {
     for (const e of errors) console.log(`::warning::${e}`);
   }

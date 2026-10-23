@@ -1,0 +1,78 @@
+.tray {
+  --body: var(--dice-body);
+  --edge: var(--dice-edge);
+  --pip: var(--dice-pip);
+  --size: 42px;
+  display: inline-flex;
+  gap: var(--s-3);
+  padding-top: var(--s-2);
+}
+
+.tray[data-tone='op'] {
+  --body: var(--dice-body-op);
+  --edge: var(--dice-edge-op);
+  --pip: var(--dice-pip-op);
+}
+
+.scene {
+  position: relative;
+  width: var(--size);
+  height: var(--size);
+  perspective: 420px;
+}
+
+.cube {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid var(--edge);
+  border-radius: 9px;
+  background:
+    radial-gradient(circle at 30% 25%, rgb(255 255 255 / 0.14), transparent 60%), var(--body);
+  color: var(--pip);
+  font-family: var(--f-pop);
+  font-size: 27px;
+  font-weight: 800;
+  line-height: 1;
+  backface-visibility: hidden;
+  box-shadow: inset 0 -3px 0 rgb(0 0 0 / 0.35);
+}
+
+.face[data-side='front'] {
+  transform: translateZ(calc(var(--size) / 2));
+}
+.face[data-side='right'] {
+  transform: rotateY(90deg) translateZ(calc(var(--size) / 2));
+}
+.face[data-side='back'] {
+  transform: rotateY(180deg) translateZ(calc(var(--size) / 2));
+}
+.face[data-side='left'] {
+  transform: rotateY(-90deg) translateZ(calc(var(--size) / 2));
+}
+.face[data-side='top'] {
+  transform: rotateX(90deg) translateZ(calc(var(--size) / 2));
+}
+.face[data-side='bottom'] {
+  transform: rotateX(-90deg) translateZ(calc(var(--size) / 2));
+}
+
+.shadow {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: -8px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.45);
+  filter: blur(3px);
+  z-index: -1;
+}

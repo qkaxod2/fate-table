@@ -2,9 +2,36 @@
 
 import type { DieFace } from '@fate/rules-engine';
 import { useEffect, useState } from 'react';
+import { Dice3D } from './Dice3D';
 import styles from './DiceTray.module.css';
 
-export type DiceMode = 'flicker' | 'instant';
+export type DiceMode = '3d' | 'flicker' | 'instant';
+
+export const DICE_MODES: ReadonlyArray<readonly [DiceMode, string]> = [
+  ['3d', '3D'],
+  ['flicker', '눈 바뀜'],
+  ['instant', '없음'],
+];
+
+const MODE_KEY = 'fate.diceMode';
+
+export function savedDiceMode(): DiceMode {
+  try {
+    const v = localStorage.getItem(MODE_KEY);
+    if (v === '3d' || v === 'flicker' || v === 'instant') return v;
+  } catch {
+    // 저장소를 못 쓰면 기본값
+  }
+  return '3d';
+}
+
+export function saveDiceMode(mode: DiceMode) {
+  try {
+    localStorage.setItem(MODE_KEY, mode);
+  } catch {
+    // 무시
+  }
+}
 
 const GLYPH: Record<DieFace, string> = { [-1]: '−', 0: '', 1: '+' };
 const FACES: DieFace[] = [-1, 0, 1];
@@ -28,15 +55,18 @@ interface Progress {
   flicker: DieFace[];
 }
 
+/** 3D 모드는 Dice3D가, 나머지는 여기서 그린다 */
+export function DiceTray(props: Props) {
+  const { dice, rollKey, tone = 'me', mode = 'flicker', sealed, onSettled } = props;
+  if (mode === '3d' && dice && !sealed)
+    return (
+      <Dice3D dice={dice} rollKey={rollKey} tone={tone} {...(onSettled ? { onSettled } : {})} />
+    );
+  return <FlatDice {...props} mode={mode === '3d' ? 'flicker' : mode} />;
+}
+
 /** 눈 바뀜 모드: 네 주사위의 눈이 빠르게 바뀌다가 80ms 간격으로 하나씩 멈춘다 */
-export function DiceTray({
-  dice,
-  rollKey,
-  tone = 'me',
-  mode = 'flicker',
-  sealed,
-  onSettled,
-}: Props) {
+function FlatDice({ dice, rollKey, tone = 'me', mode = 'flicker', sealed, onSettled }: Props) {
   const [progress, setProgress] = useState<Progress>({
     key: '',
     stopped: 0,

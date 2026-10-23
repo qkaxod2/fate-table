@@ -328,6 +328,112 @@ describe('undo (#22)', () => {
     );
     expect({ ...withUndo, seq: 0 }).toEqual({ ...without, seq: 0 });
     expect(withUndo.characters.a!.fatePoints).toBe(3);
+    expect(t.state.characters.a!.fatePoints).toBe(3);
+  });
+
+  it('undoes every event of the same command together', () => {
+    const t = table();
+    t.run(GM, { type: 'session.start', payload: {} });
+    t.run(GM, {
+      type: 'scene.start',
+      payload: { name: '창고', aspects: [{ text: '불길', hidden: false }] },
+    });
+    const sceneSeq = t.log.find((e) => e.type === 'scene.started')!.seq;
+    const [undo] = t.run(GM, { type: 'event.undo', payload: { targetSeq: sceneSeq } });
+    expect(undo!.type === 'event.undone' && undo!.payload.seqs).toEqual([sceneSeq, sceneSeq + 1]);
+    expect(t.state.scene).toBeNull();
+    expect(Object.values(t.state.aspects)).toHaveLength(0);
+  });
+
+  it('undoing an undo redoes it', () => {
+    const t = table();
+    t.run(GM, { type: 'fate.adjust', payload: { target: 'a', delta: 2 } });
+    const target = t.state.seq;
+    t.run(GM, { type: 'event.undo', payload: { targetSeq: target } });
+    expect(t.state.characters.a!.fatePoints).toBe(3);
+    t.run(GM, { type: 'event.undo', payload: { targetSeq: t.state.seq } });
+    expect(t.state.characters.a!.fatePoints).toBe(5);
+  });
+
+  it('refuses to undo twice or to undo a join', () => {
+    const t = table();
+    t.run(GM, { type: 'fate.adjust', payload: { target: 'a', delta: 1 } });
+    t.run(GM, { type: 'event.undo', payload: { targetSeq: 1 } });
+    expect(() => t.run(GM, { type: 'event.undo', payload: { targetSeq: 1 } })).toThrow();
+    t.push({
+      type: 'room.member_joined',
+      actorId: 'u1',
+      payload: { userId: 'u1', nickname: 'x', role: 'player' },
+      visibility: 'public',
+    });
+    expect(() => t.run(GM, { type: 'event.undo', payload: { targetSeq: t.state.seq } })).toThrow();
+    expect(() => t.run(P1, { type: 'event.undo', payload: { targetSeq: 1 } })).toThrow();
+  });
+});
+
+describe('conflict turns', () => {
+  it('lets the player whose turn it is pass the turn, but nobody else', () => {
+    const t = table();
+    t.run(GM, { type: 'conflict.start', payload: { kind: 'mental', participantIds: ['a', 'b'] } });
+    const first = t.state.conflict!.order[0]!;
+    const [owner, other] = first === 'a' ? [P1, P2] : [P2, P1];
+    expect(() => t.run(other, { type: 'conflict.next', payload: {} })).toThrow();
+    t.run(owner, { type: 'conflict.next', payload: {} });
+    expect(t.state.conflict!.index).toBe(1);
+    t.run(GM, { type: 'conflict.next', payload: {} });
+    expect(t.state.conflict).toMatchObject({ index: 0, round: 2 });
+  });
+});
+
+describe('milestones', () => {
+  it('lets a player grow only with a milestone, once', () => {
+    const t = table();
+    const grown = { careful: 4, clever: 2, flashy: 2, forceful: 1, quick: 1, sneaky: 0 };
+    const update = {
+      type: 'character.update',
+      payload: { id: 'a', patch: { approaches: grown } },
+    } as const;
+    expect(() => t.run(P1, update)).toThrow();
+    t.run(GM, { type: 'milestone.grant', payload: { characterIds: ['a'], size: 'minor' } });
+    expect(() => t.run(P1, update)).toThrow();
+    const swapped = { careful: 0, clever: 2, flashy: 2, forceful: 1, quick: 1, sneaky: 3 };
+    t.run(P1, { type: 'character.update', payload: { id: 'a', patch: { approaches: swapped } } });
+    expect(t.state.characters.a!.approaches.sneaky).toBe(3);
+    expect(t.state.characters.a!.milestone).toBeUndefined();
+    t.run(GM, { type: 'milestone.grant', payload: { characterIds: ['a'], size: 'significant' } });
+    t.run(P1, {
+      type: 'character.update',
+      payload: { id: 'a', patch: { approaches: { ...swapped, sneaky: 4 } } },
+    });
+    expect(t.state.characters.a!.approaches.sneaky).toBe(4);
+  });
+});
+
+describe('zones', () => {
+  it('moves, renames, links and unlinks zones', () => {
+    const t = table();
+    t.run(GM, {
+      type: 'scene.start',
+      payload: {
+        name: '항구',
+        zones: [
+          { name: '부두', x: 10, y: 10 },
+          { name: '창고', x: 80, y: 60 },
+        ],
+      },
+    });
+    const [z1, z2] = Object.keys(t.state.scene!.zones);
+    t.run(GM, { type: 'zone.link', payload: { from: z1!, to: z2! } });
+    expect(t.state.scene!.zones[z2!]!.links).toEqual([z1]);
+    t.run(GM, { type: 'zone.update', payload: { zoneId: z1!, name: '선착장', x: 30 } });
+    expect(t.state.scene!.zones[z1!]).toMatchObject({ name: '선착장', x: 30, y: 10 });
+    t.run(GM, { type: 'zone.unlink', payload: { from: z2!, to: z1! } });
+    expect(t.state.scene!.zones[z1!]!.links).toEqual([]);
+    t.run(P1, { type: 'token.move', payload: { characterId: 'a', zoneId: z2! } });
+    expect(t.state.tokens.a).toBe(z2);
+    expect(() =>
+      t.run(P1, { type: 'token.move', payload: { characterId: 'b', zoneId: z2! } }),
+    ).toThrow();
   });
 });
 

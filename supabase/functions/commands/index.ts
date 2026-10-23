@@ -1,6 +1,6 @@
 // 명령 처리: 파싱 → 역할 확인 → 이벤트로 상태 복원 → rules-engine resolve → append_events
 // 요청: { roomId, clientCmdId, command }  응답: { events: [{seq, ...}] }
-import { CommandError, initialState, parseCommand, reduce, resolve } from '../_shared/engine.js';
+import { CommandError, parseCommand, replay, resolve } from '../_shared/engine.js';
 import {
   admin,
   appendEvents,
@@ -56,14 +56,27 @@ Deno.serve(async (req) => {
   for (let attempt = 0; attempt < 4; attempt++) {
     const history = await loadEvents(db, roomId);
     const head = history.at(-1)?.seq ?? 0;
-    let state = initialState();
-    for (const e of history) state = reduce(state, e);
+    const state = replay(history);
 
     const { data: seals } = await db
       .from('sealed_rolls')
       .select('roll_id, side')
       .eq('room_id', roomId);
     const sealed = new Map((seals ?? []).map((s) => [s.roll_id, s.side]));
+
+    // 되돌리기는 같은 명령이 만든 이벤트를 함께 되돌린다
+    let group: readonly [number, number] | undefined;
+    if (command.type === 'event.undo') {
+      const seq = command.payload.targetSeq;
+      const { data: g } = await db
+        .from('command_log')
+        .select('first_seq, last_seq')
+        .eq('room_id', roomId)
+        .lte('first_seq', seq)
+        .gte('last_seq', seq)
+        .maybeSingle();
+      if (g) group = [Number(g.first_seq), Number(g.last_seq)];
+    }
 
     let result;
     try {
@@ -72,6 +85,8 @@ Deno.serve(async (req) => {
         newId: () => crypto.randomUUID(),
         animSeed: () => cryptoInt(2 ** 32),
         sealed: (id: string) => sealed.get(id),
+        history,
+        groupOf: () => group,
       });
     } catch (e) {
       if (e instanceof CommandError) return fail(409, e.code, e.message);

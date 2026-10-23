@@ -251,3 +251,47 @@
   color: var(--muted);
   font-size: var(--fs-sm);
 }
+
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  margin: var(--s-2) 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.notes li {
+  padding-left: var(--s-2);
+  border-left: 2px solid var(--hi);
+  white-space: pre-wrap;
+}
+
+.topStack {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  margin-bottom: auto;
+  padding-bottom: var(--s-3);
+}
+
+/* 왼쪽 GM 도구가 길어져도 굴림 패널이 화면 안에 머물게 */
+.center {
+  position: sticky;
+  top: var(--s-3);
+  align-self: start;
+  min-height: min(620px, calc(100dvh - 280px));
+}
+
+@media (max-width: 1100px) {
+  .center {
+    position: relative;
+    top: 0;
+  }
+}

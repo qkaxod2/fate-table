@@ -388,7 +388,12 @@ var handlers = {
     ...s,
     characters: { ...s.characters, [p.character.id]: p.character }
   }),
-  "character.updated": (s, p) => patchCharacter(s, p.id, (c) => ({ ...c, ...p.patch })),
+  "character.updated": (s, p) => patchCharacter(s, p.id, (c) => {
+    const next = { ...c, ...p.patch };
+    if (!p.milestoneUsed) return next;
+    const { milestone: _used, ...rest } = next;
+    return rest;
+  }),
   "milestone.granted": (s, p) => p.characterIds.reduce(
     (acc, id2) => patchCharacter(acc, id2, (c) => ({ ...c, milestone: p.size })),
     s
@@ -667,6 +672,29 @@ var handlers = {
       }
     };
   },
+  "zone.updated": (s, p) => {
+    const z2 = s.scene?.zones[p.zoneId];
+    if (!s.scene || !z2) return s;
+    const { zoneId: _id, ...patch } = p;
+    return { ...s, scene: { ...s.scene, zones: { ...s.scene.zones, [z2.id]: { ...z2, ...patch } } } };
+  },
+  "zone.unlinked": (s, p) => {
+    const zones = s.scene?.zones;
+    const from = zones?.[p.from];
+    const to = zones?.[p.to];
+    if (!s.scene || !from || !to) return s;
+    return {
+      ...s,
+      scene: {
+        ...s.scene,
+        zones: {
+          ...zones,
+          [from.id]: { ...from, links: from.links.filter((l) => l !== to.id) },
+          [to.id]: { ...to, links: to.links.filter((l) => l !== from.id) }
+        }
+      }
+    };
+  },
   "zone.removed": (s, p) => {
     if (!s.scene) return s;
     const zones = Object.fromEntries(
@@ -725,10 +753,17 @@ function reduce(state, event) {
   const handler = handlers[event.type];
   return { ...handler(state, event.payload, event), seq: event.seq };
 }
+function undoneSeqs(events) {
+  const undone = /* @__PURE__ */ new Set();
+  for (let i = events.length - 1; i >= 0; i--) {
+    const e = events[i];
+    if (e.type !== "event.undone" || undone.has(e.seq)) continue;
+    for (const q of e.payload.seqs) undone.add(q);
+  }
+  return undone;
+}
 function replay(events, base = initialState()) {
-  const undone = new Set(
-    events.filter((e) => e.type === "event.undone").map((e) => e.payload.targetSeq)
-  );
+  const undone = undoneSeqs(events);
   return events.reduce((s, e) => undone.has(e.seq) ? { ...s, seq: e.seq } : reduce(s, e), base);
 }
 
@@ -20465,7 +20500,8 @@ var stunt = external_exports.object({
   kind: external_exports.enum(["bonus", "once_per_session"]),
   bonus: external_exports.object({ approach, action, value: external_exports.literal(2) }).optional()
 });
-var zone = external_exports.object({ name: text, x: external_exports.number(), y: external_exports.number() });
+var coord = external_exports.number().min(0).max(100);
+var zone = external_exports.object({ name: text, x: coord, y: coord });
 function cmd(type, payload) {
   return external_exports.object({ type: external_exports.literal(type), payload: external_exports.object(payload) });
 }
@@ -20565,6 +20601,13 @@ var CommandSchema = external_exports.discriminatedUnion("type", [
   cmd("challenge.end", {}),
   cmd("zone.add", zone.shape),
   cmd("zone.link", { from: id, to: id }),
+  cmd("zone.unlink", { from: id, to: id }),
+  cmd("zone.update", {
+    zoneId: id,
+    name: text.optional(),
+    x: coord.optional(),
+    y: coord.optional()
+  }),
   cmd("zone.remove", { zoneId: id }),
   cmd("token.move", { characterId: id, zoneId: id.nullable() }),
   cmd("chat.post", { text: external_exports.string().trim().min(1).max(2e3), as: text.optional() }),
@@ -20584,6 +20627,19 @@ var CommandError = class extends Error {
     this.code = code;
   }
 };
+function isGrowth(c, next, size) {
+  const before = APPROACHES.map((k) => c.approaches[k]).sort((x, y) => x - y);
+  const after = APPROACHES.map((k) => next[k]).sort((x, y) => x - y);
+  if (after.some((v) => v > 5 || v < 0)) return false;
+  const diff = after.reduce((t, v) => t + v, 0) - before.reduce((t, v) => t + v, 0);
+  if (diff === 0) return after.every((v, i) => v === before[i]);
+  if (diff !== 1 || size === "minor") return false;
+  return before.some((_, i) => {
+    const raised = before.map((v, j) => j === i ? v + 1 : v).sort((x, y) => x - y);
+    return raised.every((v, j) => v === after[j]);
+  });
+}
+var NOT_UNDOABLE = /* @__PURE__ */ new Set(["room.member_joined"]);
 var GM_ONLY = /* @__PURE__ */ new Set([
   "session.start",
   "session.end",
@@ -20595,7 +20651,6 @@ var GM_ONLY = /* @__PURE__ */ new Set([
   "compel.offer",
   "compel.withdraw",
   "conflict.start",
-  "conflict.next",
   "conflict.end",
   "consequence.clear",
   "contest.start",
@@ -20606,6 +20661,8 @@ var GM_ONLY = /* @__PURE__ */ new Set([
   "challenge.end",
   "zone.add",
   "zone.link",
+  "zone.unlink",
+  "zone.update",
   "zone.remove",
   "gm.note",
   "narration.post",
@@ -20739,14 +20796,21 @@ var resolvers = {
   },
   "character.update": (s, p, a) => {
     const c = controlled(s, a, p.id);
+    const growth = a.role !== "gm" && !c.isNpc;
+    if (growth) {
+      if (!c.milestone) throw new CommandError("FORBIDDEN_ROLE", "needs a milestone");
+      if (p.patch.approaches && !isGrowth(c, p.patch.approaches, c.milestone))
+        throw new CommandError("INVALID_CHARACTER", "APPROACH_SPREAD");
+      if (p.patch.stunts && c.milestone === "minor" && p.patch.stunts.length > c.stunts.length)
+        throw new CommandError("INVALID_CHARACTER", "TOO_MANY_STUNTS");
+    }
     const patch = {
       ...p.patch,
       ...p.patch.stunts ? { refresh: refreshFor(p.patch.stunts.length) } : {}
     };
-    const merged = { ...c, ...patch };
-    const check2 = validateCharacter(merged);
-    if (!check2.ok) throw new CommandError("INVALID_CHARACTER", check2.issues.join(","));
-    return one(ev("character.updated", a, { id: c.id, patch }));
+    return one(
+      ev("character.updated", a, { id: c.id, patch, ...growth ? { milestoneUsed: true } : {} })
+    );
   },
   "milestone.grant": (s, p, a) => {
     for (const id2 of p.characterIds) need(s.characters[id2], "character");
@@ -20968,6 +21032,9 @@ var resolvers = {
   },
   "conflict.next": (s, _p, a) => {
     const c = need(s.conflict, "conflict");
+    const current = s.characters[c.order[c.index] ?? ""];
+    if (a.role !== "gm" && !(current && canControl(s, a, current)))
+      throw new CommandError("FORBIDDEN_ROLE");
     const active = (id2) => !s.characters[id2]?.takenOut;
     if (!c.order.some(active)) throw new CommandError("INVALID", "no one left");
     let index = c.index;
@@ -21067,6 +21134,15 @@ var resolvers = {
     if (p.from === p.to) throw new CommandError("INVALID");
     return one(ev("zone.linked", a, p));
   },
+  "zone.unlink": (s, p, a) => {
+    const zones = need(s.scene, "scene").zones;
+    if (!need(zones[p.from], "zone").links.includes(p.to)) throw new CommandError("INVALID");
+    return one(ev("zone.unlinked", a, p));
+  },
+  "zone.update": (s, p, a) => {
+    need(need(s.scene, "scene").zones[p.zoneId], "zone");
+    return one(ev("zone.updated", a, p));
+  },
   "zone.remove": (s, p, a) => {
     need(need(s.scene, "scene").zones[p.zoneId], "zone");
     return one(ev("zone.removed", a, p));
@@ -21083,11 +21159,26 @@ var resolvers = {
   "gm.note": (_s, p, a) => one(ev("gm.note", a, p, "gm")),
   "narration.post": (_s, p, a) => one(ev("narration.posted", a, p)),
   "sfx.play": (_s, p, a) => one(ev("sfx.played", a, p)),
-  "event.undo": (s, p, a) => {
+  "event.undo": (s, p, a, ctx) => {
     if (p.targetSeq > s.seq) throw new CommandError("NOT_FOUND", "event not found");
-    return one(
-      ev("event.undone", a, { targetSeq: p.targetSeq, ...p.reason ? { reason: p.reason } : {} })
-    );
+    const history = ctx.history;
+    if (!history) {
+      return one(
+        ev("event.undone", a, { seqs: [p.targetSeq], ...p.reason ? { reason: p.reason } : {} })
+      );
+    }
+    const bySeq = new Map(history.map((e) => [e.seq, e]));
+    const target = need(bySeq.get(p.targetSeq), "event");
+    if (NOT_UNDOABLE.has(target.type)) throw new CommandError("INVALID", "cannot undo this");
+    const undone = undoneSeqs(history);
+    if (undone.has(target.seq)) throw new CommandError("INVALID", "already undone");
+    const [first, last] = ctx.groupOf?.(target.seq) ?? [target.seq, target.seq];
+    const seqs = [];
+    for (let q = first; q <= last; q++) {
+      const e = bySeq.get(q);
+      if (e && !NOT_UNDOABLE.has(e.type) && !undone.has(q)) seqs.push(q);
+    }
+    return one(ev("event.undone", a, { seqs, ...p.reason ? { reason: p.reason } : {} }));
   }
 };
 function resolve(state, command, actor, ctx) {
@@ -21148,6 +21239,7 @@ export {
   stuntBonuses,
   sumDice,
   turnOrder,
+  undoneSeqs,
   validate2 as validate,
   validateCharacter
 };

@@ -2,6 +2,7 @@ import {
   blankCharacter,
   initialState,
   reduce,
+  replay,
   resolve,
   type Actor,
   type Aspect,
@@ -52,11 +53,16 @@ export class Table {
   state: RoomState = initialState();
   log: RoomEvent[] = [];
   sealed = new Map<string, SealedSide>();
+  /** command_log 흉내: 명령마다 [first, last] */
+  groups: Array<[number, number]> = [];
   private ids = 0;
   private dice: number[] = [0];
 
+  private base: RoomState;
+
   constructor(setup?: (s: RoomState) => RoomState) {
     if (setup) this.state = setup(this.state);
+    this.base = this.state;
   }
 
   nextDice(...faces: number[]) {
@@ -77,9 +83,15 @@ export class Table {
       newId: () => `id${++this.ids}`,
       animSeed: () => 42,
       sealed: (rollId) => this.sealed.get(rollId),
+      history: this.log,
+      groupOf: (seq) => this.groups.find(([f, l]) => f <= seq && seq <= l),
     });
     if (result.seal) this.sealed.set(result.seal.rollId, result.seal.side);
-    return result.events.map((e) => this.push(e));
+    const first = this.state.seq + 1;
+    const out = result.events.map((e) => this.push(e));
+    if (out.length) this.groups.push([first, this.state.seq]);
+    if (out.some((e) => e.type === 'event.undone')) this.state = replay(this.log, this.base);
+    return out;
   }
 }
 

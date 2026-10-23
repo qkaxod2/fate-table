@@ -20,6 +20,7 @@ import {
   type PaidWith,
   type Reward,
   type RoomEvent,
+  undoneSeqs,
 } from '@fate/rules-engine';
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { AspectCard } from '@/components/aspect/AspectCard';
@@ -27,7 +28,13 @@ import { CompelOffer } from '@/components/compel/CompelOffer';
 import { StoryLog } from '@/components/log/StoryLog';
 import { PartyRail } from '@/components/party/PartyRail';
 import { ActionBar } from '@/components/roll/ActionBar';
-import { DiceTray, type DiceMode } from '@/components/roll/DiceTray';
+import {
+  DICE_MODES,
+  DiceTray,
+  saveDiceMode,
+  savedDiceMode,
+  type DiceMode,
+} from '@/components/roll/DiceTray';
 import { InvokeTray, type InvokeChoice } from '@/components/roll/InvokeTray';
 import { OutcomeBanner } from '@/components/roll/OutcomeBanner';
 import { playSfx, setSfxEnabled, sfxEnabled, sfxForEvent, sfxForOutcome } from '@/fx/sfx';
@@ -37,9 +44,12 @@ import { describe, ERROR_COPY } from '@/lib/copy';
 import type { RemoteRoom } from '@/state/remoteRoom';
 import tryStyles from '../tutorial/try.module.css';
 import { BringCharacter } from './BringCharacter';
+import { CharacterSheet } from './CharacterSheet';
 import { DamagePrompt } from './DamagePrompt';
 import { GmDrawer } from './GmDrawer';
 import styles from './room.module.css';
+import { Trackers } from './Trackers';
+import { ZoneMap } from './ZoneMap';
 
 const BLOCK_REASON: Record<string, string> = {
   NOT_ENOUGH_FATE_POINTS: '운명점이 부족해요',
@@ -117,9 +127,12 @@ export function RoomTable({
   const [selectedAspect, setSelectedAspect] = useState<string | null>(null);
   const [prompt, setPrompt] = useState<Prompt>(null);
   const [draft, setDraft] = useState('');
-  const [diceMode, setDiceMode] = useState<DiceMode>('flicker');
+  const [diceMode, setDiceMode] = useState<DiceMode>(savedDiceMode);
 
-  const rollId = lastRollIdOf(events);
+  // 되돌린 이벤트는 기록에 줄을 긋고, 굴림 패널 계산에서는 뺀다
+  const undone = useMemo(() => undoneSeqs(events), [events]);
+  const liveEvents = useMemo(() => events.filter((e) => !undone.has(e.seq)), [events, undone]);
+  const rollId = lastRollIdOf(liveEvents);
   const roll = rollId ? state.rolls[rollId] : undefined;
   const rollKey = roll ? `${roll.id}:${roll.active.animSeed}:${roll.defense?.animSeed ?? ''}` : '';
   const settled = !!roll && settledKey === rollKey;
@@ -314,7 +327,12 @@ export function RoomTable({
   );
   const hiddenAspects = isGm ? Object.values(state.aspects).filter((a) => a.hidden) : [];
   const lines = events.map((e) => describe(e, state)).filter((l) => l !== null);
-  const narration = [...events].reverse().find((e) => e.type === 'narration.posted');
+  const lastUndoable =
+    [...lines].reverse().find((l) => l.undoable !== false && !undone.has(l.seq)) ?? null;
+  const notes = liveEvents.flatMap((e) => (e.type === 'gm.note' ? [e.payload.text] : []));
+  const [sheetId, setSheetId] = useState<string | null>(null);
+  const sheet = sheetId ? state.characters[sheetId] : undefined;
+  const narration = [...liveEvents].reverse().find((e) => e.type === 'narration.posted');
   const party = Object.values(state.characters).sort((a, b) => Number(a.isNpc) - Number(b.isNpc));
   const [chat, setChat] = useState('');
   const [copied, setCopied] = useState(false);
@@ -350,9 +368,19 @@ export function RoomTable({
           </button>
           <label className={tryStyles.mode}>
             주사위 연출
-            <select value={diceMode} onChange={(e) => setDiceMode(e.target.value as DiceMode)}>
-              <option value="flicker">눈 바뀜</option>
-              <option value="instant">없음</option>
+            <select
+              value={diceMode}
+              onChange={(e) => {
+                const m = e.target.value as DiceMode;
+                setDiceMode(m);
+                saveDiceMode(m);
+              }}
+            >
+              {DICE_MODES.map(([v, label]) => (
+                <option key={v} value={v}>
+                  {label}
+                </option>
+              ))}
             </select>
           </label>
           <button
@@ -376,6 +404,7 @@ export function RoomTable({
         <div className={tryStyles.left}>
           {party.length > 0 ? (
             <PartyRail
+              onSelect={setSheetId}
               members={party.map((c) => ({
                 character: c,
                 ...(c.portraitUrl ? { image: c.portraitUrl } : {}),
@@ -401,11 +430,35 @@ export function RoomTable({
           )}
           {role === 'player' && <BringCharacter run={run} has={controllable.length > 0} />}
           {isGm && (
-            <GmDrawer state={state} run={run} hiddenAspects={hiddenAspects} pending={pending} />
+            <GmDrawer
+              state={state}
+              run={run}
+              hiddenAspects={hiddenAspects}
+              pending={pending}
+              lastUndoable={lastUndoable}
+              notes={notes}
+            />
           )}
         </div>
 
-        <div className={tryStyles.center}>
+        <div className={`${tryStyles.center} ${styles.center}`}>
+          <div className={styles.topStack}>
+            <Trackers
+              state={state}
+              run={run}
+              isGm={isGm}
+              canControl={canControl}
+              pending={pending}
+            />
+            <ZoneMap
+              state={state}
+              run={run}
+              isGm={isGm}
+              canControl={canControl}
+              pending={pending}
+              auto={!roll ? 'full' : roll.status === 'final' ? 'compact' : 'hidden'}
+            />
+          </div>
           {me?.portraitUrl && (
             <img className={tryStyles.standee} src={me.portraitUrl} alt={me.name} />
           )}
@@ -629,7 +682,16 @@ export function RoomTable({
               />
             ))}
           </div>
-          <StoryLog lines={lines} />
+          <StoryLog
+            lines={lines}
+            undone={undone}
+            {...(isGm
+              ? {
+                  onUndo: (seq: number) =>
+                    void run({ type: 'event.undo', payload: { targetSeq: seq } }),
+                }
+              : {})}
+          />
           {role !== 'spectator' && (
             <form
               className={styles.chat}
@@ -655,6 +717,19 @@ export function RoomTable({
           )}
         </div>
       </div>
+
+      {sheet && (
+        <CharacterSheet
+          key={sheet.id}
+          character={sheet}
+          state={state}
+          run={run}
+          isGm={isGm}
+          mine={!sheet.isNpc && sheet.ownerId === room.userId}
+          pending={pending}
+          onClose={() => setSheetId(null)}
+        />
+      )}
 
       <footer className={tryStyles.bottom}>
         <div className={tryStyles.dialogue}>
