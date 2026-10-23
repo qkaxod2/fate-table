@@ -102,7 +102,7 @@ try {
   // 6. 갈등 시작 → 플레이어 화면에 차례 띠
   await gm.getByText(/갈등 · 경합 · 도전/).click();
   await gm.getByRole('button', { name: '갈등 시작' }).click();
-  await pl.getByText(/물리 갈등/).waitFor({ timeout: T });
+  await pl.getByText(/물리 갈등/).first().waitFor({ timeout: T });
   note('conflict started; player sees the turn tracker');
 
   // 7. 구역 추가 → 플레이어 지도에 보임
