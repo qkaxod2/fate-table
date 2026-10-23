@@ -340,3 +340,79 @@
 .aspectTools button:hover {
   background: var(--gold);
 }
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--s-1);
+}
+
+.chipLabel {
+  margin-right: var(--s-1);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.who,
+.level {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  padding: 2px var(--s-3) 2px 2px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel-s);
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.level {
+  padding: var(--s-1) var(--s-2);
+}
+
+.level small {
+  color: var(--muted);
+}
+
+.who img,
+.who span {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: top;
+}
+
+.who span {
+  display: grid;
+  place-items: center;
+  background: var(--plate);
+  color: var(--gold-hi);
+  font-weight: 700;
+}
+
+.who[data-npc] {
+  border-color: var(--dice-edge-op);
+}
+
+.who[aria-checked='true'],
+.who[aria-pressed='true'],
+.level[aria-pressed='true'] {
+  border-color: var(--gold);
+  background: var(--gold);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.level[aria-pressed='true'] small {
+  color: var(--ink);
+}
+
+.who:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
