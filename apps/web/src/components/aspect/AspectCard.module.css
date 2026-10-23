@@ -1,0 +1,91 @@
+.card {
+  --bar: var(--k-normal);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--s-2) var(--s-3) var(--s-2) calc(var(--s-3) + 4px);
+  border: 1px solid var(--gold);
+  border-radius: var(--r-card);
+  background:
+    linear-gradient(var(--bar), var(--bar)) left / 4px 100% no-repeat,
+    var(--paper);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  box-shadow: 0 6px 18px -10px rgb(0 0 0 / 0.8);
+  transition:
+    transform var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
+}
+
+button.card {
+  cursor: pointer;
+}
+
+button.card:not(:disabled):hover {
+  transform: translateY(-2px);
+}
+
+.card[data-kind='high'] {
+  --bar: var(--k-high);
+}
+.card[data-kind='trouble'] {
+  --bar: var(--k-trouble);
+}
+.card[data-kind='situation'] {
+  --bar: var(--k-scene);
+}
+.card[data-kind='consequence'] {
+  --bar: var(--k-consequence);
+}
+.card[data-kind='boost'] {
+  --bar: var(--k-boost);
+  border-style: dashed;
+  border-color: var(--k-boost);
+}
+
+.card[data-highlight] {
+  border-width: 2px;
+  box-shadow:
+    0 0 0 3px rgb(242 123 173 / 0.35),
+    0 8px 22px -10px rgb(0 0 0 / 0.8);
+}
+
+.card[data-disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.label {
+  display: flex;
+  gap: var(--s-2);
+  align-items: center;
+  font-size: var(--fs-xs);
+  color: #6b5d45;
+}
+
+.free {
+  color: var(--perfect);
+  letter-spacing: 2px;
+}
+
+.text {
+  font-family: var(--f-story);
+  font-weight: 700;
+  font-size: var(--fs-lg);
+  line-height: 1.35;
+}
+
+.note {
+  font-size: var(--fs-xs);
+  color: #7a5160;
+}
+
+.card[data-size='sm'] {
+  padding: 6px var(--s-2) 6px calc(var(--s-2) + 4px);
+}
+
+.card[data-size='sm'] .text {
+  font-size: var(--fs-md);
+}

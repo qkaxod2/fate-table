@@ -1,4 +1,4 @@
-# 아키텍처 명세 v3: 기동형 페이트 툴
+# 아키텍처 명세 v4: 기동형 페이트 툴
 
 > 담당: 기능·구현 스레드. 화면·컴포넌트·토큰은 [design-system.md](design-system.md), 용어는 [glossary.md](glossary.md) 기준.
 > 목표: 이 문서만 보고 저장소를 만들어 바로 구현을 시작할 수 있는 수준.
@@ -7,50 +7,66 @@
 
 ## 0. 한눈에 보기
 
+> 2026-10-23 사용자 결정: **화면은 GitHub Pages(정적), 서버 일은 Supabase Edge Functions**. Vercel·Next.js 서버 기능은 쓰지 않는다.
+
 ```mermaid
 flowchart LR
-  subgraph Client["브라우저 (Next.js App Router, React)"]
-    UI[컴포넌트<br/>design-system.md]
-    Store[roomStore<br/>Zustand]
+  subgraph Pages["GitHub Pages (정적 파일)"]
+    UI[Next.js 정적 내보내기<br/>컴포넌트 · roomStore]
     RE1[rules-engine<br/>reduce · preview]
-    UI <--> Store
-    Store --> RE1
-  end
-
-  subgraph Server["Next.js Route Handlers (Vercel, Node)"]
-    CMD["/api/rooms/:id/commands"]
-    MEDIA["/api/media/*"]
-    RE2[rules-engine<br/>validate · resolve · rng]
-    CMD --> RE2
+    UI --> RE1
   end
 
   subgraph Supabase
-    DB[(Postgres<br/>events · snapshots<br/>rooms · characters)]
+    subgraph Fn["Edge Functions (Deno)"]
+      CMD[commands]
+      ROOM[rooms · join · state]
+      MEDIA[media-image · media-sfx]
+      RE2[rules-engine 번들<br/>validate · resolve · rng]
+      CMD --> RE2
+    end
+    DB[(Postgres<br/>events · snapshots · rooms)]
     RT[[Realtime<br/>postgres_changes + presence]]
-    ST[(Storage<br/>portraits · scenes · audio)]
+    ST[(Storage<br/>초상화 · 장면 · 효과음)]
     AUTH[Auth<br/>익명 로그인 + 이메일]
   end
 
-  NAI[NovelAI<br/>image.novelai.net]
+  NAI[NovelAI]
   EL[ElevenLabs<br/>효과음 전용]
 
   UI -- 명령 POST --> CMD
-  CMD -- 이벤트 INSERT --> DB
-  DB --> RT -- 새 이벤트 --> Store
+  CMD -- append_events() --> DB
+  DB --> RT -- 새 이벤트 --> UI
   UI -- 생성 요청 --> MEDIA
   MEDIA --> NAI
   MEDIA --> EL
   MEDIA --> ST
-  MEDIA -- job 상태 UPDATE --> DB
 ```
 
-핵심 결정 6가지
-1. **모노레포**: pnpm + Turborepo. `apps/web`(Next.js 15, React 19, TypeScript strict) + `packages/rules-engine` + `packages/glossary`.
-2. **명령 → 이벤트**: 클라이언트는 "하고 싶은 일"(명령)만 서버에 보냄. 서버가 rules-engine으로 검증·해석하고 **이벤트**를 DB에 쌓음. 상태는 이벤트를 리듀서로 접어서 계산.
-3. **주사위는 서버에서만**: `crypto.randomInt`로 서버가 굴림. 조작 불가, 모든 화면이 같은 결과.
-4. **같은 리듀서를 양쪽에서**: 서버(검증)와 클라이언트(화면 상태)가 같은 `reduce()`를 씀. 클라이언트는 낙관적 업데이트 없이 이벤트 도착 시 반영(지연 100~300ms 수준이라 충분, 단순함 우선).
-5. **Supabase**: Postgres + Realtime + Auth(익명 로그인으로 링크만으로 입장) + Storage.
-6. **외부 AI 키는 서버에만**: NAI·ElevenLabs 호출은 `/api/media/*`에서만. 이 환경에서는 프록시가 인증을 주입하고, 배포 시에는 Vercel 환경 변수 `NAI_API_KEY`, `ELEVENLABS_API_KEY`.
+핵심 결정 7가지
+1. **모노레포**: pnpm + Turborepo. `apps/web`(Next.js 16, React 19, TypeScript strict, `output: 'export'`) + `packages/rules-engine` + `packages/glossary` + `supabase/`.
+2. **명령 → 이벤트**: 클라이언트는 "하고 싶은 일"(명령)만 Edge Function `commands`에 보냄. 함수가 rules-engine으로 검증·해석하고 **이벤트**를 DB에 쌓음. 상태는 이벤트를 리듀서로 접어서 계산.
+3. **주사위는 서버에서만**: Edge Function이 `crypto.getRandomValues`로 굴림. 조작 불가, 모든 화면이 같은 결과.
+4. **같은 리듀서를 양쪽에서**: Edge Function(검증)과 브라우저(화면 상태)가 같은 `reduce()`를 씀. rules-engine은 의존성이 Zod뿐이라 Deno용으로 그대로 번들(esbuild)해 `supabase/functions/_shared/engine.js`로 넣음.
+5. **Supabase**: Postgres + Realtime + Auth(익명 로그인으로 링크만으로 입장) + Storage + Edge Functions. 무료 요금제로 시작.
+6. **외부 AI 키는 서버에만**: NAI·ElevenLabs 키는 `supabase secrets set NAI_API_KEY=… ELEVENLABS_API_KEY=…`로 함수 비밀값에 저장. 브라우저 번들에는 Supabase URL과 anon 키(공개용)만 들어감.
+7. **정적 경로**: Pages는 모르는 동적 경로를 만들 수 없으므로 방 ID는 쿼리로 받음 (`/room/?id=…`). 저장소 이름이 경로 앞에 붙으므로 `basePath: '/fate-table'`.
+
+### 배포
+| 대상 | 방법 | 비밀값 |
+|---|---|---|
+| 화면 | GitHub Actions `pages.yml`: main에 push되면 `next build`(정적) → `actions/deploy-pages` | 저장소 변수 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` |
+| DB | `supabase db push` (마이그레이션) | GitHub 비밀값 `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD` |
+| 함수 | `supabase functions deploy` | 함수 비밀값 `NAI_API_KEY`, `ELEVENLABS_API_KEY` (service role 키는 함수에 자동 제공) |
+
+### 동시성
+Edge Function은 요청마다 따로 뜨므로 메모리 잠금이 없음. 이벤트 기록은 Postgres 함수 하나로 처리:
+```sql
+-- expected_seq가 현재 head와 다르면 'STALE_STATE' 예외 → 함수가 상태를 다시 읽고 최대 3회 재시도
+create function append_events(p_room uuid, p_expected_seq bigint, p_events jsonb) returns bigint ...
+  -- select head_seq from rooms where id = p_room for update; 비교; events INSERT; rooms.head_seq 갱신; 투영 테이블 갱신
+```
+`rooms`에 `head_seq bigint not null default 0` 컬럼 추가.
 
 ---
 
@@ -58,58 +74,46 @@ flowchart LR
 
 ```
 fate-table/
-├─ apps/web/
-│  ├─ src/app/                          # 경로는 design-system.md 5절과 1:1
+├─ apps/web/                            # 정적 내보내기 → GitHub Pages
+│  ├─ src/app/
 │  │  ├─ page.tsx                       # /
-│  │  ├─ try/page.tsx                   # /try  샘플 원샷(로컬 전용 방)
+│  │  ├─ try/page.tsx                   # /try  체험 모드 (서버 없이 브라우저 안에서만)
 │  │  ├─ rooms/new/page.tsx             # /rooms/new
-│  │  ├─ r/[roomId]/
-│  │  │  ├─ page.tsx                    # 세션 3단 레이아웃
-│  │  │  ├─ join/page.tsx
-│  │  │  ├─ create/page.tsx             # CreationWizard
-│  │  │  ├─ sheet/[charId]/page.tsx
-│  │  │  └─ replay/[sessionId]/page.tsx
-│  │  └─ api/
-│  │     ├─ rooms/route.ts                       # POST 방 생성
-│  │     ├─ rooms/join/route.ts                  # POST 초대 코드로 참가
-│  │     ├─ rooms/[roomId]/state/route.ts        # GET 스냅숏 + 이후 이벤트
-│  │     ├─ rooms/[roomId]/commands/route.ts     # POST 명령
-│  │     ├─ media/image/route.ts                 # POST 초상화·장면 생성 job
-│  │     ├─ media/sfx/route.ts                   # POST GM 맞춤 효과음 job
-│  │     ├─ media/jobs/[jobId]/route.ts          # GET job 상태
-│  │     └─ media/prompt-draft/route.ts          # POST 특성 → NAI 프롬프트 초안
+│  │  ├─ join/page.tsx                  # /join/?code=
+│  │  ├─ room/page.tsx                  # /room/?id=  세션 3단 레이아웃
+│  │  ├─ room/create/page.tsx           # /room/create/?id=  CreationWizard
+│  │  ├─ room/sheet/page.tsx            # /room/sheet/?id=&char=
+│  │  └─ replay/page.tsx                # /replay/?session=
 │  ├─ src/components/                   # design-system.md 4절 폴더 그대로
 │  │  ├─ aspect/ fate/ roll/ compel/ sheet/ conflict/
 │  │  ├─ party/ scene/ log/ create/ media/ gm/ ui/
 │  ├─ src/state/
-│  │  ├─ roomStore.ts                   # Zustand: RoomState + 파생 셀렉터
+│  │  ├─ roomStore.ts                   # RoomState + 파생 셀렉터
 │  │  ├─ selectors.ts                   # 컴포넌트별 셀렉터 (5절 표)
+│  │  ├─ localRoom.ts                   # /try: 브라우저 안에서 resolve+reduce (서버 대체)
 │  │  └─ useRoomChannel.ts              # Realtime 구독, 재접속 시 갭 메우기
-│  ├─ src/server/
-│  │  ├─ commands/handle.ts             # 명령 → 검증 → 이벤트 생성
-│  │  ├─ commands/authz.ts              # 역할별 허용 명령
-│  │  ├─ events/append.ts               # seq 할당 + INSERT (트랜잭션)
-│  │  ├─ events/snapshot.ts             # 50개마다 스냅숏
-│  │  ├─ media/nai.ts                   # NAI 클라이언트
-│  │  ├─ media/elevenlabs.ts            # ElevenLabs 효과음 클라이언트
-│  │  ├─ media/queue.ts                 # job claim·실행·재시도
-│  │  ├─ media/promptDraft.ts           # 특성 텍스트 → 태그 초안
-│  │  └─ supabase.ts                    # service role 클라이언트(서버 전용)
-│  ├─ src/lib/                          # 클라이언트 공용(fetch 래퍼, hotkeys)
-│  ├─ src/styles/tokens.css             # design-system.md 2절
+│  ├─ src/lib/api.ts                    # Edge Function 호출 래퍼
+│  ├─ src/styles/tokens.css
 │  ├─ public/sfx/                       # 빌드 전 생성한 효과음 (8절)
 │  └─ src/content/                      # 샘플 캐릭터 4명, 원샷 시나리오(JSON)
-├─ packages/rules-engine/
-│  ├─ src/dice.ts  ladder.ts  resolve.ts  invoke.ts  damage.ts
-│  ├─ src/character.ts  conflict.ts  reducer.ts  types.ts  index.ts
-│  └─ test/*.test.ts                    # Vitest
+├─ packages/rules-engine/               # 순수 TS, 브라우저·Deno 공용
 ├─ packages/glossary/
-│  └─ src/terms.ts                      # glossary.md를 코드로 (용어 + 툴팁)
 ├─ supabase/
-│  ├─ migrations/0001_init.sql          # 2절 스키마
-│  └─ seed.sql
-├─ scripts/gen-sfx.ts                   # ElevenLabs 효과음 일괄 생성
-└─ turbo.json  pnpm-workspace.yaml
+│  ├─ migrations/0001_init.sql          # 2절 스키마 + append_events()
+│  ├─ functions/
+│  │  ├─ _shared/engine.js              # rules-engine 번들 (scripts/bundle-engine.ts가 생성)
+│  │  ├─ _shared/supabase.ts  auth.ts  http.ts
+│  │  ├─ rooms/index.ts                 # POST 방 생성
+│  │  ├─ join/index.ts                  # POST 초대 코드로 참가
+│  │  ├─ state/index.ts                 # GET 스냅숏 + 이후 이벤트
+│  │  ├─ commands/index.ts              # POST 명령
+│  │  ├─ media-image/index.ts           # POST NAI 생성 job (EdgeRuntime.waitUntil로 백그라운드 실행)
+│  │  ├─ media-sfx/index.ts             # POST GM 맞춤 효과음 job
+│  │  ├─ media-jobs/index.ts            # GET job 상태
+│  │  └─ prompt-draft/index.ts          # POST 특성 → NAI 프롬프트 초안
+│  └─ config.toml
+├─ scripts/bundle-engine.ts  gen-sfx.ts
+└─ .github/workflows/ci.yml  pages.yml  supabase.yml
 ```
 
 라이브러리: Zustand(상태), Zod(명령·이벤트 스키마, 서버·클라 공용), Framer Motion(모션), three.js + react-three-fiber + @react-three/rapier(3D 물리 주사위, 선택 시에만 지연 로딩), Radix Primitives(Sheet·Dialog·Tooltip 접근성), Vitest + Playwright(테스트), fflate(NAI zip 해제).
@@ -362,9 +366,11 @@ alter table sealed_rolls enable row level security;   -- 정책 없음 = 클라�
 
 ---
 
-## 4. API (Route Handlers)
+## 4. API (Supabase Edge Functions)
 
-모든 응답은 `{ ok: true, data }` 또는 `{ ok: false, error: { code, message } }`. 인증은 Supabase 세션 쿠키(익명 로그인 포함).
+경로는 `https://<project>.supabase.co/functions/v1/<함수>` 기준. 아래 표의 `/api/...`는 함수 이름으로 대응: rooms, join, state, commands, media-image, media-sfx, media-jobs, prompt-draft.
+
+모든 응답은 `{ ok: true, data }` 또는 `{ ok: false, error: { code, message } }`. 인증은 `Authorization: Bearer <Supabase 세션 JWT>`(익명 로그인 포함).
 
 | 메서드·경로 | 요청 | 응답 | 비고 |
 |---|---|---|---|
@@ -377,8 +383,8 @@ alter table sealed_rolls enable row level security;   -- 정책 없음 = 클라�
 | `POST /api/media/sfx` | roomId, description(영문 변환 전 한국어 가능), durationSec(0.5~5), loop? | jobId | GM만, 방별 월 30개 |
 | `GET /api/media/jobs/:id` | | status, position, assets[{id,url}] | Realtime 대체용 폴링 |
 
-### 명령 처리 순서 (`server/commands/handle.ts`)
-1. Zod로 명령 파싱 → 2. `authz`: 역할 확인(예: `compel.offer`, `scene.start`, `event.undo`, `fate.adjust`는 GM만, 굴림은 자기 캐릭터만) → 3. `select ... for update`로 방의 head seq 잠금 → 4. 스냅숏+이후 이벤트로 현재 상태 복원(메모리 LRU 캐시로 보통은 생략) → 5. rules-engine `validate(state, command)` → 6. `resolve(state, command, rng)`가 이벤트 배열 생성 → 7. 같은 트랜잭션에서 events INSERT + 투영 테이블 갱신 → 8. 50개마다 스냅숏 → 9. 응답.
+### 명령 처리 순서 (`supabase/functions/commands`)
+1. Zod로 명령 파싱 → 2. `authz`: 역할 확인(예: `compel.offer`, `scene.start`, `event.undo`, `fate.adjust`는 GM만, 굴림은 자기 캐릭터만) → 3. 방의 head_seq 읽기 → 4. 스냅숏+이후 이벤트로 현재 상태 복원 → 5. rules-engine `validate(state, command)` → 6. `resolve(state, command, rng)`가 이벤트 배열 생성 → 7. `append_events(room, head_seq, events)` 한 번으로 INSERT + 투영 갱신 (head가 바뀌었으면 STALE_STATE → 3부터 재시도) → 8. 50개마다 스냅숏 → 9. 응답.
 - **멱등**: 같은 `clientCmdId` 재전송 시 기존 이벤트 반환.
 - **오류 코드**: `NOT_MEMBER`, `FORBIDDEN_ROLE`, `NOT_ENOUGH_FATE_POINTS`, `ASPECT_ALREADY_INVOKED`, `ROLL_NOT_OPEN`, `INVALID_CHARACTER`, `QUOTA_EXCEEDED`, `STALE_STATE`(재시도).
 
@@ -596,7 +602,7 @@ export function resolve(state: RoomState, cmd: Command, actor: Actor, rng: Rng):
     v4_negative_prompt: { caption: { base_caption: negative, char_captions: [] } } } }
 ```
 - 크기 프리셋: 초상화 832×1216, 장면 1216×832, NPC 토큰 1024×1024. 후보 4장은 `n_samples:1`로 4번 순차 실행(동시 요청 제한 회피).
-- **동시성**: 키당 1건만 실행. `media/queue.ts`가 `update media_jobs set status='running' where id = (select id from media_jobs where provider='nai' and status='queued' order by created_at for update skip locked limit 1) and not exists (select 1 from media_jobs where provider='nai' and status='running')`로 하나씩 꺼냄. 요청 라우트는 job을 넣고 `after()`로 워커 1회 실행, 워커는 큐가 빌 때까지 반복. 429면 지수 백오프(2,4,8초) 3회.
+- **동시성**: 키당 1건만 실행. `media-image` 함수의 큐 처리가 `update media_jobs set status='running' where id = (select id from media_jobs where provider='nai' and status='queued' order by created_at for update skip locked limit 1) and not exists (select 1 from media_jobs where provider='nai' and status='running')`로 하나씩 꺼냄. 요청 함수는 job을 넣고 `EdgeRuntime.waitUntil()`로 워커를 백그라운드 실행(무료 요금제 함수 실행 한도 안에서 이미지 1장씩), 워커는 큐가 빌 때까지 반복. 429면 지수 백오프(2,4,8초) 3회.
 - **프롬프트 초안**(`promptDraft.ts`): 생성형 AI 없이 규칙 기반. 테마별 화풍 태그 + 특성 텍스트에서 사전 매핑(예: "기사"→`knight, armor`, "마법"→`mage, robe`) + 사용자가 직접 수정. 한국어 사전은 `src/content/prompt-dictionary.json`. 초상화 기본 negative에 품질·노출 관련 태그 포함(전연령 기본, 방 설정으로 변경 불가).
 - **캐시**: `cache_key = sha256(kind|model|정규화 프롬프트|크기|seed)`. 같은 키면 생성 없이 기존 자산 반환.
 - **한도**: 방별 월 이미지 40장(기본, 방 설정에서 GM이 조정). 초과 시 `QUOTA_EXCEEDED`.
@@ -615,7 +621,7 @@ export function resolve(state: RoomState, cmd: Command, actor: Actor, rng: Rng):
 ## 9. 보안·운영
 - Auth: Supabase 익명 로그인으로 초대 링크만 열면 입장, 나중에 이메일 연결로 계정 유지.
 - Rate limit: 명령 사용자당 초당 10건, 미디어 요청 분당 6건(Upstash 없이 Postgres 카운터로 시작).
-- 로그: 서버 오류는 Vercel 로그, 명령 거부율·평균 처리 시간은 `events`로 집계 가능.
+- 로그: 서버 오류는 Supabase 함수 로그, 명령 거부율·평균 처리 시간은 `events`로 집계 가능.
 - 백업: Supabase 일일 백업. 세션 내보내기(마크다운/JSON)로 사용자 쪽 보관도 가능.
 - 라이선스: 규칙 문구는 Fate Accelerated(CC BY 3.0, Evil Hat) 기반임을 앱 정보 화면에 표기.
 
@@ -659,9 +665,11 @@ gantt
 - T07 GitHub Actions: lint, typecheck, test, Playwright 스모크.
 
 **1. MVP**
-- T10 Supabase 마이그레이션 0001 + RLS + seed. 완료: 다른 방 이벤트 조회 불가 테스트.
-- T11 `/api/rooms`, `/join`, `/state`. 완료: 익명 사용자 2명이 같은 방 입장.
-- T12 `/commands` 파이프라인(잠금, 멱등, 투영, 스냅숏). 완료: 같은 clientCmdId 2회 → 이벤트 1개.
+- T08 정적 내보내기 + GitHub Pages 배포 워크플로(`pages.yml`). 완료: main 머지 시 https://qkaxod2.github.io/fate-table/ 갱신.
+- T09 `scripts/bundle-engine.ts`(esbuild → supabase/functions/_shared/engine.js) + `supabase.yml` 배포 워크플로.
+- T10 Supabase 마이그레이션 0001 + RLS + `append_events()` + seed. 완료: 다른 방 이벤트 조회 불가 테스트.
+- T11 Edge Functions `rooms`, `join`, `state`. 완료: 익명 사용자 2명이 같은 방 입장.
+- T12 Edge Function `commands` 파이프라인(append_events 낙관적 잠금, 멱등, 투영, 스냅숏). 완료: 같은 clientCmdId 2회 → 이벤트 1개.
 - T13 `useRoomChannel` + `roomStore` + 갭 메우기. 완료: 네트워크 끊김 후 재접속 시 상태 일치.
 - T14 `CharacterSheet`, `StressTrack`, `ConsequenceSlots`, `CharacterMini`, `PartyRail`.
 - T15 `CreationWizard`(6단계), `ApproachAllocator`, `StuntComposer`. 완료: 검증 오류가 단계 안에서 안내됨.

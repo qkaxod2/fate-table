@@ -1,0 +1,82 @@
+.banner {
+  --c: var(--gold);
+  --ch: var(--gold-hi);
+  position: relative;
+  padding: var(--s-3) var(--s-4);
+  text-align: center;
+  background:
+    linear-gradient(var(--gold), var(--gold)) top / 100% 1px no-repeat,
+    linear-gradient(var(--gold), var(--gold)) bottom / 100% 1px no-repeat,
+    linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--c) 30%, transparent) 25%,
+      color-mix(in srgb, var(--c) 30%, transparent) 75%,
+      transparent
+    );
+  animation: rise 400ms var(--ease);
+}
+
+.banner[data-tone='perfect'] {
+  --c: var(--perfect);
+  --ch: var(--perfect-hi);
+}
+.banner[data-tone='great'] {
+  --c: var(--great);
+  --ch: var(--great-hi);
+}
+.banner[data-tone='good'] {
+  --c: var(--good);
+  --ch: var(--good-hi);
+}
+.banner[data-tone='miss'] {
+  --c: var(--miss);
+  --ch: var(--miss-hi);
+}
+
+.latin {
+  font-family: var(--f-deco);
+  font-weight: 900;
+  font-size: clamp(36px, 7vw, 64px);
+  line-height: 1.05;
+  background: linear-gradient(180deg, var(--ch), var(--gold) 55%, #9b7a35);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 14px var(--c));
+}
+
+.kr {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-3);
+  font-family: var(--f-story);
+  font-weight: 700;
+  font-size: var(--fs-lg);
+}
+
+.rule {
+  flex: 0 1 48px;
+  height: 1px;
+  background: var(--gold);
+}
+
+.copy {
+  margin: var(--s-1) 0 0;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .banner {
+    animation: none;
+  }
+}
