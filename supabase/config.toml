@@ -3,3 +3,12 @@ project_id = "fate-table"
 
 [functions.media-image]
 verify_jwt = true
+
+[functions.rooms]
+verify_jwt = true
+
+[functions.join]
+verify_jwt = true
+
+[functions.commands]
+verify_jwt = true

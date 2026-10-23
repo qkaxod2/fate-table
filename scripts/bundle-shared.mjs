@@ -4,6 +4,7 @@ import { build } from 'esbuild';
 
 const targets = [
   { entry: 'packages/portrait/src/index.ts', out: 'supabase/functions/_shared/portrait.js' },
+  { entry: 'packages/rules-engine/src/index.ts', out: 'supabase/functions/_shared/engine.js' },
 ];
 
 for (const t of targets) {

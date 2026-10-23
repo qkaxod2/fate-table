@@ -45,6 +45,7 @@ export interface Character {
   stress: [boolean, boolean, boolean];
   consequences: Partial<Record<ConsequenceSlot, ConsequenceState>>;
   portraitAssetId?: string;
+  portraitUrl?: string;
   milestone?: 'minor' | 'significant' | 'major';
   takenOut?: boolean;
 }
