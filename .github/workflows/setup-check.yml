@@ -1,0 +1,55 @@
+name: Setup check
+
+# 시크릿·변수가 들어 있는지와 키가 실제로 통하는지만 확인한다. 값은 출력하지 않는다.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths: ['.github/workflows/setup-check.yml']
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 이름 확인
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          NAI_API_KEY: ${{ secrets.NAI_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          URL_AS_SECRET: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          ANON_AS_SECRET: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: |
+          [ -n "$URL_AS_SECRET" ] && echo "::notice::NEXT_PUBLIC_SUPABASE_URL is saved as a secret (expected: variable)"
+          [ -n "$ANON_AS_SECRET" ] && echo "::notice::NEXT_PUBLIC_SUPABASE_ANON_KEY is saved as a secret (expected: variable)"
+          for n in SUPABASE_ACCESS_TOKEN SUPABASE_PROJECT_REF SUPABASE_DB_PASSWORD NAI_API_KEY ELEVENLABS_API_KEY NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY; do
+            if [ -n "${!n}" ]; then echo "::notice::$n set"; else echo "::warning::$n missing"; fi
+          done
+          case "$NEXT_PUBLIC_SUPABASE_URL" in https://*.supabase.co) echo "::notice::URL shape ok";; *) echo "::warning::URL shape unexpected";; esac
+          case "$NEXT_PUBLIC_SUPABASE_URL" in *"$SUPABASE_PROJECT_REF"*) echo "::notice::URL matches project ref";; *) echo "::warning::URL does not contain project ref";; esac
+      - name: 키 확인
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          NAI_API_KEY: ${{ secrets.NAI_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ANON: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
+        shell: bash {0}
+        run: |
+          s=$(curl -sS -o /tmp/p.json -w '%{http_code}' -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF")
+          echo "::notice::supabase project api=$s status=$(jq -r .status /tmp/p.json 2>/dev/null)"
+          s=$(curl -sS -o /dev/null -w '%{http_code}' -H "apikey: $ANON" "$URL/auth/v1/settings")
+          echo "::notice::supabase anon key=$s"
+          k=$(printf %s "$NAI_API_KEY" | tr -d '[:space:]')
+          k=${k#Bearer}; k=${k#bearer}; k=${k//\"/}
+          case "$NAI_API_KEY" in pst-*) p=yes;; *) p=no;; esac
+          echo "::notice::nai key starts with pst-=$p, raw length=${#NAI_API_KEY}, cleaned length=${#k}"
+          s=$(curl -sS -o /tmp/n.json -w '%{http_code}' -H "Authorization: Bearer $k" https://api.novelai.net/user/subscription)
+          echo "::notice::novelai=$s tier=$(jq -r .tier /tmp/n.json 2>/dev/null) active=$(jq -r .active /tmp/n.json 2>/dev/null)"
+          s=$(curl -sS -o /tmp/g.json -w '%{http_code}' -X POST https://image.novelai.net/ai/generate-image -H "Authorization: Bearer $k" -H 'Content-Type: application/json' -d '{}')
+          echo "::notice::novelai image (빈 요청이라 400 검증 오류면 키 통과, 401이면 키 거절)=$s $(jq -r .message /tmp/g.json 2>/dev/null | head -c 200)"
+          s=$(curl -sS -o /dev/null -w '%{http_code}' -X POST https://api.elevenlabs.io/v1/sound-generation -H "xi-api-key: $ELEVENLABS_API_KEY" -H 'Content-Type: application/json' -d '{}')
+          echo "::notice::elevenlabs (빈 요청이라 422면 키 통과)=$s"

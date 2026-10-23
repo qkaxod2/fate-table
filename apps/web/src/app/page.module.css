@@ -66,6 +66,16 @@
   text-decoration: none;
 }
 
+.secondary {
+  padding: var(--s-3) var(--s-5);
+  border: 1px solid var(--gold);
+  color: var(--gold-hi);
+  font-family: var(--f-story);
+  font-weight: 700;
+  font-size: var(--fs-lg);
+  text-decoration: none;
+}
+
 .soon {
   color: var(--muted);
   font-size: var(--fs-sm);

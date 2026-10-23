@@ -20,3 +20,15 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+      - name: 공용 번들 최신 여부
+        run: pnpm bundle:shared && git diff --exit-code supabase/functions/_shared
+
+  functions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: deno check index.ts
+        working-directory: supabase/functions/media-image

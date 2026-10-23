@@ -18,6 +18,9 @@ export default function Landing() {
           <Link href="/try/" className={styles.primary}>
             바로 해보기
           </Link>
+          <Link href="/create/" className={styles.secondary}>
+            캐릭터 만들기
+          </Link>
           <span className={styles.soon}>방 만들기 · 곧 열려요</span>
         </div>
         <ul className={styles.ladder} aria-label={term('ladder')}>
