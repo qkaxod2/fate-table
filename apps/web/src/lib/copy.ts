@@ -118,8 +118,19 @@ export function describe(e: RoomEvent, state: RoomState): LogLine | null {
       return line('roll', `${name(state, e.payload.characterId)} ${term('takenOut')}!`);
     case 'narration.posted':
       return line('gm', e.payload.text);
-    case 'chat.posted':
-      return line('chat', e.payload.text);
+    case 'chat.posted': {
+      const who = e.payload.as ?? (e.actorId ? state.members[e.actorId]?.nickname : undefined);
+      return line('chat', who ? `${who}: ${e.payload.text}` : e.payload.text);
+    }
+    case 'room.member_joined':
+      return line(
+        'system',
+        `${e.payload.nickname}님이 들어왔어요${e.payload.role === 'gm' ? ' (GM)' : ''}`,
+      );
+    case 'character.created':
+      return line('system', `새 캐릭터: ${e.payload.character.name}`);
+    case 'scene.ended':
+      return line('system', '장면이 끝났어요. 스트레스가 모두 회복돼요');
     default:
       return null;
   }

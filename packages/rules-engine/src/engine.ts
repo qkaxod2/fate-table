@@ -205,6 +205,7 @@ const resolvers: Resolvers = {
       fatePoints: p.isNpc ? 0 : refresh,
       stress: [false, false, false],
       consequences: {},
+      ...(p.portraitUrl ? { portraitUrl: p.portraitUrl } : {}),
     };
     const mk = (kind: Aspect['kind'], text: string): Aspect => ({
       id: ctx.newId(),

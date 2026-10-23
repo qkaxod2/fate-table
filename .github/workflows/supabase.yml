@@ -42,4 +42,4 @@ jobs:
             -d '{"external_anonymous_users_enabled": true}')
           echo "auth config: $code"
           test "$code" = 200
-      - run: supabase functions deploy media-image --project-ref "$PROJECT_REF"
+      - run: supabase functions deploy --project-ref "$PROJECT_REF"

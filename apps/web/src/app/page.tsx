@@ -21,7 +21,12 @@ export default function Landing() {
           <Link href="/create/" className={styles.secondary}>
             캐릭터 만들기
           </Link>
-          <span className={styles.soon}>방 만들기 · 곧 열려요</span>
+          <Link href="/rooms/new/" className={styles.secondary}>
+            방 만들기
+          </Link>
+          <Link href="/join/" className={styles.soon}>
+            초대 코드로 참가 →
+          </Link>
         </div>
         <ul className={styles.ladder} aria-label={term('ladder')}>
           {RUNGS.map((n) => (

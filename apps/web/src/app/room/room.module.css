@@ -1,0 +1,253 @@
+.role {
+  padding: 2px var(--s-3);
+  border: 1px solid var(--gold);
+  border-radius: var(--r-token);
+  color: var(--gold-hi);
+  font-family: var(--f-num);
+  font-size: var(--fs-xs);
+  letter-spacing: 2px;
+}
+
+.empty,
+.muted {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.acting {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  margin-top: var(--s-3);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.acting select,
+.form input,
+.form textarea,
+.form select,
+.rollOptions select,
+.inline select,
+.chat input {
+  padding: var(--s-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+  background: var(--plate);
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--fs-sm);
+}
+
+.panel,
+.gm {
+  margin-top: var(--s-3);
+  padding: var(--s-3);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-card);
+  background: var(--panel);
+}
+
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--s-2);
+  color: var(--gold);
+  font-family: var(--f-num);
+  font-size: var(--fs-xs);
+  letter-spacing: 3px;
+}
+
+.close {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: var(--fs-lg);
+  cursor: pointer;
+}
+
+.gm details {
+  border-top: 1px solid var(--line);
+  padding: var(--s-2) 0;
+}
+
+.gm summary {
+  font-family: var(--f-story);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+}
+
+.form button,
+.chat button,
+.fateList button {
+  padding: var(--s-1) var(--s-3);
+  border: 1px solid var(--gold);
+  border-radius: var(--r-ctl);
+  background: var(--gold);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.form button:disabled,
+.chat button:disabled,
+.fateList button:disabled,
+.ghost:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ghost {
+  display: block;
+  width: 100%;
+  margin-top: var(--s-2);
+  padding: var(--s-2) var(--s-3);
+  border: 1px dashed var(--rule);
+  border-radius: var(--r-ctl);
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.check,
+.inline {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.fateList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  margin: var(--s-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fateList li {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.drafts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin: 0 0 var(--s-2);
+  padding: 0;
+  list-style: none;
+}
+
+.draft {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  padding: var(--s-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--panel-s);
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.draft:hover {
+  border-color: var(--gold);
+}
+
+.draft img {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  object-fit: cover;
+  object-position: top;
+}
+
+.draft span {
+  display: flex;
+  flex-direction: column;
+}
+
+.draft small {
+  color: var(--muted);
+}
+
+.link {
+  color: var(--gold-hi);
+  font-size: var(--fs-sm);
+}
+
+.defendGrid,
+.plans {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s-2);
+  margin: var(--s-3) 0;
+}
+
+.defendBtn,
+.plan {
+  padding: var(--s-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+  background: var(--panel-s);
+  color: var(--fg);
+  font: inherit;
+  font-family: var(--f-story);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.defendBtn:hover,
+.plan[aria-pressed='true'] {
+  border-color: var(--gold);
+  background: var(--gold);
+  color: var(--ink);
+}
+
+.chat {
+  display: flex;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+}
+
+.chat input {
+  flex: 1;
+}
+
+.actionWrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.rollOptions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.rollOptions label {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}

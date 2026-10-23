@@ -49,6 +49,8 @@ export const CommandSchema = z.discriminatedUnion('type', [
     highConcept: text,
     trouble: text.optional(),
     aspects: z.array(text).max(3).default([]),
+    /** 캐릭터 만들기에서 그린 초상화 (공개 Storage URL) */
+    portraitUrl: z.string().url().max(500).optional(),
   }),
   cmd('character.update', {
     id,
