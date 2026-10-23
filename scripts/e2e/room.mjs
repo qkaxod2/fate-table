@@ -112,6 +112,8 @@ try {
   await gm.mouse.click(box.x + box.width * 0.3, box.y + box.height * 0.5);
   await gm.getByPlaceholder('구역 이름').fill('선착장');
   await gm.getByRole('button', { name: '놓기' }).click();
+  // 굴림이 열려 있으면 지도가 접혀 있으므로 펼쳐서 본다
+  await pl.getByRole('button', { name: '펼치기' }).click({ timeout: T });
   await pl.locator('[data-zone="선착장"]').waitFor({ timeout: T });
   note('zone added; player map updated live');
 
