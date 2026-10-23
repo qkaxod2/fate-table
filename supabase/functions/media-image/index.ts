@@ -44,7 +44,11 @@ Deno.serve(async (req) => {
   const url = Deno.env.get('SUPABASE_URL')!;
   const anon = Deno.env.get('SUPABASE_ANON_KEY')!;
   const service = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-  const naiKey = Deno.env.get('NAI_API_KEY');
+  // 붙여 넣을 때 섞인 공백·따옴표·'Bearer ' 접두어는 걷어 낸다
+  const naiKey = Deno.env
+    .get('NAI_API_KEY')
+    ?.replace(/\s|"/g, '')
+    .replace(/^Bearer/i, '');
   if (!naiKey) return fail(503, 'NOT_CONFIGURED', '이미지 생성 키가 아직 설정되지 않았어요.');
 
   const auth = req.headers.get('Authorization') ?? '';
