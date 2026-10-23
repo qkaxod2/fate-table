@@ -1,0 +1,22 @@
+@import '../styles/tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--f-ui);
+  font-size: var(--fs-md);
+  line-height: 1.6;
+  word-break: keep-all;
+}
+
+a {
+  color: inherit;
+}

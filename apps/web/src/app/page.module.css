@@ -1,0 +1,47 @@
+.main {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: var(--s-6) var(--s-4);
+  background:
+    radial-gradient(ellipse at 50% 0%, rgb(214 182 110 / 0.12), transparent 60%), var(--night);
+}
+
+.hero {
+  max-width: 720px;
+  text-align: center;
+}
+
+.title {
+  font-family: var(--f-story);
+  font-size: clamp(28px, 6vw, 44px);
+  margin: 0 0 var(--s-3);
+}
+
+.lead {
+  color: var(--muted);
+  margin: 0 0 var(--s-6);
+}
+
+.ladder {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--s-2);
+  margin: 0 0 var(--s-6);
+  padding: 0;
+  list-style: none;
+}
+
+.rung {
+  font-family: var(--f-num);
+  font-size: var(--fs-sm);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-token);
+  padding: 2px var(--s-3);
+}
+
+.credit {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
