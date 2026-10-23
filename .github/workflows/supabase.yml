@@ -26,7 +26,11 @@ jobs:
       - run: supabase link --project-ref "$PROJECT_REF"
       - run: supabase db push
       - name: 함수 시크릿
-        run: supabase secrets set --project-ref "$PROJECT_REF" NAI_API_KEY="$NAI_API_KEY" ELEVENLABS_API_KEY="$ELEVENLABS_API_KEY"
+        run: |
+          supabase secrets set --project-ref "$PROJECT_REF" NAI_API_KEY="$NAI_API_KEY"
+          if [ -n "$ELEVENLABS_API_KEY" ]; then
+            supabase secrets set --project-ref "$PROJECT_REF" ELEVENLABS_API_KEY="$ELEVENLABS_API_KEY"
+          fi
         env:
           NAI_API_KEY: ${{ secrets.NAI_API_KEY }}
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
