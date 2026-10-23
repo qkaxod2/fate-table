@@ -46,7 +46,7 @@ import tryStyles from '../tutorial/try.module.css';
 import { BringCharacter } from './BringCharacter';
 import { CharacterSheet } from './CharacterSheet';
 import { DamagePrompt } from './DamagePrompt';
-import { GmDrawer } from './GmDrawer';
+import { GmBar, GmPanel, NarrationInput, SceneStarter, type GmOpen } from './GmConsole';
 import styles from './room.module.css';
 import { Trackers } from './Trackers';
 import { ZoneMap } from './ZoneMap';
@@ -325,7 +325,10 @@ export function RoomTable({
     (a) =>
       !a.hidden && (a.ownerType !== 'character' || a.kind === 'boost' || a.kind === 'consequence'),
   );
-  const hiddenAspects = isGm ? Object.values(state.aspects).filter((a) => a.hidden) : [];
+  const hiddenAspects = isGm
+    ? Object.values(state.aspects).filter((a) => a.hidden && a.ownerType !== 'character')
+    : [];
+  const [gmOpen, setGmOpen] = useState<GmOpen | null>(null);
   const lines = events.map((e) => describe(e, state)).filter((l) => l !== null);
   const lastUndoable =
     [...lines].reverse().find((l) => l.undoable !== false && !undone.has(l.seq)) ?? null;
@@ -400,6 +403,16 @@ export function RoomTable({
         </div>
       </header>
 
+      {isGm && (
+        <GmBar
+          state={state}
+          run={run}
+          pending={pending}
+          lastUndoable={lastUndoable}
+          onOpen={setGmOpen}
+        />
+      )}
+
       <div className={tryStyles.body}>
         <div className={tryStyles.left}>
           {party.length > 0 ? (
@@ -429,19 +442,10 @@ export function RoomTable({
             </label>
           )}
           {role === 'player' && <BringCharacter run={run} has={controllable.length > 0} />}
-          {isGm && (
-            <GmDrawer
-              state={state}
-              run={run}
-              hiddenAspects={hiddenAspects}
-              pending={pending}
-              lastUndoable={lastUndoable}
-              notes={notes}
-            />
-          )}
         </div>
 
         <div className={`${tryStyles.center} ${styles.center}`}>
+          {!state.scene && <SceneStarter state={state} run={run} pending={pending} isGm={isGm} />}
           <div className={styles.topStack}>
             <Trackers
               state={state}
@@ -672,15 +676,59 @@ export function RoomTable({
         <div className={tryStyles.right}>
           <div className={tryStyles.aspectsHead}>ASPECTS ON STAGE</div>
           <div className={tryStyles.aspects}>
-            {sceneAspects.map((a) => (
-              <AspectCard
-                key={a.id}
-                aspect={a}
-                {...(a.ownerType === 'character'
-                  ? { owner: state.characters[a.ownerId]?.name ?? '' }
-                  : {})}
-              />
+            {[...sceneAspects, ...hiddenAspects].map((a) => (
+              <div key={a.id} className={styles.stageAspect} data-hidden={a.hidden || undefined}>
+                <AspectCard
+                  aspect={a}
+                  {...(a.ownerType === 'character'
+                    ? { owner: state.characters[a.ownerId]?.name ?? '' }
+                    : {})}
+                  {...(a.hidden ? { note: 'GM만 보여요' } : {})}
+                />
+                {isGm && (
+                  <div className={styles.aspectTools}>
+                    {a.hidden ? (
+                      <button
+                        type="button"
+                        disabled={pending}
+                        onClick={() =>
+                          void run({ type: 'aspect.reveal', payload: { aspectId: a.id } })
+                        }
+                      >
+                        공개
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setGmOpen({ tool: 'compel', aspectId: a.id })}
+                      >
+                        {term('compel')}
+                      </button>
+                    )}
+                    {a.kind !== 'consequence' && (
+                      <button
+                        type="button"
+                        disabled={pending}
+                        onClick={() =>
+                          void run({ type: 'aspect.remove', payload: { aspectId: a.id } })
+                        }
+                      >
+                        지우기
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             ))}
+            {isGm && state.scene && (
+              <button
+                type="button"
+                className={styles.ghost}
+                onClick={() => setGmOpen({ tool: 'aspect' })}
+              >
+                + {term('aspect')} 붙이기
+              </button>
+            )}
           </div>
           <StoryLog
             lines={lines}
@@ -718,6 +766,18 @@ export function RoomTable({
         </div>
       </div>
 
+      {isGm && gmOpen && (
+        <GmPanel
+          key={`${gmOpen.tool}:${gmOpen.aspectId ?? ''}`}
+          open={gmOpen}
+          state={state}
+          run={run}
+          pending={pending}
+          notes={notes}
+          onClose={() => setGmOpen(null)}
+        />
+      )}
+
       {sheet && (
         <CharacterSheet
           key={sheet.id}
@@ -737,6 +797,7 @@ export function RoomTable({
           <p className={tryStyles.say}>
             {narration && narration.type === 'narration.posted' ? narration.payload.text : ''}
           </p>
+          {isGm && <NarrationInput run={run} pending={pending} />}
           {error && <p className={tryStyles.error}>{error}</p>}
         </div>
         {me && (

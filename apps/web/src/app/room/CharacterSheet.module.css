@@ -303,3 +303,19 @@ button:disabled {
   color: var(--muted);
   font-size: var(--fs-sm);
 }
+
+.fateBtns {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: var(--s-2);
+}
+
+.fateBtns button {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--gold-hi);
+  cursor: pointer;
+}

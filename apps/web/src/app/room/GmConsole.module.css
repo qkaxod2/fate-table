@@ -1,0 +1,315 @@
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  margin: 0 var(--s-5);
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--hi);
+  background: var(--panel);
+  backdrop-filter: blur(6px);
+}
+
+.badge {
+  padding: 2px var(--s-2);
+  border: 1px solid var(--hi);
+  color: var(--hi);
+  font-family: var(--f-num);
+  font-size: var(--fs-xs);
+  letter-spacing: 3px;
+}
+
+.tool {
+  padding: var(--s-1) var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+  background: var(--panel-s);
+  color: var(--fg);
+  font: inherit;
+  font-family: var(--f-story);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tool:hover {
+  border-color: var(--gold);
+  color: var(--gold-hi);
+}
+
+.tool[data-attention] {
+  border-color: var(--gold);
+  background: var(--gold);
+  color: var(--ink);
+  animation: glow 1.6s ease-in-out infinite;
+}
+
+@keyframes glow {
+  50% {
+    box-shadow: 0 0 14px rgb(214 182 110 / 0.7);
+  }
+}
+
+.spacer {
+  flex: 1;
+}
+
+.pool {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.pool button {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--gold-hi);
+  cursor: pointer;
+}
+
+.undo {
+  padding: var(--s-1) var(--s-3);
+  border: 1px dashed var(--rule);
+  border-radius: var(--r-ctl);
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ---------- 창 ---------- */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: var(--s-4);
+  background: rgb(6 7 14 / 0.7);
+  backdrop-filter: blur(3px);
+}
+
+.modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  width: min(100%, 560px);
+  max-height: calc(100dvh - 32px);
+  padding: var(--s-4);
+  overflow-y: auto;
+  border: 1px solid var(--gold);
+  border-radius: var(--r-card);
+  background: var(--panel-s);
+  box-shadow: 0 20px 60px rgb(0 0 0 / 0.6);
+}
+
+.modalHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modalHead h2 {
+  margin: 0;
+  font-family: var(--f-story);
+}
+
+.close {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.sub {
+  margin: var(--s-2) 0 0;
+  color: var(--gold);
+  font-family: var(--f-story);
+  font-size: var(--fs-md, 16px);
+}
+
+.help {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.field small {
+  color: var(--muted);
+  opacity: 0.8;
+}
+
+.form input,
+.form textarea,
+.narrate textarea {
+  padding: var(--s-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+  background: var(--plate);
+  color: var(--fg);
+  font: inherit;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+}
+
+.chips button {
+  padding: var(--s-1) var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--plate);
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.chips button[aria-pressed='true'] {
+  border-color: var(--gold);
+  background: var(--gold);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--s-2);
+}
+
+.primary {
+  padding: var(--s-2) var(--s-4);
+  border: 1px solid var(--gold);
+  border-radius: var(--r-ctl);
+  background: var(--gold);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ghost {
+  padding: var(--s-1) var(--s-3);
+  border: 1px dashed var(--rule);
+  border-radius: var(--r-ctl);
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+}
+
+.current {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+}
+
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.notes li {
+  padding-left: var(--s-2);
+  border-left: 2px solid var(--hi);
+  white-space: pre-wrap;
+}
+
+/* ---------- 장면 열기 카드 ---------- */
+.starter {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  width: min(100%, 520px);
+  margin: var(--s-4) auto auto;
+  padding: var(--s-4);
+  border: 1px solid var(--gold);
+  border-radius: var(--r-card);
+  background: var(--panel);
+  backdrop-filter: blur(6px);
+}
+
+.starter h2 {
+  margin: 0;
+  font-family: var(--f-story);
+}
+
+.starter p {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* ---------- 대사 입력 ---------- */
+.narrate {
+  display: flex;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+}
+
+.narrate textarea {
+  flex: 1;
+  resize: vertical;
+  font-family: var(--f-story);
+}
+
+.narrate button {
+  align-self: flex-end;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--hi);
+  border-radius: var(--r-ctl);
+  background: var(--hi);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 700px) {
+  .bar {
+    margin: 0 var(--s-3);
+  }
+  .spacer {
+    display: none;
+  }
+}
