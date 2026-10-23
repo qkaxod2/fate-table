@@ -68,6 +68,7 @@ try {
   await pl.keyboard.press('Space');
   await pl.getByRole('button', { name: '이대로 확정' }).click({ timeout: T });
   await gm
+    .locator('section[aria-label="이야기 기록"]')
     .getByText(/결과: /)
     .first()
     .waitFor({ timeout: T });
@@ -89,6 +90,7 @@ try {
   await gm.keyboard.press('Space');
   await pl.getByRole('button', { name: /^신속/ }).click({ timeout: T });
   await gm
+    .locator('section[aria-label="이야기 기록"]')
     .getByText(/두 결과 공개/)
     .first()
     .waitFor({ timeout: T });
