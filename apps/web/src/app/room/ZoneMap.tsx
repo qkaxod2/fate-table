@@ -160,7 +160,7 @@ export function ZoneMap({ state, run, isGm, canControl, pending, auto = 'full' }
         >
           {open ? '접기' : '펼치기'}
         </button>
-        {isGm && open && (
+        {isGm && (
           <button
             type="button"
             className={styles.toggle}
