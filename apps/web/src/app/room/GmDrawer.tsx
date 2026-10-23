@@ -18,11 +18,28 @@ interface Props {
   run: (cmd: Command) => Promise<RoomEvent[]>;
   hiddenAspects: Aspect[];
   pending: boolean;
+  /** 가장 최근에 되돌릴 수 있는 기록 */
+  lastUndoable: { seq: number; text: string } | null;
+  notes: string[];
 }
 
+type Kind = 'physical' | 'mental';
+
 /** GM 도구: 장면, 이야기, 특성, NPC, 운명점, 강요 */
-export function GmDrawer({ state, run, hiddenAspects, pending }: Props) {
+export function GmDrawer({ state, run, hiddenAspects, pending, lastUndoable, notes }: Props) {
   const pcs = Object.values(state.characters).filter((c) => !c.isNpc);
+  const everyone = Object.values(state.characters).filter((c) => !c.takenOut);
+
+  // 갈등 · 경합 · 도전
+  const [kind, setKind] = useState<Kind>('physical');
+  const [picked, setPicked] = useState<Record<string, boolean>>({});
+  const inConflict = everyone.filter((c) => picked[c.id] ?? true);
+  const [sideA, setSideA] = useState('');
+  const [sideB, setSideB] = useState('');
+  const [chTitle, setChTitle] = useState('');
+  const [chSteps, setChSteps] = useState('');
+  // 메모
+  const [note, setNote] = useState('');
 
   // 장면
   const [sceneName, setSceneName] = useState('');
@@ -302,6 +319,158 @@ export function GmDrawer({ state, run, hiddenAspects, pending }: Props) {
             {term('compel')} 걸기
           </button>
         </form>
+      </details>
+
+      <details>
+        <summary>
+          {term('conflict')} · {term('contest')} · {term('challenge')}
+        </summary>
+        {state.conflict ? (
+          <p className={styles.muted}>
+            {term('conflict')} 진행 중이에요. 위쪽 띠에서 차례를 넘겨요.
+          </p>
+        ) : (
+          <form
+            className={styles.form}
+            onSubmit={(e) => {
+              e.preventDefault();
+              void run({
+                type: 'conflict.start',
+                payload: { kind, participantIds: inConflict.map((c) => c.id) },
+              });
+            }}
+          >
+            <label className={styles.inline}>
+              종류
+              <select value={kind} onChange={(e) => setKind(e.target.value as Kind)}>
+                <option value="physical">물리 (신속 순)</option>
+                <option value="mental">정신 (신중 순)</option>
+              </select>
+            </label>
+            {everyone.map((c) => (
+              <label key={c.id} className={styles.check}>
+                <input
+                  type="checkbox"
+                  checked={picked[c.id] ?? true}
+                  onChange={(e) => setPicked({ ...picked, [c.id]: e.target.checked })}
+                />
+                {c.name}
+                {c.isNpc ? ' (NPC)' : ''}
+              </label>
+            ))}
+            <button type="submit" disabled={pending || inConflict.length < 2}>
+              {term('conflict')} 시작
+            </button>
+          </form>
+        )}
+
+        {!state.contest && (
+          <form
+            className={styles.form}
+            onSubmit={(e) => {
+              e.preventDefault();
+              void run({ type: 'contest.start', payload: { sides: [sideA, sideB] } });
+            }}
+          >
+            <div className={styles.inline}>{term('contest')} (먼저 3승)</div>
+            <select value={sideA} onChange={(e) => setSideA(e.target.value)}>
+              <option value="">한쪽</option>
+              {everyone.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+            <select value={sideB} onChange={(e) => setSideB(e.target.value)}>
+              <option value="">다른 쪽</option>
+              {everyone
+                .filter((c) => c.id !== sideA)
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+            </select>
+            <button type="submit" disabled={pending || !sideA || !sideB || sideA === sideB}>
+              {term('contest')} 시작
+            </button>
+          </form>
+        )}
+
+        {!state.challenge && (
+          <form
+            className={styles.form}
+            onSubmit={(e) => {
+              e.preventDefault();
+              const steps = chSteps
+                .split('\n')
+                .map((t) => t.trim())
+                .filter(Boolean)
+                .slice(0, 8);
+              void run({ type: 'challenge.start', payload: { title: chTitle.trim(), steps } });
+              setChTitle('');
+              setChSteps('');
+            }}
+          >
+            <div className={styles.inline}>{term('challenge')}</div>
+            <input
+              placeholder="무엇을 해내야 하나요? (예: 무너지는 다리 건너기)"
+              value={chTitle}
+              maxLength={80}
+              onChange={(e) => setChTitle(e.target.value)}
+            />
+            <textarea
+              rows={3}
+              placeholder={'단계를 한 줄에 하나씩\n밧줄 고정하기\n아이들 먼저 보내기'}
+              value={chSteps}
+              onChange={(e) => setChSteps(e.target.value)}
+            />
+            <button type="submit" disabled={pending || !chTitle.trim() || !chSteps.trim()}>
+              {term('challenge')} 시작
+            </button>
+          </form>
+        )}
+      </details>
+
+      <details>
+        <summary>되돌리기 · 메모</summary>
+        <button
+          type="button"
+          className={styles.ghost}
+          disabled={pending || !lastUndoable}
+          onClick={() =>
+            lastUndoable &&
+            void run({ type: 'event.undo', payload: { targetSeq: lastUndoable.seq } })
+          }
+        >
+          ↶ 마지막 기록 되돌리기{lastUndoable ? `: ${lastUndoable.text.slice(0, 30)}` : ''}
+        </button>
+        <p className={styles.muted}>기록 줄에 마우스를 올려 ↶를 눌러도 돼요.</p>
+        <form
+          className={styles.form}
+          onSubmit={(e) => {
+            e.preventDefault();
+            void run({ type: 'gm.note', payload: { text: note.trim() } });
+            setNote('');
+          }}
+        >
+          <textarea
+            rows={2}
+            placeholder="나만 보는 메모 (플레이어에게 안 보여요)"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+          />
+          <button type="submit" disabled={pending || !note.trim()}>
+            메모 남기기
+          </button>
+        </form>
+        {notes.length > 0 && (
+          <ul className={styles.notes}>
+            {notes.slice(-5).map((n, i) => (
+              <li key={i}>{n}</li>
+            ))}
+          </ul>
+        )}
       </details>
 
       <details>

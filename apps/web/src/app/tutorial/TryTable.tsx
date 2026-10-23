@@ -29,7 +29,7 @@ import { CompelOffer } from '@/components/compel/CompelOffer';
 import { StoryLog } from '@/components/log/StoryLog';
 import { PartyRail } from '@/components/party/PartyRail';
 import { ActionBar, type CoachFocus } from '@/components/roll/ActionBar';
-import { DiceTray, type DiceMode } from '@/components/roll/DiceTray';
+import { DICE_MODES, DiceTray, saveDiceMode, type DiceMode } from '@/components/roll/DiceTray';
 import { InvokeTray, type InvokeChoice } from '@/components/roll/InvokeTray';
 import { OutcomeBanner } from '@/components/roll/OutcomeBanner';
 import { CoachMark, type Coach } from '@/components/tutorial/CoachMark';
@@ -129,7 +129,7 @@ function Table({
   const [selectedAspect, setSelectedAspect] = useState<string | null>(null);
   const [prompt, setPrompt] = useState<Prompt>(null);
   const [draft, setDraft] = useState('');
-  const [diceMode, setDiceMode] = useState<DiceMode>('flicker');
+  const [diceMode, setDiceMode] = useState<DiceMode>('3d');
   const [error, setError] = useState<string | null>(null);
   const compelled = useRef(false);
   // 캐릭터를 고른 뒤에만 그려지는 화면이라 처음부터 브라우저 설정을 읽어도 된다
@@ -443,9 +443,19 @@ function Table({
         <div className={styles.topRight}>
           <label className={styles.mode}>
             주사위 연출
-            <select value={diceMode} onChange={(e) => setDiceMode(e.target.value as DiceMode)}>
-              <option value="flicker">눈 바뀜</option>
-              <option value="instant">없음</option>
+            <select
+              value={diceMode}
+              onChange={(e) => {
+                const m = e.target.value as DiceMode;
+                setDiceMode(m);
+                saveDiceMode(m);
+              }}
+            >
+              {DICE_MODES.map(([v, label]) => (
+                <option key={v} value={v}>
+                  {label}
+                </option>
+              ))}
             </select>
           </label>
           <button

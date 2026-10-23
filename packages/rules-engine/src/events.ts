@@ -43,6 +43,8 @@ export interface EventPayloads {
     patch: Partial<
       Pick<Character, 'name' | 'approaches' | 'stunts' | 'refresh' | 'portraitAssetId'>
     >;
+    /** 플레이어가 이정표로 성장했으면 이정표를 쓴 것으로 처리 */
+    milestoneUsed?: boolean;
   };
   'milestone.granted': { characterIds: string[]; size: 'minor' | 'significant' | 'major' };
 
@@ -119,13 +121,16 @@ export interface EventPayloads {
   'zone.added': { zone: Zone };
   'zone.linked': { from: string; to: string };
   'zone.removed': { zoneId: string };
+  'zone.updated': { zoneId: string; name?: string; x?: number; y?: number };
+  'zone.unlinked': { from: string; to: string };
   'token.moved': { characterId: string; zoneId: string | null };
   'chat.posted': { text: string; as?: string };
   'gm.note': { text: string };
   'narration.posted': { text: string };
   'sfx.played': { assetId: string };
   'media.attached': { assetId: string; kind: string; target: string };
-  'event.undone': { targetSeq: number; reason?: string };
+  /** 한 명령이 만든 이벤트를 함께 되돌린다. 되돌리기를 되돌리면 다시 하기가 된다. */
+  'event.undone': { seqs: number[]; reason?: string };
 }
 
 export type EventType = keyof EventPayloads;

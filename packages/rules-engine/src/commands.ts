@@ -19,7 +19,9 @@ const stunt = z.object({
   kind: z.enum(['bonus', 'once_per_session']),
   bonus: z.object({ approach, action, value: z.literal(2) }).optional(),
 });
-const zone = z.object({ name: text, x: z.number(), y: z.number() });
+/** 지도 좌표는 0~100 (%) */
+const coord = z.number().min(0).max(100);
+const zone = z.object({ name: text, x: coord, y: coord });
 
 function cmd<T extends string, P extends z.ZodRawShape>(type: T, payload: P) {
   return z.object({ type: z.literal(type), payload: z.object(payload) });
@@ -135,6 +137,13 @@ export const CommandSchema = z.discriminatedUnion('type', [
 
   cmd('zone.add', zone.shape),
   cmd('zone.link', { from: id, to: id }),
+  cmd('zone.unlink', { from: id, to: id }),
+  cmd('zone.update', {
+    zoneId: id,
+    name: text.optional(),
+    x: coord.optional(),
+    y: coord.optional(),
+  }),
   cmd('zone.remove', { zoneId: id }),
   cmd('token.move', { characterId: id, zoneId: id.nullable() }),
 

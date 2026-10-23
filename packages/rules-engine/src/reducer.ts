@@ -144,7 +144,13 @@ const handlers: Handlers = {
     ...s,
     characters: { ...s.characters, [p.character.id]: p.character },
   }),
-  'character.updated': (s, p) => patchCharacter(s, p.id, (c) => ({ ...c, ...p.patch })),
+  'character.updated': (s, p) =>
+    patchCharacter(s, p.id, (c) => {
+      const next = { ...c, ...p.patch };
+      if (!p.milestoneUsed) return next;
+      const { milestone: _used, ...rest } = next;
+      return rest;
+    }),
   'milestone.granted': (s, p) =>
     p.characterIds.reduce(
       (acc, id) => patchCharacter(acc, id, (c) => ({ ...c, milestone: p.size })),
@@ -445,6 +451,29 @@ const handlers: Handlers = {
       },
     };
   },
+  'zone.updated': (s, p) => {
+    const z = s.scene?.zones[p.zoneId];
+    if (!s.scene || !z) return s;
+    const { zoneId: _id, ...patch } = p;
+    return { ...s, scene: { ...s.scene, zones: { ...s.scene.zones, [z.id]: { ...z, ...patch } } } };
+  },
+  'zone.unlinked': (s, p) => {
+    const zones = s.scene?.zones;
+    const from = zones?.[p.from];
+    const to = zones?.[p.to];
+    if (!s.scene || !from || !to) return s;
+    return {
+      ...s,
+      scene: {
+        ...s.scene,
+        zones: {
+          ...zones,
+          [from.id]: { ...from, links: from.links.filter((l) => l !== to.id) },
+          [to.id]: { ...to, links: to.links.filter((l) => l !== from.id) },
+        },
+      },
+    };
+  },
   'zone.removed': (s, p) => {
     if (!s.scene) return s;
     const zones = Object.fromEntries(
@@ -515,14 +544,20 @@ export function reduce(state: RoomState, event: RoomEvent): RoomState {
 }
 
 /**
- * 이벤트 목록을 처음부터(또는 base부터) 접는다. event.undone이 가리키는 이벤트는 건너뛴다.
- * 되돌리기는 현재 세션 안에서만 허용하고, 서버는 세션 시작 스냅숏을 base로 쓴다.
+ * 되돌린 이벤트의 seq. 뒤에서부터 보며, 되돌려진 되돌리기는 무시한다 (= 다시 하기).
  */
+export function undoneSeqs(events: readonly RoomEvent[]): Set<number> {
+  const undone = new Set<number>();
+  for (let i = events.length - 1; i >= 0; i--) {
+    const e = events[i]!;
+    if (e.type !== 'event.undone' || undone.has(e.seq)) continue;
+    for (const q of e.payload.seqs) undone.add(q);
+  }
+  return undone;
+}
+
+/** 이벤트 목록을 처음부터(또는 base부터) 접는다. 되돌린 이벤트는 건너뛴다. */
 export function replay(events: readonly RoomEvent[], base: RoomState = initialState()): RoomState {
-  const undone = new Set(
-    events
-      .filter((e) => e.type === 'event.undone')
-      .map((e) => (e as RoomEvent<'event.undone'>).payload.targetSeq),
-  );
+  const undone = undoneSeqs(events);
   return events.reduce((s, e) => (undone.has(e.seq) ? { ...s, seq: e.seq } : reduce(s, e)), base);
 }

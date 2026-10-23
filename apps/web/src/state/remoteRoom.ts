@@ -1,6 +1,7 @@
 import {
   initialState,
   reduce,
+  replay,
   type Actor,
   type Command,
   type RoomEvent,
@@ -120,8 +121,9 @@ export class RemoteRoom {
   }
 
   private apply(e: RoomEvent) {
-    this.state = reduce(this.state, e);
     this.events = [...this.events, e];
+    // 되돌리기는 지난 이벤트를 빼고 처음부터 다시 접는다
+    this.state = e.type === 'event.undone' ? replay(this.events) : reduce(this.state, e);
     this.lastSeq = e.seq;
   }
 
@@ -141,10 +143,7 @@ export class RemoteRoom {
         if (error) throw error;
         const rows = (data as Row[]).map(fromRow);
         for (const e of rows) {
-          if (e.seq > this.lastSeq) {
-            this.state = reduce(this.state, e);
-            this.events = [...this.events, e];
-          }
+          if (e.seq > this.lastSeq) this.apply(e);
           this.lastSeq = e.seq;
         }
         if (rows.length < 1000) break;

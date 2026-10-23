@@ -94,3 +94,16 @@
   font-size: var(--fs-xs);
   color: var(--k-consequence);
 }
+
+.member[role='button'] {
+  cursor: pointer;
+}
+
+.member[role='button']:hover .name {
+  color: var(--gold-hi);
+}
+
+.milestone {
+  color: var(--hi);
+  font-size: var(--fs-xs);
+}
