@@ -3,6 +3,11 @@ name: Setup check
 # 시크릿·변수가 들어 있는지와 키가 실제로 통하는지만 확인한다. 값은 출력하지 않는다.
 on:
   workflow_dispatch:
+    inputs:
+      portrait:
+        description: '초상화 한 장을 실제로 생성해 본다'
+        type: boolean
+        default: false
   pull_request:
     paths: ['.github/workflows/setup-check.yml']
 
@@ -53,3 +58,19 @@ jobs:
           echo "::notice::novelai image (빈 요청이라 400 검증 오류면 키 통과, 401이면 키 거절)=$s $(jq -r .message /tmp/g.json 2>/dev/null | head -c 200)"
           s=$(curl -sS -o /dev/null -w '%{http_code}' -X POST https://api.elevenlabs.io/v1/sound-generation -H "xi-api-key: $ELEVENLABS_API_KEY" -H 'Content-Type: application/json' -d '{}')
           echo "::notice::elevenlabs (빈 요청이라 422면 키 통과)=$s"
+      - name: 초상화 실제 생성
+        if: ${{ inputs.portrait }}
+        env:
+          ANON: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
+        shell: bash {0}
+        run: |
+          tok=$(curl -sS -X POST "$URL/auth/v1/signup" -H "apikey: $ANON" -H 'Content-Type: application/json' -d '{}' | jq -r .access_token)
+          [ "$tok" = null ] && echo "::warning::anonymous sign-in failed" && exit 0
+          s=$(curl -sS -o /tmp/r.json -w '%{http_code}' -X POST "$URL/functions/v1/media-image" \
+            -H "Authorization: Bearer $tok" -H "apikey: $ANON" -H 'Content-Type: application/json' \
+            -d '{"presetId":"cel","appearance":"1girl, silver hair, long hair, blue eyes, armor, cape, upper body, looking at viewer","guidance":6}')
+          echo "::notice::media-image=$s $(jq -c '.error // {seed: .data.seed}' /tmp/r.json)"
+          u=$(jq -r '.data.url // empty' /tmp/r.json)
+          [ -n "$u" ] && curl -sS -o /tmp/p.png "$u" && echo "::notice::image $(file -b /tmp/p.png | head -c 120)"
+          exit 0
