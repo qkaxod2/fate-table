@@ -73,6 +73,9 @@ try {
     .first()
     .waitFor({ timeout: T });
   note('player rolled and finalized; GM log updated');
+  // 대성공·동점이면 이름 짓기 창이 뜨므로 닫아 둔다 (방어 창을 가리지 않게)
+  const skip = pl.getByRole('button', { name: '건너뛰기' });
+  if (await skip.isVisible().catch(() => false)) await skip.click();
 
   // 5. GM이 NPC를 만들어 플레이어를 공격 → 플레이어가 방어
   await gm.getByText('NPC 만들기').click();
