@@ -1,0 +1,108 @@
+/*
+ * 디자인 토큰. 이름은 plan/design-system.md 2절·17절("밤의 무대 v2")과 같다.
+ * 테마: data-theme-mode="light|dark" (기본은 시스템 설정), data-genre="paper|fantasy".
+ */
+:root {
+  color-scheme: dark;
+
+  /* surface */
+  --night: #0c0e1a;
+  --bg: #111218;
+  --panel: rgb(11 12 22 / 0.86);
+  --panel-s: #11132a;
+  --plate: #1a1b22;
+  --line: #2a2c35;
+  --fg: #ecebe7;
+  --muted: #9ea0aa;
+  --paper: #f6f0e4;
+  --ink: #1b1733;
+
+  /* accents */
+  --gold: #d6b66e;
+  --gold-hi: #f0dca0;
+  --rule: rgb(214 182 110 / 0.42);
+  --hi: #ff6fb5;
+  --danger: #ff5a63;
+
+  /* fate token */
+  --token: var(--gold);
+  --token-hi: var(--gold-hi);
+
+  /* judgement (판정) */
+  --perfect: #f27bad;
+  --perfect-hi: #ffd3e4;
+  --great: #6fbceb;
+  --great-hi: #d6eeff;
+  --good: #5ed1ba;
+  --good-hi: #d2f7ee;
+  --miss: #a598de;
+  --miss-hi: #e6e0ff;
+
+  /* aspect kind bar (왼쪽 4px 색 막대) */
+  --k-high: var(--gold);
+  --k-trouble: var(--danger);
+  --k-normal: var(--muted);
+  --k-scene: #4fb3a0;
+  --k-consequence: #a880c6;
+  --k-boost: #e59ab3;
+
+  /* dice */
+  --dice-body: #11132a;
+  --dice-edge: #d6b66e;
+  --dice-pip: #ffe9b0;
+  --dice-body-op: #3a1328;
+  --dice-edge-op: #e59ab3;
+  --dice-pip-op: #ffe0ea;
+  --dice-table: #141629;
+
+  /* type */
+  --f-ui: 'IBM Plex Sans KR', system-ui, sans-serif;
+  --f-story: 'Noto Serif KR', serif;
+  --f-pop: 'Cinzel', serif;
+  --f-deco: 'Cinzel Decorative', 'Cinzel', serif;
+  --f-num: 'IBM Plex Mono', ui-monospace, monospace;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 15px;
+  --fs-lg: 18px;
+  --fs-xl: 24px;
+  --fs-2xl: 32px;
+
+  /* space / radius / motion */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --r-card: 6px;
+  --r-ctl: 10px;
+  --r-token: 999px;
+  --dur-fast: 120ms;
+  --dur-dice: 600ms;
+  --dur-token: 700ms;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+[data-theme-mode='light'] {
+  color-scheme: light;
+  --bg: #f1f0ed;
+  --plate: #ffffff;
+  --line: #d6d4cf;
+  --fg: #16161c;
+  --muted: #5e606a;
+  --hi: #c9367e;
+}
+
+[data-genre='fantasy'] {
+  --paper: #efe2c4;
+  --gold: #c99a4a;
+  --dice-table: #1b1410;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-dice: 0ms;
+    --dur-token: 150ms;
+  }
+}
