@@ -1,0 +1,611 @@
+'use client';
+
+import { term } from '@fate/glossary';
+import {
+  absorbOptions,
+  canInvoke,
+  CommandError,
+  formatRating,
+  outcomeFor,
+  previewInvokes,
+  resolveRoll,
+  stuntBonuses,
+  sumDice,
+  type Action,
+  type Actor,
+  type Approach,
+  type Aspect,
+  type Command,
+  type InvokeMode,
+  type PaidWith,
+  type Reward,
+  type RollState,
+  type RoomState,
+} from '@fate/rules-engine';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { AspectCard } from '@/components/aspect/AspectCard';
+import { CompelOffer } from '@/components/compel/CompelOffer';
+import { StoryLog } from '@/components/log/StoryLog';
+import { PartyRail } from '@/components/party/PartyRail';
+import { ActionBar } from '@/components/roll/ActionBar';
+import { DiceTray, type DiceMode } from '@/components/roll/DiceTray';
+import { InvokeTray, type InvokeChoice } from '@/components/roll/InvokeTray';
+import { OutcomeBanner } from '@/components/roll/OutcomeBanner';
+import { BOSS, SAMPLE_CHARACTERS, SCENE, type SampleCharacter } from '@/content/oneshot';
+import { asset } from '@/lib/asset';
+import { describe, ERROR_COPY } from '@/lib/copy';
+import { LocalRoom } from '@/state/localRoom';
+import styles from './try.module.css';
+
+const ME: Actor = { userId: 'me', role: 'player' };
+const GM: Actor = { userId: 'gm', role: 'gm' };
+
+const BLOCK_REASON: Record<string, string> = {
+  NOT_ENOUGH_FATE_POINTS: '운명점이 부족해요',
+  ASPECT_ALREADY_INVOKED: '이번 굴림에 이미 썼어요',
+};
+
+const COMPEL_TEXT: Record<string, string> = {
+  hayun: '맹세가 발목을 잡아요. 도적이 인질을 앞세우자, 하윤은 칼을 거둘 수밖에 없어요.',
+  leo: '레오가 불길 옆 약병을 "잠깐만 확인"하다가 연기가 확 번져요.',
+  mira: '미라는 동료의 신호를 믿지 못하고 혼자 움직이다 위치가 드러나요.',
+};
+
+function findId(state: RoomState, name: string): string {
+  return Object.values(state.characters).find((c) => c.name === name)!.id;
+}
+
+function setupRoom(pick: SampleCharacter): LocalRoom {
+  const room = new LocalRoom();
+  room.run(GM, { type: 'character.create', payload: BOSS });
+  for (const s of SAMPLE_CHARACTERS) {
+    room.run(GM, {
+      type: 'character.create',
+      payload: { ...s.create, ownerId: s.key === pick.key ? ME.userId : 'bot' },
+    });
+  }
+  room.run(GM, { type: 'session.start', payload: { title: '체험 원샷' } });
+  room.run(GM, { type: 'scene.start', payload: { name: SCENE.name, aspects: SCENE.aspects } });
+  room.run(GM, { type: 'narration.post', payload: { text: SCENE.opening } });
+  return room;
+}
+
+export function TryTable() {
+  const [pick, setPick] = useState<SampleCharacter | null>(null);
+  const room = useMemo(() => (pick ? setupRoom(pick) : null), [pick]);
+  if (!pick || !room) return <Picker onPick={setPick} />;
+  return <Table room={room} pick={pick} onRestart={() => setPick(null)} />;
+}
+
+function Picker({ onPick }: { onPick: (s: SampleCharacter) => void }) {
+  return (
+    <main className={styles.picker}>
+      <h1 className={styles.pickTitle}>누구로 플레이할까요?</h1>
+      <p className={styles.pickLead}>
+        샘플 캐릭터를 골라 5분 안에 첫 굴림까지 가 봐요. 규칙은 몰라도 괜찮아요.
+      </p>
+      <div className={styles.pickGrid}>
+        {SAMPLE_CHARACTERS.map((s) => (
+          <button key={s.key} type="button" className={styles.pickCard} onClick={() => onPick(s)}>
+            <img src={asset(s.image)} alt="" className={styles.pickImg} />
+            <span className={styles.pickName}>{s.name}</span>
+            <span className={styles.pickHigh}>{s.create.highConcept}</span>
+            <span className={styles.pickBlurb}>{s.blurb}</span>
+          </button>
+        ))}
+      </div>
+    </main>
+  );
+}
+
+type Prompt = { kind: 'aspect'; freeInvokes: 1 | 2 } | { kind: 'boost' } | null;
+
+function Table({
+  room,
+  pick,
+  onRestart,
+}: {
+  room: LocalRoom;
+  pick: SampleCharacter;
+  onRestart: () => void;
+}) {
+  const { state, events } = useSyncExternalStore(
+    room.subscribe,
+    room.getSnapshot,
+    room.getSnapshot,
+  );
+  const meId = useMemo(() => findId(room.getSnapshot().state, pick.name), [room, pick]);
+  const bossId = useMemo(() => findId(room.getSnapshot().state, BOSS.name), [room]);
+  const me = state.characters[meId]!;
+  const boss = state.characters[bossId]!;
+
+  const [action, setAction] = useState<Action | null>(null);
+  const [approach, setApproach] = useState<Approach | null>(null);
+  const [rollId, setRollId] = useState<string | null>(null);
+  const [settled, setSettled] = useState(false);
+  const [selectedAspect, setSelectedAspect] = useState<string | null>(null);
+  const [prompt, setPrompt] = useState<Prompt>(null);
+  const [draft, setDraft] = useState('');
+  const [diceMode, setDiceMode] = useState<DiceMode>('flicker');
+  const [error, setError] = useState<string | null>(null);
+  const compelled = useRef(false);
+
+  const roll: RollState | undefined = rollId ? state.rolls[rollId] : undefined;
+  const final = roll?.status === 'final';
+  const busy = !!roll && !final;
+
+  const run = useCallback(
+    (actor: Actor, cmd: Command) => {
+      try {
+        setError(null);
+        return room.run(actor, cmd);
+      } catch (e) {
+        const code = e instanceof CommandError ? e.code : '';
+        setError(ERROR_COPY[code] ?? '지금은 할 수 없는 행동이에요.');
+        return [];
+      }
+    },
+    [room],
+  );
+
+  const onRoll = useCallback(() => {
+    if (!action || !approach || busy) return;
+    setSettled(false);
+    setSelectedAspect(null);
+    const isAttack = action === 'attack';
+    const evs = run(ME, {
+      type: 'roll.request',
+      payload: {
+        characterId: meId,
+        action,
+        approach,
+        ...(isAttack ? { targetId: bossId } : { difficulty: SCENE.overcomeDifficulty }),
+      },
+    });
+    const first = evs[0];
+    if (!first) return;
+    const id = 'rollId' in first.payload ? (first.payload.rollId as string) : null;
+    setRollId(id);
+    if (isAttack && id) {
+      // GM(자동)이 잠시 뒤 방어 굴림. 그 전까지 내 주사위도 봉인되어 아무도 볼 수 없다.
+      window.setTimeout(
+        () => run(GM, { type: 'roll.defend', payload: { rollId: id, approach: 'quick' } }),
+        900,
+      );
+    }
+  }, [action, approach, busy, run, meId, bossId]);
+
+  const myStunts = roll && !final ? stuntBonuses(me, roll.action, roll.active.approach) : [];
+  const unusedStunt = myStunts.find(
+    (s) => !roll?.active.modifiers.some((m) => m.source === `stunt:${s.id}`),
+  );
+
+  const choices: InvokeChoice[] = useMemo(() => {
+    if (!roll || roll.status !== 'open') return [];
+    const payer = { characterId: meId, fatePoints: me.fatePoints };
+    const visible = Object.values(state.aspects).filter(
+      (a) =>
+        !a.hidden &&
+        (a.ownerType !== 'character' ||
+          a.ownerId === meId ||
+          (roll.defense && a.ownerId === roll.defense.characterId)),
+    );
+    return visible.map((a): InvokeChoice => {
+      const previews = previewInvokes(roll, [a], payer);
+      const owner = a.ownerType === 'character' ? state.characters[a.ownerId]?.name : undefined;
+      const against = a.ownerType === 'character' && a.ownerId !== meId;
+      const base = { aspect: a, ...(owner ? { owner } : {}), against };
+      if (previews.length === 0) {
+        const check = canInvoke(
+          roll,
+          a,
+          payer,
+          'active',
+          a.freeInvokes > 0 ? 'free_invoke' : 'fate_point',
+        );
+        return {
+          ...base,
+          blocked: check.ok ? '쓸 수 없어요' : (BLOCK_REASON[check.code] ?? '쓸 수 없어요'),
+        };
+      }
+      const bonus = previews.find((p) => p.mode === 'bonus');
+      const reroll = previews.find((p) => p.mode === 'reroll');
+      return { ...base, ...(bonus ? { bonus } : {}), ...(reroll ? { reroll } : {}) };
+    });
+  }, [roll, state, me.fatePoints, meId]);
+
+  const onInvoke = (aspectId: string, mode: InvokeMode, paidWith: PaidWith) => {
+    if (!roll) return;
+    if (mode === 'reroll') setSettled(false);
+    run(ME, {
+      type: 'invoke.apply',
+      payload: { rollId: roll.id, side: 'active', aspectId, mode, paidWith },
+    });
+    setSelectedAspect(null);
+  };
+
+  const handleRewards = useCallback(
+    (rewards: Reward[], target: string | null) => {
+      for (const r of rewards) {
+        if (r.type === 'new_aspect') setPrompt({ kind: 'aspect', freeInvokes: r.freeInvokes });
+        if (r.type === 'boost' && r.to === 'self') setPrompt({ kind: 'boost' });
+      }
+      const pending = Object.values(room.getSnapshot().state.pendingDamage).find(
+        (d) => d.targetId === target,
+      );
+      if (pending) {
+        // GM(자동): 가장 덜 아픈 조합으로 받아내고, 못 받으면 탈락
+        const bossNow = room.getSnapshot().state.characters[pending.targetId]!;
+        const plan = absorbOptions(pending.shifts, bossNow)[0];
+        const NAMES = {
+          mild: '그을린 소매',
+          moderate: '깊게 베인 어깨',
+          severe: '부러진 도끼 자루',
+        } as const;
+        window.setTimeout(() => {
+          run(
+            GM,
+            plan
+              ? {
+                  type: 'damage.absorb',
+                  payload: {
+                    rollId: pending.rollId,
+                    takeOut: false,
+                    stressBox: plan.stressBox,
+                    consequences: plan.consequences.map((slot) => ({ slot, text: NAMES[slot] })),
+                  },
+                }
+              : {
+                  type: 'damage.absorb',
+                  payload: {
+                    rollId: pending.rollId,
+                    takeOut: true,
+                    stressBox: null,
+                    consequences: [],
+                  },
+                },
+          );
+        }, 700);
+      }
+    },
+    [room, run],
+  );
+
+  const onFinalize = () => {
+    if (!roll) return;
+    const evs = run(ME, {
+      type: 'roll.finalize',
+      payload: { rollId: roll.id, reduceForBoost: false },
+    });
+    const fin = evs.find((e) => e.type === 'roll.finalized');
+    if (fin && fin.type === 'roll.finalized') handleRewards(fin.payload.rewards, roll.targetId);
+    setAction(null);
+    setApproach(null);
+  };
+
+  // 체험 시나리오 트리거: 첫 굴림이 확정되면 GM이 약점에 강요를 한 번 건다 (design-system.md 14절 6단계)
+  useEffect(() => {
+    if (compelled.current || !final) return;
+    compelled.current = true;
+    const trouble = Object.values(state.aspects).find(
+      (a) => a.ownerId === meId && a.kind === 'trouble',
+    );
+    if (!trouble) return;
+    const t = window.setTimeout(
+      () =>
+        run(GM, {
+          type: 'compel.offer',
+          payload: { aspectId: trouble.id, targetId: meId, text: COMPEL_TEXT[pick.key]! },
+        }),
+      1800,
+    );
+    return () => window.clearTimeout(t);
+  }, [final, state.aspects, meId, pick.key, run]);
+
+  const compel = Object.values(state.compels).find((c) => c.targetId === meId);
+
+  const submitPrompt = () => {
+    const text = draft.trim();
+    if (!text || !prompt) return;
+    run(
+      ME,
+      prompt.kind === 'aspect'
+        ? {
+            type: 'aspect.add',
+            payload: {
+              ownerType: 'scene',
+              ownerId: state.scene!.id,
+              kind: 'situation',
+              text,
+              freeInvokes: prompt.freeInvokes,
+              hidden: false,
+            },
+          }
+        : {
+            type: 'aspect.add',
+            payload: {
+              ownerType: 'character',
+              ownerId: meId,
+              kind: 'boost',
+              text,
+              freeInvokes: 0,
+              hidden: false,
+            },
+          },
+    );
+    setPrompt(null);
+    setDraft('');
+  };
+
+  const sceneAspects = Object.values(state.aspects).filter(
+    (a) =>
+      !a.hidden && (a.ownerType !== 'character' || a.kind === 'boost' || a.kind === 'consequence'),
+  );
+  const lines = events.map((e) => describe(e, state)).filter((l) => l !== null);
+  const narration = [...events].reverse().find((e) => e.type === 'narration.posted');
+
+  const myOutcomeNow =
+    roll?.status === 'open' && roll.active.dice ? outcomeFor(roll, 'active') : null;
+  const hint = useMemo(() => {
+    if (compel) return undefined;
+    if (prompt) return undefined;
+    if (!action) return '1. 행동을 골라요. 처음이라면 "극복"으로 불길을 뚫어 봐요 (숫자키 1~4)';
+    if (!approach)
+      return `2. 어떻게 할까요? ${term('approach')}을 골라요. 숫자가 높을수록 잘하는 방식이에요 (Q·W·E·A·S·D)`;
+    if (!roll || final) return '3. 굴려 볼까요? 주사위 4개의 합에 접근법 수치를 더해요 (Space)';
+    if (settled && (myOutcomeNow === 'fail' || myOutcomeNow === 'tie'))
+      return `4. ${term('aspect')}을 ${term('invoke')}하면 +2! 강조된 카드를 눌러 보세요. ${term('fatePoint')} 1이 들어요`;
+    return undefined;
+  }, [action, approach, roll, final, compel, prompt, settled, myOutcomeNow]);
+
+  const result =
+    roll && roll.active.dice && (roll.defense?.dice ?? roll.targetId === null)
+      ? resolveRoll(roll)
+      : null;
+  const myOutcome = roll && result ? outcomeFor(roll, 'active') : null;
+  const showBoss = roll?.targetId === bossId || action === 'attack';
+
+  return (
+    <main
+      className={styles.stage}
+      style={{
+        backgroundImage: `linear-gradient(180deg, rgb(12 14 26 / .25), rgb(12 14 26 / .85)), url(${asset(SCENE.background)})`,
+      }}
+    >
+      <header className={styles.top}>
+        <div>
+          <div className={styles.kicker}>SCENE 01 · 체험 원샷</div>
+          <h1 className={styles.sceneName}>{state.scene?.name}</h1>
+        </div>
+        <div className={styles.topRight}>
+          <label className={styles.mode}>
+            주사위 연출
+            <select value={diceMode} onChange={(e) => setDiceMode(e.target.value as DiceMode)}>
+              <option value="flicker">눈 바뀜</option>
+              <option value="instant">없음</option>
+            </select>
+          </label>
+          <button type="button" className={styles.restart} onClick={onRestart}>
+            처음부터
+          </button>
+        </div>
+      </header>
+
+      <div className={styles.body}>
+        <div className={styles.left}>
+          <PartyRail
+            members={[
+              ...SAMPLE_CHARACTERS.map((s) => {
+                const c = state.characters[findId(state, s.name)]!;
+                return {
+                  character: c,
+                  image: asset(s.image),
+                  active: c.id === meId,
+                  ...(c.id === meId ? {} : { status: '동료' }),
+                };
+              }),
+              { character: boss, image: asset(SCENE.bossImage), status: 'NPC' },
+            ]}
+          />
+        </div>
+
+        <div className={styles.center}>
+          <img className={styles.standee} src={asset(pick.image)} alt={pick.name} />
+          {showBoss && (
+            <img className={styles.bossStandee} src={asset(SCENE.bossImage)} alt={boss.name} />
+          )}
+
+          {roll && (
+            <div className={styles.rollPanel}>
+              <div className={styles.sides}>
+                <div className={styles.side}>
+                  <div className={styles.sideHead}>
+                    {me.name} · {term(roll.action)} · {term(roll.active.approach)}{' '}
+                    {roll.active.rating >= 0 ? '+' : ''}
+                    {roll.active.rating}
+                  </div>
+                  <DiceTray
+                    dice={roll.active.dice}
+                    rollKey={`${roll.id}:${roll.active.animSeed}`}
+                    sealed={roll.status === 'awaiting_defense'}
+                    mode={diceMode}
+                    onSettled={() => setSettled(true)}
+                  />
+                  {roll.active.dice && settled && result && (
+                    <div className={styles.total}>
+                      {result.total >= 0 ? '+' : ''}
+                      {result.total} <small>{formatRating(result.total).split(' ')[0]}</small>
+                      {roll.active.modifiers.length > 0 && (
+                        <small className={styles.mods}>
+                          주사위 {sumDice(roll.active.dice)} · {term('approach')}{' '}
+                          {roll.active.rating} ·{' '}
+                          {roll.active.modifiers.map((m) => `+${m.value}`).join(' ')}
+                        </small>
+                      )}
+                    </div>
+                  )}
+                  {roll.status === 'awaiting_defense' && (
+                    <div className={styles.waiting}>굴림 완료 · 상대 응답 대기 중</div>
+                  )}
+                </div>
+                {roll.targetId ? (
+                  <>
+                    <div className={styles.vs}>VS</div>
+                    <div className={styles.side}>
+                      <div className={styles.sideHead}>
+                        {boss.name} · {term('defend')}
+                      </div>
+                      <DiceTray
+                        dice={roll.defense?.dice ?? null}
+                        rollKey={`${roll.id}:d:${roll.defense?.animSeed ?? 'x'}`}
+                        sealed={!roll.defense}
+                        tone="op"
+                        mode={diceMode}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <div className={styles.difficulty}>
+                    난이도 {formatRating(roll.difficulty ?? 0)}
+                  </div>
+                )}
+              </div>
+
+              {settled && myOutcome && result && (
+                <OutcomeBanner
+                  action={roll.action}
+                  outcome={final ? roll.result!.outcome : myOutcome}
+                  total={result.total}
+                  provisional={!final}
+                />
+              )}
+
+              {settled && roll.status === 'open' && (
+                <>
+                  {unusedStunt && (
+                    <button
+                      type="button"
+                      className={styles.stunt}
+                      onClick={() =>
+                        run(ME, {
+                          type: 'stunt.apply',
+                          payload: { rollId: roll.id, side: 'active', stuntId: unusedStunt.id },
+                        })
+                      }
+                    >
+                      {term('stunt')} 적용: {unusedStunt.text}
+                    </button>
+                  )}
+                  <InvokeTray
+                    choices={choices}
+                    fatePoints={me.fatePoints}
+                    selectedId={selectedAspect}
+                    onSelect={setSelectedAspect}
+                    onInvoke={onInvoke}
+                    onFinalize={onFinalize}
+                  />
+                </>
+              )}
+            </div>
+          )}
+
+          {compel && (
+            <div className={styles.overlay}>
+              <CompelOffer
+                aspect={state.aspects[compel.aspectId]!}
+                text={compel.text}
+                fatePoints={me.fatePoints}
+                onAccept={() =>
+                  run(ME, {
+                    type: 'compel.respond',
+                    payload: { compelId: compel.id, accept: true },
+                  })
+                }
+                onRefuse={() =>
+                  run(ME, {
+                    type: 'compel.respond',
+                    payload: { compelId: compel.id, accept: false },
+                  })
+                }
+              />
+            </div>
+          )}
+
+          {prompt && (
+            <div className={styles.overlay}>
+              <form
+                className={styles.prompt}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  submitPrompt();
+                }}
+              >
+                <div className={styles.promptHead}>
+                  {prompt.kind === 'aspect'
+                    ? `새 ${term('aspect')} 이름 짓기 · ${term('freeInvoke')} ${prompt.freeInvokes}`
+                    : `${term('boost')} 이름 짓기`}
+                </div>
+                <p className={styles.promptHelp}>
+                  {prompt.kind === 'aspect'
+                    ? '장면에 새로 생긴 사실을 짧은 문구로 적어요. 예: "연기에 가려진 뒷문"'
+                    : '한 번 쓰고 사라지는 순간의 기회예요. 예: "흔들리는 발판"'}
+                </p>
+                <input
+                  autoFocus
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  maxLength={40}
+                  className={styles.promptInput}
+                />
+                <div className={styles.promptButtons}>
+                  <button type="button" onClick={() => setPrompt(null)} className={styles.restart}>
+                    건너뛰기
+                  </button>
+                  <button type="submit" className={styles.promptOk} disabled={!draft.trim()}>
+                    붙이기
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+        </div>
+
+        <div className={styles.right}>
+          <div className={styles.aspectsHead}>ASPECTS ON STAGE</div>
+          <div className={styles.aspects}>
+            {sceneAspects.map((a: Aspect) => (
+              <AspectCard
+                key={a.id}
+                aspect={a}
+                {...(a.ownerType === 'character'
+                  ? { owner: state.characters[a.ownerId]?.name ?? '' }
+                  : {})}
+              />
+            ))}
+          </div>
+          <StoryLog lines={lines} />
+        </div>
+      </div>
+
+      <footer className={styles.bottom}>
+        <div className={styles.dialogue}>
+          <div className={styles.speaker}>G M</div>
+          <p className={styles.say}>
+            {narration && narration.type === 'narration.posted' ? narration.payload.text : ''}
+          </p>
+          {error && <p className={styles.error}>{error}</p>}
+        </div>
+        <ActionBar
+          character={me}
+          action={action}
+          approach={approach}
+          disabled={busy || !!compel || !!prompt || me.takenOut === true}
+          {...(hint ? { hint } : {})}
+          onAction={setAction}
+          onApproach={setApproach}
+          onRoll={onRoll}
+        />
+      </footer>
+    </main>
+  );
+}

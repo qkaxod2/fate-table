@@ -1,0 +1,53 @@
+.log {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--s-3);
+  background: var(--panel);
+}
+
+.head {
+  font-family: var(--f-num);
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--gold);
+  margin-bottom: var(--s-2);
+}
+
+.empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.line {
+  padding: var(--s-1) var(--s-2);
+  border-left: 2px solid var(--line);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+.line[data-kind='fate'] {
+  border-color: var(--gold);
+  color: var(--gold-hi);
+}
+
+.line[data-kind='gm'] {
+  border-left-width: 4px;
+  border-color: var(--hi);
+  font-family: var(--f-story);
+}
+
+.line[data-kind='roll'] {
+  border-color: var(--great);
+}

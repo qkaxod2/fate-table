@@ -1,0 +1,68 @@
+.tray {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-3);
+  border-top: 1px solid var(--rule);
+  background: var(--panel);
+}
+
+.head {
+  font-family: var(--f-num);
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--gold);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: var(--s-2);
+}
+
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.fp {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.ghost,
+.primary {
+  padding: var(--s-2) var(--s-3);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ghost {
+  border: 1px solid var(--gold);
+  background: transparent;
+  color: var(--gold-hi);
+}
+
+.primary {
+  border: 1px solid var(--gold-hi);
+  background: var(--gold);
+  color: var(--ink);
+}
+
+.ghost small {
+  font-weight: 400;
+  opacity: 0.8;
+}

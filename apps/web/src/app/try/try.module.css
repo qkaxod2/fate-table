@@ -1,0 +1,404 @@
+/* ---------- 캐릭터 고르기 ---------- */
+.picker {
+  min-height: 100dvh;
+  padding: var(--s-6) var(--s-4);
+  background:
+    radial-gradient(ellipse at 50% 0%, rgb(214 182 110 / 0.14), transparent 60%), var(--night);
+  text-align: center;
+}
+
+.pickTitle {
+  margin: 0 0 var(--s-2);
+  font-family: var(--f-story);
+  font-size: clamp(26px, 5vw, 40px);
+}
+
+.pickLead {
+  margin: 0 auto var(--s-6);
+  max-width: 520px;
+  color: var(--muted);
+}
+
+.pickGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 260px));
+  justify-content: center;
+  gap: var(--s-4);
+}
+
+.pickCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-1);
+  padding: 0 var(--s-3) var(--s-4);
+  border: 1px solid var(--rule);
+  background: linear-gradient(180deg, transparent 40%, var(--panel-s));
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    transform var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
+
+.pickCard:hover,
+.pickCard:focus-visible {
+  transform: translateY(-4px);
+  border-color: var(--gold);
+}
+
+.pickImg {
+  width: 100%;
+  aspect-ratio: 416 / 420;
+  object-fit: cover;
+  object-position: top;
+}
+
+.pickName {
+  font-family: var(--f-story);
+  font-weight: 700;
+  font-size: var(--fs-xl);
+}
+
+.pickHigh {
+  color: var(--gold-hi);
+  font-size: var(--fs-sm);
+}
+
+.pickBlurb {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+/* ---------- 무대 ---------- */
+.stage {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 100dvh;
+  background-size: cover;
+  background-position: center;
+}
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--s-3);
+  padding: var(--s-4) var(--s-5) 0;
+}
+
+.kicker {
+  font-family: var(--f-num);
+  font-size: 12px;
+  letter-spacing: 4px;
+  color: var(--gold);
+}
+
+.sceneName {
+  margin: 0;
+  font-family: var(--f-story);
+  font-size: clamp(24px, 4vw, 40px);
+  text-shadow: 0 2px 12px rgb(0 0 0 / 0.8);
+}
+
+.topRight {
+  display: flex;
+  gap: var(--s-2);
+  align-items: center;
+}
+
+.mode {
+  display: flex;
+  gap: var(--s-2);
+  align-items: center;
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+.mode select {
+  padding: 4px var(--s-2);
+  border: 1px solid var(--line);
+  background: var(--panel-s);
+  color: var(--fg);
+  font: inherit;
+}
+
+.restart {
+  padding: 4px var(--s-3);
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.body {
+  display: grid;
+  grid-template-columns: 280px 1fr 320px;
+  gap: var(--s-4);
+  min-height: 0;
+  padding: var(--s-4) var(--s-5);
+}
+
+.left {
+  align-self: start;
+}
+
+.center {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 420px;
+}
+
+.standee,
+.bossStandee {
+  position: absolute;
+  bottom: 0;
+  height: min(100%, 560px);
+  pointer-events: none;
+  filter: drop-shadow(0 10px 30px rgb(0 0 0 / 0.6));
+}
+
+.standee {
+  left: 0;
+}
+
+.bossStandee {
+  right: 0;
+  transform: scaleX(-1);
+}
+
+.rollPanel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  width: min(100%, 680px);
+  max-height: calc(100dvh - 300px);
+  overflow-y: auto;
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  backdrop-filter: blur(6px);
+}
+
+.sides {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-4);
+  padding: var(--s-3) var(--s-3) 0;
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.sideHead {
+  font-family: var(--f-num);
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--gold);
+}
+
+.total {
+  font-family: var(--f-pop);
+  font-weight: 800;
+  font-size: 32px;
+  line-height: 1;
+}
+
+.total small {
+  font-family: var(--f-story);
+  font-size: var(--fs-md);
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.mods {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--f-num) !important;
+  font-size: var(--fs-xs) !important;
+}
+
+.waiting {
+  align-self: flex-start;
+  padding: 2px var(--s-2);
+  border-radius: var(--r-token);
+  background: var(--gold);
+  color: var(--ink);
+  font-size: var(--fs-xs);
+}
+
+.vs {
+  font-family: var(--f-deco);
+  font-size: 32px;
+  color: var(--gold);
+}
+
+.difficulty {
+  padding: var(--s-2) var(--s-3);
+  border: 1px dashed var(--rule);
+  font-family: var(--f-story);
+}
+
+.stunt {
+  align-self: center;
+  padding: 4px var(--s-3);
+  border: 1px solid var(--good);
+  border-radius: var(--r-token);
+  background: rgb(94 209 186 / 0.15);
+  color: var(--good-hi);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  background: rgb(12 14 26 / 0.55);
+}
+
+.prompt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  width: min(100%, 420px);
+  padding: var(--s-4);
+  border: 1px solid var(--gold);
+  background: var(--panel);
+}
+
+.promptHead {
+  font-family: var(--f-story);
+  font-weight: 700;
+  font-size: var(--fs-lg);
+}
+
+.promptHelp {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.promptInput {
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--gold);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--f-story);
+  font-weight: 700;
+  font-size: var(--fs-lg);
+}
+
+.promptButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s-2);
+}
+
+.promptOk {
+  padding: 4px var(--s-4);
+  border: 1px solid var(--gold-hi);
+  background: var(--gold);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.promptOk:disabled {
+  opacity: 0.5;
+}
+
+.right {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-height: 0;
+  max-height: calc(100dvh - 330px);
+}
+
+.aspectsHead {
+  font-family: var(--f-num);
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--gold);
+  text-align: right;
+}
+
+.aspects {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--s-4);
+  align-items: end;
+  padding: 0 var(--s-5) var(--s-4);
+}
+
+.dialogue {
+  position: relative;
+  padding: var(--s-5) var(--s-4) var(--s-3);
+  border: 1px solid var(--gold);
+  background: var(--panel);
+}
+
+.speaker {
+  position: absolute;
+  top: -16px;
+  left: var(--s-4);
+  padding: 2px var(--s-4);
+  border: 1px solid var(--hi);
+  background: var(--panel-s);
+  font-family: var(--f-pop);
+  letter-spacing: 6px;
+}
+
+.say {
+  margin: 0;
+  font-family: var(--f-story);
+  font-size: var(--fs-lg);
+  line-height: 1.75;
+}
+
+.error {
+  margin: var(--s-2) 0 0;
+  color: var(--danger);
+  font-size: var(--fs-sm);
+}
+
+@media (max-width: 1100px) {
+  .body {
+    grid-template-columns: 1fr;
+  }
+  .right {
+    max-height: none;
+  }
+  .bottom {
+    grid-template-columns: 1fr;
+  }
+  .standee {
+    opacity: 0.35;
+  }
+  .bossStandee {
+    display: none;
+  }
+}

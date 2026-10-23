@@ -1,5 +1,6 @@
 import { term } from '@fate/glossary';
 import { formatRating } from '@fate/rules-engine';
+import Link from 'next/link';
 import styles from './page.module.css';
 
 const RUNGS = [8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2];
@@ -13,6 +14,12 @@ export default function Landing() {
           {term('aspect')}과 {term('fatePoint')}이 중심이 되는 기동형 페이트 전용 온라인
           테이블이에요.
         </p>
+        <div className={styles.ctas}>
+          <Link href="/try/" className={styles.primary}>
+            바로 해보기
+          </Link>
+          <span className={styles.soon}>방 만들기 · 곧 열려요</span>
+        </div>
         <ul className={styles.ladder} aria-label={term('ladder')}>
           {RUNGS.map((n) => (
             <li key={n} className={styles.rung}>

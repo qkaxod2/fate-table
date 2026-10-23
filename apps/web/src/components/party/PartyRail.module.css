@@ -1,0 +1,96 @@
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  border-top: 2px solid var(--gold);
+  background: var(--panel);
+}
+
+.head {
+  font-family: var(--f-num);
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--gold);
+}
+
+.member {
+  display: flex;
+  gap: var(--s-3);
+  align-items: center;
+  padding: var(--s-1) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.member:last-child {
+  border-bottom: 0;
+}
+
+.member[data-active] .name {
+  color: var(--gold-hi);
+}
+
+.member[data-out] {
+  opacity: 0.45;
+}
+
+.avatar {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  object-position: top;
+  border: 1px solid var(--gold);
+  background: var(--panel-s);
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.name {
+  font-family: var(--f-story);
+  font-weight: 700;
+  font-size: var(--fs-lg);
+}
+
+.status {
+  margin-left: var(--s-2);
+  font-family: var(--f-ui);
+  font-weight: 400;
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+.meters {
+  display: flex;
+  gap: var(--s-3);
+  align-items: center;
+}
+
+.stress {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.box {
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid var(--fg);
+  font-size: 9px;
+  color: transparent;
+}
+
+.box[data-used] {
+  background: var(--danger);
+  border-color: var(--danger);
+}
+
+.cons {
+  font-size: var(--fs-xs);
+  color: var(--k-consequence);
+}

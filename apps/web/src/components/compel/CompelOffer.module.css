@@ -1,0 +1,68 @@
+.offer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  max-width: 420px;
+  padding: var(--s-4);
+  border: 1px solid var(--hi);
+  background: var(--panel);
+  box-shadow: 0 0 40px -10px var(--hi);
+  animation: in 300ms var(--ease);
+}
+
+.head {
+  font-family: var(--f-num);
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--hi);
+}
+
+.text {
+  margin: 0;
+  font-family: var(--f-story);
+  font-size: var(--fs-lg);
+}
+
+.explain {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+.buttons {
+  display: flex;
+  gap: var(--s-2);
+  justify-content: flex-end;
+}
+
+.refuse,
+.accept {
+  padding: var(--s-2) var(--s-4);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.refuse {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--fg);
+}
+
+.refuse:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.accept {
+  border: 1px solid var(--gold-hi);
+  background: var(--gold);
+  color: var(--ink);
+}
+
+@keyframes in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}

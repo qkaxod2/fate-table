@@ -1,0 +1,127 @@
+.bar {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--s-3);
+  align-items: stretch;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(88px, 1fr));
+  gap: 4px;
+}
+
+.action,
+.approach {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--line);
+  background: var(--panel-s);
+  color: var(--fg);
+  font: inherit;
+  font-family: var(--f-story);
+  font-weight: 700;
+  font-size: var(--fs-lg);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.action[aria-checked='true'],
+.approach[aria-checked='true'] {
+  background: var(--gold);
+  color: var(--ink);
+  border-color: var(--gold-hi);
+}
+
+.action:disabled,
+.approach:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.num,
+.key {
+  font-family: var(--f-num);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  opacity: 0.75;
+}
+
+.approaches {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  align-content: start;
+}
+
+.approach {
+  font-size: var(--fs-md);
+}
+
+.rollCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-1);
+}
+
+.roll {
+  min-width: 112px;
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--gold-hi);
+  background: linear-gradient(180deg, var(--gold-hi), var(--gold));
+  color: var(--ink);
+  font: inherit;
+  font-family: var(--f-story);
+  font-weight: 700;
+  font-size: var(--fs-xl);
+  cursor: pointer;
+}
+
+.roll:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.space {
+  font-family: var(--f-num);
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--muted);
+}
+
+.hint {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: var(--s-2) var(--s-3);
+  background: var(--paper);
+  color: var(--ink);
+  border-left: 4px solid var(--gold);
+  font-size: var(--fs-sm);
+}
+
+@media (max-width: 760px) {
+  .bar {
+    grid-template-columns: 1fr;
+  }
+  .actions {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .action {
+    font-size: var(--fs-md);
+    padding: var(--s-2);
+  }
+  .rollCol {
+    flex-direction: row;
+  }
+  .roll {
+    flex: 1;
+  }
+  .space {
+    display: none;
+  }
+}
