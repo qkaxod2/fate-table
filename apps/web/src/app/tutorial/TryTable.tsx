@@ -88,10 +88,15 @@ function Picker({ onPick }: { onPick: (s: SampleCharacter) => void }) {
   const [chosen, setChosen] = useState<string | null>(null);
   const choose = (s: SampleCharacter) => {
     if (chosen) return;
-    if (reducedMotion()) return onPick(s);
+    // 좁은 화면에서는 카드를 고르려고 내려온 만큼 무대도 내려가 있으니 맨 위에서 시작한다
+    const go = () => {
+      onPick(s);
+      window.scrollTo(0, 0);
+    };
+    if (reducedMotion()) return go();
     setChosen(s.key);
     playSfx('token-flip', 0.35);
-    window.setTimeout(() => onPick(s), 560);
+    window.setTimeout(go, 560);
   };
   return (
     <main className={styles.picker} data-chosen={chosen ? '' : undefined}>
