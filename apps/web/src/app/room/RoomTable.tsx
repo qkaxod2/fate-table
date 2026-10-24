@@ -1219,7 +1219,8 @@ function DefendGrid({
           disabled={pending}
           onClick={() => onPick(a)}
         >
-          <kbd aria-hidden>{keys[i]!.toUpperCase()}</kbd> {term(a)} {defender.approaches[a] >= 0 ? '+' : ''}
+          <kbd aria-hidden>{keys[i]!.toUpperCase()}</kbd> {term(a)}{' '}
+          {defender.approaches[a] >= 0 ? '+' : ''}
           {defender.approaches[a]}
         </button>
       ))}
