@@ -36,7 +36,7 @@ import { CoachMark, type Coach } from '@/components/tutorial/CoachMark';
 import { BOSS, SAMPLE_CHARACTERS, SCENE, type SampleCharacter } from '@/content/oneshot';
 import { playSfx, setSfxEnabled, sfxEnabled, sfxForEvent, sfxForOutcome } from '@/fx/sfx';
 import { asset } from '@/lib/asset';
-import { Presence, revealOnNarrow } from '@/lib/motion';
+import { Presence, reducedMotion, revealOnNarrow } from '@/lib/motion';
 import { Typewriter } from '@/components/ui/Typewriter';
 import { describe, ERROR_COPY } from '@/lib/copy';
 import { LocalRoom } from '@/state/localRoom';
@@ -83,15 +83,30 @@ export function TryTable() {
 }
 
 function Picker({ onPick }: { onPick: (s: SampleCharacter) => void }) {
+  // 고른 카드가 앞으로 나서고 나머지가 물러난 뒤에 무대로 넘어간다
+  const [chosen, setChosen] = useState<string | null>(null);
+  const choose = (s: SampleCharacter) => {
+    if (chosen) return;
+    if (reducedMotion()) return onPick(s);
+    setChosen(s.key);
+    playSfx('token-flip', 0.35);
+    window.setTimeout(() => onPick(s), 560);
+  };
   return (
-    <main className={styles.picker}>
+    <main className={styles.picker} data-chosen={chosen ? '' : undefined}>
       <h1 className={styles.pickTitle}>누구로 플레이할까요?</h1>
       <p className={styles.pickLead}>
         샘플 캐릭터를 골라 5분 안에 첫 굴림까지 가 봐요. 규칙은 몰라도 괜찮아요.
       </p>
       <div className={styles.pickGrid}>
         {SAMPLE_CHARACTERS.map((s) => (
-          <button key={s.key} type="button" className={styles.pickCard} onClick={() => onPick(s)}>
+          <button
+            key={s.key}
+            type="button"
+            className={styles.pickCard}
+            data-chosen={chosen === s.key || undefined}
+            onClick={() => choose(s)}
+          >
             <img src={asset(s.image)} alt="" className={styles.pickImg} />
             <span className={styles.pickName}>{s.name}</span>
             <span className={styles.pickHigh}>{s.create.highConcept}</span>
