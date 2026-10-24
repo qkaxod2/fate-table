@@ -433,6 +433,20 @@
 }
 
 @media (max-width: 1100px) {
+  .top,
+  .topRight {
+    flex-wrap: wrap;
+  }
+  /* 한 줄로 쌓이는 화면에서는 굴림 패널이 길어져도 안에서 스크롤하지 않는다 */
+  .rollPanel {
+    max-height: none;
+    overflow: visible;
+    scroll-margin-top: var(--s-3);
+  }
+  /* 패널이 커질 때 위로 밀려 올라가지 않게 위에서부터 쌓는다 */
+  .center {
+    justify-content: flex-start;
+  }
   .body {
     grid-template-columns: 1fr;
   }

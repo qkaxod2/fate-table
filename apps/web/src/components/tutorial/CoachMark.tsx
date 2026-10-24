@@ -16,7 +16,7 @@ interface Props {
 /** 튜토리얼 단계 안내. 무대 가운데 위쪽에 크게 띄운다. */
 export function CoachMark({ coach, onHide }: Props) {
   return (
-    <div className={styles.coach} role="status" aria-live="polite">
+    <div className={styles.coach} role="status" aria-live="polite" data-coach>
       <div className={styles.head}>
         <span className={styles.step}>
           STEP {coach.step} / {coach.total}

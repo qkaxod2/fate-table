@@ -45,7 +45,7 @@ import { toast, Toaster } from '@/components/ui/Toast';
 import { playSfx, setSfxEnabled, sfxEnabled, sfxForEvent, sfxForOutcome } from '@/fx/sfx';
 import { ApiError } from '@/lib/api';
 import { asset } from '@/lib/asset';
-import { Presence } from '@/lib/motion';
+import { Presence, revealOnNarrow } from '@/lib/motion';
 import { Typewriter } from '@/components/ui/Typewriter';
 import { describe, ERROR_COPY, JUDGE } from '@/lib/copy';
 import { josa } from '@/lib/josa';
@@ -211,6 +211,10 @@ export function RoomTable({
   const roll = rollId ? state.rolls[rollId] : undefined;
   const rollKey = roll ? `${roll.id}:${roll.active.animSeed}:${roll.defense?.animSeed ?? ''}` : '';
   const settled = !!roll && settledKey === rollKey;
+  // 좁은 화면: 결과가 나오면 패널이 다시 보이게
+  useEffect(() => {
+    if (settled) revealOnNarrow(document.querySelector('[data-roll-panel]'));
+  }, [settled]);
   const activeChar = roll ? state.characters[roll.active.characterId] : undefined;
   // GM은 NPC 쪽만 대신 고른다. PC는 그 플레이어가 고르고, GM 화면에는 기다림 표시만 뜬다
   const [gmTakeOver, setGmTakeOver] = useState('');
@@ -757,7 +761,7 @@ export function RoomTable({
           )}
 
           {rolling && (
-            <div className={tryStyles.rollPanel} data-pending>
+            <div className={tryStyles.rollPanel} data-pending ref={revealOnNarrow}>
               <div className={tryStyles.sides}>
                 <div className={tryStyles.side}>
                   <div className={tryStyles.sideHead}>{rolling.head}</div>
@@ -799,7 +803,12 @@ export function RoomTable({
           )}
 
           {roll && !rolling && !isFolded && (
-            <div className={tryStyles.rollPanel} data-continued={quickKey === roll.id || undefined}>
+            <div
+              className={tryStyles.rollPanel}
+              data-continued={quickKey === roll.id || undefined}
+              ref={quickKey === roll.id ? undefined : revealOnNarrow}
+              data-roll-panel
+            >
               <div className={tryStyles.sides}>
                 <div className={tryStyles.side} data-fx="roll-dice">
                   <div className={tryStyles.sideHead}>

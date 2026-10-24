@@ -118,3 +118,19 @@ export function flyBadge(
     () => el.remove(),
   );
 }
+
+/**
+ * 한 줄로 쌓이는 좁은 화면에서는 굴리기 버튼이 맨 아래라 결과 패널이 화면 밖에 뜬다.
+ * 패널로 부드럽게 스크롤한다. 콜백 ref로 쓰거나(생길 때), 결과가 나왔을 때 다시 부른다.
+ * 위에 붙어 다니는 안내 카드가 있으면 그 아래에 오도록 맞춘다.
+ */
+export function revealOnNarrow(el: Element | null): void {
+  if (!el || !window.matchMedia('(max-width: 1100px)').matches) return;
+  // 같은 순간 사라지거나 나타나는 것(안내 카드 등)이 자리를 잡은 뒤에 위치를 잰다
+  window.setTimeout(() => {
+    if (!el.isConnected) return;
+    const coach = document.querySelector<HTMLElement>('[data-coach]');
+    const top = el.getBoundingClientRect().top + window.scrollY - (coach?.offsetHeight ?? 0) - 20;
+    window.scrollTo({ top, behavior: reducedMotion() ? 'auto' : 'smooth' });
+  }, EXIT_MS + 40);
+}

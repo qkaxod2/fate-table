@@ -114,6 +114,12 @@
     left: auto;
     transform: none;
     margin: 0 auto var(--s-4);
-    animation: none;
+    animation-name: coach-fade;
+  }
+}
+
+@keyframes coach-fade {
+  from {
+    opacity: 0;
   }
 }

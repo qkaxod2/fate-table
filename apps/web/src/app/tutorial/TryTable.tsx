@@ -36,7 +36,7 @@ import { CoachMark, type Coach } from '@/components/tutorial/CoachMark';
 import { BOSS, SAMPLE_CHARACTERS, SCENE, type SampleCharacter } from '@/content/oneshot';
 import { playSfx, setSfxEnabled, sfxEnabled, sfxForEvent, sfxForOutcome } from '@/fx/sfx';
 import { asset } from '@/lib/asset';
-import { Presence } from '@/lib/motion';
+import { Presence, revealOnNarrow } from '@/lib/motion';
 import { Typewriter } from '@/components/ui/Typewriter';
 import { describe, ERROR_COPY } from '@/lib/copy';
 import { LocalRoom } from '@/state/localRoom';
@@ -128,6 +128,10 @@ function Table({
   const [approach, setApproach] = useState<Approach | null>(null);
   const [rollId, setRollId] = useState<string | null>(null);
   const [settled, setSettled] = useState(false);
+  // 좁은 화면: 결과가 나오면 패널이 다시 보이게 (안내 카드가 위에 생겨도)
+  useEffect(() => {
+    if (settled) revealOnNarrow(document.querySelector('[data-roll-panel]'));
+  }, [settled]);
   const [selectedAspect, setSelectedAspect] = useState<string | null>(null);
   const [prompt, setPrompt] = useState<Prompt>(null);
   const [draft, setDraft] = useState('');
@@ -517,7 +521,7 @@ function Table({
           )}
 
           {roll && (
-            <div className={styles.rollPanel}>
+            <div className={styles.rollPanel} ref={revealOnNarrow} data-roll-panel>
               <div className={styles.sides}>
                 <div className={styles.side} data-fx="roll-dice">
                   <div className={styles.sideHead}>
