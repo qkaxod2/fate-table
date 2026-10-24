@@ -76,7 +76,7 @@ export function InvokeTray({
             className={styles.slot}
             data-selected={c.aspect.id === selectedId || undefined}
           >
-            {i < 9 && <kbd className={styles.key}>{i + 1}</kbd>}
+            {i < 9 && <kbd className={styles.key} aria-hidden>{i + 1}</kbd>}
             <AspectCard
               aspect={c.aspect}
               size="sm"
@@ -105,7 +105,7 @@ export function InvokeTray({
                 className={styles.ghost}
                 onClick={() => onInvoke(selected.aspect.id, 'reroll', paidWith)}
               >
-                <kbd className={styles.keyInline}>R</kbd> 다시 굴리기 · {cost}
+                <kbd className={styles.keyInline} aria-hidden>R</kbd> 다시 굴리기 · {cost}
                 {selected.reroll?.improveChance !== undefined && (
                   <small> ({Math.round(selected.reroll.improveChance * 100)}%로 나아짐)</small>
                 )}
@@ -115,12 +115,12 @@ export function InvokeTray({
                 className={styles.ghost}
                 onClick={() => onInvoke(selected.aspect.id, 'bonus', paidWith)}
               >
-                <kbd className={styles.keyInline}>F</kbd> +2 · {cost}
+                <kbd className={styles.keyInline} aria-hidden>F</kbd> +2 · {cost}
               </button>
             </>
           )}
           <button type="button" className={styles.primary} onClick={onFinalize}>
-            이대로 확정 <kbd className={styles.keyInline}>Enter</kbd>
+            이대로 확정 <kbd className={styles.keyInline} aria-hidden>Enter</kbd>
           </button>
         </div>
       </div>
