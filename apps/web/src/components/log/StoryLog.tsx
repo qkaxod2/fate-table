@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { LogLine } from '@/lib/copy';
+import { reducedMotion } from '@/lib/motion';
 import styles from './StoryLog.module.css';
 
 interface Props {
@@ -31,8 +32,12 @@ export function StoryLog({ lines, undone, onUndo, sending = [] }: Props) {
   const unread = byTab[other].filter((l) => l.seq > seen[other]).length;
 
   const end = useRef<HTMLDivElement>(null);
+  const lastTab = useRef(tab);
   useEffect(() => {
-    end.current?.scrollIntoView({ block: 'end' });
+    // 새 줄이 오면 부드럽게 따라 내려가고, 탭을 바꿨을 땐 바로 맨 아래로 간다
+    const jump = lastTab.current !== tab || reducedMotion();
+    lastTab.current = tab;
+    end.current?.scrollIntoView({ block: 'end', behavior: jump ? 'auto' : 'smooth' });
   }, [shown.length, tab, sending.length]);
 
   const open = (t: Tab) => {
@@ -53,7 +58,11 @@ export function StoryLog({ lines, undone, onUndo, sending = [] }: Props) {
             onClick={() => open(t)}
           >
             {t === 'story' ? 'STORY' : 'SYSTEM'}
-            {t === other && unread > 0 && <span className={styles.badge}>{unread}</span>}
+            {t === other && unread > 0 && (
+              <span key={unread} className={styles.badge}>
+                {unread}
+              </span>
+            )}
           </button>
         ))}
       </div>
