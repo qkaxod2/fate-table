@@ -29,6 +29,9 @@ export default function Landing() {
           <Link href="/join/" className={styles.soon}>
             초대 코드로 참가 →
           </Link>
+          <Link href="/gallery/" className={styles.soon}>
+            내 그림 →
+          </Link>
         </div>
         <div className={styles.myRooms}>
           <ClientOnly>
