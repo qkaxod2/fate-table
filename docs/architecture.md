@@ -619,7 +619,7 @@ export function resolve(state: RoomState, cmd: Command, actor: Actor, rng: Rng):
 - 한도: 방별 월 맞춤 효과음 30개(기본). 같은 설명·길이는 캐시.
 
 ## 9. 보안·운영
-- Auth: Supabase 익명 로그인으로 초대 링크만 열면 입장, 나중에 이메일 연결로 계정 유지.
+- Auth: Supabase 익명 로그인으로 초대 링크만 열면 입장, 나중에 이메일·구글 연결로 계정 유지 ([accounts.md](accounts.md)).
 - Rate limit: 명령 사용자당 초당 10건, 미디어 요청 분당 6건(Upstash 없이 Postgres 카운터로 시작).
 - 로그: 서버 오류는 Supabase 함수 로그, 명령 거부율·평균 처리 시간은 `events`로 집계 가능.
 - 백업: Supabase 일일 백업. 세션 내보내기(마크다운/JSON)로 사용자 쪽 보관도 가능.

@@ -1,6 +1,7 @@
 import { term } from '@fate/glossary';
 import { formatRating } from '@fate/rules-engine';
 import Link from 'next/link';
+import { AccountChip } from '@/components/account/AccountChip';
 import { ClientOnly } from '@/components/ui/ClientOnly';
 import { MyRoomsList } from './rooms/MyRoomsList';
 import styles from './page.module.css';
@@ -10,6 +11,9 @@ const RUNGS = [8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2];
 export default function Landing() {
   return (
     <main className={styles.main}>
+      <ClientOnly>
+        <AccountChip />
+      </ClientOnly>
       <section className={styles.hero}>
         <h1 className={styles.title}>운명점을 주고받는 테이블</h1>
         <p className={styles.lead}>
