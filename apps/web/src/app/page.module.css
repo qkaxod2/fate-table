@@ -80,3 +80,9 @@
   color: var(--muted);
   font-size: var(--fs-sm);
 }
+
+.myRooms {
+  width: min(440px, 100%);
+  margin: 0 auto var(--s-6);
+  text-align: left;
+}

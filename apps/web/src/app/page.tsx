@@ -1,6 +1,8 @@
 import { term } from '@fate/glossary';
 import { formatRating } from '@fate/rules-engine';
 import Link from 'next/link';
+import { ClientOnly } from '@/components/ui/ClientOnly';
+import { MyRoomsList } from './rooms/MyRoomsList';
 import styles from './page.module.css';
 
 const RUNGS = [8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2];
@@ -27,6 +29,11 @@ export default function Landing() {
           <Link href="/join/" className={styles.soon}>
             초대 코드로 참가 →
           </Link>
+        </div>
+        <div className={styles.myRooms}>
+          <ClientOnly>
+            <MyRoomsList limit={5} heading="내가 들어간 방" hideWhenEmpty />
+          </ClientOnly>
         </div>
         <ul className={styles.ladder} aria-label={term('ladder')}>
           {RUNGS.map((n) => (
