@@ -1,6 +1,7 @@
 'use client';
 
 import { term } from '@fate/glossary';
+import { EXPRESSIONS } from '@fate/portrait';
 import {
   APPROACHES,
   canInvoke,
@@ -38,6 +39,7 @@ import {
 } from '@/components/roll/DiceTray';
 import { InvokeTray, type InvokeChoice } from '@/components/roll/InvokeTray';
 import { OutcomeBanner } from '@/components/roll/OutcomeBanner';
+import { OUTCOME_FACES, pickFace, StageCast } from '@/components/scene/StageCast';
 import { toast, Toaster } from '@/components/ui/Toast';
 import { playSfx, setSfxEnabled, sfxEnabled, sfxForEvent, sfxForOutcome } from '@/fx/sfx';
 import { ApiError } from '@/lib/api';
@@ -46,6 +48,7 @@ import { describe, ERROR_COPY, JUDGE } from '@/lib/copy';
 import { josa } from '@/lib/josa';
 import type { RemoteRoom } from '@/state/remoteRoom';
 import tryStyles from '../tutorial/try.module.css';
+import { ArtDialog, type ArtOpen } from './ArtDialog';
 import { BringCharacter } from './BringCharacter';
 import { CharacterSheet } from './CharacterSheet';
 import { CommandPalette, roomCommands, ShortcutHelp } from './CommandPalette';
@@ -71,6 +74,7 @@ const LIGHT: ReadonlySet<Command['type']> = new Set([
   'token.move',
   'zone.update',
   'event.undo',
+  'character.expression',
 ]);
 
 /** GM이 한 일 중 알림에 "되돌리기"를 달아 주는 것 */
@@ -87,6 +91,7 @@ const DONE_COPY: Partial<Record<Command['type'], string>> = {
   'zone.add': '구역을 만들었어요',
   'zone.remove': '구역을 지웠어요',
   'gm.note': '메모를 남겼어요',
+  'media.attach': '그림을 바꿨어요',
 };
 
 const isTyping = (t: EventTarget | null) =>
@@ -551,6 +556,20 @@ export function RoomTable({
       chat: (t) => void sendChat(t),
     });
 
+  // ---------- 스탠딩 ----------
+  // 왼쪽: 굴리는 캐릭터 → 갈등 차례 → 내 캐릭터. 오른쪽: 굴림 상대
+  const showRoll = !!roll && !isFolded;
+  const castLeft = (showRoll ? activeChar : undefined) ?? turnChar ?? me ?? undefined;
+  const castRight = showRoll && roll?.targetId ? state.characters[roll.targetId] : undefined;
+  const faceShown = roll?.status === 'final' && settled && !isFolded && outcome;
+  const flip: Record<Outcome, Outcome> = {
+    style: 'fail',
+    success: 'fail',
+    tie: 'tie',
+    fail: 'success',
+  };
+  const [artOpen, setArtOpen] = useState<ArtOpen | null>(null);
+
   const overlayOpen = !!(prompt || (compel && state.aspects[compel.aspectId]) || damage || iDefend);
 
   return (
@@ -558,7 +577,7 @@ export function RoomTable({
       className={`${tryStyles.stage} ${styles.shell}`}
       data-call={myCall ?? undefined}
       style={{
-        backgroundImage: `linear-gradient(180deg, rgb(12 14 26 / .35), rgb(12 14 26 / .92)), url(${asset('/try/bg.jpg')})`,
+        backgroundImage: `linear-gradient(180deg, rgb(12 14 26 / .35), rgb(12 14 26 / .92)), url(${state.scene?.backgroundUrl ?? asset('/try/bg.jpg')})`,
       }}
     >
       <Toaster />
@@ -637,6 +656,7 @@ export function RoomTable({
           pending={pending}
           lastUndoable={lastUndoable}
           onOpen={setGmOpen}
+          onArt={() => setArtOpen({ tab: state.scene ? 'scene' : 'standing' })}
         />
       )}
 
@@ -691,9 +711,30 @@ export function RoomTable({
               }
             />
           </div>
-          {me?.portraitUrl && (
-            <img className={tryStyles.standee} src={me.portraitUrl} alt={me.name} />
-          )}
+          <StageCast
+            {...(castLeft
+              ? {
+                  left: {
+                    character: castLeft,
+                    focus: !castRight || roll?.status !== 'awaiting_defense',
+                    face:
+                      faceShown && castLeft.id === activeChar?.id
+                        ? pickFace(castLeft, OUTCOME_FACES[outcome])
+                        : null,
+                    portraitFallback: !castLeft.isNpc,
+                  },
+                }
+              : {})}
+            {...(castRight
+              ? {
+                  right: {
+                    character: castRight,
+                    focus: roll?.status === 'awaiting_defense',
+                    face: faceShown ? pickFace(castRight, OUTCOME_FACES[flip[outcome]]) : null,
+                  },
+                }
+              : {})}
+          />
 
           {waitingOn && (
             <div className={styles.waitChip}>
@@ -1082,6 +1123,21 @@ export function RoomTable({
           mine={!sheet.isNpc && sheet.ownerId === room.userId}
           pending={pending}
           onClose={() => setSheetId(null)}
+          onArt={() => {
+            setArtOpen({ tab: 'standing', characterId: sheet.id });
+            setSheetId(null);
+          }}
+        />
+      )}
+
+      {artOpen && (
+        <ArtDialog
+          open={artOpen}
+          state={state}
+          run={run}
+          isGm={isGm}
+          userId={room.userId}
+          onClose={() => setArtOpen(null)}
         />
       )}
 
@@ -1170,6 +1226,35 @@ export function RoomTable({
                         +{n} <small>{formatRating(n).split(' ')[0]}</small>
                       </button>
                     ))}
+              </div>
+            )}
+            {me.standing && Object.keys(me.standing).length > 1 && (
+              <div className={styles.chipRow} role="radiogroup" aria-label="표정">
+                <span className={styles.chipLabel}>표정</span>
+                {EXPRESSIONS.filter((e) => me.standing?.[e.id]).map((e) => {
+                  const on = (me.expression ?? 'neutral') === e.id;
+                  return (
+                    <button
+                      key={e.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={on}
+                      className={styles.face}
+                      onClick={() =>
+                        !on &&
+                        void run({
+                          type: 'character.expression',
+                          payload: {
+                            characterId: me.id,
+                            expression: e.id === 'neutral' ? null : e.id,
+                          },
+                        })
+                      }
+                    >
+                      {e.label}
+                    </button>
+                  );
+                })}
               </div>
             )}
             <ActionBar

@@ -648,6 +648,28 @@ const resolvers: Resolvers = {
     return one(ev('token.moved', a, p));
   },
 
+  'media.attach': (s, p, a) => {
+    if (p.kind === 'scene') {
+      if (a.role !== 'gm') throw new CommandError('FORBIDDEN_ROLE');
+      if (s.scene?.id !== p.target) throw new CommandError('NO_ACTIVE_SCENE');
+    } else controlled(s, a, p.target);
+    return one(
+      ev('media.attached', a, {
+        kind: p.kind,
+        target: p.target,
+        url: p.url,
+        ...(p.kind === 'standing' ? { expression: p.expression ?? 'neutral' } : {}),
+        ...(p.meta ? { meta: p.meta } : {}),
+      }),
+    );
+  },
+  'character.expression': (s, p, a) => {
+    const c = controlled(s, a, p.characterId);
+    if (p.expression && !c.standing?.[p.expression])
+      throw new CommandError('INVALID', 'no standing for this expression');
+    return one(ev('character.expression_set', a, p));
+  },
+
   'chat.post': (_s, p, a) => {
     if (p.as && a.role !== 'gm') throw new CommandError('FORBIDDEN_ROLE');
     return one(ev('chat.posted', a, p));

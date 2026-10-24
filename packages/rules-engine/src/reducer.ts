@@ -504,11 +504,37 @@ const handlers: Handlers = {
   'sfx.played': (s) => s,
   'media.attached': (s, p) => {
     if (p.kind === 'portrait')
-      return patchCharacter(s, p.target, (c) => ({ ...c, portraitAssetId: p.assetId }));
+      return patchCharacter(s, p.target, (c) => ({
+        ...c,
+        ...(p.assetId ? { portraitAssetId: p.assetId } : {}),
+        ...(p.url ? { portraitUrl: p.url } : {}),
+      }));
+    if (p.kind === 'standing' && p.url) {
+      const face = p.expression ?? 'neutral';
+      return patchCharacter(s, p.target, (c) => ({
+        ...c,
+        // 기본 스탠딩을 새로 그리면 예전 표정 차분은 버린다 (다른 그림이라 어긋난다)
+        standing: face === 'neutral' ? { neutral: p.url! } : { ...c.standing, [face]: p.url! },
+        ...(face === 'neutral' && p.meta ? { standingMeta: p.meta } : {}),
+      }));
+    }
     if (p.kind === 'scene' && s.scene?.id === p.target)
-      return { ...s, scene: { ...s.scene, backgroundAssetId: p.assetId } };
+      return {
+        ...s,
+        scene: {
+          ...s.scene,
+          ...(p.assetId ? { backgroundAssetId: p.assetId } : {}),
+          ...(p.url ? { backgroundUrl: p.url } : {}),
+        },
+      };
     return s;
   },
+  'character.expression_set': (s, p) =>
+    patchCharacter(s, p.characterId, (c) => {
+      if (p.expression) return { ...c, expression: p.expression };
+      const { expression: _gone, ...rest } = c;
+      return rest;
+    }),
   // 되돌리기는 replay()가 처리한다. 단일 이벤트 적용으로는 바뀌는 것이 없다.
   'event.undone': (s) => s,
 };

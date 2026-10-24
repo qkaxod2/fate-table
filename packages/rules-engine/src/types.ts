@@ -46,8 +46,20 @@ export interface Character {
   consequences: Partial<Record<ConsequenceSlot, ConsequenceState>>;
   portraitAssetId?: string;
   portraitUrl?: string;
+  /** 라이트노벨풍 스탠딩: 표정 id → 투명 PNG URL. 'neutral'이 기본 */
+  standing?: Record<string, string>;
+  /** 지금 무대에서 짓고 있는 표정 */
+  expression?: string;
+  /** 기본 스탠딩을 그린 설정. 표정 차분을 같은 결로 그릴 때 쓴다 */
+  standingMeta?: MediaMeta;
   milestone?: 'minor' | 'significant' | 'major';
   takenOut?: boolean;
+}
+
+export interface MediaMeta {
+  presetId: string;
+  prompt: string;
+  seed: number;
 }
 
 export interface Aspect {
@@ -103,6 +115,7 @@ export interface Scene {
   pcIds: string[];
   zones: Record<string, Zone>;
   backgroundAssetId?: string;
+  backgroundUrl?: string;
 }
 
 export interface Compel {

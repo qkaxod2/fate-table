@@ -113,6 +113,10 @@ button:disabled {
   box-shadow: 0 20px 60px rgb(0 0 0 / 0.6);
 }
 
+.modal[data-wide] {
+  width: min(100%, 760px);
+}
+
 .modalHead {
   display: flex;
   align-items: center;

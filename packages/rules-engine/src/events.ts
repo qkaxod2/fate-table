@@ -5,6 +5,7 @@ import type {
   Character,
   ConsequenceSlot,
   Dice,
+  MediaMeta,
   Modifier,
   Outcome,
   Role,
@@ -128,7 +129,15 @@ export interface EventPayloads {
   'gm.note': { text: string };
   'narration.posted': { text: string };
   'sfx.played': { assetId: string };
-  'media.attached': { assetId: string; kind: string; target: string };
+  'media.attached': {
+    assetId?: string;
+    kind: string;
+    target: string;
+    url?: string;
+    expression?: string;
+    meta?: MediaMeta;
+  };
+  'character.expression_set': { characterId: string; expression: string | null };
   /** 한 명령이 만든 이벤트를 함께 되돌린다. 되돌리기를 되돌리면 다시 하기가 된다. */
   'event.undone': { seqs: number[]; reason?: string };
 }

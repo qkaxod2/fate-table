@@ -147,6 +147,26 @@ export const CommandSchema = z.discriminatedUnion('type', [
   cmd('zone.remove', { zoneId: id }),
   cmd('token.move', { characterId: id, zoneId: id.nullable() }),
 
+  cmd('media.attach', {
+    kind: z.enum(['portrait', 'standing', 'scene']),
+    /** 캐릭터 id 또는 장면 id */
+    target: id,
+    url: z.string().url().max(500),
+    /** 스탠딩일 때 어떤 표정인지 (없으면 기본) */
+    expression: z.string().min(1).max(24).optional(),
+    meta: z
+      .object({
+        presetId: z.string().min(1).max(24),
+        prompt: z.string().max(1000),
+        seed: z.number().int().min(0).max(4294967295),
+      })
+      .optional(),
+  }),
+  cmd('character.expression', {
+    characterId: id,
+    expression: z.string().min(1).max(24).nullable(),
+  }),
+
   cmd('chat.post', { text: z.string().trim().min(1).max(2000), as: text.optional() }),
   cmd('gm.note', { text: z.string().trim().min(1).max(4000) }),
   cmd('narration.post', { text: z.string().trim().min(1).max(4000) }),

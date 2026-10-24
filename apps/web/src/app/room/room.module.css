@@ -648,6 +648,23 @@ main.shell {
   font-weight: 700;
 }
 
+.face {
+  padding: 2px var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel-s);
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.face[aria-checked='true'] {
+  border-color: var(--gold);
+  background: rgb(214 182 110 / 0.16);
+  color: var(--gold-hi);
+}
+
 .who[data-turn] {
   box-shadow: 0 0 0 2px var(--hi);
 }
