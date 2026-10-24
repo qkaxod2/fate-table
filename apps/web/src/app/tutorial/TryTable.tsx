@@ -432,7 +432,7 @@ function Table({
     );
     return () => clearTimeout(t);
   }, [outcomeKey]);
-  const showBoss = roll?.targetId === bossId || action === 'attack';
+  const showBoss = roll?.targetId === bossId || action === 'attack' || boss.takenOut === true;
 
   return (
     <main
@@ -511,6 +511,7 @@ function Table({
               className={styles.bossStandee}
               src={asset(SCENE.bossImage)}
               alt={boss.name}
+              data-out={boss.takenOut || undefined}
               data-hit={
                 (final &&
                   roll?.action === 'attack' &&

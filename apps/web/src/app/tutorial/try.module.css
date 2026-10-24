@@ -511,6 +511,41 @@
   }
 }
 
+/* 쓰러지면: 한 번 더 번쩍인 뒤 기울며 주저앉고 빛이 빠진다. 끝난 모습은 그대로 남는다 */
+.bossStandee[data-out] {
+  opacity: 0.28;
+  filter: grayscale(1) brightness(0.7);
+  translate: 0 28px;
+  rotate: 4deg;
+  animation:
+    slide-in-flip var(--dur-scene) var(--ease-out) backwards,
+    boss-down 1.1s var(--ease-in-out) backwards;
+}
+
+.bossStandee[data-hit][data-out] {
+  animation:
+    slide-in-flip var(--dur-scene) var(--ease-out) backwards,
+    hit 520ms var(--ease-out),
+    boss-down 1.1s var(--ease-in-out) backwards;
+}
+
+@keyframes boss-down {
+  0% {
+    opacity: 1;
+    filter: brightness(1) drop-shadow(0 10px 30px rgb(0 0 0 / 0.6));
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  12% {
+    filter: brightness(2.4) saturate(0.2) drop-shadow(0 0 30px rgb(255 240 200 / 0.8));
+  }
+  30% {
+    opacity: 1;
+    translate: 6px -6px;
+    rotate: -1deg;
+  }
+}
+
 .top,
 .left,
 .right,
@@ -553,6 +588,7 @@
   .standee,
   .bossStandee,
   .bossStandee[data-hit],
+  .bossStandee[data-out],
   .top,
   .left,
   .right,
