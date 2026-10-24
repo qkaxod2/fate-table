@@ -36,6 +36,7 @@ import { CoachMark, type Coach } from '@/components/tutorial/CoachMark';
 import { BOSS, SAMPLE_CHARACTERS, SCENE, type SampleCharacter } from '@/content/oneshot';
 import { playSfx, setSfxEnabled, sfxEnabled, sfxForEvent, sfxForOutcome } from '@/fx/sfx';
 import { asset } from '@/lib/asset';
+import { Presence } from '@/lib/motion';
 import { describe, ERROR_COPY } from '@/lib/copy';
 import { LocalRoom } from '@/state/localRoom';
 import styles from './try.module.css';
@@ -494,9 +495,11 @@ function Table({
         </div>
 
         <div className={styles.center}>
-          {coach && !coachHidden && (
-            <CoachMark key={coach.step} coach={coach} onHide={() => setCoachHidden(true)} />
-          )}
+          <Presence show={!!(coach && !coachHidden)}>
+            {coach && !coachHidden && (
+              <CoachMark key={coach.step} coach={coach} onHide={() => setCoachHidden(true)} />
+            )}
+          </Presence>
           <img className={styles.standee} src={asset(pick.image)} alt={pick.name} />
           {showBoss && (
             <img className={styles.bossStandee} src={asset(SCENE.bossImage)} alt={boss.name} />
@@ -505,7 +508,7 @@ function Table({
           {roll && (
             <div className={styles.rollPanel}>
               <div className={styles.sides}>
-                <div className={styles.side}>
+                <div className={styles.side} data-fx="roll-dice">
                   <div className={styles.sideHead}>
                     {me.name} · {term(roll.action)} · {term(roll.active.approach)}{' '}
                     {roll.active.rating >= 0 ? '+' : ''}
@@ -519,7 +522,7 @@ function Table({
                     onSettled={() => setSettled(true)}
                   />
                   {roll.active.dice && settled && result && (
-                    <div className={styles.total} key={result.total}>
+                    <div className={styles.total} key={result.total} data-fx="roll-total">
                       {result.total >= 0 ? '+' : ''}
                       {result.total} <small>{formatRating(result.total).split(' ')[0]}</small>
                       {roll.active.modifiers.length > 0 && (
@@ -596,65 +599,73 @@ function Table({
             </div>
           )}
 
-          {compel && (
-            <div className={styles.overlay}>
-              <CompelOffer
-                aspect={state.aspects[compel.aspectId]!}
-                text={compel.text}
-                fatePoints={me.fatePoints}
-                onAccept={() =>
-                  run(ME, {
-                    type: 'compel.respond',
-                    payload: { compelId: compel.id, accept: true },
-                  })
-                }
-                onRefuse={() =>
-                  run(ME, {
-                    type: 'compel.respond',
-                    payload: { compelId: compel.id, accept: false },
-                  })
-                }
-              />
-            </div>
-          )}
-
-          {prompt && (
-            <div className={styles.overlay}>
-              <form
-                className={styles.prompt}
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  submitPrompt();
-                }}
-              >
-                <div className={styles.promptHead}>
-                  {prompt.kind === 'aspect'
-                    ? `새 ${term('aspect')} 이름 짓기 · ${term('freeInvoke')} ${prompt.freeInvokes}`
-                    : `${term('boost')} 이름 짓기`}
-                </div>
-                <p className={styles.promptHelp}>
-                  {prompt.kind === 'aspect'
-                    ? '장면에 새로 생긴 사실을 짧은 문구로 적어요. 예: "연기에 가려진 뒷문"'
-                    : '한 번 쓰고 사라지는 순간의 기회예요. 예: "흔들리는 발판"'}
-                </p>
-                <input
-                  autoFocus
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  maxLength={40}
-                  className={styles.promptInput}
+          <Presence show={!!compel}>
+            {compel && (
+              <div className={styles.overlay}>
+                <CompelOffer
+                  aspect={state.aspects[compel.aspectId]!}
+                  text={compel.text}
+                  fatePoints={me.fatePoints}
+                  onAccept={() =>
+                    run(ME, {
+                      type: 'compel.respond',
+                      payload: { compelId: compel.id, accept: true },
+                    })
+                  }
+                  onRefuse={() =>
+                    run(ME, {
+                      type: 'compel.respond',
+                      payload: { compelId: compel.id, accept: false },
+                    })
+                  }
                 />
-                <div className={styles.promptButtons}>
-                  <button type="button" onClick={() => setPrompt(null)} className={styles.restart}>
-                    건너뛰기
-                  </button>
-                  <button type="submit" className={styles.promptOk} disabled={!draft.trim()}>
-                    붙이기
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
+              </div>
+            )}
+          </Presence>
+
+          <Presence show={!!prompt}>
+            {prompt && (
+              <div className={styles.overlay}>
+                <form
+                  className={styles.prompt}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    submitPrompt();
+                  }}
+                >
+                  <div className={styles.promptHead}>
+                    {prompt.kind === 'aspect'
+                      ? `새 ${term('aspect')} 이름 짓기 · ${term('freeInvoke')} ${prompt.freeInvokes}`
+                      : `${term('boost')} 이름 짓기`}
+                  </div>
+                  <p className={styles.promptHelp}>
+                    {prompt.kind === 'aspect'
+                      ? '장면에 새로 생긴 사실을 짧은 문구로 적어요. 예: "연기에 가려진 뒷문"'
+                      : '한 번 쓰고 사라지는 순간의 기회예요. 예: "흔들리는 발판"'}
+                  </p>
+                  <input
+                    autoFocus
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    maxLength={40}
+                    className={styles.promptInput}
+                  />
+                  <div className={styles.promptButtons}>
+                    <button
+                      type="button"
+                      onClick={() => setPrompt(null)}
+                      className={styles.restart}
+                    >
+                      건너뛰기
+                    </button>
+                    <button type="submit" className={styles.promptOk} disabled={!draft.trim()}>
+                      붙이기
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+          </Presence>
         </div>
 
         <div className={styles.right}>

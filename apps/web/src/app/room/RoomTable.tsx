@@ -44,6 +44,7 @@ import { toast, Toaster } from '@/components/ui/Toast';
 import { playSfx, setSfxEnabled, sfxEnabled, sfxForEvent, sfxForOutcome } from '@/fx/sfx';
 import { ApiError } from '@/lib/api';
 import { asset } from '@/lib/asset';
+import { Presence } from '@/lib/motion';
 import { describe, ERROR_COPY, JUDGE } from '@/lib/copy';
 import { josa } from '@/lib/josa';
 import type { RemoteRoom } from '@/state/remoteRoom';
@@ -793,7 +794,7 @@ export function RoomTable({
           {roll && !rolling && !isFolded && (
             <div className={tryStyles.rollPanel} data-continued={quickKey === roll.id || undefined}>
               <div className={tryStyles.sides}>
-                <div className={tryStyles.side}>
+                <div className={tryStyles.side} data-fx="roll-dice">
                   <div className={tryStyles.sideHead}>
                     {activeChar?.name} · {term(roll.action)} · {term(roll.active.approach)}{' '}
                     {roll.active.rating >= 0 ? '+' : ''}
@@ -812,7 +813,7 @@ export function RoomTable({
                     />
                   )}
                   {roll.active.dice && settled && result && (
-                    <div className={tryStyles.total} key={result.total}>
+                    <div className={tryStyles.total} key={result.total} data-fx="roll-total">
                       {result.total >= 0 ? '+' : ''}
                       {result.total} <small>{formatRating(result.total).split(' ')[0]}</small>
                       {roll.active.modifiers.length > 0 && (
@@ -897,111 +898,119 @@ export function RoomTable({
             </div>
           )}
 
-          {iDefend && defender && roll && (
-            <div className={tryStyles.overlay}>
-              <div className={tryStyles.prompt}>
-                <div className={tryStyles.promptHead}>
-                  {activeChar?.name}의 {term(roll.action)}! {josa(defender.name, '은/는')} 어떻게
-                  막을까요?
+          <Presence show={!!(iDefend && defender && roll)}>
+            {iDefend && defender && roll && (
+              <div className={tryStyles.overlay}>
+                <div className={tryStyles.prompt}>
+                  <div className={tryStyles.promptHead}>
+                    {activeChar?.name}의 {term(roll.action)}! {josa(defender.name, '은/는')} 어떻게
+                    막을까요?
+                  </div>
+                  <p className={tryStyles.promptHelp}>
+                    {term('defend')}에 쓸 {term('approach')}을 골라요. 두 결과가 동시에 공개돼요.
+                    <br />
+                    <small>키보드 Q W E / A S D</small>
+                  </p>
+                  <DefendGrid
+                    defender={defender}
+                    pending={pending}
+                    onPick={(a) => {
+                      rollSound();
+                      void run({ type: 'roll.defend', payload: { rollId: roll.id, approach: a } });
+                    }}
+                  />
                 </div>
-                <p className={tryStyles.promptHelp}>
-                  {term('defend')}에 쓸 {term('approach')}을 골라요. 두 결과가 동시에 공개돼요.
-                  <br />
-                  <small>키보드 Q W E / A S D</small>
-                </p>
-                <DefendGrid
-                  defender={defender}
-                  pending={pending}
-                  onPick={(a) => {
-                    rollSound();
-                    void run({ type: 'roll.defend', payload: { rollId: roll.id, approach: a } });
-                  }}
+              </div>
+            )}
+          </Presence>
+
+          <Presence show={!!(compel && state.aspects[compel.aspectId])}>
+            {compel && state.aspects[compel.aspectId] && (
+              <div className={tryStyles.overlay}>
+                <CompelOffer
+                  aspect={state.aspects[compel.aspectId] as Aspect}
+                  text={compel.text}
+                  fatePoints={
+                    state.characters[compel.targetId]?.isNpc
+                      ? state.gmPool
+                      : (state.characters[compel.targetId]?.fatePoints ?? 0)
+                  }
+                  onAccept={() =>
+                    void run({
+                      type: 'compel.respond',
+                      payload: { compelId: compel.id, accept: true },
+                    })
+                  }
+                  onRefuse={() =>
+                    void run({
+                      type: 'compel.respond',
+                      payload: { compelId: compel.id, accept: false },
+                    })
+                  }
                 />
               </div>
-            </div>
-          )}
+            )}
+          </Presence>
 
-          {compel && state.aspects[compel.aspectId] && (
-            <div className={tryStyles.overlay}>
-              <CompelOffer
-                aspect={state.aspects[compel.aspectId] as Aspect}
-                text={compel.text}
-                fatePoints={
-                  state.characters[compel.targetId]?.isNpc
-                    ? state.gmPool
-                    : (state.characters[compel.targetId]?.fatePoints ?? 0)
-                }
-                onAccept={() =>
-                  void run({
-                    type: 'compel.respond',
-                    payload: { compelId: compel.id, accept: true },
-                  })
-                }
-                onRefuse={() =>
-                  void run({
-                    type: 'compel.respond',
-                    payload: { compelId: compel.id, accept: false },
-                  })
-                }
-              />
-            </div>
-          )}
-
-          {damage && !compel && (
-            <div className={tryStyles.overlay}>
-              <DamagePrompt
-                damage={damage}
-                character={state.characters[damage.targetId]!}
-                run={run}
-                pending={pending}
-              />
-            </div>
-          )}
-
-          {prompt && (
-            <div className={tryStyles.overlay}>
-              <form
-                className={tryStyles.prompt}
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  submitPrompt();
-                }}
-              >
-                <div className={tryStyles.promptHead}>
-                  {prompt.kind === 'aspect'
-                    ? `새 ${term('aspect')} 이름 짓기 · ${term('freeInvoke')} ${prompt.freeInvokes}`
-                    : `${term('boost')} 이름 짓기`}
-                </div>
-                <p className={tryStyles.promptHelp}>
-                  {prompt.kind === 'aspect'
-                    ? '장면에 새로 생긴 사실을 짧은 문구로 적어요.'
-                    : '한 번 쓰고 사라지는 순간의 기회예요.'}
-                </p>
-                <input
-                  autoFocus
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Escape') setPrompt(null);
-                  }}
-                  maxLength={40}
-                  className={tryStyles.promptInput}
+          <Presence show={!!(damage && !compel)}>
+            {damage && !compel && (
+              <div className={tryStyles.overlay}>
+                <DamagePrompt
+                  damage={damage}
+                  character={state.characters[damage.targetId]!}
+                  run={run}
+                  pending={pending}
                 />
-                <div className={tryStyles.promptButtons}>
-                  <button
-                    type="button"
-                    onClick={() => setPrompt(null)}
-                    className={tryStyles.restart}
-                  >
-                    건너뛰기 <kbd aria-hidden>Esc</kbd>
-                  </button>
-                  <button type="submit" className={tryStyles.promptOk} disabled={!draft.trim()}>
-                    붙이기 <kbd aria-hidden>Enter</kbd>
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
+              </div>
+            )}
+          </Presence>
+
+          <Presence show={!!prompt}>
+            {prompt && (
+              <div className={tryStyles.overlay}>
+                <form
+                  className={tryStyles.prompt}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    submitPrompt();
+                  }}
+                >
+                  <div className={tryStyles.promptHead}>
+                    {prompt.kind === 'aspect'
+                      ? `새 ${term('aspect')} 이름 짓기 · ${term('freeInvoke')} ${prompt.freeInvokes}`
+                      : `${term('boost')} 이름 짓기`}
+                  </div>
+                  <p className={tryStyles.promptHelp}>
+                    {prompt.kind === 'aspect'
+                      ? '장면에 새로 생긴 사실을 짧은 문구로 적어요.'
+                      : '한 번 쓰고 사라지는 순간의 기회예요.'}
+                  </p>
+                  <input
+                    autoFocus
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') setPrompt(null);
+                    }}
+                    maxLength={40}
+                    className={tryStyles.promptInput}
+                  />
+                  <div className={tryStyles.promptButtons}>
+                    <button
+                      type="button"
+                      onClick={() => setPrompt(null)}
+                      className={tryStyles.restart}
+                    >
+                      건너뛰기 <kbd aria-hidden>Esc</kbd>
+                    </button>
+                    <button type="submit" className={tryStyles.promptOk} disabled={!draft.trim()}>
+                      붙이기 <kbd aria-hidden>Enter</kbd>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+          </Presence>
         </div>
 
         <div className={`${tryStyles.right} ${styles.right}`}>

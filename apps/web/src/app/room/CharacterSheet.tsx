@@ -19,6 +19,7 @@ import { AspectCard } from '@/components/aspect/AspectCard';
 import { FatePointToken } from '@/components/fate/FatePointToken';
 import styles from './CharacterSheet.module.css';
 import { josa } from '@/lib/josa';
+import { useClosing } from '@/lib/motion';
 
 interface Props {
   character: Character;
@@ -50,6 +51,7 @@ export function CharacterSheet({
   onClose,
   onArt,
 }: Props) {
+  const [closing, close] = useClosing(onClose);
   const aspects = Object.values(state.aspects).filter(
     (a) => a.ownerType === 'character' && a.ownerId === c.id && (!a.hidden || isGm),
   );
@@ -70,7 +72,7 @@ export function CharacterSheet({
     JSON.stringify(stunts) !== JSON.stringify(c.stunts);
 
   return (
-    <div className={styles.backdrop} onClick={onClose}>
+    <div className={styles.backdrop} data-closing={closing || undefined} onClick={close}>
       <article
         className={styles.sheet}
         role="dialog"
@@ -123,7 +125,7 @@ export function CharacterSheet({
               </p>
             )}
           </div>
-          <button type="button" className={styles.close} onClick={onClose} aria-label="닫기">
+          <button type="button" className={styles.close} onClick={close} aria-label="닫기">
             ×
           </button>
         </header>

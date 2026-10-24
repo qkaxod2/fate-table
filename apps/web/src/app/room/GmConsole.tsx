@@ -11,6 +11,7 @@ import {
 import { useState, type ReactNode } from 'react';
 import { AspectCard } from '@/components/aspect/AspectCard';
 import { FatePointToken } from '@/components/fate/FatePointToken';
+import { useClosing } from '@/lib/motion';
 import styles from './GmConsole.module.css';
 
 type Run = (cmd: Command) => Promise<RoomEvent[]>;
@@ -268,8 +269,9 @@ export function Modal({
   children: ReactNode;
   wide?: boolean;
 }) {
+  const [closing, close] = useClosing(onClose);
   return (
-    <div className={styles.backdrop} onClick={onClose}>
+    <div className={styles.backdrop} data-closing={closing || undefined} onClick={close}>
       <section
         className={styles.modal}
         data-wide={wide || undefined}
@@ -277,12 +279,12 @@ export function Modal({
         aria-label={title}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
-          if (e.key === 'Escape') onClose();
+          if (e.key === 'Escape') close();
         }}
       >
         <header className={styles.modalHead}>
           <h2>{title}</h2>
-          <button type="button" className={styles.close} onClick={onClose} aria-label="닫기">
+          <button type="button" className={styles.close} onClick={close} aria-label="닫기">
             ×
           </button>
         </header>

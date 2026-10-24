@@ -2,7 +2,8 @@
 
 import { term } from '@fate/glossary';
 import type { Aspect, InvokeMode, InvokePreview, PaidWith } from '@fate/rules-engine';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { flyBadge } from '@/lib/motion';
 import { AspectCard } from '../aspect/AspectCard';
 import { FatePointToken } from '../fate/FatePointToken';
 import styles from './InvokeTray.module.css';
@@ -39,6 +40,31 @@ export function InvokeTray({
   const selected = choices.find((c) => c.aspect.id === selectedId && !c.blocked);
   const paidWith: PaidWith = selected?.aspect.freeInvokes ? 'free_invoke' : 'fate_point';
   const cost = paidWith === 'free_invoke' ? term('freeInvoke') : `${term('fatePoint')} 1`;
+  const fp = useRef<HTMLSpanElement>(null);
+  const [firing, setFiring] = useState<string | null>(null);
+
+  /**
+   * 발동하는 순간: 운명점 토큰이 카드로 날아가 꽂히고, 카드가 들리며 +2가 합계로 날아간다
+   * (다시 굴리기는 주사위로). 다 날아간 뒤에 명령을 보낸다. 날아가는 동안 다시 누르면 무시한다.
+   */
+  const invoke = (aspectId: string, mode: InvokeMode) => {
+    if (firing) return;
+    setFiring(aspectId);
+    const slot = document.querySelector(`[data-invoke-slot="${CSS.escape(aspectId)}"]`);
+    const target = document.querySelector(
+      mode === 'bonus' ? '[data-fx="roll-total"]' : '[data-fx="roll-dice"]',
+    );
+    const pay =
+      paidWith === 'fate_point'
+        ? flyBadge(fp.current, slot, '◆', { duration: 300, className: 'fx-badge fx-token' })
+        : Promise.resolve();
+    void pay
+      .then(() => flyBadge(slot, target, mode === 'bonus' ? '+2' : '↻', { duration: 420 }))
+      .then(() => {
+        setFiring(null);
+        onInvoke(aspectId, mode, paidWith);
+      });
+  };
 
   // 숫자로 카드 고르기, F +2, R 다시 굴리기, Enter 확정
   useEffect(() => {
@@ -53,8 +79,8 @@ export function InvokeTray({
         return;
       }
       const k = e.key.toLowerCase();
-      if (selected && k === 'f') onInvoke(selected.aspect.id, 'bonus', paidWith);
-      else if (selected && k === 'r') onInvoke(selected.aspect.id, 'reroll', paidWith);
+      if (selected && k === 'f') invoke(selected.aspect.id, 'bonus');
+      else if (selected && k === 'r') invoke(selected.aspect.id, 'reroll');
       else if (e.key === 'Enter' && !e.repeat) {
         e.preventDefault();
         onFinalize();
@@ -62,7 +88,9 @@ export function InvokeTray({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [choices, selected, paidWith, onSelect, onInvoke, onFinalize]);
+    // invoke는 매번 새로 만들어지지만 쓰는 값(selected, paidWith, firing)은 여기 다 들어 있다
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [choices, selected, paidWith, firing, onSelect, onInvoke, onFinalize]);
 
   return (
     <div className={styles.tray}>
@@ -74,7 +102,9 @@ export function InvokeTray({
           <div
             key={c.aspect.id}
             className={styles.slot}
+            data-invoke-slot={c.aspect.id}
             data-selected={c.aspect.id === selectedId || undefined}
+            data-firing={c.aspect.id === firing || undefined}
           >
             {i < 9 && (
               <kbd className={styles.key} aria-hidden>
@@ -99,7 +129,10 @@ export function InvokeTray({
       </div>
       <div className={styles.foot}>
         <span className={styles.fp}>
-          내 {term('fatePoint')} <FatePointToken count={fatePoints} />
+          내 {term('fatePoint')}{' '}
+          <span ref={fp}>
+            <FatePointToken count={fatePoints} />
+          </span>
         </span>
         <div className={styles.buttons}>
           {selected && (
@@ -107,7 +140,8 @@ export function InvokeTray({
               <button
                 type="button"
                 className={styles.ghost}
-                onClick={() => onInvoke(selected.aspect.id, 'reroll', paidWith)}
+                disabled={!!firing}
+                onClick={() => invoke(selected.aspect.id, 'reroll')}
               >
                 <kbd className={styles.keyInline} aria-hidden>
                   R
@@ -120,7 +154,8 @@ export function InvokeTray({
               <button
                 type="button"
                 className={styles.ghost}
-                onClick={() => onInvoke(selected.aspect.id, 'bonus', paidWith)}
+                disabled={!!firing}
+                onClick={() => invoke(selected.aspect.id, 'bonus')}
               >
                 <kbd className={styles.keyInline} aria-hidden>
                   F

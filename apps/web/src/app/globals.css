@@ -59,6 +59,66 @@ kbd {
   font-family: var(--f-num);
 }
 
+/*
+ * 사라지는 쪽 (lib/motion.tsx). 창이 스스로 닫히면 data-closing, 조건이 꺼져서 사라지면
+ * data-leaving 래퍼가 붙는다. 들어올 때보다 짧고, 천천히 출발해 빨리 사라진다.
+ * 모듈 CSS의 들어오는 애니메이션보다 이겨야 해서 속성을 두 번 써서 특이도를 올린다.
+ */
+[data-closing][data-closing],
+[data-leaving][data-leaving] > * {
+  animation: leave-fade var(--dur-exit) var(--ease-in) forwards;
+  pointer-events: none;
+}
+
+[data-closing][data-closing] > *,
+[data-leaving][data-leaving] > * > * {
+  animation: leave-drop var(--dur-exit) var(--ease-in) forwards;
+}
+
+@keyframes leave-fade {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes leave-drop {
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+/* 발동 +2처럼 화면 위를 날아가는 배지 (flyBadge) */
+.fx-badge {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 80;
+  padding: 2px 10px;
+  border: 1px solid var(--gold-hi);
+  border-radius: var(--r-token);
+  background: linear-gradient(180deg, var(--gold-hi), var(--gold));
+  box-shadow:
+    0 0 18px rgb(240 220 160 / 0.7),
+    0 6px 16px rgb(0 0 0 / 0.5);
+  color: var(--ink);
+  font-family: var(--f-pop);
+  font-size: var(--fs-lg);
+  font-weight: 800;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.fx-token {
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--gold-hi);
+  font-size: var(--fs-md);
+  text-shadow: 0 0 10px var(--gold-hi);
+  box-shadow: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   button:not(:disabled):active {
     scale: none;

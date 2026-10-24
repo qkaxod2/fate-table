@@ -9,6 +9,7 @@ import {
   type RoomState,
 } from '@fate/rules-engine';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useClosing } from '@/lib/motion';
 import type { GmOpen } from './GmConsole';
 import styles from './CommandPalette.module.css';
 
@@ -242,6 +243,7 @@ export function CommandPalette({
   onClose: () => void;
 }) {
   const entries = build();
+  const [closing, close] = useClosing(onClose);
   const [input, setInput] = useState('');
   const [index, setIndex] = useState(0);
   const field = useRef<HTMLInputElement>(null);
@@ -264,11 +266,11 @@ export function CommandPalette({
   const exec = (e: PaletteEntry) => {
     const exactHead = e.words.some((w) => w.toLowerCase() === head.toLowerCase());
     void e.act(exactHead ? rest : '');
-    onClose();
+    close();
   };
 
   return (
-    <div className={styles.backdrop} onMouseDown={onClose}>
+    <div className={styles.backdrop} data-closing={closing || undefined} onMouseDown={close}>
       <div
         className={styles.box}
         role="dialog"
@@ -286,7 +288,7 @@ export function CommandPalette({
           }}
           onKeyDown={(e) => {
             if (e.nativeEvent.isComposing) return;
-            if (e.key === 'Escape') onClose();
+            if (e.key === 'Escape') close();
             else if (e.key === 'ArrowDown') {
               e.preventDefault();
               setIndex((i) => (i + 1) % Math.max(matches.length, 1));
@@ -334,6 +336,7 @@ export function CommandPalette({
 
 /** ? 단축키 목록 */
 export function ShortcutHelp({ isGm, onClose }: { isGm: boolean; onClose: () => void }) {
+  const [closing, close] = useClosing(onClose);
   const rows: Array<[string[], string]> = [
     [['Ctrl', 'K'], '명령 창 열기 (/ 도 돼요)'],
     [['1', '–', '4'], '행동 고르기 (극복 · 이점 창출 · 공격 · 방어)'],
@@ -347,7 +350,7 @@ export function ShortcutHelp({ isGm, onClose }: { isGm: boolean; onClose: () => 
     [['Esc'], '창 닫기'],
   ];
   return (
-    <div className={styles.backdrop} onMouseDown={onClose}>
+    <div className={styles.backdrop} data-closing={closing || undefined} onMouseDown={close}>
       <div
         className={styles.box}
         role="dialog"

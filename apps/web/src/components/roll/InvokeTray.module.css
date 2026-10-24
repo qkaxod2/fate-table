@@ -125,6 +125,21 @@
   color: var(--gold-hi);
 }
 
+/* 발동하는 카드는 토큰을 받으면서 살짝 들린다 */
+.slot[data-firing] {
+  animation: lift 700ms var(--ease-spring);
+}
+
+@keyframes lift {
+  35%,
+  60% {
+    transform: translateY(-6px) scale(1.04);
+    box-shadow:
+      0 0 0 2px var(--gold-hi),
+      0 0 28px rgb(240 220 160 / 0.6);
+  }
+}
+
 .slot[data-selected] {
   border-radius: var(--r-card);
   box-shadow:
@@ -136,6 +151,9 @@
   .tray,
   .cards > * {
     animation-name: fade;
+  }
+  .slot[data-firing] {
+    animation: none;
   }
 }
 
