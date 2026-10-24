@@ -231,3 +231,10 @@
 .cand[data-on] {
   border-color: var(--gold);
 }
+
+.mine summary {
+  margin-bottom: var(--s-2);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
