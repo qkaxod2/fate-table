@@ -286,6 +286,37 @@ button:disabled {
   border-radius: var(--r-card);
 }
 
+/* 지도를 펼치거나 구역이 새로 놓이면 톡 솟아난다. 길은 그 뒤에 그어진다 */
+.zone {
+  animation: zone-in 380ms var(--ease-spring) backwards;
+}
+.zone:nth-of-type(2) {
+  animation-delay: var(--stagger);
+}
+.zone:nth-of-type(3) {
+  animation-delay: calc(var(--stagger) * 2);
+}
+.zone:nth-of-type(n + 4) {
+  animation-delay: calc(var(--stagger) * 3);
+}
+
+@keyframes zone-in {
+  from {
+    opacity: 0;
+    scale: 0.7;
+  }
+}
+
+.links {
+  animation: links-in 480ms var(--ease-out) 160ms backwards;
+}
+
+@keyframes links-in {
+  from {
+    opacity: 0;
+  }
+}
+
 /* 다른 구역으로 옮겨진 토큰: 내려앉는 순간 둘레에 물결이 한 번 퍼진다 */
 .token[data-landing] img,
 .token[data-landing] span {
@@ -324,7 +355,9 @@ button:disabled {
 @media (prefers-reduced-motion: reduce) {
   .token[data-landing] img,
   .token[data-landing] span,
-  .token[data-picked] {
+  .token[data-picked],
+  .zone,
+  .links {
     animation: none;
   }
 }
