@@ -21,13 +21,33 @@ a {
   color: inherit;
 }
 
-/* 누르는 감촉: 모든 버튼이 눌리는 순간 살짝 들어간다 */
+/*
+ * 누르는 감촉: 모든 버튼이 눌리는 순간 살짝 들어가고, 손을 떼면 튕기듯 돌아온다.
+ * transform 대신 scale·translate를 써서 카드가 hover로 떠 있는 transform과 부딪히지 않는다.
+ * :where()라 특이도가 0이어서, 컴포넌트가 transition을 따로 정하면 그쪽이 이긴다
+ * (그때는 var(--press)를 목록에 같이 넣는다).
+ */
+:root {
+  --press: scale var(--dur-hover) var(--ease-spring), translate var(--dur-hover) var(--ease-spring);
+  --hover:
+    color var(--dur-hover) var(--ease-out), background-color var(--dur-hover) var(--ease-out),
+    border-color var(--dur-hover) var(--ease-out), box-shadow var(--dur-hover) var(--ease-out),
+    opacity var(--dur-hover) var(--ease-out);
+}
+
 button {
   -webkit-tap-highlight-color: transparent;
 }
 
+:where(button, a, summary, select, input, textarea, [role='button'], [role='tab']) {
+  transition: var(--hover), var(--press);
+}
+
 button:not(:disabled):active {
-  transform: translateY(1px) scale(0.97);
+  scale: 0.97;
+  translate: 0 1px;
+  transition-duration: var(--dur-press);
+  transition-timing-function: var(--ease-out);
 }
 
 :focus-visible {
@@ -41,6 +61,7 @@ kbd {
 
 @media (prefers-reduced-motion: reduce) {
   button:not(:disabled):active {
-    transform: none;
+    scale: none;
+    translate: none;
   }
 }

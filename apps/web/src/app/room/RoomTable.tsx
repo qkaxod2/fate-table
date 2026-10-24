@@ -791,7 +791,7 @@ export function RoomTable({
           )}
 
           {roll && !rolling && !isFolded && (
-            <div className={tryStyles.rollPanel}>
+            <div className={tryStyles.rollPanel} data-continued={quickKey === roll.id || undefined}>
               <div className={tryStyles.sides}>
                 <div className={tryStyles.side}>
                   <div className={tryStyles.sideHead}>
@@ -812,7 +812,7 @@ export function RoomTable({
                     />
                   )}
                   {roll.active.dice && settled && result && (
-                    <div className={tryStyles.total}>
+                    <div className={tryStyles.total} key={result.total}>
                       {result.total >= 0 ? '+' : ''}
                       {result.total} <small>{formatRating(result.total).split(' ')[0]}</small>
                       {roll.active.modifiers.length > 0 && (

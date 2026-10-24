@@ -77,17 +77,51 @@
   z-index: -1;
 }
 
+/* 멈춘 자리에 금빛이 번진다 (design-system.md 17절 "착지 시 금빛 번짐") */
+.scene::after {
+  content: '';
+  position: absolute;
+  inset: -40%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--edge) 55%, transparent),
+    transparent
+  );
+  opacity: 0;
+  pointer-events: none;
+}
+
+.scene[data-landed]::after {
+  animation: bloom 700ms var(--ease-out);
+}
+
+@keyframes bloom {
+  from {
+    opacity: 0.9;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.1);
+  }
+}
+
 /* 결과를 기다리며 제자리에서 구르는 중 */
 .tumble {
   animation: tumble 520ms linear infinite;
 }
 
+/* 떨어질 때 빨라지고 튀어 오를 때 느려져서, 손 안에서 흔드는 것처럼 보인다 */
 @keyframes tumble {
   0% {
     transform: translateY(-10px) rotateX(0deg) rotateY(0deg);
+    animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.5);
   }
   50% {
     transform: translateY(2px) rotateX(200deg) rotateY(110deg);
+    animation-timing-function: cubic-bezier(0.1, 0.5, 0.5, 1);
   }
   100% {
     transform: translateY(-10px) rotateX(360deg) rotateY(360deg);
@@ -97,5 +131,8 @@
 @media (prefers-reduced-motion: reduce) {
   .tumble {
     animation-duration: 2s;
+  }
+  .scene[data-landed]::after {
+    animation: none;
   }
 }

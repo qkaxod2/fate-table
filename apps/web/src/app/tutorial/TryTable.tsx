@@ -494,7 +494,9 @@ function Table({
         </div>
 
         <div className={styles.center}>
-          {coach && !coachHidden && <CoachMark coach={coach} onHide={() => setCoachHidden(true)} />}
+          {coach && !coachHidden && (
+            <CoachMark key={coach.step} coach={coach} onHide={() => setCoachHidden(true)} />
+          )}
           <img className={styles.standee} src={asset(pick.image)} alt={pick.name} />
           {showBoss && (
             <img className={styles.bossStandee} src={asset(SCENE.bossImage)} alt={boss.name} />
@@ -517,7 +519,7 @@ function Table({
                     onSettled={() => setSettled(true)}
                   />
                   {roll.active.dice && settled && result && (
-                    <div className={styles.total}>
+                    <div className={styles.total} key={result.total}>
                       {result.total >= 0 ? '+' : ''}
                       {result.total} <small>{formatRating(result.total).split(' ')[0]}</small>
                       {roll.active.modifiers.length > 0 && (

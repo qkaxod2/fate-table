@@ -15,11 +15,12 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
+  /* 말하는 쪽이 바뀔 때는 천천히 밝아지고 어두워진다 */
   transition:
-    filter 360ms var(--ease),
-    transform 360ms var(--ease),
-    opacity 360ms var(--ease);
-  animation: slideIn 520ms var(--ease) both;
+    filter 480ms var(--ease-in-out),
+    transform 480ms var(--ease-in-out),
+    opacity 480ms var(--ease-in-out);
+  animation: slideIn var(--dur-scene) var(--ease-out) backwards;
 }
 
 .sprite[data-side='left'] {
@@ -45,20 +46,25 @@
   object-fit: contain;
   object-position: 50% 100%;
   filter: drop-shadow(0 10px 30px rgb(0 0 0 / 0.6));
-  animation: faceIn 260ms var(--ease) both;
+  animation: faceIn 320ms var(--ease-out) backwards;
+}
+
+/* 바뀌기 전 표정: 새 그림 아래에서 사라진다 */
+.sprite img.leaving {
+  animation: faceOut 320ms var(--ease-in) forwards !important;
 }
 
 /* 배경을 딴 스탠딩은 숨 쉬듯 아주 조금 움직인다 */
 .sprite[data-cutout][data-focus] img {
   animation:
-    faceIn 260ms var(--ease) both,
+    faceIn 320ms var(--ease-out) backwards,
     breathe 5.5s ease-in-out 600ms infinite;
   transform-origin: 50% 100%;
 }
 
 .sprite[data-cutout][data-side='right'][data-focus] img {
   animation:
-    faceIn 260ms var(--ease) both,
+    faceIn 320ms var(--ease-out) backwards,
     breatheFlip 5.5s ease-in-out 600ms infinite;
 }
 
@@ -108,7 +114,13 @@
 
 @keyframes faceIn {
   from {
-    opacity: 0.35;
+    opacity: 0;
+  }
+}
+
+@keyframes faceOut {
+  to {
+    opacity: 0;
   }
 }
 
@@ -142,5 +154,8 @@
   .sprite img {
     animation: none !important;
     transition: none;
+  }
+  .sprite img.leaving {
+    display: none;
   }
 }

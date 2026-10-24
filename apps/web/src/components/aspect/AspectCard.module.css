@@ -15,8 +15,9 @@
   text-align: left;
   box-shadow: 0 6px 18px -10px rgb(0 0 0 / 0.8);
   transition:
-    transform var(--dur-fast) var(--ease),
-    box-shadow var(--dur-fast) var(--ease);
+    transform var(--dur-hover) var(--ease-out),
+    box-shadow var(--dur-hover) var(--ease-out),
+    var(--press);
 }
 
 button.card {
@@ -24,7 +25,8 @@ button.card {
 }
 
 button.card:not(:disabled):hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px -12px rgb(0 0 0 / 0.85);
 }
 
 .card[data-kind='high'] {

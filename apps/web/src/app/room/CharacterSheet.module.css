@@ -7,6 +7,7 @@
   padding: var(--s-4);
   background: rgb(6 7 14 / 0.7);
   backdrop-filter: blur(3px);
+  animation: backdrop-in var(--dur-enter) var(--ease-out) backwards;
 }
 
 .sheet {
@@ -21,6 +22,7 @@
   border-radius: var(--r-card);
   background: var(--panel-s);
   box-shadow: 0 20px 60px rgb(0 0 0 / 0.6);
+  animation: window-in var(--dur-enter) var(--ease-out) 30ms backwards;
 }
 
 .head {
@@ -332,4 +334,24 @@ button:disabled {
   font-size: var(--fs-xs);
   vertical-align: middle;
   cursor: pointer;
+}
+
+/* 창은 뒤가 흐려진 다음 살짝 떠오르며 열린다 */
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes window-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet {
+    animation-name: backdrop-in;
+  }
 }

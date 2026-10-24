@@ -14,7 +14,8 @@
       color-mix(in srgb, var(--c) 30%, transparent) 75%,
       transparent
     );
-  animation: rise 400ms var(--ease);
+  overflow: hidden;
+  animation: band-in 420ms var(--ease-out) backwards;
 }
 
 .banner[data-tone='perfect'] {
@@ -44,6 +45,29 @@
   background-clip: text;
   color: transparent;
   filter: drop-shadow(0 0 14px var(--c));
+  /* 띠가 펼쳐진 뒤 판정 글자가 도장처럼 찍힌다 */
+  animation: stamp 520ms var(--ease-spring) 90ms backwards;
+}
+
+.kr,
+.copy {
+  animation: rise var(--dur-enter) var(--ease-out) 260ms backwards;
+}
+
+/* 대성공은 금색 광택이 한 번 지나간다 */
+.banner[data-tone='perfect']::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 35%,
+    rgb(255 240 200 / 0.35) 50%,
+    transparent 65%
+  );
+  translate: -100% 0;
+  animation: shine 900ms var(--ease-in-out) 380ms;
+  pointer-events: none;
 }
 
 .kr {
@@ -68,15 +92,51 @@
   font-size: var(--fs-sm);
 }
 
+@keyframes band-in {
+  from {
+    opacity: 0;
+    clip-path: inset(0 30% 0 30%);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes stamp {
+  from {
+    opacity: 0;
+    transform: scale(1.35);
+    filter: blur(6px) drop-shadow(0 0 14px var(--c));
+  }
+}
+
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.98);
+    transform: translateY(6px);
+  }
+}
+
+@keyframes shine {
+  to {
+    translate: 100% 0;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .banner {
-    animation: none;
+  .banner,
+  .latin,
+  .kr,
+  .copy {
+    animation-name: fade;
+  }
+  .banner[data-tone='perfect']::after {
+    display: none;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
   }
 }

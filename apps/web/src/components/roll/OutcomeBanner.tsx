@@ -15,7 +15,8 @@ export function OutcomeBanner({ action, outcome, total, provisional }: Props) {
   const judge = JUDGE[outcome];
   return (
     <div className={styles.banner} data-tone={judge.tone} role="status">
-      <div className={styles.latin} aria-hidden>
+      {/* 발동으로 판정이 뒤집히면 글자를 새로 찍는다 */}
+      <div className={styles.latin} key={judge.latin} aria-hidden>
         {judge.latin}
       </div>
       <div className={styles.kr}>
