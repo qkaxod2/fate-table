@@ -18,6 +18,7 @@ import { useState } from 'react';
 import { AspectCard } from '@/components/aspect/AspectCard';
 import { FatePointToken } from '@/components/fate/FatePointToken';
 import styles from './CharacterSheet.module.css';
+import { josa } from '@/lib/josa';
 
 interface Props {
   character: Character;
@@ -386,7 +387,7 @@ export function CharacterSheet({ character: c, state, run, isGm, mine, pending, 
                 disabled={pending}
                 title="지기로 하고 장면에서 빠져요. 운명점을 받아요."
                 onClick={() => {
-                  if (window.confirm(`${c.name}이(가) ${term('concede')}할까요?`))
+                  if (window.confirm(`${josa(c.name, '이/가')} ${term('concede')}할까요?`))
                     void run({ type: 'character.concede', payload: { characterId: c.id } });
                 }}
               >

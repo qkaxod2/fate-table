@@ -10,12 +10,14 @@ interface Props {
   undone?: ReadonlySet<number>;
   /** GM 전용: 줄마다 되돌리기 버튼 */
   onUndo?: (seq: number) => void;
+  /** 보냈지만 서버가 아직 받지 않은 채팅 (흐리게 먼저 보인다) */
+  sending?: ReadonlyArray<{ id: number; text: string }>;
 }
 
 type Tab = 'story' | 'system';
 
 /** 이야기(굴림·대사·채팅)와 시스템(입장·생성·되돌리기 같은 알림)을 탭으로 나눈다 */
-export function StoryLog({ lines, undone, onUndo }: Props) {
+export function StoryLog({ lines, undone, onUndo, sending = [] }: Props) {
   const [tab, setTab] = useState<Tab>('story');
   const [seen, setSeen] = useState<Record<Tab, number>>({ story: 0, system: 0 });
   const live = lines.filter((l) => !undone?.has(l.seq));
@@ -31,7 +33,7 @@ export function StoryLog({ lines, undone, onUndo }: Props) {
   const end = useRef<HTMLDivElement>(null);
   useEffect(() => {
     end.current?.scrollIntoView({ block: 'end' });
-  }, [shown.length, tab]);
+  }, [shown.length, tab, sending.length]);
 
   const open = (t: Tab) => {
     setSeen((x) => ({ ...x, [tab]: lastSeq(tab), [t]: lastSeq(t) }));
@@ -55,7 +57,7 @@ export function StoryLog({ lines, undone, onUndo }: Props) {
           </button>
         ))}
       </div>
-      {shown.length === 0 && (
+      {shown.length === 0 && sending.length === 0 && (
         <p className={styles.empty}>
           {tab === 'story' ? '첫 굴림이 여기 기록돼요.' : '입장·생성 같은 알림이 여기 모여요.'}
         </p>
@@ -77,6 +79,12 @@ export function StoryLog({ lines, undone, onUndo }: Props) {
             )}
           </li>
         ))}
+        {tab === 'story' &&
+          sending.map((m) => (
+            <li key={`s${m.id}`} className={styles.line} data-kind="chat" data-sending>
+              <span>{m.text}</span>
+            </li>
+          ))}
       </ol>
       <div ref={end} />
     </section>

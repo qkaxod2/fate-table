@@ -26,7 +26,16 @@
   font-weight: 700;
   font-size: var(--fs-lg);
   cursor: pointer;
-  transition: background var(--dur-fast) var(--ease);
+  transition:
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+
+.action:not(:disabled):hover,
+.approach:not(:disabled):hover {
+  border-color: var(--rule);
+  background: #191c3a;
 }
 
 .action[aria-checked='true'],
@@ -34,6 +43,13 @@
   background: var(--gold);
   color: var(--ink);
   border-color: var(--gold-hi);
+  animation: pick 200ms var(--ease);
+}
+
+@keyframes pick {
+  40% {
+    transform: scale(1.05);
+  }
 }
 
 .action:disabled,
@@ -80,6 +96,37 @@
   font-weight: 700;
   font-size: var(--fs-xl);
   cursor: pointer;
+}
+
+.roll:not(:disabled):hover {
+  box-shadow: 0 0 24px rgb(240 220 160 / 0.45);
+}
+
+.roll:not(:disabled) {
+  animation: ready 1.8s ease-in-out infinite;
+}
+
+@keyframes ready {
+  50% {
+    box-shadow: 0 0 18px rgb(240 220 160 / 0.35);
+  }
+}
+
+.roll[data-busy] {
+  opacity: 1;
+  cursor: progress;
+  background: linear-gradient(110deg, var(--gold) 30%, var(--gold-hi) 50%, var(--gold) 70%);
+  background-size: 250% 100%;
+  animation: shimmer 0.9s linear infinite;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -150% 0;
+  }
 }
 
 .roll:disabled {

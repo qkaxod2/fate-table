@@ -1,5 +1,6 @@
 import { term } from '@fate/glossary';
 import type { Action, Outcome, RoomEvent, RoomState } from '@fate/rules-engine';
+import { josa } from '@/lib/josa';
 
 /** 판정 연출 라벨 (design-system.md 17절). 한국어 결과 표기와 항상 같이 쓴다. */
 export const JUDGE: Record<
@@ -62,7 +63,7 @@ export function describe(e: RoomEvent, state: RoomState): LogLine | null {
     case 'roll.opposition_requested':
       return line(
         'roll',
-        `${name(state, e.payload.attackerId)}이(가) ${name(state, e.payload.defenderId)}에게 ${term(e.payload.action)}! 상대 응답 대기 중`,
+        `${josa(name(state, e.payload.attackerId), '이/가')} ${name(state, e.payload.defenderId)}에게 ${term(e.payload.action)}! 상대 응답 대기 중`,
       );
     case 'roll.resolved':
       return line(
@@ -72,7 +73,7 @@ export function describe(e: RoomEvent, state: RoomState): LogLine | null {
     case 'roll.opposition_revealed':
       return line(
         'roll',
-        `${name(state, e.payload.defender.characterId)}이(가) ${term(e.payload.defender.approach)}(으)로 ${term('defend')}. 두 결과 공개`,
+        `${josa(name(state, e.payload.defender.characterId), '이/가')} ${josa(term(e.payload.defender.approach), '으로/로')} ${term('defend')}. 두 결과 공개`,
       );
     case 'invoke.applied': {
       const a = state.aspects[e.payload.aspectId];
@@ -113,7 +114,7 @@ export function describe(e: RoomEvent, state: RoomState): LogLine | null {
       ];
       return line(
         'roll',
-        `${name(state, e.payload.targetId)}이(가) 피해를 받아냈어요: ${parts.join(', ')}`,
+        `${josa(name(state, e.payload.targetId), '이/가')} 피해를 받아냈어요: ${parts.join(', ')}`,
       );
     }
     case 'character.taken_out':
@@ -216,7 +217,7 @@ export function describe(e: RoomEvent, state: RoomState): LogLine | null {
         'system',
         zone
           ? `${name(state, e.payload.characterId)} → ${zone}`
-          : `${name(state, e.payload.characterId)}이(가) 지도에서 빠졌어요`,
+          : `${josa(name(state, e.payload.characterId), '이/가')} 지도에서 빠졌어요`,
       );
     }
     case 'aspect.revealed':

@@ -2,6 +2,7 @@
 
 import { term } from '@fate/glossary';
 import type { Aspect, InvokeMode, InvokePreview, PaidWith } from '@fate/rules-engine';
+import { useEffect } from 'react';
 import { AspectCard } from '../aspect/AspectCard';
 import { FatePointToken } from '../fate/FatePointToken';
 import styles from './InvokeTray.module.css';
@@ -39,27 +40,57 @@ export function InvokeTray({
   const paidWith: PaidWith = selected?.aspect.freeInvokes ? 'free_invoke' : 'fate_point';
   const cost = paidWith === 'free_invoke' ? term('freeInvoke') : `${term('fatePoint')} 1`;
 
+  // 숫자로 카드 고르기, F +2, R 다시 굴리기, Enter 확정
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target;
+      if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const n = Number(e.key);
+      if (n >= 1 && n <= 9 && choices[n - 1]) {
+        e.preventDefault();
+        onSelect(choices[n - 1]!.aspect.id);
+        return;
+      }
+      const k = e.key.toLowerCase();
+      if (selected && k === 'f') onInvoke(selected.aspect.id, 'bonus', paidWith);
+      else if (selected && k === 'r') onInvoke(selected.aspect.id, 'reroll', paidWith);
+      else if (e.key === 'Enter' && !e.repeat) {
+        e.preventDefault();
+        onFinalize();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [choices, selected, paidWith, onSelect, onInvoke, onFinalize]);
+
   return (
     <div className={styles.tray}>
       <div className={styles.head}>
         INVOKE · {term('aspect')} {term('invoke')} · +2 또는 다시 굴리기
       </div>
       <div className={styles.cards}>
-        {choices.map((c) => (
-          <AspectCard
+        {choices.map((c, i) => (
+          <div
             key={c.aspect.id}
-            aspect={c.aspect}
-            size="sm"
-            {...(c.owner ? { owner: c.owner } : {})}
-            highlight={(c.bonus?.improves ?? false) && !c.blocked}
-            disabled={!!c.blocked}
-            {...(c.blocked
-              ? { note: c.blocked }
-              : c.against
-                ? { note: '쓰면 상대가 운명점 1을 받아요' }
-                : {})}
-            onClick={() => onSelect(c.aspect.id)}
-          />
+            className={styles.slot}
+            data-selected={c.aspect.id === selectedId || undefined}
+          >
+            {i < 9 && <kbd className={styles.key}>{i + 1}</kbd>}
+            <AspectCard
+              aspect={c.aspect}
+              size="sm"
+              {...(c.owner ? { owner: c.owner } : {})}
+              highlight={(c.bonus?.improves ?? false) && !c.blocked}
+              disabled={!!c.blocked}
+              {...(c.blocked
+                ? { note: c.blocked }
+                : c.against
+                  ? { note: '쓰면 상대가 운명점 1을 받아요' }
+                  : {})}
+              onClick={() => onSelect(c.aspect.id)}
+            />
+          </div>
         ))}
       </div>
       <div className={styles.foot}>
@@ -74,7 +105,7 @@ export function InvokeTray({
                 className={styles.ghost}
                 onClick={() => onInvoke(selected.aspect.id, 'reroll', paidWith)}
               >
-                다시 굴리기 · {cost}
+                <kbd className={styles.keyInline}>R</kbd> 다시 굴리기 · {cost}
                 {selected.reroll?.improveChance !== undefined && (
                   <small> ({Math.round(selected.reroll.improveChance * 100)}%로 나아짐)</small>
                 )}
@@ -84,12 +115,12 @@ export function InvokeTray({
                 className={styles.ghost}
                 onClick={() => onInvoke(selected.aspect.id, 'bonus', paidWith)}
               >
-                +2 · {cost}
+                <kbd className={styles.keyInline}>F</kbd> +2 · {cost}
               </button>
             </>
           )}
           <button type="button" className={styles.primary} onClick={onFinalize}>
-            이대로 확정
+            이대로 확정 <kbd className={styles.keyInline}>Enter</kbd>
           </button>
         </div>
       </div>

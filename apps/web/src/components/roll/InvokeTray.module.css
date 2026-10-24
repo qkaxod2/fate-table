@@ -66,3 +66,35 @@
   font-weight: 400;
   opacity: 0.8;
 }
+
+.slot {
+  position: relative;
+  display: grid;
+}
+
+.key,
+.keyInline {
+  font-family: var(--f-num);
+  font-size: 10px;
+  line-height: 1;
+  padding: 2px 4px;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  opacity: 0.7;
+}
+
+.key {
+  position: absolute;
+  top: -7px;
+  left: -7px;
+  z-index: 1;
+  background: var(--night);
+  color: var(--gold-hi);
+}
+
+.slot[data-selected] {
+  border-radius: var(--r-card);
+  box-shadow:
+    0 0 0 2px var(--gold-hi),
+    0 0 18px rgb(240 220 160 / 0.35);
+}

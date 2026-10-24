@@ -141,3 +141,24 @@
   font-family: var(--f-story);
   font-weight: 700;
 }
+
+.line[data-sending] {
+  opacity: 0.55;
+}
+
+.list > li:last-child:not([data-sending]) {
+  animation: line-in 260ms var(--ease);
+}
+
+@keyframes line-in {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .list > li:last-child {
+    animation: none;
+  }
+}
