@@ -229,6 +229,17 @@ button:disabled {
   opacity: 0.5;
 }
 
+/* 열려 있는 동안 상태가 바뀌면(스트레스가 차거나 후유증이 생기면) 툭 바뀌지 않고 번지듯 바뀐다 */
+.stunts li,
+.stress span,
+.cons li {
+  transition:
+    opacity var(--dur-hover) var(--ease-out),
+    border-color 320ms var(--ease-out),
+    background-color 320ms var(--ease-out),
+    color 320ms var(--ease-out);
+}
+
 .stunts small {
   color: var(--muted);
 }
