@@ -286,6 +286,49 @@ button:disabled {
   border-radius: var(--r-card);
 }
 
+/* 다른 구역으로 옮겨진 토큰: 내려앉는 순간 둘레에 물결이 한 번 퍼진다 */
+.token[data-landing] img,
+.token[data-landing] span {
+  animation: token-land 520ms var(--ease-out) 420ms backwards;
+}
+
+@keyframes token-land {
+  from {
+    box-shadow: 0 0 0 0 rgb(240 220 160 / 0.8);
+  }
+  to {
+    box-shadow: 0 0 0 10px rgb(240 220 160 / 0);
+  }
+}
+
+/* 고른 토큰은 갈 곳을 기다리며 살짝 떠 있다 */
+.token[data-picked] {
+  animation: token-hover 1.2s var(--ease-in-out) infinite alternate;
+}
+
+@keyframes token-hover {
+  to {
+    translate: 0 -3px;
+  }
+}
+
+.zone[data-target],
+.zone[data-linking] {
+  transition: var(--hover);
+}
+
+.zone[data-target]:hover {
+  scale: 1.04;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .token[data-landing] img,
+  .token[data-landing] span,
+  .token[data-picked] {
+    animation: none;
+  }
+}
+
 @media (max-width: 700px) {
   .map {
     height: 300px;
