@@ -101,8 +101,82 @@
   text-align: center;
 }
 
+/* 다 끝냈을 때: 테두리가 금빛으로 한 번 번지고 점들이 차례로 반짝인다 */
+.coach[data-clear] {
+  animation:
+    coach-in 320ms var(--ease) both,
+    coach-clear 1.2s var(--ease-out) 200ms;
+}
+
+@keyframes coach-clear {
+  30% {
+    box-shadow:
+      0 0 0 10px rgb(240 220 160 / 0.35),
+      0 0 60px rgb(240 220 160 / 0.5),
+      0 18px 48px rgb(0 0 0 / 0.55);
+  }
+}
+
+.coach[data-clear] .step {
+  color: #b07d12;
+  font-weight: 700;
+}
+
+.coach[data-clear] .dots li {
+  animation: dot-cheer 520ms var(--ease-spring) backwards;
+}
+.coach[data-clear] .dots li:nth-child(1) {
+  animation-delay: 260ms;
+}
+.coach[data-clear] .dots li:nth-child(2) {
+  animation-delay: 340ms;
+}
+.coach[data-clear] .dots li:nth-child(3) {
+  animation-delay: 420ms;
+}
+.coach[data-clear] .dots li:nth-child(n + 4) {
+  animation-delay: 500ms;
+}
+
+@keyframes dot-cheer {
+  from {
+    scale: 0.2;
+  }
+  50% {
+    scale: 1.6;
+  }
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin: var(--s-3) 0 0;
+}
+
+.links a {
+  padding: var(--s-1) var(--s-3);
+  border: 1px solid #8a6a24;
+  border-radius: var(--r-ctl);
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.links a:first-child {
+  border-color: var(--gold);
+  background: linear-gradient(180deg, var(--gold-hi), var(--gold));
+}
+
+.links a:hover {
+  box-shadow: 0 4px 14px rgb(138 106 36 / 0.35);
+  translate: 0 -1px;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .coach {
+  .coach,
+  .coach[data-clear],
+  .coach[data-clear] .dots li {
     animation: none;
   }
 }

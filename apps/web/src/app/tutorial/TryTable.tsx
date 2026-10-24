@@ -39,6 +39,7 @@ import { asset } from '@/lib/asset';
 import { Presence, reducedMotion, revealOnNarrow } from '@/lib/motion';
 import { Typewriter } from '@/components/ui/Typewriter';
 import { describe, ERROR_COPY } from '@/lib/copy';
+import { josa } from '@/lib/josa';
 import { LocalRoom } from '@/state/localRoom';
 import styles from './try.module.css';
 
@@ -393,6 +394,18 @@ function Table({
   const coach = useMemo((): (Coach & { focus?: CoachFocus }) | undefined => {
     if (compel || prompt) return undefined;
     const total = 4;
+    if (boss.takenOut)
+      return {
+        step: total,
+        total,
+        clear: true,
+        title: `${josa(boss.name, '을/를')} 쓰러뜨렸어요!`,
+        body: `행동을 고르고, 굴리고, ${term('aspect')}을 ${term('invoke')}해 판을 뒤집는 법을 다 익혔어요. 이제 내 캐릭터로 이어 가 볼까요?`,
+        links: [
+          { href: '/create/', label: '캐릭터 만들기' },
+          { href: '/rooms/new/', label: '친구들과 방 만들기' },
+        ],
+      };
     if (!action)
       return {
         step: 1,
@@ -428,8 +441,14 @@ function Table({
         body: `빛나는 ${term('aspect')} 카드를 누르면 +2를 받아요. ${term('fatePoint')} 1개가 들어요.`,
       };
     return undefined;
-  }, [action, approach, roll, final, compel, prompt, settled, myOutcomeNow]);
+  }, [action, approach, roll, final, compel, prompt, settled, myOutcomeNow, boss]);
   const [coachHidden, setCoachHidden] = useState(false);
+  // 안내를 숨겼더라도 다 끝낸 순간의 축하 카드는 한 번 다시 보여 준다
+  const [clearShown, setClearShown] = useState(false);
+  if (coach?.clear && !clearShown) {
+    setClearShown(true);
+    setCoachHidden(false);
+  }
 
   const result =
     roll && roll.active.dice && (roll.defense?.dice ?? roll.targetId === null)
@@ -517,7 +536,11 @@ function Table({
         <div className={styles.center}>
           <Presence show={!!(coach && !coachHidden)}>
             {coach && !coachHidden && (
-              <CoachMark key={coach.step} coach={coach} onHide={() => setCoachHidden(true)} />
+              <CoachMark
+                key={coach.clear ? 'clear' : coach.step}
+                coach={coach}
+                onHide={() => setCoachHidden(true)}
+              />
             )}
           </Presence>
           <img className={styles.standee} src={asset(pick.image)} alt={pick.name} />
