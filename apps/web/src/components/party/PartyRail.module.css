@@ -85,9 +85,44 @@
   color: transparent;
 }
 
+.box {
+  transition: var(--hover);
+}
+
+/* 스트레스 칸이 찰 때 도장처럼 쾅 찍힌다 */
 .box[data-used] {
   background: var(--danger);
   border-color: var(--danger);
+  animation: stamp-box 420ms var(--ease-spring) backwards;
+}
+
+@keyframes stamp-box {
+  from {
+    transform: scale(1.8);
+    opacity: 0;
+    box-shadow: 0 0 12px var(--danger);
+  }
+}
+
+/* 후유증·이정표가 생기면 살짝 떠오른다 */
+.cons,
+.milestone {
+  animation: note-in var(--dur-enter) var(--ease-out) backwards;
+}
+
+@keyframes note-in {
+  from {
+    opacity: 0;
+    translate: -6px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .box[data-used],
+  .cons,
+  .milestone {
+    animation: none;
+  }
 }
 
 .cons {

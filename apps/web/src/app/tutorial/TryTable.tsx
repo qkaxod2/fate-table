@@ -605,6 +605,7 @@ function Table({
                 <CompelOffer
                   aspect={state.aspects[compel.aspectId]!}
                   text={compel.text}
+                  targetId={meId}
                   fatePoints={me.fatePoints}
                   onAccept={() =>
                     run(ME, {

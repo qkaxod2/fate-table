@@ -930,6 +930,7 @@ export function RoomTable({
                 <CompelOffer
                   aspect={state.aspects[compel.aspectId] as Aspect}
                   text={compel.text}
+                  targetId={compel.targetId}
                   fatePoints={
                     state.characters[compel.targetId]?.isNpc
                       ? state.gmPool
