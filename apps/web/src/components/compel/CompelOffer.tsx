@@ -1,6 +1,7 @@
 import { term } from '@fate/glossary';
 import type { Aspect } from '@fate/rules-engine';
 import { useRef, useState } from 'react';
+import { tap } from '@/fx/sfx';
 import { flyBadge } from '@/lib/motion';
 import { AspectCard } from '../aspect/AspectCard';
 import styles from './CompelOffer.module.css';
@@ -30,9 +31,11 @@ export function CompelOffer({ aspect, text, fatePoints, onAccept, onRefuse, targ
     setSending(true);
     const mine = targetId ? document.querySelector(`[data-fx-fp="${CSS.escape(targetId)}"]`) : null;
     const [from, to] = accept ? [card.current, mine] : [mine, card.current];
-    void flyBadge(from, to, '◆', { duration: 520, className: 'fx-badge fx-token' }).then(() =>
-      accept ? onAccept() : onRefuse(),
-    );
+    void flyBadge(from, to, '◆', { duration: 520, className: 'fx-badge fx-token' }).then(() => {
+      tap(10);
+      if (accept) onAccept();
+      else onRefuse();
+    });
   };
   return (
     <div className={styles.offer} role="dialog" aria-label={term('compel')}>

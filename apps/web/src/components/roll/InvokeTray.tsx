@@ -3,6 +3,7 @@
 import { term } from '@fate/glossary';
 import type { Aspect, InvokeMode, InvokePreview, PaidWith } from '@fate/rules-engine';
 import { useEffect, useRef, useState } from 'react';
+import { tap } from '@/fx/sfx';
 import { flyBadge } from '@/lib/motion';
 import { AspectCard } from '../aspect/AspectCard';
 import { FatePointToken } from '../fate/FatePointToken';
@@ -61,6 +62,8 @@ export function InvokeTray({
     void pay
       .then(() => flyBadge(slot, target, mode === 'bonus' ? '+2' : '↻', { duration: 420 }))
       .then(() => {
+        // 합계에 꽂히는 순간 손에도 톡
+        tap(10);
         setFiring(null);
         onInvoke(aspectId, mode, paidWith);
       });
