@@ -201,13 +201,24 @@ export function SceneStarter({
 }
 
 /** GM 대사 창: 쓰고 Enter를 누르면 모두의 화면에 크게 뜬다 */
-export function NarrationInput({ run, pending }: { run: Run; pending: boolean }) {
+export function NarrationInput({
+  run,
+  onEcho,
+}: {
+  run: Run;
+  /** 서버 응답 전에 대사 창에 먼저 띄울 글 (실패하면 null) */
+  onEcho?: (text: string | null) => void;
+}) {
   const [text, setText] = useState('');
   const send = async () => {
     const t = text.trim();
     if (!t) return;
+    // 바로 비우고 먼저 보여 준 뒤, 실패하면 되돌려 놓는다
+    setText('');
+    onEcho?.(t);
     const evs = await run({ type: 'narration.post', payload: { text: t } });
-    if (evs.length) setText('');
+    onEcho?.(null);
+    if (!evs.length) setText((cur) => cur || t);
   };
   return (
     <form
@@ -229,7 +240,7 @@ export function NarrationInput({ run, pending }: { run: Run; pending: boolean })
           }
         }}
       />
-      <button type="submit" disabled={pending || !text.trim()}>
+      <button type="submit" disabled={!text.trim()}>
         보내기
       </button>
     </form>

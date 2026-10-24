@@ -23,9 +23,6 @@ function cryptoInt(max: number): number {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   if (req.method !== 'POST') return fail(405, 'METHOD', 'POST만 받아요.');
-  const user = await currentUser(req);
-  if (!user) return fail(401, 'NOT_SIGNED_IN', '로그인이 필요해요.');
-
   const body = await readJson<{ roomId?: string; clientCmdId?: string; command?: unknown }>(req);
   const roomId = String(body?.roomId ?? '');
   const clientCmd = String(body?.clientCmdId ?? '');
@@ -40,12 +37,40 @@ Deno.serve(async (req) => {
   }
 
   const db = admin();
-  const { data: member } = await db
-    .from('room_members')
-    .select('role')
-    .eq('room_id', roomId)
-    .eq('user_id', user.id)
-    .maybeSingle();
+  // 이벤트와 봉인 주사위는 함께 읽는다 (경합으로 다시 시도할 때도)
+  const readHistory = () =>
+    Promise.all([
+      loadEvents(db, roomId),
+      db.from('sealed_rolls').select('roll_id, side').eq('room_id', roomId),
+    ]);
+  const undoSeq = command.type === 'event.undo' ? command.payload.targetSeq : null;
+  // 로그인 확인 → 참가자 확인은 이어서, 나머지 조회와는 나란히 기다린다
+  const whoP = currentUser(req)
+    .catch(() => null)
+    .then(async (user) => {
+      if (!user) return { user: null, member: null };
+      const { data: member } = await db
+        .from('room_members')
+        .select('role')
+        .eq('room_id', roomId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      return { user, member };
+    });
+  const [{ user, member }, firstRead, undoGroup] = await Promise.all([
+    whoP,
+    readHistory(),
+    undoSeq === null
+      ? Promise.resolve(null)
+      : db
+          .from('command_log')
+          .select('first_seq, last_seq')
+          .eq('room_id', roomId)
+          .lte('first_seq', undoSeq)
+          .gte('last_seq', undoSeq)
+          .maybeSingle(),
+  ]);
+  if (!user) return fail(401, 'NOT_SIGNED_IN', '로그인이 필요해요.');
   if (!member) return fail(403, 'NOT_MEMBER', '이 방의 참가자가 아니에요.');
   const actor = { userId: user.id, role: member.role };
   const canSee = (e: StoredEvent) =>
@@ -53,30 +78,19 @@ Deno.serve(async (req) => {
     actor.role === 'gm' ||
     (e.visibility === 'owner' && e.ownerId === user.id);
 
+  // 되돌리기는 같은 명령이 만든 이벤트를 함께 되돌린다
+  const g = undoGroup?.data;
+  const group: readonly [number, number] | undefined = g
+    ? [Number(g.first_seq), Number(g.last_seq)]
+    : undefined;
+
+  let read = firstRead;
   for (let attempt = 0; attempt < 4; attempt++) {
-    const history = await loadEvents(db, roomId);
+    if (attempt > 0) read = await readHistory();
+    const [history, { data: seals }] = read;
     const head = history.at(-1)?.seq ?? 0;
     const state = replay(history);
-
-    const { data: seals } = await db
-      .from('sealed_rolls')
-      .select('roll_id, side')
-      .eq('room_id', roomId);
     const sealed = new Map((seals ?? []).map((s) => [s.roll_id, s.side]));
-
-    // 되돌리기는 같은 명령이 만든 이벤트를 함께 되돌린다
-    let group: readonly [number, number] | undefined;
-    if (command.type === 'event.undo') {
-      const seq = command.payload.targetSeq;
-      const { data: g } = await db
-        .from('command_log')
-        .select('first_seq, last_seq')
-        .eq('room_id', roomId)
-        .lte('first_seq', seq)
-        .gte('last_seq', seq)
-        .maybeSingle();
-      if (g) group = [Number(g.first_seq), Number(g.last_seq)];
-    }
 
     let result;
     try {

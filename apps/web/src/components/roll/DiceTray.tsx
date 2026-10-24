@@ -2,7 +2,7 @@
 
 import type { DieFace } from '@fate/rules-engine';
 import { useEffect, useState } from 'react';
-import { Dice3D } from './Dice3D';
+import { Dice3D, TumblingDice } from './Dice3D';
 import styles from './DiceTray.module.css';
 
 export type DiceMode = '3d' | 'flicker' | 'instant';
@@ -46,6 +46,8 @@ interface Props {
   mode?: DiceMode;
   /** 봉인: 상대 응답 전이라 아무도 볼 수 없는 상태 */
   sealed?: boolean;
+  /** 이 화면에서 굴리기를 눌러 이미 굴러가던 중이었으면 짧게 멈춘다 */
+  quick?: boolean;
   onSettled?: () => void;
 }
 
@@ -57,16 +59,30 @@ interface Progress {
 
 /** 3D 모드는 Dice3D가, 나머지는 여기서 그린다 */
 export function DiceTray(props: Props) {
-  const { dice, rollKey, tone = 'me', mode = 'flicker', sealed, onSettled } = props;
+  const { dice, rollKey, tone = 'me', mode = 'flicker', sealed, quick, onSettled } = props;
   if (mode === '3d' && dice && !sealed)
     return (
-      <Dice3D dice={dice} rollKey={rollKey} tone={tone} {...(onSettled ? { onSettled } : {})} />
+      <Dice3D
+        dice={dice}
+        rollKey={rollKey}
+        tone={tone}
+        {...(quick ? { quick } : {})}
+        {...(onSettled ? { onSettled } : {})}
+      />
     );
   return <FlatDice {...props} mode={mode === '3d' ? 'flicker' : mode} />;
 }
 
 /** 눈 바뀜 모드: 네 주사위의 눈이 빠르게 바뀌다가 80ms 간격으로 하나씩 멈춘다 */
-function FlatDice({ dice, rollKey, tone = 'me', mode = 'flicker', sealed, onSettled }: Props) {
+function FlatDice({
+  dice,
+  rollKey,
+  tone = 'me',
+  mode = 'flicker',
+  sealed,
+  quick,
+  onSettled,
+}: Props) {
   const [progress, setProgress] = useState<Progress>({
     key: '',
     stopped: 0,
@@ -101,7 +117,7 @@ function FlatDice({ dice, rollKey, tone = 'me', mode = 'flicker', sealed, onSett
             onSettled?.();
           }
         },
-        FIRST_STOP_MS + i * STAGGER_MS,
+        (quick ? 120 : FIRST_STOP_MS) + i * STAGGER_MS,
       ),
     );
     return () => {
@@ -134,6 +150,35 @@ function FlatDice({ dice, rollKey, tone = 'me', mode = 'flicker', sealed, onSett
           </span>
         );
       })}
+    </div>
+  );
+}
+
+/** 굴리기를 누른 순간부터 서버 결과가 올 때까지 보여 주는 주사위 */
+export function PendingDice({
+  mode = 'flicker',
+  tone = 'me',
+}: {
+  mode?: DiceMode;
+  tone?: 'me' | 'op';
+}) {
+  const [faces, setFaces] = useState<DieFace[]>([0, 0, 0, 0]);
+  useEffect(() => {
+    if (mode === '3d') return;
+    const t = window.setInterval(
+      () => setFaces([0, 0, 0, 0].map(() => FACES[Math.floor(Math.random() * 3)]!)),
+      55,
+    );
+    return () => window.clearInterval(t);
+  }, [mode]);
+  if (mode === '3d') return <TumblingDice tone={tone} />;
+  return (
+    <div className={styles.tray} data-tone={tone} aria-label="주사위 굴리는 중">
+      {faces.map((f, i) => (
+        <span key={i} className={styles.die} data-rolling>
+          {GLYPH[f]}
+        </span>
+      ))}
     </div>
   );
 }

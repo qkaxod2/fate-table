@@ -76,3 +76,26 @@
   filter: blur(3px);
   z-index: -1;
 }
+
+/* 결과를 기다리며 제자리에서 구르는 중 */
+.tumble {
+  animation: tumble 520ms linear infinite;
+}
+
+@keyframes tumble {
+  0% {
+    transform: translateY(-10px) rotateX(0deg) rotateY(0deg);
+  }
+  50% {
+    transform: translateY(2px) rotateX(200deg) rotateY(110deg);
+  }
+  100% {
+    transform: translateY(-10px) rotateX(360deg) rotateY(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tumble {
+    animation-duration: 2s;
+  }
+}

@@ -12,6 +12,7 @@ import {
 import { useState } from 'react';
 import tryStyles from '../tutorial/try.module.css';
 import styles from './room.module.css';
+import { josa } from '@/lib/josa';
 
 interface Props {
   damage: PendingDamage;
@@ -31,7 +32,7 @@ export function DamagePrompt({ damage, character, run, pending }: Props) {
   return (
     <div className={tryStyles.prompt}>
       <div className={tryStyles.promptHead}>
-        {character.name}이(가) 피해 {damage.shifts}을(를) 받았어요
+        {josa(character.name, '이/가')} 피해 {josa(String(damage.shifts), '을/를')} 받았어요
       </div>
       {plans.length === 0 ? (
         <p className={tryStyles.promptHelp}>

@@ -54,11 +54,13 @@ interface Props {
   dice: readonly DieFace[];
   rollKey: string;
   tone?: 'me' | 'op';
+  /** 서버를 기다리는 동안 이미 굴러가고 있었으면 짧게 내려앉는다 */
+  quick?: boolean;
   onSettled?: () => void;
 }
 
 /** 3D 주사위: 위에서 떨어져 구르다 튕기고 멈춘다. 결과는 처음부터 정해져 있다 */
-export function Dice3D({ dice, rollKey, tone = 'me', onSettled }: Props) {
+export function Dice3D({ dice, rollKey, tone = 'me', quick, onSettled }: Props) {
   const cubes = useRef<Array<HTMLDivElement | null>>([]);
 
   useEffect(() => {
@@ -82,6 +84,11 @@ export function Dice3D({ dice, rollKey, tone = 'me', onSettled }: Props) {
         offset,
         transform: `translate3d(${x}px,${y}px,0) rotateX(${lerp(sx, ex, t)}deg) rotateY(${lerp(sy, ey, t)}deg)`,
       });
+      if (quick)
+        return el.animate(
+          [frame(0.55, drift * 0.3, -18, 0), frame(0.92, 0, -6, 0.55), frame(1, 0, 0, 1)],
+          { duration: 420 + i * 70, easing: 'cubic-bezier(.2,.8,.3,1)' },
+        );
       return el.animate(
         [
           frame(0, drift, -64, 0),
@@ -118,6 +125,29 @@ export function Dice3D({ dice, rollKey, tone = 'me', onSettled }: Props) {
             ref={(el) => {
               cubes.current[i] = el;
             }}
+          >
+            {FACES.map(([side, glyph]) => (
+              <span key={side} className={styles.face} data-side={side}>
+                {glyph}
+              </span>
+            ))}
+          </div>
+          <span className={styles.shadow} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** 서버 결과를 기다리는 동안 누르자마자 굴러가는 주사위 (눈은 아직 정해지지 않았다) */
+export function TumblingDice({ tone = 'me' }: { tone?: 'me' | 'op' }) {
+  return (
+    <div className={styles.tray} data-tone={tone} aria-label="주사위 굴리는 중">
+      {[0, 1, 2, 3].map((i) => (
+        <div key={i} className={styles.scene}>
+          <div
+            className={`${styles.cube} ${styles.tumble}`}
+            style={{ animationDelay: `${-i * 137}ms` }}
           >
             {FACES.map(([side, glyph]) => (
               <span key={side} className={styles.face} data-side={side}>

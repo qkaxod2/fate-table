@@ -231,6 +231,7 @@
 
 .chat input {
   flex: 1;
+  min-width: 0;
 }
 
 .actionWrap {
@@ -281,18 +282,270 @@
   padding-bottom: var(--s-3);
 }
 
-/* 왼쪽 GM 도구가 길어져도 굴림 패널이 화면 안에 머물게 */
-.center {
-  position: sticky;
-  top: var(--s-3);
-  align-self: start;
-  min-height: min(620px, calc(100dvh - 280px));
+/*
+ * 한 화면 테이블: 헤더·GM 줄·행동 바는 늘 보이고, 가운데 무대와 양옆 열만 안에서 스크롤된다.
+ * 좁은 화면(1100px 이하)에서는 예전처럼 페이지 전체가 스크롤된다.
+ */
+main.shell {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.shell .body {
+  flex: 1;
+  min-height: 0;
+  padding-block: var(--s-3);
+}
+
+.shell .scroll {
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.shell .center {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+
+.shell .right {
+  max-height: none;
+  min-height: 0;
+  min-width: 0;
+}
+
+.shell .rightScroll {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.shell .bottom {
+  padding-top: var(--s-2);
 }
 
 @media (max-width: 1100px) {
-  .center {
-    position: relative;
-    top: 0;
+  main.shell {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+  .shell .center,
+  .shell .scroll,
+  .shell .rightScroll {
+    overflow: visible;
+    max-height: none;
+  }
+  .shell .center {
+    min-height: 420px;
+  }
+}
+
+/* 새 장면 이름과 새 대사는 부드럽게 들어온다 */
+.shell h1,
+.shell [data-fresh] {
+  animation: enter 420ms var(--ease);
+}
+
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+    filter: blur(3px);
+  }
+}
+
+/* 서버를 기다리며 굴러가는 굴림 패널 */
+.shell [data-pending] {
+  animation: enter 180ms var(--ease);
+}
+
+/* 나에게 묻는 일이 생기면 화면 테두리가 한 번 빛난다 */
+.shell[data-call]::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 0 2px var(--hi),
+    inset 0 0 60px rgb(255 111 181 / 0.35);
+  animation: call 1.6s var(--ease) forwards;
+}
+
+@keyframes call {
+  0%,
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* 헤더 버튼 */
+.topBtn {
+  padding: 4px var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-token);
+  background: var(--panel);
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease);
+}
+
+.topBtn:hover {
+  border-color: var(--gold);
+}
+
+.topBtn[aria-pressed='false'] {
+  color: var(--muted);
+}
+
+.topBtn kbd {
+  font-size: 11px;
+  color: var(--gold-hi);
+}
+
+.seg {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-token);
+  background: var(--panel);
+}
+
+.seg button {
+  padding: 2px var(--s-3);
+  border: 0;
+  border-radius: var(--r-token);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+.seg button[aria-checked='true'] {
+  background: var(--gold);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* 상대가 고르는 동안 */
+.waitChip {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-bottom: var(--s-2);
+  padding: 4px var(--s-3);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-token);
+  background: var(--panel);
+  font-size: var(--fs-sm);
+}
+
+.waitChip button {
+  padding: 1px var(--s-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-token);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+.dots {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  animation: dot 1s ease-in-out infinite;
+}
+
+@keyframes dot {
+  50% {
+    opacity: 0.25;
+    transform: scale(0.7);
+  }
+}
+
+/* 확정 뒤 한 줄로 접힌 굴림 */
+.foldedRoll {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-4);
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  animation: fold-in 260ms var(--ease);
+}
+
+.foldedRoll b {
+  font-family: var(--f-pop);
+  font-size: var(--fs-lg);
+  letter-spacing: 1px;
+}
+
+.foldedRoll[data-tone='perfect'] b {
+  color: var(--perfect);
+}
+.foldedRoll[data-tone='great'] b {
+  color: var(--great);
+}
+.foldedRoll[data-tone='good'] b {
+  color: var(--good);
+}
+.foldedRoll[data-tone='miss'] b {
+  color: var(--miss);
+}
+
+.foldedRoll span {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+@keyframes fold-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scaleY(0.9);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell[data-call]::after,
+  .shell h1,
+  .shell [data-fresh],
+  .foldedRoll,
+  .dots {
+    animation: none;
+  }
+  .shell[data-call]::after {
+    opacity: 0;
   }
 }
 
@@ -393,6 +646,10 @@
   background: var(--plate);
   color: var(--gold-hi);
   font-weight: 700;
+}
+
+.who[data-turn] {
+  box-shadow: 0 0 0 2px var(--hi);
 }
 
 .who[data-npc] {

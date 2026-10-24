@@ -22,6 +22,8 @@ interface Props {
   action: Action | null;
   approach: Approach | null;
   disabled?: boolean;
+  /** 굴리기를 눌러 서버 결과를 기다리는 중 */
+  busy?: boolean;
   /** 방어는 상대가 공격할 때만 굴린다 */
   canDefend?: boolean;
   /** 체험 안내가 가리키는 곳을 빛나게 한다 */
@@ -36,6 +38,7 @@ export function ActionBar({
   action,
   approach,
   disabled,
+  busy,
   canDefend = false,
   focus,
   onAction,
@@ -46,6 +49,7 @@ export function ActionBar({
     if (disabled) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
       const n = Number(e.key);
       if (n >= 1 && n <= 4) {
         const a = ACTIONS[n - 1]!;
@@ -116,10 +120,12 @@ export function ActionBar({
         <button
           type="button"
           className={styles.roll}
-          disabled={disabled || !action || !approach}
-          onClick={onRoll}
+          disabled={!busy && (disabled || !action || !approach)}
+          data-busy={busy || undefined}
+          aria-busy={busy || undefined}
+          onClick={() => !busy && onRoll()}
         >
-          굴리기
+          {busy ? '굴리는 중' : '굴리기'}
         </button>
         <span className={styles.space}>SPACE</span>
       </div>

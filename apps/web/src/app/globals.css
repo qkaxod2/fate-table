@@ -20,3 +20,27 @@ body {
 a {
   color: inherit;
 }
+
+/* 누르는 감촉: 모든 버튼이 눌리는 순간 살짝 들어간다 */
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:not(:disabled):active {
+  transform: translateY(1px) scale(0.97);
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold-hi);
+  outline-offset: 2px;
+}
+
+kbd {
+  font-family: var(--f-num);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button:not(:disabled):active {
+    transform: none;
+  }
+}
