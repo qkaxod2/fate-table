@@ -26,7 +26,7 @@ export interface PortraitPreset {
 }
 
 // 모든 프리셋 negative 앞에 붙는다 (전연령 기본)
-const SAFE_NEGATIVE = 'nsfw, nude, cleavage, underwear, lowres, worst quality, bad quality';
+export const SAFE_NEGATIVE = 'nsfw, nude, cleavage, underwear, lowres, worst quality, bad quality';
 
 export const PORTRAIT_PRESETS: readonly PortraitPreset[] = [
   {
@@ -125,10 +125,10 @@ const BLOCKED = [
 
 export type AppearanceIssue = 'EMPTY' | 'TOO_LONG' | 'BLOCKED_TAG';
 
-export function checkAppearance(text: string): AppearanceIssue | null {
+export function checkAppearance(text: string, max = APPEARANCE_MAX): AppearanceIssue | null {
   const t = text.trim();
   if (!t) return 'EMPTY';
-  if (t.length > APPEARANCE_MAX) return 'TOO_LONG';
+  if (t.length > max) return 'TOO_LONG';
   if (BLOCKED.some((re) => re.test(t))) return 'BLOCKED_TAG';
   return null;
 }
@@ -154,6 +154,10 @@ export interface PortraitInput {
   appearance: string;
   guidance: number;
   seed: number;
+  /** LLM이 만든 태그(NPC)는 더 길어도 된다 */
+  maxLength?: number;
+  /** 이 그림에만 붙일 네거티브 (LLM 제안) */
+  negative?: string;
 }
 
 /** NovelAI generate-image 요청 본문 (V5 medium, params_version 4) */
@@ -162,23 +166,47 @@ export function buildPortraitRequest(input: PortraitInput) {
   if (!preset) throw new Error('UNKNOWN_PRESET');
   const issue = checkAppearance(input.appearance);
   if (issue) throw new Error(issue);
-  const character = normalizeAppearance(input.appearance);
-  const negative = `${SAFE_NEGATIVE}, ${preset.negative}`;
+  return buildNaiBody({
+    base: preset.prompt,
+    character: normalizeAppearance(input.appearance),
+    negative: [SAFE_NEGATIVE, input.negative?.trim(), preset.negative].filter(Boolean).join(', '),
+    size: PORTRAIT_SIZE,
+    guidance: input.guidance,
+    cfgRescale: preset.cfgRescale,
+    seed: input.seed,
+  });
+}
+
+export interface NaiBodyInput {
+  base: string;
+  /** 인물 캡션. 없으면 base만으로 그린다 (배경) */
+  character?: string;
+  negative: string;
+  size: { width: number; height: number };
+  guidance: number;
+  cfgRescale: number;
+  seed: number;
+  /** 있으면 이 그림(PNG base64)을 바탕으로 다시 그린다 */
+  img2img?: { image: string; strength: number };
+}
+
+export function buildNaiBody(o: NaiBodyInput) {
   const center = { x: 0.5, y: 0.5 };
+  const chars = o.character ? [{ prompt: o.character, uc: '', center, enabled: true }] : [];
   return {
-    input: preset.prompt,
+    input: o.base,
     model: PORTRAIT_MODEL,
-    action: 'generate',
+    action: o.img2img ? 'img2img' : 'generate',
     parameters: {
       params_version: 4,
-      width: PORTRAIT_SIZE.width,
-      height: PORTRAIT_SIZE.height,
-      scale: clampGuidance(input.guidance),
-      cfg_rescale: preset.cfgRescale,
+      width: o.size.width,
+      height: o.size.height,
+      scale: clampGuidance(o.guidance),
+      cfg_rescale: o.cfgRescale,
       sampler: 'k_euler_ancestral',
       steps: PORTRAIT_STEPS,
       n_samples: 1,
-      seed: input.seed >>> 0,
+      seed: o.seed >>> 0,
       noise_schedule: 'karras',
       ucPresetId: 'heavy',
       qualityPresetId: 'none',
@@ -189,23 +217,31 @@ export function buildPortraitRequest(input: PortraitInput) {
       legacy_v3_extend: false,
       use_coords: false,
       legacy_uc: false,
-      characterPrompts: [{ prompt: character, uc: '', center, enabled: true }],
+      ...(o.img2img
+        ? {
+            image: o.img2img.image,
+            strength: o.img2img.strength,
+            noise: 0,
+            extra_noise_seed: o.seed >>> 0,
+          }
+        : {}),
+      characterPrompts: chars,
       v4_prompt: {
         caption: {
-          base_caption: preset.prompt,
-          char_captions: [{ char_caption: character, centers: [center] }],
+          base_caption: o.base,
+          char_captions: chars.map((c) => ({ char_caption: c.prompt, centers: [center] })),
         },
         use_coords: false,
         use_order: true,
       },
       v4_negative_prompt: {
         caption: {
-          base_caption: negative,
-          char_captions: [{ char_caption: '', centers: [center] }],
+          base_caption: o.negative,
+          char_captions: chars.map(() => ({ char_caption: '', centers: [center] })),
         },
         legacy_uc: false,
       },
-      negative_prompt: negative,
+      negative_prompt: o.negative,
     },
   };
 }
@@ -231,3 +267,6 @@ export const APPEARANCE_CHIPS: readonly { label: string; tag: string; group: str
   { group: '표정', label: '진지함', tag: 'serious' },
   { group: '배경', label: '단색 배경', tag: 'simple background' },
 ];
+
+export * from './matte';
+export * from './stage';

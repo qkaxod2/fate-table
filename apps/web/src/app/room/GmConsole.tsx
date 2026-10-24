@@ -39,12 +39,14 @@ export function GmBar({
   pending,
   lastUndoable,
   onOpen,
+  onArt,
 }: {
   state: RoomState;
   run: Run;
   pending: boolean;
   lastUndoable: { seq: number; text: string } | null;
   onOpen: (o: GmOpen) => void;
+  onArt: () => void;
 }) {
   return (
     <nav className={styles.bar} aria-label="GM 도구">
@@ -61,6 +63,14 @@ export function GmBar({
           {label}
         </button>
       ))}
+      <button
+        type="button"
+        className={styles.tool}
+        title="장면 배경 · 스탠딩과 표정 · 초상화를 그려요"
+        onClick={onArt}
+      >
+        그림
+      </button>
       <span className={styles.spacer} />
       <span className={styles.pool} title="GM 운명점 풀 (NPC가 써요)">
         GM 풀 <FatePointToken count={state.gmPool} />
@@ -247,19 +257,22 @@ export function NarrationInput({
   );
 }
 
-function Modal({
+export function Modal({
   title,
   onClose,
   children,
+  wide,
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  wide?: boolean;
 }) {
   return (
     <div className={styles.backdrop} onClick={onClose}>
       <section
         className={styles.modal}
+        data-wide={wide || undefined}
         role="dialog"
         aria-label={title}
         onClick={(e) => e.stopPropagation()}

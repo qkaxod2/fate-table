@@ -4,6 +4,9 @@ project_id = "fate-table"
 [functions.media-image]
 verify_jwt = true
 
+[functions.media-prompt]
+verify_jwt = true
+
 [functions.rooms]
 verify_jwt = true
 

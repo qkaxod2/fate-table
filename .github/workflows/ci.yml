@@ -31,4 +31,4 @@ jobs:
         with:
           deno-version: v2.x
       - name: deno check
-        run: for f in media-image rooms join commands; do (cd supabase/functions/$f && deno check index.ts) || exit 1; done
+        run: for f in media-image media-prompt rooms join commands; do (cd supabase/functions/$f && deno check index.ts) || exit 1; done

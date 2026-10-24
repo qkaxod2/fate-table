@@ -1,11 +1,31 @@
-// 캐릭터 초상화 생성 (NovelAI V5 medium). 키는 함수 시크릿 NAI_API_KEY에만 있다.
-// 요청: { presetId, appearance, guidance, seed? }  응답: { ok, data: { url, seed } } | { ok:false, error }
+// NAI 그림 생성 (NovelAI V5 medium). 키는 함수 시크릿 NAI_API_KEY에만 있다.
+// 요청: { kind?, presetId, appearance, negative?, guidance, seed?, expression?, baseUrl? }
+//   kind: portrait(기본) · npc · standing(전신, 배경을 따서 투명 PNG) · expression(스탠딩 표정 차분) · scene(장면 배경)
+// 응답: { ok, data: { url, seed, kind, expression? } } | { ok:false, error }
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { unzipSync } from 'npm:fflate@0.8.2';
-import { buildPortraitRequest, checkAppearance, findPreset } from '../_shared/portrait.js';
+import { decode, encode } from 'npm:fast-png@6.3.0';
+import {
+  MEDIA_KINDS,
+  TAGS_MAX,
+  buildPortraitRequest,
+  buildSceneRequest,
+  buildStandingRequest,
+  checkAppearance,
+  findExpression,
+  findPreset,
+  matteBackground,
+} from '../_shared/portrait.js';
 
 const NAI_URL = 'https://image.novelai.net/ai/generate-image';
-const DAILY_LIMIT = Number(Deno.env.get('PORTRAIT_DAILY_LIMIT') ?? 30);
+const BUCKET = 'portraits';
+// 예전 이름(PORTRAIT_DAILY_LIMIT)도 받는다. 초상화·스탠딩·배경을 합쳐 센다
+const DAILY_LIMIT = Number(
+  Deno.env.get('MEDIA_DAILY_LIMIT') ?? Deno.env.get('PORTRAIT_DAILY_LIMIT') ?? 60,
+);
+const IMAGE_KINDS = ['portrait', 'npc', 'standing', 'expression', 'scene'];
+
+type Kind = (typeof MEDIA_KINDS)[number];
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -37,6 +57,23 @@ async function callNai(body: unknown, key: string): Promise<Response> {
   }
 }
 
+function toBase64(bytes: Uint8Array): string {
+  let s = '';
+  for (let i = 0; i < bytes.length; i += 0x8000)
+    s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+
+/** 흰 배경 PNG → 배경을 딴 투명 PNG (그림 크기로 잘림) */
+function cutOut(png: Uint8Array): Uint8Array {
+  const img = decode(png);
+  const channels = img.channels === 4 ? 4 : 3;
+  const data =
+    img.depth === 8 ? (img.data as Uint8Array) : Uint8Array.from(img.data, (v) => v >> 8);
+  const out = matteBackground(data, img.width, img.height, channels);
+  return encode({ width: out.width, height: out.height, data: out.data, channels: 4, depth: 8 });
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   if (req.method !== 'POST') return fail(405, 'METHOD', 'POST만 받아요.');
@@ -57,23 +94,29 @@ Deno.serve(async (req) => {
   const user = who.user;
   if (!user) return fail(401, 'NOT_SIGNED_IN', '로그인이 필요해요.');
 
-  let input: { presetId?: unknown; appearance?: unknown; guidance?: unknown; seed?: unknown };
+  let input: Record<string, unknown>;
   try {
     input = await req.json();
   } catch {
     return fail(400, 'BAD_REQUEST', '요청 형식이 올바르지 않아요.');
   }
+  const kind = String(input.kind ?? 'portrait') as Kind;
+  if (!IMAGE_KINDS.includes(kind)) return fail(400, 'UNKNOWN_KIND', '없는 그림 종류예요.');
   const presetId = String(input.presetId ?? '');
   const appearance = String(input.appearance ?? '');
+  const negative = typeof input.negative === 'string' ? input.negative.slice(0, 300) : undefined;
   const guidance = Number(input.guidance);
+  const expression = typeof input.expression === 'string' ? input.expression : 'neutral';
   const seed =
     typeof input.seed === 'number' && Number.isInteger(input.seed)
       ? input.seed >>> 0
       : crypto.getRandomValues(new Uint32Array(1))[0]!;
 
   if (!findPreset(presetId)) return fail(400, 'UNKNOWN_PRESET', '없는 화풍이에요.');
-  const issue = checkAppearance(appearance);
+  const issue = checkAppearance(appearance, kind === 'portrait' ? undefined : TAGS_MAX);
   if (issue) return fail(400, issue, '외형 입력을 확인해 주세요.');
+  if (kind === 'expression' && !findExpression(expression))
+    return fail(400, 'UNKNOWN_EXPRESSION', '없는 표정이에요.');
 
   const admin = createClient(url, service);
   const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
@@ -81,18 +124,60 @@ Deno.serve(async (req) => {
     .from('media_usage')
     .select('id', { count: 'exact', head: true })
     .eq('user_id', user.id)
-    .eq('kind', 'portrait')
+    .in('kind', IMAGE_KINDS)
     .gte('created_at', since);
   if ((count ?? 0) >= DAILY_LIMIT) {
-    return fail(429, 'QUOTA_EXCEEDED', `초상화는 하루 ${DAILY_LIMIT}장까지 만들 수 있어요.`);
+    return fail(429, 'QUOTA_EXCEEDED', `그림은 하루 ${DAILY_LIMIT}장까지 만들 수 있어요.`);
   }
 
-  const body = buildPortraitRequest({ presetId, appearance, guidance, seed });
+  // 표정 차분은 원본 스탠딩(흰 배경, 잘리기 전)을 바탕으로 다시 그린다
+  let baseImage: string | undefined;
+  if (kind === 'expression') {
+    const prefix = admin.storage.from(BUCKET).getPublicUrl('').data.publicUrl;
+    const baseUrl = String(input.baseUrl ?? '');
+    if (!baseUrl.startsWith(prefix) || !baseUrl.endsWith('.png'))
+      return fail(400, 'BAD_BASE', '표정을 바꿀 스탠딩을 찾지 못했어요.');
+    const rawPath = baseUrl
+      .slice(prefix.length)
+      .replace(/^\/+/, '')
+      .replace(/\.png$/, '.raw.png');
+    const { data: raw, error } = await admin.storage.from(BUCKET).download(rawPath);
+    if (error || !raw) return fail(404, 'BAD_BASE', '이 스탠딩은 표정을 바꿀 원본이 없어요.');
+    baseImage = toBase64(new Uint8Array(await raw.arrayBuffer()));
+  }
+
+  let body: unknown;
+  try {
+    body =
+      kind === 'scene'
+        ? buildSceneRequest({ presetId, tags: appearance, guidance, seed, negative })
+        : kind === 'standing' || kind === 'expression'
+          ? buildStandingRequest({
+              presetId,
+              tags: appearance,
+              guidance,
+              seed,
+              negative,
+              expression: kind === 'standing' ? 'neutral' : expression,
+              ...(baseImage ? { baseImage } : {}),
+            })
+          : buildPortraitRequest({
+              presetId,
+              appearance,
+              guidance,
+              seed,
+              negative,
+              ...(kind === 'npc' ? { maxLength: TAGS_MAX } : {}),
+            });
+  } catch (e) {
+    return fail(400, 'BAD_REQUEST', e instanceof Error ? e.message : '요청을 만들지 못했어요.');
+  }
+
   const res = await callNai(body, naiKey);
   if (res.status === 429)
     return fail(429, 'BUSY', '다른 그림을 그리는 중이에요. 잠시 뒤 다시 눌러 주세요.');
   if (!res.ok) {
-    console.error('nai', res.status, (await res.text()).slice(0, 300));
+    console.error('nai', kind, res.status, (await res.text()).slice(0, 300));
     return fail(502, 'NAI_FAILED', '그림을 만들지 못했어요. 잠시 뒤 다시 시도해 주세요.');
   }
 
@@ -100,14 +185,39 @@ Deno.serve(async (req) => {
   const png = Object.values(files)[0];
   if (!png) return fail(502, 'NAI_FAILED', '그림을 만들지 못했어요.');
 
-  const path = `${user.id}/${crypto.randomUUID()}.png`;
-  const up = await admin.storage.from('portraits').upload(path, png, { contentType: 'image/png' });
+  const id = crypto.randomUUID();
+  const path = `${user.id}/${id}.png`;
+  const store = (p: string, bytes: Uint8Array) =>
+    admin.storage.from(BUCKET).upload(p, bytes, { contentType: 'image/png' });
+
+  let final = png;
+  if (kind === 'standing' || kind === 'expression') {
+    // 원본은 다음 표정 차분의 바탕으로 남겨 둔다
+    const rawUp = await store(`${user.id}/${id}.raw.png`, png);
+    if (rawUp.error) console.error('upload raw', rawUp.error.message);
+    try {
+      final = cutOut(png);
+    } catch (e) {
+      console.error('matte', e instanceof Error ? e.message : e);
+    }
+  }
+  const up = await store(path, final);
   if (up.error) {
     console.error('upload', up.error.message);
     return fail(500, 'STORAGE_FAILED', '그림을 저장하지 못했어요.');
   }
-  await admin.from('media_usage').insert({ user_id: user.id, kind: 'portrait', path });
+  await admin.from('media_usage').insert({ user_id: user.id, kind, path });
 
-  const { data: pub } = admin.storage.from('portraits').getPublicUrl(path);
-  return reply(200, { ok: true, data: { url: pub.publicUrl, seed } });
+  const { data: pub } = admin.storage.from(BUCKET).getPublicUrl(path);
+  return reply(200, {
+    ok: true,
+    data: {
+      url: pub.publicUrl,
+      seed,
+      kind,
+      ...(kind === 'standing' || kind === 'expression'
+        ? { expression: kind === 'standing' ? 'neutral' : expression }
+        : {}),
+    },
+  });
 });

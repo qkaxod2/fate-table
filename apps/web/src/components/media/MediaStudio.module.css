@@ -1,0 +1,219 @@
+.studio {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.h {
+  margin: 0;
+  font-family: var(--f-story);
+  font-size: var(--fs-md);
+  font-weight: 700;
+}
+
+.h small {
+  margin-left: var(--s-2);
+  color: var(--muted);
+  font-family: var(--f-ui);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+}
+
+.context {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-1) var(--s-2);
+  margin: 0;
+  font-size: var(--fs-sm);
+}
+
+.context span {
+  color: var(--k-scene);
+}
+
+.context small {
+  color: var(--muted);
+}
+
+.desc,
+.tags,
+.neg input {
+  width: 100%;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+  background: var(--plate);
+  color: var(--fg);
+  font: inherit;
+  resize: vertical;
+}
+
+.tags {
+  font-family: var(--f-num);
+  font-size: var(--fs-sm);
+}
+
+.desc:focus-visible,
+.tags:focus-visible,
+.neg input:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 1px;
+}
+
+.tags[aria-invalid] {
+  border-color: var(--danger);
+}
+
+.summary {
+  margin: 0;
+  padding: var(--s-2) var(--s-3);
+  border-left: 3px solid var(--k-scene);
+  background: rgb(79 168 175 / 0.1);
+  font-family: var(--f-story);
+  font-size: var(--fs-sm);
+}
+
+.neg summary {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.neg input {
+  margin-top: var(--s-1);
+  font-family: var(--f-num);
+  font-size: var(--fs-sm);
+}
+
+.wait {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.bad {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--fs-sm);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-3);
+}
+
+.think {
+  padding: var(--s-2) var(--s-4);
+  border: 1px solid var(--k-scene);
+  border-radius: var(--r-ctl);
+  background: rgb(79 168 175 / 0.16);
+  color: var(--fg);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.draw,
+.apply {
+  min-width: 140px;
+  padding: var(--s-2) var(--s-5);
+  border: 1px solid var(--gold);
+  border-radius: var(--r-ctl);
+  background: linear-gradient(180deg, var(--gold-hi), var(--gold));
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.think:disabled,
+.draw:disabled,
+.apply:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.presets {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--s-1);
+}
+
+@media (width < 560px) {
+  .presets {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.preset {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 0 var(--s-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+  overflow: hidden;
+  background: var(--panel-s);
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+.preset img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  object-position: 50% 20%;
+}
+
+.preset[aria-checked='true'] {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold);
+}
+
+.cands {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: var(--s-2);
+}
+
+.studio[data-kind='scene'] .cands {
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+}
+
+.cand {
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: var(--r-ctl);
+  overflow: hidden;
+  /* 스탠딩은 투명이라 체크무늬 위에 보여 준다 */
+  background: repeating-conic-gradient(rgb(255 255 255 / 0.08) 0 25%, transparent 0 50%) 0 0 / 16px
+    16px;
+  cursor: pointer;
+}
+
+.cand img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 832 / 1216;
+  object-fit: contain;
+  object-position: 50% 100%;
+}
+
+.studio[data-kind='scene'] .cand img {
+  aspect-ratio: 1216 / 832;
+  object-fit: cover;
+}
+
+.cand[aria-pressed='true'] {
+  border-color: var(--gold);
+}

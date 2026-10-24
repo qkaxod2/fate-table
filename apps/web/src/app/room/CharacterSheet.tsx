@@ -28,6 +28,8 @@ interface Props {
   mine: boolean;
   pending: boolean;
   onClose: () => void;
+  /** 스탠딩·표정·초상화 그리기 창 열기 */
+  onArt: () => void;
 }
 
 const MILESTONE_LABEL = { minor: '작은', significant: '중요한', major: '큰' } as const;
@@ -38,7 +40,16 @@ const MILESTONE_HELP = {
 } as const;
 
 /** 캐릭터 시트: 특성·접근법·특기·스트레스·후유증. 양보·회복·이정표 성장도 여기서 한다 */
-export function CharacterSheet({ character: c, state, run, isGm, mine, pending, onClose }: Props) {
+export function CharacterSheet({
+  character: c,
+  state,
+  run,
+  isGm,
+  mine,
+  pending,
+  onClose,
+  onArt,
+}: Props) {
   const aspects = Object.values(state.aspects).filter(
     (a) => a.ownerType === 'character' && a.ownerId === c.id && (!a.hidden || isGm),
   );
@@ -67,9 +78,23 @@ export function CharacterSheet({ character: c, state, run, isGm, mine, pending, 
         onClick={(e) => e.stopPropagation()}
       >
         <header className={styles.head}>
-          {c.portraitUrl && <img className={styles.portrait} src={c.portraitUrl} alt="" />}
+          {(c.portraitUrl || c.standing?.neutral) && (
+            <img className={styles.portrait} src={c.portraitUrl ?? c.standing!.neutral} alt="" />
+          )}
           <div className={styles.title}>
-            <h2>{c.name}</h2>
+            <h2>
+              {c.name}
+              {canEdit && (
+                <button
+                  type="button"
+                  className={styles.art}
+                  onClick={onArt}
+                  title="스탠딩 · 표정 · 초상화 그리기"
+                >
+                  그림
+                </button>
+              )}
+            </h2>
             <p>
               {c.isNpc ? 'NPC' : `플레이어 ${owner ?? ''}`}
               {c.takenOut && ` · ${term('takenOut')}`}

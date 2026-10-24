@@ -1,5 +1,273 @@
 // 자동 생성 파일: scripts/bundle-shared.mjs. 직접 고치지 않는다.
 
+// packages/portrait/src/matte.ts
+var N4 = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1]
+];
+function backgroundColor(src, w, h, ch) {
+  const samples = [[], [], []];
+  const k = Math.max(2, Math.round(Math.min(w, h) * 0.02));
+  for (const [x0, y0] of [
+    [0, 0],
+    [w - k, 0],
+    [0, h - k],
+    [w - k, h - k]
+  ]) {
+    for (let y = y0; y < y0 + k; y++)
+      for (let x = x0; x < x0 + k; x++) {
+        const i = (y * w + x) * ch;
+        for (let c = 0; c < 3; c++) samples[c].push(src[i + c]);
+      }
+  }
+  return samples.map((s) => s.sort((a, b) => a - b)[s.length >> 1]);
+}
+function matteBackground(src, width, height, channels = 4, opts = {}) {
+  const hard = opts.hard ?? 26;
+  const soft = opts.soft ?? 70;
+  const holeMin = opts.holeMin ?? Math.round(width * height * 15e-4);
+  const pad = opts.pad ?? 6;
+  const w = width;
+  const h = height;
+  const n = w * h;
+  const ch = channels;
+  const s = src instanceof Uint8Array ? src : new Uint8Array(src.buffer, src.byteOffset, src.length);
+  const bg = backgroundColor(s, w, h, ch);
+  const dist = new Uint8Array(n);
+  for (let p = 0; p < n; p++) {
+    const i = p * ch;
+    const a = ch === 4 ? s[i + 3] : 255;
+    if (a < 8) continue;
+    dist[p] = Math.max(
+      Math.abs(s[i] - bg[0]),
+      Math.abs(s[i + 1] - bg[1]),
+      Math.abs(s[i + 2] - bg[2])
+    );
+  }
+  const mark = new Uint8Array(n);
+  const queue = new Int32Array(n);
+  let head = 0;
+  let tail = 0;
+  const seed = (p) => {
+    if (mark[p] === 0 && dist[p] <= hard) {
+      mark[p] = 1;
+      queue[tail++] = p;
+    }
+  };
+  for (let x = 0; x < w; x++) {
+    seed(x);
+    seed((h - 1) * w + x);
+  }
+  for (let y = 0; y < h; y++) {
+    seed(y * w);
+    seed(y * w + w - 1);
+  }
+  while (head < tail) {
+    const p = queue[head++];
+    const x = p % w;
+    const y = p / w | 0;
+    for (const [dx, dy] of N4) {
+      const nx = x + dx;
+      const ny = y + dy;
+      if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+      seed(ny * w + nx);
+    }
+  }
+  const strict = Math.max(4, hard >> 2);
+  for (let start = 0; start < n; start++) {
+    if (mark[start] !== 0 || dist[start] > strict) continue;
+    head = tail = 0;
+    mark[start] = 2;
+    queue[tail++] = start;
+    let sum = 0;
+    while (head < tail) {
+      const p = queue[head++];
+      sum += dist[p];
+      const x = p % w;
+      const y = p / w | 0;
+      for (const [dx, dy] of N4) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+        const q = ny * w + nx;
+        if (mark[q] === 0 && dist[q] <= strict) {
+          mark[q] = 2;
+          queue[tail++] = q;
+        }
+      }
+    }
+    if (tail >= holeMin && sum / tail < 2) for (let i = 0; i < tail; i++) mark[queue[i]] = 1;
+  }
+  const out = new Uint8Array(n * 4);
+  for (let p = 0; p < n; p++) {
+    const i = p * ch;
+    const o = p * 4;
+    if (mark[p] === 1) continue;
+    let alpha = ch === 4 ? s[i + 3] : 255;
+    let r = s[i];
+    let g = s[i + 1];
+    let b = s[i + 2];
+    const d = dist[p];
+    if (d < soft) {
+      const x = p % w;
+      const y = p / w | 0;
+      let edge = false;
+      for (const [dx, dy] of N4) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx >= 0 && ny >= 0 && nx < w && ny < h && mark[ny * w + nx] === 1) edge = true;
+      }
+      if (edge) {
+        const a = Math.min(1, Math.max(0, (d - hard) / (soft - hard)));
+        if (a <= 0.02) continue;
+        const un = (c, k) => Math.min(255, Math.max(0, Math.round((c - k * (1 - a)) / a)));
+        r = un(r, bg[0]);
+        g = un(g, bg[1]);
+        b = un(b, bg[2]);
+        alpha = Math.round(alpha * a);
+      }
+    }
+    out[o] = r;
+    out[o + 1] = g;
+    out[o + 2] = b;
+    out[o + 3] = alpha;
+  }
+  return cropToContent({ data: out, width: w, height: h }, pad);
+}
+function cropToContent(img, pad = 0) {
+  const { data, width: w, height: h } = img;
+  let x0 = w;
+  let y0 = h;
+  let x1 = -1;
+  let y1 = -1;
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      if (data[(y * w + x) * 4 + 3] < 16) continue;
+      if (x < x0) x0 = x;
+      if (x > x1) x1 = x;
+      if (y < y0) y0 = y;
+      if (y > y1) y1 = y;
+    }
+  if (x1 < 0) return img;
+  x0 = Math.max(0, x0 - pad);
+  y0 = Math.max(0, y0 - pad);
+  x1 = Math.min(w - 1, x1 + pad);
+  y1 = Math.min(h - 1, y1 + 1);
+  const cw = x1 - x0 + 1;
+  const chh = y1 - y0 + 1;
+  if (cw === w && chh === h) return img;
+  const out = new Uint8Array(cw * chh * 4);
+  for (let y = 0; y < chh; y++)
+    out.set(data.subarray(((y + y0) * w + x0) * 4, ((y + y0) * w + x0 + cw) * 4), y * cw * 4);
+  return { data: out, width: cw, height: chh };
+}
+
+// packages/portrait/src/stage.ts
+var MEDIA_KINDS = ["portrait", "npc", "standing", "expression", "scene"];
+var TAGS_MAX = 900;
+var STANDING_SIZE = { width: 832, height: 1216 };
+var SCENE_SIZE = { width: 1216, height: 832 };
+var EXPRESSION_STRENGTH = 0.5;
+var EXPRESSIONS = [
+  { id: "neutral", label: "\uAE30\uBCF8", tags: "light smile, closed mouth" },
+  { id: "smile", label: "\uC6C3\uC74C", tags: "smile, open mouth, happy, :d, eyes visible" },
+  { id: "serious", label: "\uC9C4\uC9C0", tags: "serious, closed mouth, furrowed brow, determined" },
+  { id: "angry", label: "\uD654\uB0A8", tags: "angry, v-shaped eyebrows, clenched teeth, glaring" },
+  { id: "sad", label: "\uC2AC\uD514", tags: "sad, frown, tears, downturned eyes" },
+  { id: "surprised", label: "\uB180\uB78C", tags: "surprised, wide-eyed, open mouth, raised eyebrows" },
+  { id: "embarrassed", label: "\uB2F9\uD669", tags: "embarrassed, blush, wavy mouth, sweatdrop" },
+  { id: "smug", label: "\uC5EC\uC720", tags: "smug, smirk, half-closed eyes, confident" }
+];
+function findExpression(id) {
+  return EXPRESSIONS.find((e) => e.id === id);
+}
+var FACE_TAGS = new Set(
+  [
+    "smile",
+    "light smile",
+    "grin",
+    "smirk",
+    "laughing",
+    "happy",
+    "frown",
+    "angry",
+    "sad",
+    "crying",
+    "tears",
+    "surprised",
+    "shocked",
+    "blush",
+    "serious",
+    "expressionless",
+    "pout",
+    "open mouth",
+    "closed mouth",
+    ":d",
+    ":o",
+    "smug",
+    "embarrassed",
+    "determined",
+    "glaring"
+  ].map((t) => t.toLowerCase())
+);
+var STANDING_FRAME = "solo, full body, standing, straight-on, looking at viewer, white background, simple background";
+var STANDING_NEGATIVE = "cropped, feet out of frame, head out of frame, multiple views, reference sheet, turnaround, shadow, drop shadow, gradient background, detailed background, scenery, border, frame, text, speech bubble";
+var SCENE_FRAME = "no humans, scenery, wide shot, background";
+var SCENE_NEGATIVE = "1girl, 1boy, people, person, character, crowd, silhouette, text, speech bubble, signature, watermark, border, frame";
+function splitTags(text) {
+  return text.split(/[,\n]/).map((s) => s.trim()).filter(Boolean);
+}
+function joinTags(...parts) {
+  return parts.map((p) => p?.trim()).filter(Boolean).join(", ");
+}
+function uniq(tags) {
+  const seen = /* @__PURE__ */ new Set();
+  return tags.filter((t) => {
+    const k = t.toLowerCase();
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+function standingCaption(tags, expressionId = "neutral") {
+  const face = findExpression(expressionId) ?? EXPRESSIONS[0];
+  const look = splitTags(normalizeAppearance(tags)).filter((t) => !FACE_TAGS.has(t.toLowerCase()));
+  return uniq([...splitTags(STANDING_FRAME), ...look, ...splitTags(face.tags)]).join(", ");
+}
+function buildStandingRequest(input) {
+  const preset = findPreset(input.presetId);
+  if (!preset) throw new Error("UNKNOWN_PRESET");
+  const issue = checkAppearance(input.tags, TAGS_MAX);
+  if (issue) throw new Error(issue);
+  return buildNaiBody({
+    base: preset.prompt,
+    character: standingCaption(input.tags, input.expression),
+    negative: joinTags(SAFE_NEGATIVE, input.negative, STANDING_NEGATIVE, preset.negative),
+    size: STANDING_SIZE,
+    guidance: input.guidance,
+    cfgRescale: preset.cfgRescale,
+    seed: input.seed,
+    ...input.baseImage ? { img2img: { image: input.baseImage, strength: EXPRESSION_STRENGTH } } : {}
+  });
+}
+function buildSceneRequest(input) {
+  const preset = findPreset(input.presetId);
+  if (!preset) throw new Error("UNKNOWN_PRESET");
+  const issue = checkAppearance(input.tags, TAGS_MAX);
+  if (issue) throw new Error(issue);
+  const scene = uniq([...splitTags(input.tags), ...splitTags(SCENE_FRAME)]).join(", ");
+  return buildNaiBody({
+    base: `${scene}, ${preset.prompt}`,
+    negative: joinTags(SAFE_NEGATIVE, input.negative, SCENE_NEGATIVE, preset.negative),
+    size: SCENE_SIZE,
+    guidance: input.guidance,
+    cfgRescale: preset.cfgRescale,
+    seed: input.seed
+  });
+}
+
 // packages/portrait/src/index.ts
 var PORTRAIT_MODEL = "nai-diffusion-5-full-medium";
 var PORTRAIT_STEPS = 14;
@@ -86,10 +354,10 @@ var BLOCKED = [
   /\bloli\b/i,
   /\bshota\b/i
 ];
-function checkAppearance(text) {
+function checkAppearance(text, max = APPEARANCE_MAX) {
   const t = text.trim();
   if (!t) return "EMPTY";
-  if (t.length > APPEARANCE_MAX) return "TOO_LONG";
+  if (t.length > max) return "TOO_LONG";
   if (BLOCKED.some((re) => re.test(t))) return "BLOCKED_TAG";
   return null;
 }
@@ -108,23 +376,33 @@ function buildPortraitRequest(input) {
   if (!preset) throw new Error("UNKNOWN_PRESET");
   const issue = checkAppearance(input.appearance);
   if (issue) throw new Error(issue);
-  const character = normalizeAppearance(input.appearance);
-  const negative = `${SAFE_NEGATIVE}, ${preset.negative}`;
+  return buildNaiBody({
+    base: preset.prompt,
+    character: normalizeAppearance(input.appearance),
+    negative: [SAFE_NEGATIVE, input.negative?.trim(), preset.negative].filter(Boolean).join(", "),
+    size: PORTRAIT_SIZE,
+    guidance: input.guidance,
+    cfgRescale: preset.cfgRescale,
+    seed: input.seed
+  });
+}
+function buildNaiBody(o) {
   const center = { x: 0.5, y: 0.5 };
+  const chars = o.character ? [{ prompt: o.character, uc: "", center, enabled: true }] : [];
   return {
-    input: preset.prompt,
+    input: o.base,
     model: PORTRAIT_MODEL,
-    action: "generate",
+    action: o.img2img ? "img2img" : "generate",
     parameters: {
       params_version: 4,
-      width: PORTRAIT_SIZE.width,
-      height: PORTRAIT_SIZE.height,
-      scale: clampGuidance(input.guidance),
-      cfg_rescale: preset.cfgRescale,
+      width: o.size.width,
+      height: o.size.height,
+      scale: clampGuidance(o.guidance),
+      cfg_rescale: o.cfgRescale,
       sampler: "k_euler_ancestral",
       steps: PORTRAIT_STEPS,
       n_samples: 1,
-      seed: input.seed >>> 0,
+      seed: o.seed >>> 0,
       noise_schedule: "karras",
       ucPresetId: "heavy",
       qualityPresetId: "none",
@@ -135,23 +413,29 @@ function buildPortraitRequest(input) {
       legacy_v3_extend: false,
       use_coords: false,
       legacy_uc: false,
-      characterPrompts: [{ prompt: character, uc: "", center, enabled: true }],
+      ...o.img2img ? {
+        image: o.img2img.image,
+        strength: o.img2img.strength,
+        noise: 0,
+        extra_noise_seed: o.seed >>> 0
+      } : {},
+      characterPrompts: chars,
       v4_prompt: {
         caption: {
-          base_caption: preset.prompt,
-          char_captions: [{ char_caption: character, centers: [center] }]
+          base_caption: o.base,
+          char_captions: chars.map((c) => ({ char_caption: c.prompt, centers: [center] }))
         },
         use_coords: false,
         use_order: true
       },
       v4_negative_prompt: {
         caption: {
-          base_caption: negative,
-          char_captions: [{ char_caption: "", centers: [center] }]
+          base_caption: o.negative,
+          char_captions: chars.map(() => ({ char_caption: "", centers: [center] }))
         },
         legacy_uc: false
       },
-      negative_prompt: negative
+      negative_prompt: o.negative
     }
   };
 }
@@ -178,14 +462,29 @@ var APPEARANCE_CHIPS = [
 export {
   APPEARANCE_CHIPS,
   APPEARANCE_MAX,
+  EXPRESSIONS,
+  EXPRESSION_STRENGTH,
   GUIDANCE,
+  MEDIA_KINDS,
   PORTRAIT_MODEL,
   PORTRAIT_PRESETS,
   PORTRAIT_SIZE,
   PORTRAIT_STEPS,
+  SAFE_NEGATIVE,
+  SCENE_SIZE,
+  STANDING_SIZE,
+  TAGS_MAX,
+  buildNaiBody,
   buildPortraitRequest,
+  buildSceneRequest,
+  buildStandingRequest,
   checkAppearance,
   clampGuidance,
+  cropToContent,
+  findExpression,
   findPreset,
-  normalizeAppearance
+  joinTags,
+  matteBackground,
+  normalizeAppearance,
+  standingCaption
 };

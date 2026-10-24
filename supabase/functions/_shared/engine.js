@@ -722,11 +722,36 @@ var handlers = {
   "sfx.played": (s) => s,
   "media.attached": (s, p) => {
     if (p.kind === "portrait")
-      return patchCharacter(s, p.target, (c) => ({ ...c, portraitAssetId: p.assetId }));
+      return patchCharacter(s, p.target, (c) => ({
+        ...c,
+        ...p.assetId ? { portraitAssetId: p.assetId } : {},
+        ...p.url ? { portraitUrl: p.url } : {}
+      }));
+    if (p.kind === "standing" && p.url) {
+      const face = p.expression ?? "neutral";
+      return patchCharacter(s, p.target, (c) => ({
+        ...c,
+        // 기본 스탠딩을 새로 그리면 예전 표정 차분은 버린다 (다른 그림이라 어긋난다)
+        standing: face === "neutral" ? { neutral: p.url } : { ...c.standing, [face]: p.url },
+        ...face === "neutral" && p.meta ? { standingMeta: p.meta } : {}
+      }));
+    }
     if (p.kind === "scene" && s.scene?.id === p.target)
-      return { ...s, scene: { ...s.scene, backgroundAssetId: p.assetId } };
+      return {
+        ...s,
+        scene: {
+          ...s.scene,
+          ...p.assetId ? { backgroundAssetId: p.assetId } : {},
+          ...p.url ? { backgroundUrl: p.url } : {}
+        }
+      };
     return s;
   },
+  "character.expression_set": (s, p) => patchCharacter(s, p.characterId, (c) => {
+    if (p.expression) return { ...c, expression: p.expression };
+    const { expression: _gone, ...rest } = c;
+    return rest;
+  }),
   // 되돌리기는 replay()가 처리한다. 단일 이벤트 적용으로는 바뀌는 것이 없다.
   "event.undone": (s) => s
 };
@@ -20610,6 +20635,23 @@ var CommandSchema = external_exports.discriminatedUnion("type", [
   }),
   cmd("zone.remove", { zoneId: id }),
   cmd("token.move", { characterId: id, zoneId: id.nullable() }),
+  cmd("media.attach", {
+    kind: external_exports.enum(["portrait", "standing", "scene"]),
+    /** 캐릭터 id 또는 장면 id */
+    target: id,
+    url: external_exports.string().url().max(500),
+    /** 스탠딩일 때 어떤 표정인지 (없으면 기본) */
+    expression: external_exports.string().min(1).max(24).optional(),
+    meta: external_exports.object({
+      presetId: external_exports.string().min(1).max(24),
+      prompt: external_exports.string().max(1e3),
+      seed: external_exports.number().int().min(0).max(4294967295)
+    }).optional()
+  }),
+  cmd("character.expression", {
+    characterId: id,
+    expression: external_exports.string().min(1).max(24).nullable()
+  }),
   cmd("chat.post", { text: external_exports.string().trim().min(1).max(2e3), as: text.optional() }),
   cmd("gm.note", { text: external_exports.string().trim().min(1).max(4e3) }),
   cmd("narration.post", { text: external_exports.string().trim().min(1).max(4e3) }),
@@ -21151,6 +21193,27 @@ var resolvers = {
     controlled(s, a, p.characterId);
     if (p.zoneId) need(need(s.scene, "scene").zones[p.zoneId], "zone");
     return one(ev("token.moved", a, p));
+  },
+  "media.attach": (s, p, a) => {
+    if (p.kind === "scene") {
+      if (a.role !== "gm") throw new CommandError("FORBIDDEN_ROLE");
+      if (s.scene?.id !== p.target) throw new CommandError("NO_ACTIVE_SCENE");
+    } else controlled(s, a, p.target);
+    return one(
+      ev("media.attached", a, {
+        kind: p.kind,
+        target: p.target,
+        url: p.url,
+        ...p.kind === "standing" ? { expression: p.expression ?? "neutral" } : {},
+        ...p.meta ? { meta: p.meta } : {}
+      })
+    );
+  },
+  "character.expression": (s, p, a) => {
+    const c = controlled(s, a, p.characterId);
+    if (p.expression && !c.standing?.[p.expression])
+      throw new CommandError("INVALID", "no standing for this expression");
+    return one(ev("character.expression_set", a, p));
   },
   "chat.post": (_s, p, a) => {
     if (p.as && a.role !== "gm") throw new CommandError("FORBIDDEN_ROLE");

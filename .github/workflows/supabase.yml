@@ -31,9 +31,20 @@ jobs:
           if [ -n "$ELEVENLABS_API_KEY" ]; then
             supabase secrets set --project-ref "$PROJECT_REF" ELEVENLABS_API_KEY="$ELEVENLABS_API_KEY"
           fi
+          # 프롬프트 도우미(Vertex AI Gemini): API 키나 서비스 계정 JSON 중 하나만 있으면 된다
+          for name in VERTEX_API_KEY GOOGLE_SERVICE_ACCOUNT_JSON GOOGLE_CLOUD_PROJECT VERTEX_LOCATION VERTEX_MODEL; do
+            if [ -n "${!name}" ]; then
+              supabase secrets set --project-ref "$PROJECT_REF" "$name=${!name}"
+            fi
+          done
         env:
           NAI_API_KEY: ${{ secrets.NAI_API_KEY }}
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          VERTEX_API_KEY: ${{ secrets.VERTEX_API_KEY }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          GOOGLE_CLOUD_PROJECT: ${{ vars.GOOGLE_CLOUD_PROJECT }}
+          VERTEX_LOCATION: ${{ vars.VERTEX_LOCATION }}
+          VERTEX_MODEL: ${{ vars.VERTEX_MODEL }}
       - name: 익명 로그인 켜기
         run: |
           code=$(curl -sS -o /dev/null -w '%{http_code}' -X PATCH \

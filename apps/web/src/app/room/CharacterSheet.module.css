@@ -319,3 +319,17 @@ button:disabled {
   color: var(--gold-hi);
   cursor: pointer;
 }
+
+.art {
+  margin-left: var(--s-2);
+  padding: 1px var(--s-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--plate);
+  color: var(--gold-hi);
+  font: inherit;
+  font-family: var(--f-ui);
+  font-size: var(--fs-xs);
+  vertical-align: middle;
+  cursor: pointer;
+}
