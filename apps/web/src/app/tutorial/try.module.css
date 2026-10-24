@@ -78,6 +78,8 @@
 
 /* ---------- 무대 ---------- */
 .stage {
+  position: relative;
+  isolation: isolate;
   display: grid;
   grid-template-rows: auto 1fr auto;
   min-height: 100dvh;

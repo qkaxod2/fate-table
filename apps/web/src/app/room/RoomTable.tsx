@@ -39,6 +39,7 @@ import {
 } from '@/components/roll/DiceTray';
 import { InvokeTray, type InvokeChoice } from '@/components/roll/InvokeTray';
 import { OutcomeBanner } from '@/components/roll/OutcomeBanner';
+import { SceneFade } from '@/components/scene/SceneFade';
 import { OUTCOME_FACES, pickFace, StageCast } from '@/components/scene/StageCast';
 import { toast, Toaster } from '@/components/ui/Toast';
 import { playSfx, setSfxEnabled, sfxEnabled, sfxForEvent, sfxForOutcome } from '@/fx/sfx';
@@ -574,14 +575,15 @@ export function RoomTable({
 
   const overlayOpen = !!(prompt || (compel && state.aspects[compel.aspectId]) || damage || iDefend);
 
+  const stageBg = `linear-gradient(180deg, rgb(12 14 26 / .35), rgb(12 14 26 / .92)), url(${state.scene?.backgroundUrl ?? asset('/try/bg.jpg')})`;
+
   return (
     <main
       className={`${tryStyles.stage} ${styles.shell}`}
       data-call={myCall ?? undefined}
-      style={{
-        backgroundImage: `linear-gradient(180deg, rgb(12 14 26 / .35), rgb(12 14 26 / .92)), url(${state.scene?.backgroundUrl ?? asset('/try/bg.jpg')})`,
-      }}
+      style={{ backgroundImage: stageBg }}
     >
+      <SceneFade background={stageBg} />
       <Toaster />
       <header className={tryStyles.top}>
         <div>

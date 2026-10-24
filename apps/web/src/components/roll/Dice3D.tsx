@@ -2,6 +2,7 @@
 
 import type { DieFace } from '@fate/rules-engine';
 import { useEffect, useRef } from 'react';
+import { playSfx, tap } from '@/fx/sfx';
 import styles from './Dice3D.module.css';
 
 /** 서버 animSeed(rollKey에 들어 있음)로 궤적을 정해서, 같은 굴림은 모두에게 같은 모양으로 굴러간다 */
@@ -69,6 +70,7 @@ export function Dice3D({ dice, rollKey, tone = 'me', quick, onSettled }: Props) 
     const shadowEls = shadows.current;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+    const knocks: number[] = [];
     const anims = dice.map((face, i) => {
       const el = cubes.current[i];
       if (!el) return null;
@@ -115,6 +117,13 @@ export function Dice3D({ dice, rollKey, tone = 'me', quick, onSettled }: Props) 
             frame(1, 0, 0, 1, 'linear'),
           ];
       const duration = quick ? 480 + i * 70 : 1050 + i * 150;
+      // 판에 처음 닿는 순간 주사위마다 작은 딸깍 소리 (음높이를 조금씩 다르게)
+      knocks.push(
+        window.setTimeout(() => {
+          playSfx('dice-settle', 0.16, 1.15 + i * 0.08);
+          tap(8);
+        }, duration * keys[1]!.offset),
+      );
       // 그림자는 주사위가 높을수록 작고 옅다
       shadowEls[i]?.animate(
         keys.map((k, j) => {
@@ -144,6 +153,7 @@ export function Dice3D({ dice, rollKey, tone = 'me', quick, onSettled }: Props) 
         };
     });
     return () => {
+      knocks.forEach((t) => window.clearTimeout(t));
       anims.forEach((a) => a?.cancel());
       shadowEls.forEach((s) => s?.parentElement?.removeAttribute('data-landed'));
     };

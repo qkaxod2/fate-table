@@ -24,9 +24,33 @@ button.card {
   cursor: pointer;
 }
 
+button.card {
+  position: relative;
+}
+
 button.card:not(:disabled):hover {
-  transform: translateY(-3px);
+  transform: perspective(600px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(-3px);
   box-shadow: 0 12px 24px -12px rgb(0 0 0 / 0.85);
+}
+
+/* 마우스를 따라오는 종이 광택 */
+button.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle at var(--mx, 50%) var(--my, 0%),
+    rgb(255 255 255 / 0.55),
+    transparent 55%
+  );
+  opacity: 0;
+  transition: opacity var(--dur-hover) var(--ease-out);
+  pointer-events: none;
+}
+
+button.card:not(:disabled):hover::after {
+  opacity: 0.45;
 }
 
 .card[data-kind='high'] {
@@ -52,6 +76,26 @@ button.card:not(:disabled):hover {
   box-shadow:
     0 0 0 3px rgb(242 123 173 / 0.35),
     0 8px 22px -10px rgb(0 0 0 / 0.8);
+  animation: invite 2.2s var(--ease-in-out) 700ms infinite;
+}
+
+/* 결과를 뒤집을 수 있는 카드는 은은하게 숨 쉰다 */
+@keyframes invite {
+  50% {
+    box-shadow:
+      0 0 0 4px rgb(242 123 173 / 0.5),
+      0 0 22px rgb(242 123 173 / 0.45),
+      0 8px 22px -10px rgb(0 0 0 / 0.8);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card[data-highlight] {
+    animation: none;
+  }
+  button.card:not(:disabled):hover {
+    transform: none;
+  }
 }
 
 .card[data-disabled] {
