@@ -56,9 +56,10 @@ export function RoomLoader() {
           <>
             <h1 className={styles.title}>들어갈 수 없어요</h1>
             <p className={styles.lead}>{load.message}</p>
-            <Link href="/join/" className={styles.back}>
-              초대 코드로 참가하기 →
-            </Link>
+            <div className={styles.links}>
+              <Link href="/join/">초대 코드로 참가하기</Link>
+              <Link href="/rooms/">내 방 목록</Link>
+            </div>
           </>
         )}
       </div>
