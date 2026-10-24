@@ -14,7 +14,6 @@
       color-mix(in srgb, var(--c) 30%, transparent) 75%,
       transparent
     );
-  overflow: hidden;
   animation: band-in 420ms var(--ease-out) backwards;
 }
 
@@ -59,13 +58,9 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    100deg,
-    transparent 35%,
-    rgb(255 240 200 / 0.35) 50%,
-    transparent 65%
-  );
-  translate: -100% 0;
+  background: linear-gradient(100deg, transparent 40%, rgb(255 240 200 / 0.35) 50%, transparent 60%)
+    0 0 / 300% 100% no-repeat;
+  background-position: 100% 0;
   animation: shine 900ms var(--ease-in-out) 380ms;
   pointer-events: none;
 }
@@ -90,6 +85,69 @@
   margin: var(--s-1) 0 0;
   color: var(--fg);
   font-size: var(--fs-sm);
+}
+
+.sparks {
+  position: absolute;
+  top: 38%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.sparks span {
+  position: absolute;
+  width: var(--s);
+  height: var(--s);
+  margin: calc(var(--s) / -2);
+  border-radius: 50%;
+  background: var(--perfect-hi);
+  box-shadow:
+    0 0 8px 1px var(--gold-hi),
+    0 0 18px 2px var(--perfect);
+  opacity: 0;
+  animation: spark 1100ms var(--ease-out) forwards;
+}
+
+@keyframes spark {
+  0% {
+    opacity: 1;
+    transform: rotate(var(--a)) translateX(0) scale(1.4);
+  }
+  70% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--a)) translateX(var(--d)) translateY(14px) scale(0.4);
+  }
+}
+
+/* 실패는 글자가 무겁게 떨어져 한 번 흔들린다 */
+.banner[data-tone='miss'] .latin {
+  animation-name: thud;
+  animation-timing-function: var(--ease-out);
+}
+
+@keyframes thud {
+  0% {
+    opacity: 0;
+    transform: translateY(-18px);
+  }
+  45% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(3px);
+  }
+  90% {
+    transform: translateX(-1px);
+  }
 }
 
 @keyframes band-in {
@@ -118,8 +176,11 @@
 }
 
 @keyframes shine {
+  from {
+    background-position: 100% 0;
+  }
   to {
-    translate: 100% 0;
+    background-position: 0 0;
   }
 }
 
@@ -130,8 +191,12 @@
   .copy {
     animation-name: fade;
   }
-  .banner[data-tone='perfect']::after {
+  .banner[data-tone='perfect']::after,
+  .sparks {
     display: none;
+  }
+  .banner[data-tone='miss'] .latin {
+    animation-name: fade;
   }
 }
 

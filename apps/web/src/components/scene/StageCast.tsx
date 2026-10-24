@@ -12,6 +12,8 @@ export interface CastMember {
   face?: string | null;
   /** 스탠딩이 없을 때 초상화라도 세울지 */
   portraitFallback?: boolean;
+  /** 공격을 맞았다: 한 번 움찔한다 */
+  hit?: boolean;
 }
 
 /** 표정 → 그림. 없는 표정이면 기본 스탠딩 */
@@ -73,6 +75,7 @@ function Sprite({ m, side }: { m: CastMember; side: 'left' | 'right' }) {
       data-side={side}
       data-focus={m.focus || undefined}
       data-cutout={cutout || undefined}
+      data-hit={m.hit || undefined}
     >
       {prev && prev !== url && (
         <img key={`was:${prev}`} className={styles.leaving} src={prev} alt="" draggable={false} />

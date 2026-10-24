@@ -45,6 +45,7 @@ import { playSfx, setSfxEnabled, sfxEnabled, sfxForEvent, sfxForOutcome } from '
 import { ApiError } from '@/lib/api';
 import { asset } from '@/lib/asset';
 import { Presence } from '@/lib/motion';
+import { Typewriter } from '@/components/ui/Typewriter';
 import { describe, ERROR_COPY, JUDGE } from '@/lib/copy';
 import { josa } from '@/lib/josa';
 import type { RemoteRoom } from '@/state/remoteRoom';
@@ -732,6 +733,10 @@ export function RoomTable({
                     character: castRight,
                     focus: roll?.status === 'awaiting_defense',
                     face: faceShown ? pickFace(castRight, OUTCOME_FACES[flip[outcome]]) : null,
+                    hit:
+                      !!faceShown &&
+                      roll?.action === 'attack' &&
+                      (outcome === 'success' || outcome === 'style'),
                   },
                 }
               : {})}
@@ -1160,8 +1165,8 @@ export function RoomTable({
           <div className={tryStyles.dialogue}>
             <div className={tryStyles.speaker}>G M</div>
             {said && (
-              <p className={tryStyles.say} key={said} data-fresh>
-                {said}
+              <p className={tryStyles.say}>
+                <Typewriter text={said} />
               </p>
             )}
             {isGm && <NarrationInput run={run} onEcho={setNarrationEcho} />}

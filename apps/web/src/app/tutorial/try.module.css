@@ -473,6 +473,28 @@
   animation: slide-in-flip var(--dur-scene) var(--ease-out) backwards;
 }
 
+/* 공격이 들어가면 하얗게 번쩍이며 뒤로 움찔한다 (StageCast와 같은 움직임) */
+.bossStandee[data-hit] {
+  animation:
+    slide-in-flip var(--dur-scene) var(--ease-out) backwards,
+    hit 520ms var(--ease-out);
+}
+
+@keyframes hit {
+  0% {
+    filter: brightness(2.2) saturate(0.3) drop-shadow(0 10px 30px rgb(0 0 0 / 0.6));
+  }
+  15% {
+    translate: 14px 0;
+  }
+  35% {
+    translate: -6px 0;
+  }
+  55% {
+    translate: 3px 0;
+  }
+}
+
 .top,
 .left,
 .right,
@@ -514,6 +536,7 @@
   .pickCard,
   .standee,
   .bossStandee,
+  .bossStandee[data-hit],
   .top,
   .left,
   .right,

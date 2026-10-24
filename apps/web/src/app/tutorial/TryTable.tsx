@@ -37,6 +37,7 @@ import { BOSS, SAMPLE_CHARACTERS, SCENE, type SampleCharacter } from '@/content/
 import { playSfx, setSfxEnabled, sfxEnabled, sfxForEvent, sfxForOutcome } from '@/fx/sfx';
 import { asset } from '@/lib/asset';
 import { Presence } from '@/lib/motion';
+import { Typewriter } from '@/components/ui/Typewriter';
 import { describe, ERROR_COPY } from '@/lib/copy';
 import { LocalRoom } from '@/state/localRoom';
 import styles from './try.module.css';
@@ -502,7 +503,17 @@ function Table({
           </Presence>
           <img className={styles.standee} src={asset(pick.image)} alt={pick.name} />
           {showBoss && (
-            <img className={styles.bossStandee} src={asset(SCENE.bossImage)} alt={boss.name} />
+            <img
+              className={styles.bossStandee}
+              src={asset(SCENE.bossImage)}
+              alt={boss.name}
+              data-hit={
+                (final &&
+                  roll?.action === 'attack' &&
+                  (roll.result?.outcome === 'success' || roll.result?.outcome === 'style')) ||
+                undefined
+              }
+            />
           )}
 
           {roll && (
@@ -690,7 +701,11 @@ function Table({
         <div className={styles.dialogue}>
           <div className={styles.speaker}>G M</div>
           <p className={styles.say}>
-            {narration && narration.type === 'narration.posted' ? narration.payload.text : ''}
+            <Typewriter
+              text={
+                narration && narration.type === 'narration.posted' ? narration.payload.text : ''
+              }
+            />
           </p>
           {error && <p className={styles.error}>{error}</p>}
         </div>
