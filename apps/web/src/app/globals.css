@@ -21,13 +21,33 @@ a {
   color: inherit;
 }
 
-/* 누르는 감촉: 모든 버튼이 눌리는 순간 살짝 들어간다 */
+/*
+ * 누르는 감촉: 모든 버튼이 눌리는 순간 살짝 들어가고, 손을 떼면 튕기듯 돌아온다.
+ * transform 대신 scale·translate를 써서 카드가 hover로 떠 있는 transform과 부딪히지 않는다.
+ * :where()라 특이도가 0이어서, 컴포넌트가 transition을 따로 정하면 그쪽이 이긴다
+ * (그때는 var(--press)를 목록에 같이 넣는다).
+ */
+:root {
+  --press: scale var(--dur-hover) var(--ease-spring), translate var(--dur-hover) var(--ease-spring);
+  --hover:
+    color var(--dur-hover) var(--ease-out), background-color var(--dur-hover) var(--ease-out),
+    border-color var(--dur-hover) var(--ease-out), box-shadow var(--dur-hover) var(--ease-out),
+    opacity var(--dur-hover) var(--ease-out);
+}
+
 button {
   -webkit-tap-highlight-color: transparent;
 }
 
+:where(button, a, summary, select, input, textarea, [role='button'], [role='tab']) {
+  transition: var(--hover), var(--press);
+}
+
 button:not(:disabled):active {
-  transform: translateY(1px) scale(0.97);
+  scale: 0.97;
+  translate: 0 1px;
+  transition-duration: var(--dur-press);
+  transition-timing-function: var(--ease-out);
 }
 
 :focus-visible {
@@ -39,8 +59,69 @@ kbd {
   font-family: var(--f-num);
 }
 
+/*
+ * 사라지는 쪽 (lib/motion.tsx). 창이 스스로 닫히면 data-closing, 조건이 꺼져서 사라지면
+ * data-leaving 래퍼가 붙는다. 들어올 때보다 짧고, 천천히 출발해 빨리 사라진다.
+ * 모듈 CSS의 들어오는 애니메이션보다 이겨야 해서 속성을 두 번 써서 특이도를 올린다.
+ */
+[data-closing][data-closing],
+[data-leaving][data-leaving] > * {
+  animation: leave-fade var(--dur-exit) var(--ease-in) forwards;
+  pointer-events: none;
+}
+
+[data-closing][data-closing] > *,
+[data-leaving][data-leaving] > * > * {
+  animation: leave-drop var(--dur-exit) var(--ease-in) forwards;
+}
+
+@keyframes leave-fade {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes leave-drop {
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+/* 발동 +2처럼 화면 위를 날아가는 배지 (flyBadge) */
+.fx-badge {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 80;
+  padding: 2px 10px;
+  border: 1px solid var(--gold-hi);
+  border-radius: var(--r-token);
+  background: linear-gradient(180deg, var(--gold-hi), var(--gold));
+  box-shadow:
+    0 0 18px rgb(240 220 160 / 0.7),
+    0 6px 16px rgb(0 0 0 / 0.5);
+  color: var(--ink);
+  font-family: var(--f-pop);
+  font-size: var(--fs-lg);
+  font-weight: 800;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.fx-token {
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--gold-hi);
+  font-size: var(--fs-md);
+  text-shadow: 0 0 10px var(--gold-hi);
+  box-shadow: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   button:not(:disabled):active {
-    transform: none;
+    scale: none;
+    translate: none;
   }
 }

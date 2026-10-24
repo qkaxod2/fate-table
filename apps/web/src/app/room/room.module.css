@@ -403,7 +403,7 @@ main.shell {
   font: inherit;
   font-size: var(--fs-sm);
   cursor: pointer;
-  transition: border-color var(--dur-fast) var(--ease);
+  transition: var(--hover), var(--press);
 }
 
 .topBtn:hover {
@@ -436,9 +436,7 @@ main.shell {
   font: inherit;
   font-size: var(--fs-sm);
   cursor: pointer;
-  transition:
-    background var(--dur-fast) var(--ease),
-    color var(--dur-fast) var(--ease);
+  transition: var(--hover), var(--press);
 }
 
 .seg button[aria-checked='true'] {
@@ -564,7 +562,7 @@ main.shell {
   display: flex;
   gap: 4px;
   opacity: 0;
-  transition: opacity 0.15s;
+  transition: opacity var(--dur-hover) var(--ease-out);
 }
 
 .stageAspect:hover .aspectTools,

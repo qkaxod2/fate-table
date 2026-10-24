@@ -5,6 +5,37 @@
   padding: var(--s-3);
   border-top: 1px solid var(--rule);
   background: var(--panel);
+  /* 판정 띠가 먼저 뜨고, 그다음 "뒤집을 수 있어요" 카드가 따라 올라온다 */
+  animation: tray-in var(--dur-enter) var(--ease-out) 100ms backwards;
+}
+
+.cards > * {
+  animation: tray-in var(--dur-enter) var(--ease-out) backwards;
+}
+.cards > :nth-child(1) {
+  animation-delay: calc(140ms + var(--stagger) * 1);
+}
+.cards > :nth-child(2) {
+  animation-delay: calc(140ms + var(--stagger) * 2);
+}
+.cards > :nth-child(3) {
+  animation-delay: calc(140ms + var(--stagger) * 3);
+}
+.cards > :nth-child(4) {
+  animation-delay: calc(140ms + var(--stagger) * 4);
+}
+.cards > :nth-child(5) {
+  animation-delay: calc(140ms + var(--stagger) * 5);
+}
+.cards > :nth-child(n + 6) {
+  animation-delay: calc(140ms + var(--stagger) * 6);
+}
+
+@keyframes tray-in {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+  }
 }
 
 .head {
@@ -70,6 +101,8 @@
 .slot {
   position: relative;
   display: grid;
+  border-radius: var(--r-card);
+  transition: box-shadow var(--dur-hover) var(--ease-out);
 }
 
 .key,
@@ -92,9 +125,40 @@
   color: var(--gold-hi);
 }
 
+/* 발동하는 카드는 토큰을 받으면서 살짝 들린다 */
+.slot[data-firing] {
+  animation: lift 700ms var(--ease-spring);
+}
+
+@keyframes lift {
+  35%,
+  60% {
+    transform: translateY(-6px) scale(1.04);
+    box-shadow:
+      0 0 0 2px var(--gold-hi),
+      0 0 28px rgb(240 220 160 / 0.6);
+  }
+}
+
 .slot[data-selected] {
   border-radius: var(--r-card);
   box-shadow:
     0 0 0 2px var(--gold-hi),
     0 0 18px rgb(240 220 160 / 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tray,
+  .cards > * {
+    animation-name: fade;
+  }
+  .slot[data-firing] {
+    animation: none;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
 }

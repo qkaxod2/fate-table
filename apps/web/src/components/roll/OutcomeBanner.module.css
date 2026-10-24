@@ -14,7 +14,7 @@
       color-mix(in srgb, var(--c) 30%, transparent) 75%,
       transparent
     );
-  animation: rise 400ms var(--ease);
+  animation: band-in 420ms var(--ease-out) backwards;
 }
 
 .banner[data-tone='perfect'] {
@@ -44,6 +44,25 @@
   background-clip: text;
   color: transparent;
   filter: drop-shadow(0 0 14px var(--c));
+  /* 띠가 펼쳐진 뒤 판정 글자가 도장처럼 찍힌다 */
+  animation: stamp 520ms var(--ease-spring) 90ms backwards;
+}
+
+.kr,
+.copy {
+  animation: rise var(--dur-enter) var(--ease-out) 260ms backwards;
+}
+
+/* 대성공은 금색 광택이 한 번 지나간다 */
+.banner[data-tone='perfect']::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 40%, rgb(255 240 200 / 0.35) 50%, transparent 60%)
+    0 0 / 300% 100% no-repeat;
+  background-position: 100% 0;
+  animation: shine 900ms var(--ease-in-out) 380ms;
+  pointer-events: none;
 }
 
 .kr {
@@ -68,15 +87,121 @@
   font-size: var(--fs-sm);
 }
 
+.sparks {
+  position: absolute;
+  top: 38%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.sparks span {
+  position: absolute;
+  width: var(--s);
+  height: var(--s);
+  margin: calc(var(--s) / -2);
+  border-radius: 50%;
+  background: var(--perfect-hi);
+  box-shadow:
+    0 0 8px 1px var(--gold-hi),
+    0 0 18px 2px var(--perfect);
+  opacity: 0;
+  animation: spark 1100ms var(--ease-out) forwards;
+}
+
+@keyframes spark {
+  0% {
+    opacity: 1;
+    transform: rotate(var(--a)) translateX(0) scale(1.4);
+  }
+  70% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--a)) translateX(var(--d)) translateY(14px) scale(0.4);
+  }
+}
+
+/* 실패는 글자가 무겁게 떨어져 한 번 흔들린다 */
+.banner[data-tone='miss'] .latin {
+  animation-name: thud;
+  animation-timing-function: var(--ease-out);
+}
+
+@keyframes thud {
+  0% {
+    opacity: 0;
+    transform: translateY(-18px);
+  }
+  45% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(3px);
+  }
+  90% {
+    transform: translateX(-1px);
+  }
+}
+
+@keyframes band-in {
+  from {
+    opacity: 0;
+    clip-path: inset(0 30% 0 30%);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes stamp {
+  from {
+    opacity: 0;
+    transform: scale(1.35);
+    filter: blur(6px) drop-shadow(0 0 14px var(--c));
+  }
+}
+
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.98);
+    transform: translateY(6px);
+  }
+}
+
+@keyframes shine {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .banner {
-    animation: none;
+  .banner,
+  .latin,
+  .kr,
+  .copy {
+    animation-name: fade;
+  }
+  .banner[data-tone='perfect']::after,
+  .sparks {
+    display: none;
+  }
+  .banner[data-tone='miss'] .latin {
+    animation-name: fade;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
   }
 }

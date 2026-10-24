@@ -37,7 +37,7 @@ export function setSfxEnabled(on: boolean): void {
   }
 }
 
-export function playSfx(name: SfxName, volume = 0.6): void {
+export function playSfx(name: SfxName, volume = 0.6, rate = 1): void {
   if (typeof window === 'undefined' || !sfxEnabled()) return;
   let base = cache.get(name);
   if (!base) {
@@ -48,8 +48,16 @@ export function playSfx(name: SfxName, volume = 0.6): void {
   // 같은 소리가 겹쳐도 끊기지 않게 복제해서 재생
   const a = base.cloneNode() as HTMLAudioElement;
   a.volume = volume;
+  a.playbackRate = rate;
   // 자동 재생 제한(첫 클릭 전)에 걸리면 조용히 넘어간다
   a.play().catch(() => {});
+}
+
+/** 손에 닿는 작은 떨림 (터치 기기에서만, 지원하면) */
+export function tap(ms = 10): void {
+  if (typeof window === 'undefined' || !sfxEnabled()) return;
+  if (!window.matchMedia('(pointer: coarse)').matches) return;
+  navigator.vibrate?.(ms);
 }
 
 /** 이벤트 하나에 어울리는 효과음. 없으면 null */

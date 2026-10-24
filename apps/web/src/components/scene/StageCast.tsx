@@ -1,6 +1,7 @@
 'use client';
 
 import type { Character } from '@fate/rules-engine';
+import { useEffect, useState } from 'react';
 import styles from './StageCast.module.css';
 
 export interface CastMember {
@@ -11,6 +12,8 @@ export interface CastMember {
   face?: string | null;
   /** 스탠딩이 없을 때 초상화라도 세울지 */
   portraitFallback?: boolean;
+  /** 공격을 맞았다: 한 번 움찔한다 */
+  hit?: boolean;
 }
 
 /** 표정 → 그림. 없는 표정이면 기본 스탠딩 */
@@ -39,25 +42,44 @@ export function pickFace(c: Character, wants: readonly string[]): string | null 
 export function StageCast({ left, right }: { left?: CastMember; right?: CastMember }) {
   return (
     <div className={styles.cast} aria-hidden>
-      {left && <Sprite m={left} side="left" />}
-      {right && right.character.id !== left?.character.id && <Sprite m={right} side="right" />}
+      {left && <Sprite key={left.character.id} m={left} side="left" />}
+      {right && right.character.id !== left?.character.id && (
+        <Sprite key={right.character.id} m={right} side="right" />
+      )}
     </div>
   );
 }
 
+/** 표정이 바뀌면 앞 그림을 잠깐 남겨 두고 새 그림과 겹쳐서 바꾼다 */
+const CROSSFADE_MS = 320;
+
 function Sprite({ m, side }: { m: CastMember; side: 'left' | 'right' }) {
   const c = m.character;
   const url = spriteOf(c, m.face) ?? (m.portraitFallback ? c.portraitUrl : undefined);
+  const [shown, setShown] = useState(url);
+  const [prev, setPrev] = useState<string | undefined>(undefined);
+  if (url !== shown) {
+    setPrev(shown);
+    setShown(url);
+  }
+  useEffect(() => {
+    if (!prev) return;
+    const t = window.setTimeout(() => setPrev(undefined), CROSSFADE_MS);
+    return () => window.clearTimeout(t);
+  }, [prev]);
   if (!url) return null;
   const cutout = !!c.standing;
   return (
     <figure
-      key={c.id}
       className={styles.sprite}
       data-side={side}
       data-focus={m.focus || undefined}
       data-cutout={cutout || undefined}
+      data-hit={m.hit || undefined}
     >
+      {prev && prev !== url && (
+        <img key={`was:${prev}`} className={styles.leaving} src={prev} alt="" draggable={false} />
+      )}
       <img key={url} src={url} alt="" draggable={false} />
       <figcaption className={styles.name}>{c.name}</figcaption>
     </figure>
