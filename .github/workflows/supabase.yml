@@ -45,12 +45,35 @@ jobs:
           GOOGLE_CLOUD_PROJECT: ${{ vars.GOOGLE_CLOUD_PROJECT }}
           VERTEX_LOCATION: ${{ vars.VERTEX_LOCATION }}
           VERTEX_MODEL: ${{ vars.VERTEX_MODEL }}
-      - name: 익명 로그인 켜기
+      - name: 로그인 설정 (익명 · 이메일 · 구글)
         run: |
+          # 이메일 확인 메일은 직접 SMTP를 붙였을 때만 켠다 (기본 메일 서버는 팀원에게만 보내진다)
+          autoconfirm=true
+          if [ "$AUTH_EMAIL_CONFIRM" = "true" ]; then autoconfirm=false; fi
+          body=$(jq -n \
+            --arg site "$SITE_URL" \
+            --arg allow "$SITE_URL**,http://localhost:3000/**" \
+            --argjson autoconfirm "$autoconfirm" \
+            '{external_anonymous_users_enabled: true,
+              security_manual_linking_enabled: true,
+              external_email_enabled: true,
+              mailer_autoconfirm: $autoconfirm,
+              password_min_length: 8,
+              site_url: $site,
+              uri_allow_list: $allow}')
+          if [ -n "$GOOGLE_OAUTH_CLIENT_ID" ] && [ -n "$GOOGLE_OAUTH_CLIENT_SECRET" ]; then
+            body=$(echo "$body" | jq --arg id "$GOOGLE_OAUTH_CLIENT_ID" --arg secret "$GOOGLE_OAUTH_CLIENT_SECRET" \
+              '. + {external_google_enabled: true, external_google_client_id: $id, external_google_secret: $secret}')
+          fi
           code=$(curl -sS -o /dev/null -w '%{http_code}' -X PATCH \
             "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth" \
             -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H 'Content-Type: application/json' \
-            -d '{"external_anonymous_users_enabled": true}')
+            -d "$body")
           echo "auth config: $code"
           test "$code" = 200
+        env:
+          SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+          AUTH_EMAIL_CONFIRM: ${{ vars.AUTH_EMAIL_CONFIRM }}
+          GOOGLE_OAUTH_CLIENT_ID: ${{ vars.GOOGLE_OAUTH_CLIENT_ID }}
+          GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
       - run: supabase functions deploy --project-ref "$PROJECT_REF"

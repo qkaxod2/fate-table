@@ -2,8 +2,8 @@
 
 import type { Command, RoomEvent } from '@fate/rules-engine';
 import Link from 'next/link';
-import { useState } from 'react';
-import { loadMyCharacters } from '@/lib/myCharacters';
+import { useEffect, useState } from 'react';
+import { type CharacterDraft, listMyCharacters, loadMyCharacters } from '@/lib/myCharacters';
 import styles from './room.module.css';
 
 interface Props {
@@ -11,10 +11,18 @@ interface Props {
   has: boolean;
 }
 
-/** 캐릭터 만들기에서 저장한 캐릭터를 이 방에 데려온다 */
+/** 캐릭터 만들기에서 저장한 캐릭터(계정 보관함 포함)를 이 방에 데려온다 */
 export function BringCharacter({ run, has }: Props) {
   const [open, setOpen] = useState(!has);
-  const drafts = loadMyCharacters();
+  const [drafts, setDrafts] = useState<CharacterDraft[]>(loadMyCharacters);
+  useEffect(() => {
+    if (!open) return;
+    let alive = true;
+    void listMyCharacters().then((list) => alive && setDrafts(list));
+    return () => {
+      alive = false;
+    };
+  }, [open]);
   if (!open)
     return (
       <button type="button" className={styles.ghost} onClick={() => setOpen(true)}>
