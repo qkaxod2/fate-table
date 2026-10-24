@@ -619,6 +619,7 @@ export function RoomTable({
             type="button"
             className={styles.topBtn}
             title="명령 창 (Ctrl+K) · 단축키는 ?"
+            aria-label="명령 창 열기"
             onClick={() => setPalette(true)}
           >
             <kbd>Ctrl K</kbd>
@@ -951,10 +952,10 @@ export function RoomTable({
                     onClick={() => setPrompt(null)}
                     className={tryStyles.restart}
                   >
-                    건너뛰기 <kbd>Esc</kbd>
+                    건너뛰기 <kbd aria-hidden>Esc</kbd>
                   </button>
                   <button type="submit" className={tryStyles.promptOk} disabled={!draft.trim()}>
-                    붙이기 <kbd>Enter</kbd>
+                    붙이기 <kbd aria-hidden>Enter</kbd>
                   </button>
                 </div>
               </form>
@@ -1218,7 +1219,8 @@ function DefendGrid({
           disabled={pending}
           onClick={() => onPick(a)}
         >
-          <kbd>{keys[i]!.toUpperCase()}</kbd> {term(a)} {defender.approaches[a] >= 0 ? '+' : ''}
+          <kbd aria-hidden>{keys[i]!.toUpperCase()}</kbd> {term(a)}{' '}
+          {defender.approaches[a] >= 0 ? '+' : ''}
           {defender.approaches[a]}
         </button>
       ))}
