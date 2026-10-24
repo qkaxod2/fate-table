@@ -449,6 +449,12 @@ function Table({
     setClearShown(true);
     setCoachHidden(false);
   }
+  useEffect(() => {
+    // 쓰러지는 연출이 지나간 뒤 축하 종소리
+    if (!clearShown) return;
+    const t = window.setTimeout(() => playSfx('style-chime', 0.5), 900);
+    return () => window.clearTimeout(t);
+  }, [clearShown]);
 
   const result =
     roll && roll.active.dice && (roll.defense?.dice ?? roll.targetId === null)
