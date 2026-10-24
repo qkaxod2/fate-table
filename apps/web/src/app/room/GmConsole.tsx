@@ -263,13 +263,17 @@ export function Modal({
   onClose,
   children,
   wide,
+  closer,
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
   wide?: boolean;
+  /** 안쪽에서도 닫아야 할 때(할 일을 마치면 닫힘) 바깥에서 만든 useClosing을 넘긴다 */
+  closer?: [boolean, () => void];
 }) {
-  const [closing, close] = useClosing(onClose);
+  const own = useClosing(onClose);
+  const [closing, close] = closer ?? own;
   return (
     <div className={styles.backdrop} data-closing={closing || undefined} onClick={close}>
       <section
@@ -310,14 +314,16 @@ export function GmPanel({
   notes: string[];
   onClose: () => void;
 }) {
+  // 할 일을 마쳐 닫힐 때도 ×를 누를 때처럼 흐려지며 닫힌다
+  const closer = useClosing(onClose);
   const done = async (cmd: Command) => {
     const evs = await run(cmd);
-    if (evs.length) onClose();
+    if (evs.length) closer[1]();
   };
   const title = TOOLS.find(([t]) => t === open.tool)?.[1] ?? 'GM';
-  const props = { state, run, pending, done, onClose };
+  const props = { state, run, pending, done, onClose: closer[1] };
   return (
-    <Modal title={title} onClose={onClose}>
+    <Modal title={title} onClose={onClose} closer={closer}>
       {open.tool === 'scene' && <ScenePanel {...props} />}
       {open.tool === 'aspect' && <AspectPanel {...props} />}
       {open.tool === 'npc' && <NpcPanel {...props} />}
