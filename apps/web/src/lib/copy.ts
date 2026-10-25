@@ -16,26 +16,26 @@ export const JUDGE: Record<
 /** 행동 × 결과 안내 문구 (design-system.md 6절) */
 export const OUTCOME_COPY: Record<Action, Record<Outcome, string>> = {
   overcome: {
-    fail: '실패했어요. 또는 큰 대가를 치르고 성공할 수 있어요',
-    tie: '작은 대가를 치르고 성공해요',
+    fail: '넘지 못했어요. 큰 대가를 치르면 넘을 수도 있어요',
+    tie: '작은 대가를 치르고 넘어가요',
     success: '성공!',
     style: '대성공! 부스트도 얻어요',
   },
   create_advantage: {
-    fail: '특성을 만들지 못했어요 (상대가 무료 발동을 얻을 수 있어요)',
+    fail: '특성을 만들지 못했어요. 상대가 무료 발동을 얻을 수도 있어요',
     tie: '부스트를 얻어요',
-    success: '특성 + 무료 발동 1',
-    style: '특성 + 무료 발동 2',
+    success: '특성을 붙이고 무료 발동 1개를 받아요',
+    style: '특성을 붙이고 무료 발동 2개를 받아요',
   },
   attack: {
     fail: '빗나갔어요',
     tie: '부스트를 얻어요',
     success: '차이만큼 피해를 줘요',
-    style: '피해를 주거나, 피해 1을 줄이고 부스트를 얻어요',
+    style: '차이만큼 피해를 줘요. 피해를 1 덜 주고 부스트를 얻을 수도 있어요',
   },
   defend: {
-    fail: '상대의 행동이 통해요',
-    tie: '상대가 동점 결과를 얻어요',
+    fail: '막지 못했어요. 상대의 행동이 통해요',
+    tie: '비겼어요. 상대는 동점일 때의 결과를 얻어요',
     success: '막아냈어요',
     style: '막아내고 부스트를 얻어요',
   },
@@ -63,7 +63,7 @@ export function describe(e: RoomEvent, state: RoomState): LogLine | null {
     case 'roll.opposition_requested':
       return line(
         'roll',
-        `${josa(name(state, e.payload.attackerId), '이/가')} ${name(state, e.payload.defenderId)}에게 ${term(e.payload.action)}! 상대 응답 대기 중`,
+        `${josa(name(state, e.payload.attackerId), '이/가')} ${name(state, e.payload.defenderId)}에게 ${term(e.payload.action)}! 상대가 응하기를 기다려요`,
       );
     case 'roll.resolved':
       return line(
@@ -73,7 +73,7 @@ export function describe(e: RoomEvent, state: RoomState): LogLine | null {
     case 'roll.opposition_revealed':
       return line(
         'roll',
-        `${josa(name(state, e.payload.defender.characterId), '이/가')} ${josa(term(e.payload.defender.approach), '으로/로')} ${term('defend')}. 두 결과 공개`,
+        `${josa(name(state, e.payload.defender.characterId), '이/가')} ${josa(term(e.payload.defender.approach), '으로/로')} ${term('defend')}. 양쪽 결과가 공개됐어요`,
       );
     case 'invoke.applied': {
       const a = state.aspects[e.payload.aspectId];
@@ -151,7 +151,7 @@ export function describe(e: RoomEvent, state: RoomState): LogLine | null {
     case 'session.started':
       return line(
         'scene',
-        `세션 ${e.payload.number} 시작! ${term('fatePoint')}가 ${term('refresh')}돼요`,
+        `세션 ${e.payload.number} 시작! ${josa(term('fatePoint'), '이/가')} ${term('refresh')} 수치까지 채워져요`,
       );
     case 'session.ended':
       return line('scene', '세션이 끝났어요');
@@ -174,12 +174,12 @@ export function describe(e: RoomEvent, state: RoomState): LogLine | null {
     case 'consequence.recovery_started':
       return line(
         'system',
-        `${name(state, e.payload.characterId)}의 ${term(e.payload.slot)} 회복 시작`,
+        `${name(state, e.payload.characterId)}의 ${josa(term(e.payload.slot), '이/가')} 낫기 시작해요`,
       );
     case 'consequence.cleared':
       return line(
         'system',
-        `${name(state, e.payload.characterId)}의 ${term(e.payload.slot)}이 나았어요`,
+        `${name(state, e.payload.characterId)}의 ${josa(term(e.payload.slot), '이/가')} 나았어요`,
       );
     case 'milestone.granted': {
       const size = { minor: '작은', significant: '중요한', major: '큰' }[e.payload.size];

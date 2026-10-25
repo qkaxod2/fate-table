@@ -10,6 +10,7 @@ import {
 } from '@fate/rules-engine';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCloseGuard } from '@/components/ui/closeGuard';
+import { josa } from '@/lib/josa';
 import { useClosing } from '@/lib/motion';
 import type { GmOpen } from './GmConsole';
 import styles from './CommandPalette.module.css';
@@ -113,7 +114,7 @@ export function roomCommands({
     {
       words: ['npc', '엔피씨'],
       label: 'NPC 만들기',
-      hint: `예: "npc 밀수꾼 은밀" (뒤에 잘하는 ${term('approach')} +2)`,
+      hint: `예: "npc 밀수꾼 은밀". 끝에 적은 ${josa(term('approach'), '이/가')} +2가 돼요`,
       arg: '이름 [접근법]',
       gmOnly: true,
       act: (arg) => {
@@ -197,7 +198,7 @@ export function roomCommands({
     {
       words: ['세션', 'session'],
       label: '세션 시작·끝',
-      hint: `${term('refresh')}과 요약`,
+      hint: `${term('fatePoint')} ${term('refresh')}과 세션 요약`,
       gmOnly: true,
       act: () => openGm({ tool: 'session' }),
     },

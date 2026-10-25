@@ -34,7 +34,8 @@ export function PartyRail({
             ? {
                 role: 'button',
                 tabIndex: 0,
-                title: `${c.name} ${typeof selectHint === 'function' ? selectHint(c.id) : selectHint}`,
+                title:
+                  typeof selectHint === 'function' ? selectHint(c.id) : `${c.name} ${selectHint}`,
                 onClick: () => onSelect(c.id),
                 onKeyDown: (e: { key: string }) => {
                   if (e.key === 'Enter') onSelect(c.id);

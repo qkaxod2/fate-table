@@ -31,7 +31,7 @@ const TOOLS: ReadonlyArray<readonly [GmTool, string, string]> = [
   ['conflict', '갈등·경합', '차례가 있는 싸움, 3승 겨루기, 여러 단계 도전'],
   ['compel', term('compel'), '특성 때문에 일이 꼬이게 하고 운명점을 줘요'],
   ['note', '메모', '나만 보는 메모'],
-  ['session', '세션', '세션 시작·끝 (운명점 재충전)'],
+  ['session', '세션', '세션을 열고 닫아요. 열면 운명점이 다시 채워져요'],
 ];
 
 /** 화면 위쪽 GM 버튼 줄. 자주 쓰는 일은 한 번에, 나머지는 큰 창으로 */
@@ -546,14 +546,14 @@ function ConflictPanel({ state, pending, done }: PanelProps) {
               aria-pressed={kind === 'physical'}
               onClick={() => setKind('physical')}
             >
-              물리 (신속 순서)
+              물리 · 신속이 높은 순서
             </button>
             <button
               type="button"
               aria-pressed={kind === 'mental'}
               onClick={() => setKind('mental')}
             >
-              정신 (신중 순서)
+              정신 · 신중이 높은 순서
             </button>
           </div>
           <div className={styles.chips}>
@@ -778,7 +778,7 @@ function SessionPanel({ state, pending, done }: PanelProps) {
     return (
       <>
         <p className={styles.help}>
-          새 세션을 열면 PC들의 {term('fatePoint')}가 {term('refresh')}까지 채워져요.
+          새 세션을 열면 PC들의 {term('fatePoint')}이 {term('refresh')} 수치까지 다시 채워져요.
         </p>
         <button
           type="button"
