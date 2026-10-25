@@ -1,6 +1,6 @@
 // 명령 처리의 순서와 규칙. DB 접근은 Store로 받아서 index.ts는 Supabase를, 테스트는 메모리를 꽂는다.
 // 순서: 참가자 확인 → 이미 처리한 명령이면 저장된 결과 → 이벤트로 상태 복원 → resolve → append
-import { CommandError, replay, resolve } from '../_shared/engine.js';
+import { CommandError, initialState, replay, resolve } from '../_shared/engine.js';
 import type { PlainEvent, StoredEvent } from '../_shared/http.ts';
 
 export interface Store {
@@ -13,8 +13,8 @@ export interface Store {
   /** 되돌리기: 이 seq를 만든 명령의 이벤트 범위 */
   undoGroup(seq: number): Promise<readonly [number, number] | null>;
   seal(rollId: string, side: unknown): Promise<void>;
-  /** 성공하면 새 head, 같은 명령 id가 이미 있으면 -1, 경합이면 'STALE' */
-  append(expected: number, events: PlainEvent[]): Promise<number | 'STALE'>;
+  /** 성공하면 새 head, 같은 명령 id가 이미 있으면 -1, 경합이면 'STALE'. expected가 null이면 맨 끝에 붙인다 */
+  append(expected: number | null, events: PlainEvent[]): Promise<number | 'STALE'>;
   /** seq가 first..last인 이벤트 */
   loadRange(first: number, last: number): Promise<StoredEvent[]>;
 }
@@ -27,12 +27,25 @@ export interface Rand {
 export type Outcome =
   { status: 200; events: StoredEvent[] } | { status: 403 | 409; code: string; message: string };
 
+/**
+ * 방 상태를 보지 않는 명령. 이력을 읽어 접지 않고, head 경합 없이 맨 끝에 붙인다.
+ * 방이 길어져도 채팅이 늦어지지 않고, 굴림·이동과 동시에 보내도 STALE로 다시 읽지 않는다.
+ */
+export const STATELESS: ReadonlySet<string> = new Set([
+  'chat.post',
+  'narration.post',
+  'gm.note',
+  'sfx.play',
+]);
+
 export async function handleCommand(
   userId: string,
   command: unknown,
   store: Store,
   rand: Rand,
 ): Promise<Outcome> {
+  const type = (command as { type: string }).type;
+  const stateless = STATELESS.has(type);
   const undoSeq =
     (command as { type: string }).type === 'event.undo'
       ? (command as { payload: { targetSeq: number } }).payload.targetSeq
@@ -41,7 +54,7 @@ export async function handleCommand(
   const [role, done, firstRead, group] = await Promise.all([
     store.memberRole(),
     store.findCommand(),
-    store.readHistory(),
+    stateless ? Promise.resolve(null) : store.readHistory(),
     undoSeq === null ? Promise.resolve(null) : store.undoGroup(undoSeq),
   ]);
   if (!role) return { status: 403, code: 'NOT_MEMBER', message: '이 방의 참가자가 아니에요.' };
@@ -58,7 +71,34 @@ export async function handleCommand(
   // 이미 처리한 명령의 재전송: 지금 상태로 다시 검증하지 않고 그때 기록한 결과를 돌려준다
   if (done) return stored(done);
 
-  let read = firstRead;
+  if (stateless) {
+    let result;
+    try {
+      result = resolve(initialState(), command, actor, {
+        rng: rand.int,
+        newId: rand.uuid,
+        animSeed: () => rand.int(2 ** 32),
+      });
+    } catch (e) {
+      if (!(e instanceof CommandError)) throw e;
+      return { status: 409, code: e.code, message: e.message };
+    }
+    const events = result.events as PlainEvent[];
+    const newHead = await store.append(null, events);
+    if (newHead === -1) {
+      const range = await store.findCommand();
+      if (range) return stored(range);
+    }
+    if (typeof newHead !== 'number' || newHead < 0)
+      throw new Error('append without expected head cannot be stale');
+    const first = newHead - events.length + 1;
+    return {
+      status: 200,
+      events: events.map((e, i) => ({ ...e, seq: first + i })).filter(canSee),
+    };
+  }
+
+  let read = firstRead!;
   for (let attempt = 0; attempt < 4; attempt++) {
     if (attempt > 0) read = await store.readHistory();
     const { history, sealed } = read;

@@ -50,11 +50,14 @@ export interface StoredEvent extends PlainEvent {
   seq: number;
 }
 
-/** append_events() 호출. 성공하면 새 head, 이미 처리된 명령이면 -1, 경합이면 'STALE' */
+/**
+ * append_events() 호출. 성공하면 새 head, 이미 처리된 명령이면 -1, 경합이면 'STALE'.
+ * expected가 null이면 head를 맞춰 보지 않고 맨 끝에 붙인다 (상태와 상관없는 명령)
+ */
 export async function appendEvents(
   db: SupabaseClient,
   roomId: string,
-  expected: number,
+  expected: number | null,
   events: PlainEvent[],
   clientCmd?: string,
 ): Promise<number | 'STALE'> {

@@ -32,11 +32,11 @@ function memoryRoom(roles: Record<string, string>) {
     readHistory: () => Promise.resolve({ history: [...events], sealed: new Map() }),
     undoGroup: () => Promise.resolve(null),
     seal: () => Promise.resolve(),
-    append(expected: number, evs: PlainEvent[]) {
+    append(expected: number | null, evs: PlainEvent[]) {
       hooks.beforeAppend?.();
       if (log.has(clientCmd)) return Promise.resolve(-1);
       const head = events.at(-1)?.seq ?? 0;
-      if (head !== expected) return Promise.resolve('STALE' as const);
+      if (expected !== null && head !== expected) return Promise.resolve('STALE' as const);
       evs.forEach((e, i) => events.push({ visibility: 'public', ...e, seq: head + 1 + i }));
       log.set(clientCmd, [head + 1, head + evs.length]);
       return Promise.resolve(head + evs.length);
@@ -134,4 +134,45 @@ Deno.test('returns the stored result when the first request lands before validat
     uuid: () => 'u',
   });
   assertEquals(out.status, 200);
+});
+
+Deno.test('chat skips the history read and appends at the head', async () => {
+  const room = memoryRoom({ gm: 'gm', p1: 'player' });
+  await room.run('gm', 'cmd-1', START);
+  const base = room.storeFor('p1', 'cmd-chat');
+  let reads = 0;
+  const expected: Array<number | null> = [];
+  const store: Store = {
+    ...base,
+    readHistory: () => {
+      reads++;
+      return base.readHistory();
+    },
+    append: (e, evs) => {
+      expected.push(e);
+      // 그 사이 다른 사람이 먼저 기록해도 채팅은 다시 읽지 않고 맨 끝에 붙는다
+      room.commit('other', [
+        { type: 'fate.adjusted', actorId: 'gm', payload: { target: 'gm_pool', delta: 1 } },
+      ]);
+      return base.append(e, evs);
+    },
+  };
+  const out = await handleCommand(
+    'p1',
+    parseCommand({ type: 'chat.post', payload: { text: '안녕' } }),
+    store,
+    { int: () => 0, uuid: () => 'u' },
+  );
+  assertEquals(reads, 0, 'no history read');
+  assertEquals(expected, [null]);
+  assertEquals(out.status === 200 && out.events.map((e) => [e.seq, e.type]), [[3, 'chat.posted']]);
+});
+
+Deno.test('a player still cannot chat as an NPC', async () => {
+  const room = memoryRoom({ p1: 'player' });
+  const out = await room.run('p1', 'cmd-1', {
+    type: 'chat.post',
+    payload: { text: '...', as: '고블린' },
+  });
+  assertEquals(out.status, 409);
 });
