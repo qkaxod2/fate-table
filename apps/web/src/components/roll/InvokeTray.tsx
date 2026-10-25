@@ -140,7 +140,7 @@ export function InvokeTray({
         ))}
       </div>
       <div className={styles.foot}>
-        <span className={styles.fp}>
+        <span className={styles.fp} data-tour="fate">
           내 {term('fatePoint')}{' '}
           <span ref={fp}>
             <FatePointToken count={fatePoints} />

@@ -120,7 +120,19 @@ const OUTCOME_DETAIL: Record<Action, Record<Outcome, string>> = {
   },
 };
 const OUTCOME_ORDER: Outcome[] = ['fail', 'tie', 'success', 'style'];
-const OUTCOME_RULE = '차이가 0보다 작으면 실패, 0이면 동점, 1~2면 성공, 3 이상이면 대성공이에요.';
+
+/**
+ * 튜토리얼 장마다 정해 둔 굴림 결과 (상대 수치와의 차이). 네 장을 지나면 결과 4단계를 다 겪는다:
+ * 1장 실패 → 발동으로 성공, 2장 대성공, 3장 동점 → 무료 발동으로 성공, 4장 방어 대성공.
+ */
+const SCRIPT: Record<Action, { first: number; reroll: number }> = {
+  overcome: { first: -1, reroll: 1 },
+  create_advantage: { first: 3, reroll: 3 },
+  attack: { first: 0, reroll: 2 },
+  defend: { first: 3, reroll: 3 },
+};
+const OUTCOME_RULE =
+  '차이가 0보다 작으면 실패(MISS), 0이면 동점(GOOD), 1~2면 성공(GREAT), 3 이상이면 대성공(PERFECT)이에요.';
 
 const sign = (n: number) => `${n >= 0 ? '+' : ''}${n}`;
 const faces = (d: Dice) => d.map((f) => (f > 0 ? '＋' : f < 0 ? '－' : '○')).join(' ');
@@ -327,7 +339,11 @@ function Table({
 
   const onRoll = useCallback(() => {
     if (!action || !approach) return;
+    const scripted = lesson === action;
     if (defending && roll) {
+      // 두목은 완력 +3, 주사위 0으로 공격해 온다
+      if (scripted)
+        room.forceDice(boss.approaches.forceful + SCRIPT.defend.first - me.approaches[approach]);
       setSettled(false);
       run(ME, { type: 'roll.defend', payload: { rollId: roll.id, approach } });
       return;
@@ -336,6 +352,12 @@ function Table({
     setSettled(false);
     setSelectedAspect(null);
     const isAttack = action === 'attack';
+    if (scripted) {
+      // 두목의 방어는 신속 + 주사위 0
+      const opp = isAttack ? boss.approaches.quick : SCENE.overcomeDifficulty;
+      room.forceDice(opp + SCRIPT[action].first - me.approaches[approach]);
+      if (isAttack) room.forceDice(0);
+    }
     const evs = run(ME, {
       type: 'roll.request',
       payload: {
@@ -356,20 +378,21 @@ function Table({
         900,
       );
     }
-  }, [action, approach, busy, defending, roll, run, meId, bossId]);
+  }, [action, approach, busy, defending, roll, run, meId, bossId, lesson, room, boss, me]);
 
   /** 4장: 두목(GM 자동)이 나를 공격한다. 주사위는 내가 막을 때까지 가려져 있다 */
   const bossAttacks = useCallback(() => {
     setAction(null);
     setApproach(null);
     setSettled(false);
+    if (lesson === 'defend') room.forceDice(0);
     const evs = run(GM, {
       type: 'roll.request',
       payload: { characterId: bossId, action: 'attack', approach: 'forceful', targetId: meId },
     });
     const first = evs[0];
     if (first && 'rollId' in first.payload) setRollId(first.payload.rollId as string);
-  }, [run, bossId, meId]);
+  }, [run, bossId, meId, lesson, room]);
 
   const myStunts =
     roll && !final && myRoll ? stuntBonuses(me, roll.action, roll.active.approach) : [];
@@ -414,7 +437,41 @@ function Table({
   const onInvoke = (aspectId: string, mode: InvokeMode, paidWith: PaidWith) => {
     if (!roll) return;
     if (mode === 'reroll') setSettled(false);
+    if (mode === 'reroll' && lesson === roll.action && roll.active.dice) {
+      // 정해 둔 결과로 다시 굴린다: 지금 보너스는 그대로 두고 주사위만 바꾼다
+      const { total, shifts } = resolveRoll(roll);
+      const opp = total - shifts;
+      const rest = total - sumDice(roll.active.dice);
+      room.forceDice(opp + SCRIPT[roll.action].reroll - rest);
+    }
     setInvokedRoll(roll.id);
+    if (lesson !== 'free') {
+      const used = state.aspects[aspectId];
+      const left = paidWith === 'fate_point' ? me.fatePoints - 1 : me.fatePoints;
+      setNotes([
+        {
+          chapter: `${term('invoke')} 정리`,
+          step: 4,
+          title:
+            paidWith === 'fate_point'
+              ? `${term('fatePoint')} ◆ 1개를 썼어요. 남은 건 ${left}개`
+              : `${term('freeInvoke')} ● 1개를 썼어요. ${term('fatePoint')}는 그대로 ${left}개`,
+          body:
+            paidWith === 'fate_point'
+              ? `${term('fatePoint')}는 저절로 다시 생기지 않아요. ${left === 0 ? `이제 0개라서, 앞으로는 ●가 있는 카드로만 ${term('invoke')}할 수 있어요. ${josa(term('compel'), '을/를')} 받아들이면 다시 생겨요.` : `${left}개를 다 쓰면 그 뒤로는 ●가 있는 카드로만 ${term('invoke')}할 수 있어요.`}`
+              : used?.kind === 'boost'
+                ? `${term('boost')}는 ● 1개짜리라서, 쓰는 순간 카드째 사라져요.`
+                : `"${used?.text ?? ''}"의 ●가 하나 줄었어요. ●를 다 써도 ${term('aspect')}은 남고, 그 뒤로는 ◆를 내야 해요.`,
+          open: ['[data-roll-panel]'],
+          ring: paidWith === 'fate_point' ? '[data-tour="fate"]' : '[data-tour="invoke-cards"]',
+          example:
+            mode === 'bonus'
+              ? '+2가 합계에 더해졌어요. 결과가 어떻게 바뀌었는지 볼까요?'
+              : '주사위를 새로 굴렸어요. 결과가 어떻게 바뀌었는지 볼까요?',
+          label: '결과 보기',
+        },
+      ]);
+    }
     run(ME, {
       type: 'invoke.apply',
       payload: { rollId: roll.id, side: 'active', aspectId, mode, paidWith },
@@ -701,6 +758,10 @@ function Table({
   const myOutcomeNow =
     roll?.status === 'open' && roll.active.dice && myRoll ? outcomeFor(roll, 'active') : null;
   const canInvokeNow = choices.some((c) => !c.blocked && (c.bonus || c.reroll));
+  // ● 무료 발동이 남아 있어 운명점 없이 쓸 수 있는 카드
+  const freeCard = choices.find(
+    (c) => !c.blocked && c.aspect.freeInvokes > 0 && (c.bonus || c.reroll),
+  );
   const best = useMemo(
     () =>
       (Object.entries(me.approaches) as [Approach, number][]).reduce((x, y) =>
@@ -800,7 +861,7 @@ function Table({
 
     if (lesson === 'intro') {
       const next = (label: string) => ({ label, onClick: () => setIntroStep((n) => n + 1) });
-      const total = 7;
+      const total = 8;
       const steps: Tour[] = [
         {
           open: [],
@@ -865,21 +926,42 @@ function Table({
             step: 5,
             total,
             chapter: '시작하기',
-            title: `${josa(term('fatePoint'), '은/는')} 이야기의 화폐예요`,
-            body: `왼쪽 파티 칸의 ◆가 ${josa(term('fatePoint'), '이에요/예요')}. 지금 ${pick.name}에게 ${me.fatePoints}개 있어요.`,
+            title: `${josa(term('fatePoint'), '은/는')} 딱 ${me.fatePoints}개뿐이에요`,
+            body: `왼쪽 파티 칸의 ◆ 하나가 ${term('fatePoint')} 1개예요. ${josa(term('aspect'), '을/를')} ${term('invoke')}할 때마다 1개씩 없어지고, 저절로 다시 생기지 않아요. 아무 때나 쓰면 금방 바닥나요.`,
             points: [
-              `쓰는 곳: ${josa(term('aspect'), '을/를')} ${term('invoke')}해서 +2를 받거나 다시 굴릴 때 1개`,
-              `얻는 곳: GM의 ${josa(term('compel'), '을/를')} 받아들여 일이 꼬일 때 1개, 상대가 내 ${josa(term('aspect'), '을/를')} 나에게 불리하게 쓸 때 1개`,
-              `세션이 시작되면 ${term('refresh')} 값까지 다시 채워져요`,
+              `쓰는 곳: ${term('invoke')} 1번에 1개 (+2 또는 다시 굴리기), ${term('compel')} 거절에 1개`,
+              `0개가 되면 ${term('fatePoint')}로는 더 ${term('invoke')}할 수 없어요. 남은 방법은 ${term('freeInvoke')}뿐이에요.`,
+              `늘리는 법: GM의 ${josa(term('compel'), '을/를')} 받아들여 일이 꼬이게 두면 1개, 상대가 내 ${josa(term('aspect'), '을/를')} 나에게 불리하게 쓰면 1개`,
+              `다음 세션이 시작될 때 ${term('refresh')}(${pick.name}은 ${me.refresh}개)까지만 다시 채워져요. 그보다 많이 모았으면 그대로 남아요.`,
             ],
-            example: '곤란을 받아들여 모으고, 결정적인 순간에 써서 뒤집는 게 기본 흐름이에요.',
+            example:
+              '그래서 진짜 중요한 굴림에만 써요. 곤란을 받아들여 모으고, 결정적인 순간에 써서 뒤집는 게 기본 흐름이에요.',
+            next: next('다음'),
+          },
+        },
+        {
+          open: ['[data-tour="aspects"]'],
+          ring: '[data-tour="aspects"]',
+          coach: {
+            step: 6,
+            total,
+            chapter: '시작하기',
+            title: `${josa(term('freeInvoke'), '이/가')} 뭐예요? 카드의 ● 표시`,
+            body: `${term('freeInvoke')}은 그 ${term('aspect')}을 ${term('fatePoint')} 없이 한 번 ${term('invoke')}할 수 있는 공짜 권리예요. ${term('aspect')} 카드에 붙은 ● 하나가 ${term('freeInvoke')} 1번이에요.`,
+            points: [
+              `쓰면: ◆(${term('fatePoint')}) 대신 카드의 ● 하나가 지워지고, 똑같이 +2나 다시 굴리기를 받아요.`,
+              `●를 다 써도 ${term('aspect')}은 남아요. 그 뒤로는 ◆를 내야 ${term('invoke')}할 수 있어요.`,
+              `얻는 곳: ${term('create_advantage')} 성공(● 1개)·대성공(● 2개), 상대에게 ${josa(term('consequence'), '을/를')} 남겼을 때(● 1개), ${term('boost')}(● 1개, 쓰면 카드째 사라짐)`,
+              `오른쪽 ${BOSS.name}의 상처 카드에 ●가 보이죠? 앞서 동료들이 남긴 ${term('freeInvoke')}이라 내가 공짜로 쓸 수 있어요.`,
+            ],
+            example: `${term('fatePoint')}는 개수가 한정돼 있으니, ●가 있는 카드를 먼저 쓰는 게 이득이에요.`,
             next: next('다음'),
           },
         },
         {
           open: ['[data-tour="party"]'],
           coach: {
-            step: 6,
+            step: 7,
             total,
             chapter: '시작하기',
             title: `숫자에는 이름이 있어요: ${term('ladder')}`,
@@ -895,7 +977,7 @@ function Table({
           open: ['[data-tour="actions"]'],
           ring: '[data-tour="actions"]',
           coach: {
-            step: 7,
+            step: 8,
             total,
             chapter: '시작하기',
             title: '할 수 있는 일은 딱 네 가지 행동이에요',
@@ -1011,6 +1093,7 @@ function Table({
           points: [
             '주사위 한 개는 ＋(+1), ○(0), －(−1)이 똑같은 확률로 나와요.',
             '4개를 더하면 −4부터 +4까지. 대부분 −1~+1 근처라서, 결국 접근법 수치가 가장 중요해요.',
+            '튜토리얼에서는 결과 네 가지를 골고루 겪어 보도록 주사위 눈이 미리 정해져 있어요. 자유 진행부터는 진짜로 굴려요.',
             `상대 수치보다 높으면 이기는데, 그 차이를 ${term('shifts')}라고 불러요. ${OUTCOME_RULE}`,
           ],
           example:
@@ -1078,15 +1161,18 @@ function Table({
           ...base,
           step: 4,
           title: `아쉬워요! ${term('aspect')}을 ${term('invoke')}해서 뒤집어요`,
-          body: `확정하기 전이라면 결과를 바꿀 수 있어요. 지금 상황에 어울리는 ${term('aspect')} 카드를 누르고 "+2"를 골라요.`,
+          body: `확정하기 전이라면 결과를 바꿀 수 있어요. 지금 상황에 어울리는 ${term('aspect')} 카드를 누르고 "+2"를 골라요. 값은 ${term('fatePoint')} ◆ 1개, 또는 카드의 ● ${term('freeInvoke')} 1개예요.`,
           points: [
             `+2: 합계에 2를 더해요. 실패가 동점이나 성공으로 바뀔 수 있어요.`,
             `다시 굴리기: 주사위 4개를 새로 굴려요. 더 나빠질 수도 있으니 주사위가 아주 나쁠 때 써요.`,
-            `비용: ${term('fatePoint')} 1개. 그 ${term('aspect')}에 ${term('freeInvoke')}이 있으면 공짜예요.`,
+            `${term('fatePoint')}: 지금 ◆ ${me.fatePoints}개 → 쓰면 ${Math.max(0, me.fatePoints - 1)}개. 0개가 되면 ●가 있는 카드 말고는 더 쓸 수 없어요.`,
+            `${term('freeInvoke')}: 카드에 ●가 있으면 ◆ 대신 ● 하나를 지워요. ◆를 아낄 수 있으니 ● 카드를 먼저 봐요.`,
             `같은 ${term('aspect')}은 한 굴림에 한 번만. 여러 ${term('aspect')}을 겹쳐 쓸 수는 있어요.`,
-            `상대 캐릭터의 ${term('aspect')}을 쓰면 상대가 ${term('fatePoint')} 1개를 받아요. 상처(${term('consequence')})에 붙은 ${term('freeInvoke')}은 공짜예요.`,
+            `상대 캐릭터의 ${term('aspect')}을 ◆로 쓰면 상대가 ◆ 1개를 받아요.`,
           ],
-          example: `이야기로 말하면 "${scenePlay?.text ?? '사방에 번지는 불길'}을 이용하면 할 수 있어!"처럼 특성을 근거로 드는 거예요.`,
+          example: freeCard
+            ? `"${freeCard.aspect.text}"에 ● ${freeCard.aspect.freeInvokes}개가 있어요. 이걸 쓰면 ${term('fatePoint')}를 쓰지 않아요!`
+            : `지금 ●가 있는 카드는 없어요. ${josa(term('fatePoint'), '을/를')} 1개 써서 "${scenePlay?.text ?? '사방에 번지는 불길'}을 이용하면 할 수 있어!"처럼 이야기로 근거를 대 봐요.`,
           keys: ['F'],
         },
       };
@@ -1139,6 +1225,7 @@ function Table({
     approach,
     best,
     canInvokeNow,
+    freeCard,
     invokedRoll,
     scenePlay,
     bossAttacks,
@@ -1259,7 +1346,8 @@ function Table({
                 key={coach.clear ? 'clear' : `${lesson}:${introStep}:${coach.step}:${coach.title}`}
                 coach={coach}
                 hideLabel={guided ? '건너뛰고 자유롭게 하기' : '안내 숨기기'}
-                dock={!!roll && !coach.clear}
+                // 파티 칸을 가리키는 안내는 그 위를 덮지 않게 가운데 위에 둔다
+                dock={!!roll && !coach.clear && !tour?.open.includes('[data-tour="party"]')}
                 pinned={guided}
                 onHide={() => {
                   if (!guided) return setCoachHidden(true);
@@ -1441,10 +1529,38 @@ function Table({
                       ? `새 ${term('aspect')} 이름 짓기 · ${term('freeInvoke')} ${prompt.freeInvokes}`
                       : `${term('boost')} 이름 짓기`}
                   </div>
+                  <ul className={styles.promptExplain}>
+                    {prompt.kind === 'aspect' ? (
+                      <>
+                        <li>
+                          방금 만든 유리한 상황이 장면의 새 {term('aspect')}이 돼요. 이야기에서
+                          &quot;사실&quot;이 되는 거예요.
+                        </li>
+                        <li>
+                          카드에 ● {prompt.freeInvokes}개가 붙어요. ● 하나가 {term('freeInvoke')}{' '}
+                          1번이에요. {term('fatePoint')} ◆를 쓰지 않고 이 {term('aspect')}으로
+                          +2(또는 다시 굴리기)를 받을 수 있어요.
+                        </li>
+                        <li>●를 다 써도 {term('aspect')}은 남아요. 그 뒤로는 ◆를 내야 써요.</li>
+                      </>
+                    ) : (
+                      <>
+                        <li>
+                          {term('boost')}는 굴림 덕분에 잠깐 생긴 작은 기회예요. 오래가는{' '}
+                          {term('aspect')}이 아니에요.
+                        </li>
+                        <li>
+                          ● 1개짜리 {term('aspect')}이라 {term('fatePoint')} 없이 한 번 +2를 받을 수
+                          있어요. 쓰는 순간 카드째 사라져요.
+                        </li>
+                        <li>바로 다음 굴림에서 쓰는 게 좋아요. 장면이 바뀌면 없어지거든요.</li>
+                      </>
+                    )}
+                  </ul>
                   <p className={styles.promptHelp}>
                     {prompt.kind === 'aspect'
                       ? '장면에 새로 생긴 사실을 짧은 문구로 적어요. 예: "연기에 가려진 뒷문"'
-                      : '한 번 쓰고 사라지는 순간의 기회예요. 예: "흔들리는 발판"'}
+                      : '그 순간의 기회를 짧게 적어요. 예: "흔들리는 발판", "연기 틈의 빈틈"'}
                   </p>
                   <input
                     autoFocus

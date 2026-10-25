@@ -650,3 +650,16 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.promptExplain {
+  margin: 0 0 var(--s-2);
+  padding: var(--s-2) var(--s-3) var(--s-2) calc(var(--s-3) + 1em);
+  border-left: 3px solid var(--gold);
+  background: rgb(214 182 110 / 0.12);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+}
+
+.promptExplain li + li {
+  margin-top: 4px;
+}
