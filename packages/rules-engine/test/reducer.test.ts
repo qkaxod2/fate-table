@@ -281,6 +281,27 @@ describe('character creation', () => {
     ]);
   });
 
+  it('brings the same saved draft only once', () => {
+    const t = new Table();
+    const bring = () =>
+      t.run(P1, {
+        type: 'character.create',
+        payload: {
+          name: '하늘',
+          isNpc: false,
+          approaches: { careful: 1, clever: 3, flashy: 2, forceful: 0, quick: 2, sneaky: 1 },
+          stunts: [],
+          highConcept: '떠돌이 마법사',
+          trouble: '호기심을 못 참는다',
+          aspects: [],
+          sourceKey: 'draft-1',
+        },
+      });
+    bring();
+    expect(bring).toThrow('DUPLICATE_CHARACTER');
+    expect(Object.values(t.state.characters)).toHaveLength(1);
+  });
+
   it('rejects a broken approach spread', () => {
     const t = new Table();
     expect(() =>

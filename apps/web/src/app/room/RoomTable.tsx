@@ -728,7 +728,13 @@ export function RoomTable({
           ) : (
             <p className={styles.empty}>아직 테이블에 캐릭터가 없어요.</p>
           )}
-          {role === 'player' && <BringCharacter run={run} has={controllable.length > 0} />}
+          {role === 'player' && (
+            <BringCharacter
+              run={run}
+              has={controllable.length > 0}
+              brought={new Set(controllable.flatMap((c) => (c.sourceKey ? [c.sourceKey] : [])))}
+            />
+          )}
         </div>
 
         <div className={`${tryStyles.center} ${styles.center}`}>

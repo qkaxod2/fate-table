@@ -53,6 +53,8 @@ export const CommandSchema = z.discriminatedUnion('type', [
     aspects: z.array(text).max(3).default([]),
     /** 캐릭터 만들기에서 그린 초상화 (공개 Storage URL) */
     portraitUrl: z.string().url().max(500).optional(),
+    /** 캐릭터 만들기에서 저장한 초안의 키. 같은 초안을 두 번 데려오지 않게 한다 */
+    sourceKey: id.optional(),
   }),
   cmd('character.update', {
     id,

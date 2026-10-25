@@ -11,8 +11,10 @@ import {
   type Stunt,
 } from '@fate/rules-engine';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useState, useSyncExternalStore } from 'react';
 import { PortraitStudio } from '@/components/media/PortraitStudio';
+import { roomHref } from '@/lib/lobby';
 import { saveMyCharacter } from '@/lib/myCharacters';
 import styles from './create.module.css';
 
@@ -30,6 +32,8 @@ interface StuntDraft {
 }
 
 const emptyRatings = (): Ratings => Object.fromEntries(APPROACHES.map((a) => [a, null])) as Ratings;
+
+const noSubscribe = () => () => {};
 
 /** 아직 남은 값 (예: +2가 하나 남음) */
 function remaining(r: Ratings): number[] {
@@ -58,6 +62,13 @@ export function CreationWizard() {
   const [stunts, setStunts] = useState<StuntDraft[]>([]);
   const [portrait, setPortrait] = useState<string | undefined>();
   const [saved, setSaved] = useState(false);
+  const router = useRouter();
+  /** 방에서 넘어왔다면 그 방 (?room=id). 다 만들거나 그만두면 그 방으로 돌아간다 */
+  const fromRoom = useSyncExternalStore(
+    noSubscribe,
+    () => new URLSearchParams(location.search).get('room'),
+    () => null,
+  );
 
   const left = remaining(ratings);
   const conceptOk = name.trim() && high.trim() && trouble.trim();
@@ -85,8 +96,9 @@ export function CreationWizard() {
       kind: 'bonus',
       bonus: { approach: s.approach, action: s.action, value: 2 },
     }));
+    const key = crypto.randomUUID();
     saveMyCharacter({
-      key: crypto.randomUUID(),
+      key,
       name: name.trim(),
       isNpc: false,
       approaches,
@@ -98,14 +110,22 @@ export function CreationWizard() {
       savedAt: new Date().toISOString(),
     });
     setSaved(true);
+    // 방에서 왔다면 돌아가서 바로 그 방에 데려온다
+    if (fromRoom) router.push(`${roomHref(fromRoom)}&bring=${encodeURIComponent(key)}`);
   }
 
   return (
     <main className={styles.main}>
       <header className={styles.top}>
-        <Link href="/" className={styles.back}>
-          ← 처음으로
-        </Link>
+        {fromRoom ? (
+          <Link href={roomHref(fromRoom)} className={styles.back}>
+            ← 방으로 돌아가기
+          </Link>
+        ) : (
+          <Link href="/" className={styles.back}>
+            ← 처음으로
+          </Link>
+        )}
         <h1 className={styles.title}>캐릭터 만들기</h1>
         <ol className={styles.steps}>
           {STEPS.map((s, i) => (
@@ -310,11 +330,13 @@ export function CreationWizard() {
                 </p>
                 {saved ? (
                   <p className={styles.ok} role="status">
-                    이 브라우저에 저장했어요. 방이 열리면 바로 불러올 수 있어요.
+                    {fromRoom
+                      ? '저장했어요. 방으로 돌아가는 중…'
+                      : '이 브라우저에 저장했어요. 방이 열리면 바로 불러올 수 있어요.'}
                   </p>
                 ) : (
                   <button type="button" className={styles.primary} onClick={save}>
-                    저장하기
+                    {fromRoom ? '저장하고 방으로 돌아가기' : '저장하기'}
                   </button>
                 )}
               </div>
