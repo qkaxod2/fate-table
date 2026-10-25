@@ -392,6 +392,25 @@ describe('undo (#22)', () => {
     expect(() => t.run(GM, { type: 'event.undo', payload: { targetSeq: t.state.seq } })).toThrow();
     expect(() => t.run(P1, { type: 'event.undo', payload: { targetSeq: 1 } })).toThrow();
   });
+
+  it('drops a member who left and refuses to undo the leave', () => {
+    const t = table();
+    t.push({
+      type: 'room.member_joined',
+      actorId: 'u9',
+      payload: { userId: 'u9', nickname: 'x', role: 'player' },
+      visibility: 'public',
+    });
+    expect(t.state.members.u9).toBeDefined();
+    t.push({
+      type: 'room.member_left',
+      actorId: 'u9',
+      payload: { userId: 'u9', nickname: 'x' },
+      visibility: 'public',
+    });
+    expect(t.state.members.u9).toBeUndefined();
+    expect(() => t.run(GM, { type: 'event.undo', payload: { targetSeq: t.state.seq } })).toThrow();
+  });
 });
 
 describe('conflict turns', () => {

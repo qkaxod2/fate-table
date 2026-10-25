@@ -140,6 +140,10 @@ export function describe(e: RoomEvent, state: RoomState): LogLine | null {
         ),
         undoable: false,
       };
+    case 'room.member_left':
+      return { ...line('system', `${e.payload.nickname}님이 방을 나갔어요`), undoable: false };
+    case 'room.closed':
+      return { ...line('system', 'GM이 방을 닫았어요'), undoable: false };
     case 'character.created':
       return line('system', `새 캐릭터: ${e.payload.character.name}`);
     case 'scene.ended':

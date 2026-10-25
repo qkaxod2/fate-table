@@ -197,3 +197,33 @@
 .wide {
   width: min(960px, 100%);
 }
+
+.roomRow {
+  display: flex;
+  align-items: stretch;
+  gap: var(--s-2);
+}
+
+.roomRow .roomItem {
+  flex: 1;
+  min-width: 0;
+}
+
+.rowAction {
+  flex-shrink: 0;
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.rowAction:hover,
+.rowAction:focus-visible {
+  border-color: var(--danger);
+  color: var(--danger);
+  outline: none;
+}

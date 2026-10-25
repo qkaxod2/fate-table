@@ -24,6 +24,7 @@ import {
   type RoomEvent,
   undoneSeqs,
 } from '@fate/rules-engine';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { AspectCard } from '@/components/aspect/AspectCard';
 import { CompelOffer } from '@/components/compel/CompelOffer';
@@ -51,6 +52,7 @@ import { Typewriter } from '@/components/ui/Typewriter';
 import { describe, ERROR_COPY, JUDGE } from '@/lib/copy';
 import { josa } from '@/lib/josa';
 import type { RemoteRoom } from '@/state/remoteRoom';
+import { ExitRoomDialog } from '../rooms/ExitRoomDialog';
 import tryStyles from '../tutorial/try.module.css';
 import { ArtDialog, type ArtOpen } from './ArtDialog';
 import { BringCharacter } from './BringCharacter';
@@ -526,6 +528,8 @@ export function RoomTable({
     setSending((x) => x.filter((m) => m.id !== id));
   };
   const [copied, setCopied] = useState(false);
+  const [exitOpen, setExitOpen] = useState(false);
+  const router = useRouter();
   const joinUrl = `${location.origin}${asset('/join/')}?code=${inviteCode}`;
 
   // 확정된 굴림은 잠시 뒤 한 줄로 접혀서 무대를 비켜 준다
@@ -693,8 +697,25 @@ export function RoomTable({
           <span className={styles.role}>
             {isGm ? 'GM' : role === 'player' ? '플레이어' : '관전'}
           </span>
+          <button
+            type="button"
+            className={styles.topBtn}
+            title={isGm ? '방 터트리기' : '방 나가기'}
+            onClick={() => setExitOpen(true)}
+          >
+            {isGm ? '터트리기' : '나가기'}
+          </button>
         </div>
       </header>
+      {exitOpen && (
+        <ExitRoomDialog
+          roomId={room.roomId}
+          roomName={name}
+          isGm={isGm}
+          onCancel={() => setExitOpen(false)}
+          onDone={() => router.replace('/rooms/')}
+        />
+      )}
 
       {isGm && (
         <GmBar

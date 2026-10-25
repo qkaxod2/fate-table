@@ -63,6 +63,8 @@ type Handlers = { [K in EventType]: Handler<K> };
 
 const handlers: Handlers = {
   'room.member_joined': (s, p) => ({ ...s, members: { ...s.members, [p.userId]: p } }),
+  'room.member_left': (s, p) => ({ ...s, members: withoutKey(s.members, p.userId) }),
+  'room.closed': (s) => s,
 
   'session.started': (s, p) => ({
     ...s,
