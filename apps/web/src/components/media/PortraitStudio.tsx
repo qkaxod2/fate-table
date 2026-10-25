@@ -10,8 +10,12 @@ import {
 } from '@fate/portrait';
 import { useState } from 'react';
 import { asset } from '@/lib/asset';
+import { useMyImages, type ShownImage } from '@/lib/myImages';
 import { PortraitError, generatePortrait, portraitAvailable } from '@/lib/portraitApi';
+import { MyGallery } from './MyGallery';
 import styles from './PortraitStudio.module.css';
+
+const REUSE = ['portrait', 'npc'] as const;
 
 interface Candidate {
   url: string;
@@ -49,6 +53,13 @@ export function PortraitStudio({ value, onChange }: Props) {
   const preset = findPreset(presetId)!;
   const issue = appearance.trim() ? checkAppearance(appearance) : null;
   const tags = splitTags(appearance);
+  const kept = useMyImages(REUSE).images.length;
+
+  function reuse(img: ShownImage) {
+    const c = { url: img.url, seed: img.seed, presetId: img.presetId };
+    setCandidates((x) => [c, ...x.filter((y) => y.url !== img.url)].slice(0, 8));
+    onChange(img.url);
+  }
 
   function pickPreset(id: string) {
     setPresetId(id);
@@ -185,6 +196,13 @@ export function PortraitStudio({ value, onChange }: Props) {
         <p className={styles.bad} role="alert">
           {error}
         </p>
+      )}
+
+      {kept > 0 && (
+        <details className={styles.mine}>
+          <summary>내 그림에서 고르기 · {kept}장</summary>
+          <MyGallery kinds={REUSE} onPick={reuse} pickLabel="이걸로" compact />
+        </details>
       )}
 
       {candidates.length > 0 && (

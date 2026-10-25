@@ -193,3 +193,7 @@
   font-family: var(--f-story);
   font-size: var(--fs-lg);
 }
+
+.wide {
+  width: min(960px, 100%);
+}

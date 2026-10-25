@@ -134,9 +134,27 @@
   cursor: pointer;
 }
 
+.save {
+  padding: var(--s-2) var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+  background: var(--plate);
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+}
+
+.mine summary {
+  margin-bottom: var(--s-2);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
 .think:disabled,
 .draw:disabled,
-.apply:disabled {
+.apply:disabled,
+.save:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }

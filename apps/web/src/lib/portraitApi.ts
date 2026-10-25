@@ -1,5 +1,6 @@
 import type { MediaKind } from '@fate/portrait';
 import { FunctionsHttpError } from '@supabase/supabase-js';
+import { keepImage } from './myImages';
 import { ensureSession, getSupabase } from './supabase';
 
 export interface PortraitRequest {
@@ -76,13 +77,30 @@ async function invoke<T>(fn: string, body: object): Promise<T> {
   return data.data as T;
 }
 
-export function generatePortrait(req: PortraitRequest): Promise<PortraitResult> {
-  return invoke('media-image', req);
+export async function generatePortrait(req: PortraitRequest): Promise<PortraitResult> {
+  const r = await invoke<PortraitResult>('media-image', req);
+  void keepImage({
+    kind: 'portrait',
+    url: r.url,
+    seed: r.seed,
+    presetId: req.presetId,
+    prompt: req.appearance,
+  });
+  return r;
 }
 
-/** 초상화·NPC·스탠딩·표정·장면 배경 (NAI) */
-export function generateImage(req: ImageRequest): Promise<ImageResult> {
-  return invoke('media-image', req);
+/** 초상화·NPC·스탠딩·표정·장면 배경 (NAI). 그린 그림은 내 그림 보관함에도 담긴다 */
+export async function generateImage(req: ImageRequest): Promise<ImageResult> {
+  const r = await invoke<ImageResult>('media-image', req);
+  void keepImage({
+    kind: req.kind,
+    url: r.url,
+    seed: r.seed,
+    presetId: req.presetId,
+    prompt: req.appearance,
+    ...(req.expression ? { expression: req.expression } : {}),
+  });
+  return r;
 }
 
 /** 묘사 → NAI 태그 (Gemini) */

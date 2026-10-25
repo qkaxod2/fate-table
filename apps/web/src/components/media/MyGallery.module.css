@@ -1,0 +1,125 @@
+.gallery {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+}
+
+.filters button {
+  padding: 2px var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--plate);
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.filters button[aria-pressed='true'] {
+  border-color: var(--gold);
+  color: var(--gold-hi);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--s-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gallery[data-compact] .grid {
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: var(--s-2);
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  min-width: 0;
+}
+
+.item[data-kind='scene'] {
+  grid-column: span 2;
+}
+
+.thumb {
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+  overflow: hidden;
+  /* 스탠딩은 투명이라 체크무늬 위에 보여 준다 */
+  background: repeating-conic-gradient(rgb(255 255 255 / 0.08) 0 25%, transparent 0 50%) 0 0 / 16px
+    16px;
+}
+
+.thumb img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 832 / 1216;
+  object-fit: contain;
+  object-position: 50% 100%;
+}
+
+.item[data-kind='scene'] .thumb img {
+  aspect-ratio: 1216 / 832;
+  object-fit: cover;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--s-2);
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.meta b {
+  color: var(--fg);
+}
+
+.gallery[data-compact] .meta {
+  display: none;
+}
+
+.actions {
+  display: flex;
+  gap: var(--s-1);
+}
+
+.actions button {
+  flex: 1;
+  padding: 2px var(--s-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+  background: var(--plate);
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+.actions .pick {
+  border-color: var(--gold);
+  color: var(--gold-hi);
+}
+
+.actions .del {
+  color: var(--danger);
+}

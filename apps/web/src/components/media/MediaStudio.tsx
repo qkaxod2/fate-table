@@ -1,9 +1,17 @@
 'use client';
 
-import { PORTRAIT_PRESETS, TAGS_MAX, checkAppearance, findPreset } from '@fate/portrait';
+import {
+  PORTRAIT_PRESETS,
+  TAGS_MAX,
+  checkAppearance,
+  findPreset,
+  type MediaKind,
+} from '@fate/portrait';
 import { useState } from 'react';
 import { useCloseGuardDirty } from '@/components/ui/closeGuard';
+import { toast } from '@/components/ui/Toast';
 import { asset } from '@/lib/asset';
+import { downloadImage, useMyImages, type ShownImage } from '@/lib/myImages';
 import {
   PortraitError,
   generateImage,
@@ -13,6 +21,7 @@ import {
   type PromptRequest,
 } from '@/lib/portraitApi';
 import styles from './MediaStudio.module.css';
+import { MyGallery } from './MyGallery';
 
 export interface Drawn {
   url: string;
@@ -54,6 +63,13 @@ const COPY: Record<PromptKind, { what: string; placeholder: string; tags: string
     },
   };
 
+/** 보관함에서 다시 고를 수 있는 그림 종류 */
+const REUSE: Record<PromptKind, readonly MediaKind[]> = {
+  scene: ['scene'],
+  npc: ['npc', 'portrait'],
+  standing: ['standing'],
+};
+
 const PRESET_KEY = 'fate.artPreset';
 
 function savedPreset(): string {
@@ -90,6 +106,7 @@ export function MediaStudio({ kind, context, applyLabel, onApply }: Props) {
   const issue = prompt.trim() ? checkAppearance(prompt, TAGS_MAX) : null;
   const hasContext = !!(context.name || context.aspects?.length);
   const chosen = drawn.find((d) => d.url === picked);
+  const kept = useMyImages(REUSE[kind]).images.length;
 
   const fail = (e: unknown, fallback: string) =>
     setError(e instanceof PortraitError ? e.message : fallback);
@@ -131,6 +148,18 @@ export function MediaStudio({ kind, context, applyLabel, onApply }: Props) {
     } finally {
       setDrawing(false);
     }
+  }
+
+  function reuse(img: ShownImage) {
+    const d = { url: img.url, seed: img.seed, presetId: img.presetId, prompt: img.prompt };
+    setDrawn((x) => [d, ...x.filter((y) => y.url !== img.url)].slice(0, 8));
+    setPicked(img.url);
+  }
+
+  async function download() {
+    if (!chosen) return;
+    if (!(await downloadImage({ url: chosen.url, kind, seed: chosen.seed })))
+      toast({ text: '그림을 받아 오지 못했어요.', tone: 'error', key: 'gallery' });
   }
 
   async function apply() {
@@ -260,6 +289,13 @@ export function MediaStudio({ kind, context, applyLabel, onApply }: Props) {
         </p>
       )}
 
+      {kept > 0 && (
+        <details className={styles.mine}>
+          <summary>내 그림에서 고르기 · {kept}장</summary>
+          <MyGallery kinds={REUSE[kind]} onPick={reuse} pickLabel="후보로" compact />
+        </details>
+      )}
+
       {drawn.length > 0 && (
         <section className={styles.block} aria-label="그린 그림">
           <div className={styles.cands}>
@@ -275,14 +311,26 @@ export function MediaStudio({ kind, context, applyLabel, onApply }: Props) {
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            className={styles.apply}
-            onClick={apply}
-            disabled={!chosen || applying}
-          >
-            {applying ? '올리는 중…' : applyLabel}
-          </button>
+          <div className={styles.actions}>
+            <button
+              type="button"
+              className={styles.apply}
+              onClick={apply}
+              disabled={!chosen || applying}
+            >
+              {applying ? '올리는 중…' : applyLabel}
+            </button>
+            <button
+              type="button"
+              className={styles.save}
+              onClick={() => void download()}
+              disabled={!chosen}
+              title="고른 그림을 PNG 파일로 받아요"
+            >
+              PNG로 받기
+            </button>
+          </div>
+          <p className={styles.wait}>그린 그림은 이 브라우저의 내 그림 보관함에도 담겨요.</p>
         </section>
       )}
     </div>
