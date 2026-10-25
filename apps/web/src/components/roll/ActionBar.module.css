@@ -56,6 +56,12 @@
   cursor: not-allowed;
 }
 
+/* 튜토리얼이 다음 단계로 잠가도 이미 고른 버튼은 또렷하게 남긴다 */
+.action[aria-checked='true']:disabled,
+.approach[aria-checked='true']:disabled {
+  opacity: 1;
+}
+
 .num,
 .key {
   font-family: var(--f-num);
@@ -200,21 +206,23 @@
   }
 }
 
-/* 체험 안내가 가리키는 곳 */
+/* 체험 안내가 가리키는 곳: 금빛 테두리가 맥박처럼 크게 번진다 */
 .bar [data-focus] {
   border-radius: var(--r-card);
-  animation: focus-glow 1.4s ease-in-out infinite;
+  animation: focus-glow 1.1s ease-in-out infinite;
 }
 
 @keyframes focus-glow {
   0%,
   100% {
-    box-shadow: 0 0 0 2px var(--gold);
+    box-shadow:
+      0 0 0 3px var(--gold),
+      0 0 12px 2px rgb(214 182 110 / 0.5);
   }
   50% {
     box-shadow:
-      0 0 0 3px var(--gold-hi),
-      0 0 24px 4px rgb(214 182 110 / 0.55);
+      0 0 0 5px var(--gold-hi),
+      0 0 40px 10px rgb(240 220 160 / 0.75);
   }
 }
 

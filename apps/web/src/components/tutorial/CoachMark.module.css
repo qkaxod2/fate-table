@@ -31,6 +31,7 @@
 }
 
 .step {
+  white-space: nowrap;
   font-family: var(--f-num);
   font-size: var(--fs-xs);
   letter-spacing: 2px;
@@ -181,6 +182,23 @@
   }
 }
 
+/* 굴림 패널이 가운데를 쓰는 동안: 주사위를 가리지 않게 왼쪽 파티 칸 위로 비켜 선다 */
+@media (min-width: 1101px) {
+  .coach[data-dock] {
+    left: calc(-280px - var(--s-4));
+    width: 300px;
+    padding: var(--s-3) var(--s-4) var(--s-4);
+    transform: none;
+    animation-name: coach-fade;
+  }
+  .coach[data-dock] .head {
+    flex-wrap: wrap;
+  }
+  .coach[data-dock] .title {
+    font-size: var(--fs-lg);
+  }
+}
+
 @media (max-width: 1100px) {
   .coach {
     position: sticky;
@@ -195,5 +213,92 @@
 @keyframes coach-fade {
   from {
     opacity: 0;
+  }
+}
+
+.chapter {
+  white-space: nowrap;
+  padding: 2px var(--s-2);
+  border-radius: var(--r-ctl);
+  background: var(--ink);
+  color: var(--gold-hi);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.example {
+  margin: var(--s-3) 0 0;
+  padding: var(--s-2) var(--s-3);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 var(--r-ctl) var(--r-ctl) 0;
+  background: rgb(214 182 110 / 0.18);
+  font-size: var(--fs-md);
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.nextRow {
+  display: flex;
+  justify-content: flex-end;
+  margin: var(--s-4) 0 0;
+}
+
+.next {
+  padding: var(--s-2) var(--s-5);
+  border: 1px solid var(--gold);
+  border-radius: var(--r-ctl);
+  background: linear-gradient(180deg, var(--gold-hi), var(--gold));
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  animation: next-nudge 1.6s ease-in-out 1.2s infinite;
+}
+
+.next:hover {
+  box-shadow: 0 4px 14px rgb(138 106 36 / 0.35);
+  translate: 0 -1px;
+}
+
+@keyframes next-nudge {
+  0%,
+  70%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(214 182 110 / 0.6);
+  }
+  85% {
+    box-shadow: 0 0 0 8px rgb(214 182 110 / 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .next {
+    animation: none;
+  }
+}
+
+/* 좁은 화면 단계별 진행: 화면 맨 위에 붙여 두고, 눌러야 할 곳은 아래쪽에 보이게 한다 */
+@media (max-width: 1100px) {
+  .coach[data-pinned] {
+    position: fixed;
+    top: var(--s-2);
+    right: var(--s-2);
+    left: var(--s-2);
+    z-index: 70;
+    width: auto;
+    max-height: 46dvh;
+    margin: 0;
+    overflow-y: auto;
+    padding: var(--s-3) var(--s-4) var(--s-4);
+  }
+  .coach[data-pinned] .title {
+    font-size: var(--fs-lg);
+  }
+}
+
+@media (max-width: 760px) {
+  .keys {
+    display: none;
   }
 }
