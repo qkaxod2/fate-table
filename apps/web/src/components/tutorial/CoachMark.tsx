@@ -10,6 +10,8 @@ export interface Coach {
   body: string;
   /** 쉬운 예시나 지금 할 일. 본문 아래 따로 강조해 보여 준다 */
   example?: string;
+  /** 하나씩 짚어 주는 목록 (결과 4단계, 굴림 계산 순서 등) */
+  points?: string[];
   /** 설명만 하는 단계: 읽고 이 버튼을 눌러 넘어간다 */
   next?: { label: string; onClick: () => void };
   keys?: string[];
@@ -64,6 +66,13 @@ export function CoachMark({
       </div>
       <p className={styles.title}>{coach.title}</p>
       <p className={styles.body}>{coach.body}</p>
+      {coach.points && coach.points.length > 0 && (
+        <ul className={styles.points}>
+          {coach.points.map((p) => (
+            <li key={p}>{p}</li>
+          ))}
+        </ul>
+      )}
       {coach.example && <p className={styles.example}>{coach.example}</p>}
       {coach.keys && coach.keys.length > 0 && (
         <p className={styles.keys}>
