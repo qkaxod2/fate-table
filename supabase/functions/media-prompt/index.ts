@@ -2,6 +2,7 @@
 // 요청: { kind: 'scene'|'npc'|'standing', description, context? }
 // 응답: { ok, data: { prompt, negative, summary, model } } | { ok:false, error }
 import { admin, CORS, currentUser, fail, ok, readJson } from '../_shared/http.ts';
+import { withUsage } from '../_shared/quota.ts';
 import { generateJson, VERTEX_MODEL, VertexError, vertexConfigured } from '../_shared/vertex.ts';
 import {
   GUIDE,
@@ -65,39 +66,44 @@ Deno.serve(async (req) => {
     return fail(400, 'EMPTY', '어떤 그림인지 한 줄이라도 적어 주세요.');
 
   const db = admin();
-  const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
-  const { count } = await db
-    .from('media_usage')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-    .eq('kind', 'prompt')
-    .gte('created_at', since);
-  if ((count ?? 0) >= DAILY_LIMIT)
-    return fail(429, 'QUOTA_EXCEEDED', `프롬프트 도우미는 하루 ${DAILY_LIMIT}번까지 쓸 수 있어요.`);
+  // 사용량은 Gemini를 부르기 전에 예약한다. 모델 호출이 실패하면 예약을 돌려놓는다
+  const quota = {
+    userId: user.id,
+    group: 'prompt',
+    kinds: ['prompt'],
+    kind: 'prompt',
+    limit: DAILY_LIMIT,
+  };
+  const refuse = (reason: 'limit' | 'unavailable') =>
+    reason === 'limit'
+      ? fail(429, 'QUOTA_EXCEEDED', `프롬프트 도우미는 하루 ${DAILY_LIMIT}번까지 쓸 수 있어요.`)
+      : fail(503, 'QUOTA_UNAVAILABLE', '사용량을 확인하지 못했어요. 잠시 뒤 다시 시도해 주세요.');
+  return withUsage(db, quota, refuse, async (keep) => {
+    let out: { prompt?: unknown; negative?: unknown; summary?: unknown };
+    try {
+      out = await generateJson({
+        system: GUIDE,
+        user: userMessage(kind, description, context),
+        schema: RESPONSE_SCHEMA,
+      });
+    } catch (e) {
+      if (e instanceof VertexError && e.status === 429)
+        return fail(429, 'BUSY', '도우미가 바빠요. 잠시 뒤 다시 눌러 주세요.');
+      if (e instanceof VertexError && e.status === 503)
+        return fail(503, 'NOT_CONFIGURED', '프롬프트 도우미(Gemini) 키가 아직 설정되지 않았어요.');
+      console.error('prompt', e instanceof Error ? e.message : e);
+      return fail(502, 'LLM_FAILED', '프롬프트를 만들지 못했어요. 잠시 뒤 다시 시도해 주세요.');
+    }
 
-  let out: { prompt?: unknown; negative?: unknown; summary?: unknown };
-  try {
-    out = await generateJson({
-      system: GUIDE,
-      user: userMessage(kind, description, context),
-      schema: RESPONSE_SCHEMA,
+    // 모델을 불렀으니 결과가 비어도 사용량을 남긴다
+    keep();
+    const prompt = tidy(out.prompt, 880);
+    if (!prompt) return fail(502, 'LLM_FAILED', '프롬프트를 만들지 못했어요. 다시 눌러 주세요.');
+    return ok({
+      prompt,
+      negative: tidy(out.negative, 300),
+      summary: String(out.summary ?? '').slice(0, 200),
+      model: VERTEX_MODEL,
     });
-  } catch (e) {
-    if (e instanceof VertexError && e.status === 429)
-      return fail(429, 'BUSY', '도우미가 바빠요. 잠시 뒤 다시 눌러 주세요.');
-    if (e instanceof VertexError && e.status === 503)
-      return fail(503, 'NOT_CONFIGURED', '프롬프트 도우미(Gemini) 키가 아직 설정되지 않았어요.');
-    console.error('prompt', e instanceof Error ? e.message : e);
-    return fail(502, 'LLM_FAILED', '프롬프트를 만들지 못했어요. 잠시 뒤 다시 시도해 주세요.');
-  }
-
-  const prompt = tidy(out.prompt, 880);
-  if (!prompt) return fail(502, 'LLM_FAILED', '프롬프트를 만들지 못했어요. 다시 눌러 주세요.');
-  await db.from('media_usage').insert({ user_id: user.id, kind: 'prompt' });
-  return ok({
-    prompt,
-    negative: tidy(out.negative, 300),
-    summary: String(out.summary ?? '').slice(0, 200),
-    model: VERTEX_MODEL,
   });
 });

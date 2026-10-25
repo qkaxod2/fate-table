@@ -80,6 +80,8 @@ export interface EventPayloads {
     newAnimSeed?: number;
   };
   'stunt.applied': { rollId: string; side: InvokeSide; stuntId: string; value: number };
+  /** 방어자가 조정을 마쳤다. 이 뒤에 공격자가 확정할 수 있다 */
+  'roll.defense_ready': { rollId: string };
   'roll.finalized': {
     rollId: string;
     total: number;

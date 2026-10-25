@@ -96,6 +96,7 @@ export const CommandSchema = z.discriminatedUnion('type', [
     paidWith: z.enum(['fate_point', 'free_invoke']),
   }),
   cmd('stunt.apply', { rollId: id, side: side.default('active'), stuntId: id }),
+  cmd('roll.defense_ready', { rollId: id }),
   cmd('roll.finalize', { rollId: id, reduceForBoost: z.boolean().default(false) }),
 
   cmd('fate.adjust', { target: id, delta: z.number().int().min(-10).max(10) }),

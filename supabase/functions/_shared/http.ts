@@ -71,17 +71,22 @@ export async function appendEvents(
   return Number(data);
 }
 
-/** 방의 모든 이벤트 (서버용, 비공개 포함) */
-export async function loadEvents(db: SupabaseClient, roomId: string, after = 0): Promise<StoredEvent[]> {
+/** 방의 모든 이벤트 (서버용, 비공개 포함). until이 있으면 그 seq까지만 */
+export async function loadEvents(
+  db: SupabaseClient,
+  roomId: string,
+  after = 0,
+  until?: number,
+): Promise<StoredEvent[]> {
   const out: StoredEvent[] = [];
   for (let from = after; ; ) {
-    const { data, error } = await db
+    let q = db
       .from('events')
       .select('seq, type, actor_id, payload, visibility, owner_id')
       .eq('room_id', roomId)
-      .gt('seq', from)
-      .order('seq')
-      .limit(1000);
+      .gt('seq', from);
+    if (until !== undefined) q = q.lte('seq', until);
+    const { data, error } = await q.order('seq').limit(1000);
     if (error) throw new Error(error.message);
     for (const r of data) {
       out.push({
