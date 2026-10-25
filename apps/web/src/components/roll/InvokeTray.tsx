@@ -31,6 +31,8 @@ interface Props {
   finalizeLabel?: string;
   /** 있으면 확정을 막고 이 문구를 보여 준다 (상대가 조정 중일 때) */
   waiting?: string;
+  /** 튜토리얼: 발동을 먼저 해 보게 확정을 잠시 막는다 */
+  lockFinalize?: boolean;
 }
 
 /** 굴림 직후 열리는 발동 트레이. 결과를 바꾸는 카드만 강조하고, 권하는 말은 하지 않는다. */
@@ -43,6 +45,7 @@ export function InvokeTray({
   onFinalize,
   finalizeLabel = '이대로 확정',
   waiting,
+  lockFinalize = false,
 }: Props) {
   const selected = choices.find((c) => c.aspect.id === selectedId && !c.blocked);
   const paidWith: PaidWith = selected?.aspect.freeInvokes ? 'free_invoke' : 'fate_point';
@@ -90,7 +93,7 @@ export function InvokeTray({
       const k = e.key.toLowerCase();
       if (selected && k === 'f') invoke(selected.aspect.id, 'bonus');
       else if (selected && k === 'r') invoke(selected.aspect.id, 'reroll');
-      else if (e.key === 'Enter' && !e.repeat && !waiting) {
+      else if (e.key === 'Enter' && !e.repeat && !waiting && !lockFinalize) {
         e.preventDefault();
         onFinalize();
       }
@@ -99,14 +102,14 @@ export function InvokeTray({
     return () => window.removeEventListener('keydown', onKey);
     // invoke는 매번 새로 만들어지지만 쓰는 값(selected, paidWith, firing)은 여기 다 들어 있다
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [choices, selected, paidWith, firing, onSelect, onInvoke, onFinalize, waiting]);
+  }, [choices, selected, paidWith, firing, onSelect, onInvoke, onFinalize, waiting, lockFinalize]);
 
   return (
     <div className={styles.tray}>
       <div className={styles.head}>
         INVOKE · {term('aspect')} {term('invoke')} · +2 또는 다시 굴리기
       </div>
-      <div className={styles.cards}>
+      <div className={styles.cards} data-tour="invoke-cards">
         {choices.map((c, i) => (
           <div
             key={c.aspect.id}
@@ -143,7 +146,7 @@ export function InvokeTray({
             <FatePointToken count={fatePoints} />
           </span>
         </span>
-        <div className={styles.buttons}>
+        <div className={styles.buttons} data-tour="invoke-buttons">
           {selected && (
             <>
               <button
@@ -176,8 +179,9 @@ export function InvokeTray({
           <button
             type="button"
             className={styles.primary}
+            data-tour="finalize"
             onClick={onFinalize}
-            disabled={!!waiting}
+            disabled={!!waiting || lockFinalize}
             title={waiting}
           >
             {waiting ? (

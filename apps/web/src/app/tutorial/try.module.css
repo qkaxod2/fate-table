@@ -293,6 +293,18 @@
   cursor: pointer;
 }
 
+.defenseOk {
+  align-self: center;
+  padding: var(--s-2) var(--s-5);
+  border: 1px solid var(--gold-hi);
+  border-radius: var(--r-ctl);
+  background: linear-gradient(180deg, var(--gold-hi), var(--gold));
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .overlay {
   position: absolute;
   inset: 0;
