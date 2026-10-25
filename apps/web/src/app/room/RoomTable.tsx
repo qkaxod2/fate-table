@@ -1263,7 +1263,8 @@ export function RoomTable({
         )}
         {me && (
           <div className={styles.actionWrap}>
-            {controllable.length > 1 && (
+            {/* 굴림이 끝나기 전에는 다음 굴림 준비 줄을 접어서 무대(발동 메뉴)에 높이를 내준다 */}
+            {controllable.length > 1 && !busyRoll && (
               <div className={styles.chipRow} role="radiogroup" aria-label="움직일 캐릭터">
                 <span className={styles.chipLabel}>누구로?</span>
                 {controllable
@@ -1276,7 +1277,6 @@ export function RoomTable({
                       aria-checked={c.id === me.id}
                       className={styles.who}
                       data-turn={c.id === turnId || undefined}
-                      disabled={busyRoll}
                       onClick={() => {
                         setActingId(c.id);
                         setTargetId('');
@@ -1292,7 +1292,7 @@ export function RoomTable({
                   ))}
               </div>
             )}
-            {action && (
+            {action && !busyRoll && (
               <div
                 className={styles.chipRow}
                 aria-label={action === 'attack' ? '공격 대상' : '난이도'}
