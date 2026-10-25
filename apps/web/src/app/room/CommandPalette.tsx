@@ -10,6 +10,7 @@ import {
 } from '@fate/rules-engine';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCloseGuard } from '@/components/ui/closeGuard';
+import { useClosing } from '@/lib/motion';
 import type { GmOpen } from './GmConsole';
 import styles from './CommandPalette.module.css';
 
@@ -243,6 +244,7 @@ export function CommandPalette({
   onClose: () => void;
 }) {
   const entries = build();
+  const [closing, close] = useClosing(onClose);
   const [input, setInput] = useState('');
   const [index, setIndex] = useState(0);
   const field = useRef<HTMLInputElement>(null);
@@ -262,16 +264,16 @@ export function CommandPalette({
 
   useEffect(() => field.current?.focus(), []);
 
-  const guard = useCloseGuard(onClose);
+  const guard = useCloseGuard(close);
 
   const exec = (e: PaletteEntry) => {
     const exactHead = e.words.some((w) => w.toLowerCase() === head.toLowerCase());
     void e.act(exactHead ? rest : '');
-    onClose();
+    close();
   };
 
   return (
-    <div className={styles.backdrop} {...guard.backdrop}>
+    <div className={styles.backdrop} data-closing={closing || undefined} {...guard.backdrop}>
       <div className={styles.box} role="dialog" aria-label="명령" {...guard.panel}>
         <input
           ref={field}
@@ -332,7 +334,8 @@ export function CommandPalette({
 
 /** ? 단축키 목록 */
 export function ShortcutHelp({ isGm, onClose }: { isGm: boolean; onClose: () => void }) {
-  const guard = useCloseGuard(onClose);
+  const [closing, close] = useClosing(onClose);
+  const guard = useCloseGuard(close);
   const rows: Array<[string[], string]> = [
     [['Ctrl', 'K'], '명령 창 열기 (/ 도 돼요)'],
     [['1', '–', '4'], '행동 고르기 (극복 · 이점 창출 · 공격 · 방어)'],
@@ -346,7 +349,7 @@ export function ShortcutHelp({ isGm, onClose }: { isGm: boolean; onClose: () => 
     [['Esc'], '창 닫기'],
   ];
   return (
-    <div className={styles.backdrop} {...guard.backdrop}>
+    <div className={styles.backdrop} data-closing={closing || undefined} {...guard.backdrop}>
       <div className={styles.box} role="dialog" aria-label="단축키" {...guard.panel}>
         <h2 className={styles.title}>단축키</h2>
         <dl className={styles.keys}>

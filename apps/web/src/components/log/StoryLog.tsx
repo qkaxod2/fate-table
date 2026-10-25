@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { LogLine } from '@/lib/copy';
+import { reducedMotion } from '@/lib/motion';
 import styles from './StoryLog.module.css';
 
 interface Props {
@@ -30,9 +31,16 @@ export function StoryLog({ lines, undone, onUndo, sending = [] }: Props) {
   const other: Tab = tab === 'story' ? 'system' : 'story';
   const unread = byTab[other].filter((l) => l.seq > seen[other]).length;
 
-  const end = useRef<HTMLDivElement>(null);
+  const box = useRef<HTMLElement>(null);
+  const lastTab = useRef(tab);
   useEffect(() => {
-    end.current?.scrollIntoView({ block: 'end' });
+    // 새 줄이 오면 부드럽게 따라 내려가고, 탭을 바꿨을 땐 바로 맨 아래로 간다
+    const jump = lastTab.current !== tab || reducedMotion();
+    lastTab.current = tab;
+    // 기록을 품은 스크롤 칸(기록 자신이나 방의 오른쪽 열)만 내린다. 페이지 전체가 스크롤되는
+    // 좁은 화면에서 scrollIntoView를 쓰면 화면이 통째로 기록까지 끌려 내려갔다
+    const el = scrollParent(box.current);
+    el?.scrollTo({ top: el.scrollHeight, behavior: jump ? 'auto' : 'smooth' });
   }, [shown.length, tab, sending.length]);
 
   const open = (t: Tab) => {
@@ -41,7 +49,7 @@ export function StoryLog({ lines, undone, onUndo, sending = [] }: Props) {
   };
 
   return (
-    <section className={styles.log} aria-label="이야기 기록" aria-live="polite">
+    <section ref={box} className={styles.log} aria-label="이야기 기록" aria-live="polite">
       <div className={styles.tabs} role="tablist">
         {(['story', 'system'] as const).map((t) => (
           <button
@@ -53,7 +61,11 @@ export function StoryLog({ lines, undone, onUndo, sending = [] }: Props) {
             onClick={() => open(t)}
           >
             {t === 'story' ? 'STORY' : 'SYSTEM'}
-            {t === other && unread > 0 && <span className={styles.badge}>{unread}</span>}
+            {t === other && unread > 0 && (
+              <span key={unread} className={styles.badge}>
+                {unread}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -86,7 +98,15 @@ export function StoryLog({ lines, undone, onUndo, sending = [] }: Props) {
             </li>
           ))}
       </ol>
-      <div ref={end} />
     </section>
   );
+}
+
+/** 스스로 스크롤되는 가장 가까운 칸. 문서 자체는 고르지 않는다 */
+function scrollParent(from: HTMLElement | null): HTMLElement | null {
+  for (let el = from; el && el !== document.body; el = el.parentElement) {
+    const y = getComputedStyle(el).overflowY;
+    if ((y === 'auto' || y === 'scroll') && el.scrollHeight > el.clientHeight) return el;
+  }
+  return null;
 }

@@ -1,5 +1,6 @@
 import { term } from '@fate/glossary';
 import type { Aspect } from '@fate/rules-engine';
+import type { PointerEvent } from 'react';
 import styles from './AspectCard.module.css';
 
 const KIND_LABEL: Record<Aspect['kind'], string> = {
@@ -23,6 +24,23 @@ interface Props {
   size?: 'md' | 'sm';
 }
 
+/** 누를 수 있는 카드는 마우스 쪽으로 살짝 기울고, 종이 위에 빛이 따라온다 */
+function tilt(e: PointerEvent<HTMLElement>) {
+  if (e.pointerType !== 'mouse') return;
+  const el = e.currentTarget;
+  const r = el.getBoundingClientRect();
+  const x = (e.clientX - r.left) / r.width;
+  const y = (e.clientY - r.top) / r.height;
+  el.style.setProperty('--rx', `${((0.5 - y) * 8).toFixed(2)}deg`);
+  el.style.setProperty('--ry', `${((x - 0.5) * 10).toFixed(2)}deg`);
+  el.style.setProperty('--mx', `${(x * 100).toFixed(1)}%`);
+  el.style.setProperty('--my', `${(y * 100).toFixed(1)}%`);
+}
+
+function untilt(e: PointerEvent<HTMLElement>) {
+  for (const v of ['--rx', '--ry', '--mx', '--my']) e.currentTarget.style.removeProperty(v);
+}
+
 export function AspectCard({
   aspect,
   owner,
@@ -44,6 +62,7 @@ export function AspectCard({
       data-disabled={disabled || undefined}
       disabled={onClick ? disabled : undefined}
       onClick={onClick}
+      {...(onClick && !disabled ? { onPointerMove: tilt, onPointerLeave: untilt } : {})}
     >
       <span className={styles.label}>
         {label}

@@ -36,7 +36,10 @@ import { CoachMark, type Coach } from '@/components/tutorial/CoachMark';
 import { BOSS, SAMPLE_CHARACTERS, SCENE, type SampleCharacter } from '@/content/oneshot';
 import { playSfx, setSfxEnabled, sfxEnabled, sfxForEvent, sfxForOutcome } from '@/fx/sfx';
 import { asset } from '@/lib/asset';
+import { Presence, reducedMotion, revealOnNarrow } from '@/lib/motion';
+import { Typewriter } from '@/components/ui/Typewriter';
 import { describe, ERROR_COPY } from '@/lib/copy';
+import { josa } from '@/lib/josa';
 import { LocalRoom } from '@/state/localRoom';
 import styles from './try.module.css';
 
@@ -81,15 +84,35 @@ export function TryTable() {
 }
 
 function Picker({ onPick }: { onPick: (s: SampleCharacter) => void }) {
+  // 고른 카드가 앞으로 나서고 나머지가 물러난 뒤에 무대로 넘어간다
+  const [chosen, setChosen] = useState<string | null>(null);
+  const choose = (s: SampleCharacter) => {
+    if (chosen) return;
+    // 좁은 화면에서는 카드를 고르려고 내려온 만큼 무대도 내려가 있으니 맨 위에서 시작한다
+    const go = () => {
+      onPick(s);
+      window.scrollTo(0, 0);
+    };
+    if (reducedMotion()) return go();
+    setChosen(s.key);
+    playSfx('token-flip', 0.35);
+    window.setTimeout(go, 560);
+  };
   return (
-    <main className={styles.picker}>
+    <main className={styles.picker} data-chosen={chosen ? '' : undefined}>
       <h1 className={styles.pickTitle}>누구로 플레이할까요?</h1>
       <p className={styles.pickLead}>
         샘플 캐릭터를 골라 5분 안에 첫 굴림까지 가 봐요. 규칙은 몰라도 괜찮아요.
       </p>
       <div className={styles.pickGrid}>
         {SAMPLE_CHARACTERS.map((s) => (
-          <button key={s.key} type="button" className={styles.pickCard} onClick={() => onPick(s)}>
+          <button
+            key={s.key}
+            type="button"
+            className={styles.pickCard}
+            data-chosen={chosen === s.key || undefined}
+            onClick={() => choose(s)}
+          >
             <img src={asset(s.image)} alt="" className={styles.pickImg} />
             <span className={styles.pickName}>{s.name}</span>
             <span className={styles.pickHigh}>{s.create.highConcept}</span>
@@ -126,6 +149,10 @@ function Table({
   const [approach, setApproach] = useState<Approach | null>(null);
   const [rollId, setRollId] = useState<string | null>(null);
   const [settled, setSettled] = useState(false);
+  // 좁은 화면: 결과가 나오면 패널이 다시 보이게 (안내 카드가 위에 생겨도)
+  useEffect(() => {
+    if (settled) revealOnNarrow(document.querySelector('[data-roll-panel]'));
+  }, [settled]);
   const [selectedAspect, setSelectedAspect] = useState<string | null>(null);
   const [prompt, setPrompt] = useState<Prompt>(null);
   const [draft, setDraft] = useState('');
@@ -375,6 +402,18 @@ function Table({
   const coach = useMemo((): (Coach & { focus?: CoachFocus }) | undefined => {
     if (compel || prompt) return undefined;
     const total = 4;
+    if (boss.takenOut)
+      return {
+        step: total,
+        total,
+        clear: true,
+        title: `${josa(boss.name, '을/를')} 쓰러뜨렸어요!`,
+        body: `행동을 고르고, 굴리고, ${term('aspect')}을 ${term('invoke')}해 판을 뒤집는 법을 다 익혔어요. 이제 내 캐릭터로 이어 가 볼까요?`,
+        links: [
+          { href: '/create/', label: '캐릭터 만들기' },
+          { href: '/rooms/new/', label: '친구들과 방 만들기' },
+        ],
+      };
     if (!action)
       return {
         step: 1,
@@ -410,8 +449,20 @@ function Table({
         body: `빛나는 ${term('aspect')} 카드를 누르면 +2를 받아요. ${term('fatePoint')} 1개가 들어요.`,
       };
     return undefined;
-  }, [action, approach, roll, final, compel, prompt, settled, myOutcomeNow]);
+  }, [action, approach, roll, final, compel, prompt, settled, myOutcomeNow, boss]);
   const [coachHidden, setCoachHidden] = useState(false);
+  // 안내를 숨겼더라도 다 끝낸 순간의 축하 카드는 한 번 다시 보여 준다
+  const [clearShown, setClearShown] = useState(false);
+  if (coach?.clear && !clearShown) {
+    setClearShown(true);
+    setCoachHidden(false);
+  }
+  useEffect(() => {
+    // 쓰러지는 연출이 지나간 뒤 축하 종소리
+    if (!clearShown) return;
+    const t = window.setTimeout(() => playSfx('style-chime', 0.5), 900);
+    return () => window.clearTimeout(t);
+  }, [clearShown]);
 
   const result =
     roll && roll.active.dice && (roll.defense?.dice ?? roll.targetId === null)
@@ -429,7 +480,7 @@ function Table({
     );
     return () => clearTimeout(t);
   }, [outcomeKey]);
-  const showBoss = roll?.targetId === bossId || action === 'attack';
+  const showBoss = roll?.targetId === bossId || action === 'attack' || boss.takenOut === true;
 
   return (
     <main
@@ -497,16 +548,35 @@ function Table({
         </div>
 
         <div className={styles.center}>
-          {coach && !coachHidden && <CoachMark coach={coach} onHide={() => setCoachHidden(true)} />}
+          <Presence show={!!(coach && !coachHidden)}>
+            {coach && !coachHidden && (
+              <CoachMark
+                key={coach.clear ? 'clear' : coach.step}
+                coach={coach}
+                onHide={() => setCoachHidden(true)}
+              />
+            )}
+          </Presence>
           <img className={styles.standee} src={asset(pick.image)} alt={pick.name} />
           {showBoss && (
-            <img className={styles.bossStandee} src={asset(SCENE.bossImage)} alt={boss.name} />
+            <img
+              className={styles.bossStandee}
+              src={asset(SCENE.bossImage)}
+              alt={boss.name}
+              data-out={boss.takenOut || undefined}
+              data-hit={
+                (final &&
+                  roll?.action === 'attack' &&
+                  (roll.result?.outcome === 'success' || roll.result?.outcome === 'style')) ||
+                undefined
+              }
+            />
           )}
 
           {roll && (
-            <div className={styles.rollPanel}>
+            <div className={styles.rollPanel} ref={revealOnNarrow} data-roll-panel>
               <div className={styles.sides}>
-                <div className={styles.side}>
+                <div className={styles.side} data-fx="roll-dice">
                   <div className={styles.sideHead}>
                     {me.name} · {term(roll.action)} · {term(roll.active.approach)}{' '}
                     {roll.active.rating >= 0 ? '+' : ''}
@@ -520,7 +590,7 @@ function Table({
                     onSettled={() => setSettled(true)}
                   />
                   {roll.active.dice && settled && result && (
-                    <div className={styles.total}>
+                    <div className={styles.total} key={result.total} data-fx="roll-total">
                       {result.total >= 0 ? '+' : ''}
                       {result.total} <small>{formatRating(result.total).split(' ')[0]}</small>
                       {roll.active.modifiers.length > 0 && (
@@ -597,65 +667,74 @@ function Table({
             </div>
           )}
 
-          {compel && (
-            <div className={styles.overlay}>
-              <CompelOffer
-                aspect={state.aspects[compel.aspectId]!}
-                text={compel.text}
-                fatePoints={me.fatePoints}
-                onAccept={() =>
-                  run(ME, {
-                    type: 'compel.respond',
-                    payload: { compelId: compel.id, accept: true },
-                  })
-                }
-                onRefuse={() =>
-                  run(ME, {
-                    type: 'compel.respond',
-                    payload: { compelId: compel.id, accept: false },
-                  })
-                }
-              />
-            </div>
-          )}
-
-          {prompt && (
-            <div className={styles.overlay}>
-              <form
-                className={styles.prompt}
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  submitPrompt();
-                }}
-              >
-                <div className={styles.promptHead}>
-                  {prompt.kind === 'aspect'
-                    ? `새 ${term('aspect')} 이름 짓기 · ${term('freeInvoke')} ${prompt.freeInvokes}`
-                    : `${term('boost')} 이름 짓기`}
-                </div>
-                <p className={styles.promptHelp}>
-                  {prompt.kind === 'aspect'
-                    ? '장면에 새로 생긴 사실을 짧은 문구로 적어요. 예: "연기에 가려진 뒷문"'
-                    : '한 번 쓰고 사라지는 순간의 기회예요. 예: "흔들리는 발판"'}
-                </p>
-                <input
-                  autoFocus
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  maxLength={40}
-                  className={styles.promptInput}
+          <Presence show={!!compel}>
+            {compel && (
+              <div className={styles.overlay}>
+                <CompelOffer
+                  aspect={state.aspects[compel.aspectId]!}
+                  text={compel.text}
+                  targetId={meId}
+                  fatePoints={me.fatePoints}
+                  onAccept={() =>
+                    run(ME, {
+                      type: 'compel.respond',
+                      payload: { compelId: compel.id, accept: true },
+                    })
+                  }
+                  onRefuse={() =>
+                    run(ME, {
+                      type: 'compel.respond',
+                      payload: { compelId: compel.id, accept: false },
+                    })
+                  }
                 />
-                <div className={styles.promptButtons}>
-                  <button type="button" onClick={() => setPrompt(null)} className={styles.restart}>
-                    건너뛰기
-                  </button>
-                  <button type="submit" className={styles.promptOk} disabled={!draft.trim()}>
-                    붙이기
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
+              </div>
+            )}
+          </Presence>
+
+          <Presence show={!!prompt}>
+            {prompt && (
+              <div className={styles.overlay}>
+                <form
+                  className={styles.prompt}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    submitPrompt();
+                  }}
+                >
+                  <div className={styles.promptHead}>
+                    {prompt.kind === 'aspect'
+                      ? `새 ${term('aspect')} 이름 짓기 · ${term('freeInvoke')} ${prompt.freeInvokes}`
+                      : `${term('boost')} 이름 짓기`}
+                  </div>
+                  <p className={styles.promptHelp}>
+                    {prompt.kind === 'aspect'
+                      ? '장면에 새로 생긴 사실을 짧은 문구로 적어요. 예: "연기에 가려진 뒷문"'
+                      : '한 번 쓰고 사라지는 순간의 기회예요. 예: "흔들리는 발판"'}
+                  </p>
+                  <input
+                    autoFocus
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    maxLength={40}
+                    className={styles.promptInput}
+                  />
+                  <div className={styles.promptButtons}>
+                    <button
+                      type="button"
+                      onClick={() => setPrompt(null)}
+                      className={styles.restart}
+                    >
+                      건너뛰기
+                    </button>
+                    <button type="submit" className={styles.promptOk} disabled={!draft.trim()}>
+                      붙이기
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+          </Presence>
         </div>
 
         <div className={styles.right}>
@@ -679,7 +758,11 @@ function Table({
         <div className={styles.dialogue}>
           <div className={styles.speaker}>G M</div>
           <p className={styles.say}>
-            {narration && narration.type === 'narration.posted' ? narration.payload.text : ''}
+            <Typewriter
+              text={
+                narration && narration.type === 'narration.posted' ? narration.payload.text : ''
+              }
+            />
           </p>
           {error && <p className={styles.error}>{error}</p>}
         </div>
