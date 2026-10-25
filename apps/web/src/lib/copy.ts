@@ -252,6 +252,7 @@ export const ERROR_COPY: Record<string, string> = {
   QUOTA_UNAVAILABLE: '사용량을 확인하지 못했어요. 잠시 뒤 다시 시도해 주세요.',
   FORBIDDEN_ROLE: 'GM만 할 수 있는 일이에요.',
   INVALID_CHARACTER: '캐릭터 시트에 고칠 곳이 있어요.',
+  DUPLICATE_CHARACTER: '이미 이 방에 데려온 캐릭터예요.',
   QUOTA_EXCEEDED: '이번 달 생성 한도를 다 썼어요.',
   NOT_MEMBER: '이 방의 참가자가 아니에요.',
 };

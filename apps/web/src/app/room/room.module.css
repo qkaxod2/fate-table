@@ -169,7 +169,17 @@
   cursor: pointer;
 }
 
-.draft:hover {
+.draft:not(:disabled):hover {
+  border-color: var(--gold);
+}
+
+.draft:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.draft[aria-busy] {
+  opacity: 1;
   border-color: var(--gold);
 }
 

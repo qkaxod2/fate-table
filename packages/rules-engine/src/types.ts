@@ -46,6 +46,8 @@ export interface Character {
   consequences: Partial<Record<ConsequenceSlot, ConsequenceState>>;
   portraitAssetId?: string;
   portraitUrl?: string;
+  /** 캐릭터 만들기 초안에서 데려왔다면 그 초안의 키 */
+  sourceKey?: string;
   /** 라이트노벨풍 스탠딩: 표정 id → 투명 PNG URL. 'neutral'이 기본 */
   standing?: Record<string, string>;
   /** 지금 무대에서 짓고 있는 표정 */

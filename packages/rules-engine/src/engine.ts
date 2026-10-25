@@ -24,6 +24,7 @@ export type CommandErrorCode =
   | 'NOT_FOUND'
   | 'INVALID'
   | 'INVALID_CHARACTER'
+  | 'DUPLICATE_CHARACTER'
   | 'NOT_ENOUGH_FATE_POINTS'
   | 'ASPECT_ALREADY_INVOKED'
   | 'NO_FREE_INVOKES'
@@ -239,6 +240,9 @@ const resolvers: Resolvers = {
     if (a.role === 'spectator') throw new CommandError('FORBIDDEN_ROLE');
     if (a.role === 'player' && p.isNpc) throw new CommandError('FORBIDDEN_ROLE');
     const ownerId = p.isNpc ? null : a.role === 'gm' ? (p.ownerId ?? a.userId) : a.userId;
+    // 버튼을 연타해도 같은 초안은 한 번만 데려온다 (서버는 명령을 차례로 처리하므로 여기서 막힌다)
+    if (p.sourceKey && Object.values(s.characters).some((c) => c.sourceKey === p.sourceKey))
+      throw new CommandError('DUPLICATE_CHARACTER');
     const id = ctx.newId();
     const refresh = refreshFor(p.stunts.length);
     const character: Character = {
@@ -253,6 +257,7 @@ const resolvers: Resolvers = {
       stress: [false, false, false],
       consequences: {},
       ...(p.portraitUrl ? { portraitUrl: p.portraitUrl } : {}),
+      ...(p.sourceKey ? { sourceKey: p.sourceKey } : {}),
     };
     const mk = (kind: Aspect['kind'], text: string): Aspect => ({
       id: ctx.newId(),

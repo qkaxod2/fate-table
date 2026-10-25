@@ -20568,7 +20568,9 @@ var CommandSchema = external_exports.discriminatedUnion("type", [
     trouble: text.optional(),
     aspects: external_exports.array(text).max(3).default([]),
     /** 캐릭터 만들기에서 그린 초상화 (공개 Storage URL) */
-    portraitUrl: external_exports.string().url().max(500).optional()
+    portraitUrl: external_exports.string().url().max(500).optional(),
+    /** 캐릭터 만들기에서 저장한 초안의 키. 같은 초안을 두 번 데려오지 않게 한다 */
+    sourceKey: id.optional()
   }),
   cmd("character.update", {
     id,
@@ -20826,6 +20828,8 @@ var resolvers = {
     if (a.role === "spectator") throw new CommandError("FORBIDDEN_ROLE");
     if (a.role === "player" && p.isNpc) throw new CommandError("FORBIDDEN_ROLE");
     const ownerId = p.isNpc ? null : a.role === "gm" ? p.ownerId ?? a.userId : a.userId;
+    if (p.sourceKey && Object.values(s.characters).some((c) => c.sourceKey === p.sourceKey))
+      throw new CommandError("DUPLICATE_CHARACTER");
     const id2 = ctx.newId();
     const refresh = refreshFor(p.stunts.length);
     const character = {
@@ -20839,7 +20843,8 @@ var resolvers = {
       fatePoints: p.isNpc ? 0 : refresh,
       stress: [false, false, false],
       consequences: {},
-      ...p.portraitUrl ? { portraitUrl: p.portraitUrl } : {}
+      ...p.portraitUrl ? { portraitUrl: p.portraitUrl } : {},
+      ...p.sourceKey ? { sourceKey: p.sourceKey } : {}
     };
     const mk = (kind, text2) => ({
       id: ctx.newId(),
