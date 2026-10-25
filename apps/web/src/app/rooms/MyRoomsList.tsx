@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { SkeletonRows } from '@/components/ui/Loading';
+import { useAccount } from '@/lib/account';
 import { fetchMyRooms, loadRecentRooms, ROLE_LABEL, roomHref } from '@/lib/lobby';
 import { getSupabase } from '@/lib/supabase';
 import styles from './lobby.module.css';
@@ -90,5 +91,17 @@ export function MyRoomsList({
       )}
       {!load.fromServer && <p className={styles.muted}>이 브라우저에 남은 기록이에요.</p>}
     </>
+  );
+}
+
+/** 로그인하지 않았으면 목록이 이 기기에만 묶여 있다고 알려 준다 */
+export function AccountHint() {
+  const account = useAccount();
+  if (!account || account.kind === 'member') return null;
+  return (
+    <p className={styles.muted}>
+      지금 목록은 이 기기에만 있어요. <Link href="/account/">로그인</Link>하면 다른 기기에서도
+      보여요.
+    </p>
   );
 }

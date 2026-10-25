@@ -1,0 +1,26 @@
+.chip {
+  position: absolute;
+  top: var(--s-4);
+  right: var(--s-4);
+  max-width: 40vw;
+  overflow: hidden;
+  padding: var(--s-1) var(--s-3);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-token);
+  background: var(--panel);
+  color: var(--gold-hi);
+  font-size: var(--fs-sm);
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chip[data-member='true'] {
+  color: var(--fg);
+}
+
+.chip:hover,
+.chip:focus-visible {
+  border-color: var(--gold);
+  outline: none;
+}

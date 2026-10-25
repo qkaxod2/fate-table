@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { roomHref } from '@/lib/lobby';
-import { loadMyCharacters, type CharacterDraft } from '@/lib/myCharacters';
+import { type CharacterDraft, listMyCharacters, loadMyCharacters } from '@/lib/myCharacters';
 import styles from './room.module.css';
 
 interface Props {
@@ -15,7 +15,7 @@ interface Props {
   brought: Set<string>;
 }
 
-/** 캐릭터 만들기에서 저장한 캐릭터를 이 방에 데려온다 */
+/** 캐릭터 만들기에서 저장한 캐릭터(계정 보관함 포함)를 이 방에 데려온다 */
 export function BringCharacter({ run, has, brought }: Props) {
   const params = useSearchParams();
   const router = useRouter();
@@ -24,7 +24,15 @@ export function BringCharacter({ run, has, brought }: Props) {
   /** 데려오는 중인 초안 키. 응답이 오기 전에 다시 누르면 무시한다 */
   const [busy, setBusy] = useState<string | null>(null);
   const busyRef = useRef(false);
-  const drafts = loadMyCharacters();
+  const [drafts, setDrafts] = useState<CharacterDraft[]>(loadMyCharacters);
+  useEffect(() => {
+    if (!open) return;
+    let alive = true;
+    void listMyCharacters().then((list) => alive && setDrafts(list));
+    return () => {
+      alive = false;
+    };
+  }, [open]);
 
   async function bring(d: CharacterDraft) {
     if (busyRef.current || brought.has(d.key)) return;
@@ -47,8 +55,10 @@ export function BringCharacter({ run, has, brought }: Props) {
     if (!bringKey || handled.current === bringKey) return;
     handled.current = bringKey;
     router.replace(roomHref(roomId));
-    const d = loadMyCharacters().find((x) => x.key === bringKey);
-    if (d) void bring(d);
+    void listMyCharacters().then((list) => {
+      const d = list.find((x) => x.key === bringKey);
+      if (d) void bring(d);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bringKey]);
 

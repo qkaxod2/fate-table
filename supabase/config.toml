@@ -15,3 +15,6 @@ verify_jwt = true
 
 [functions.commands]
 verify_jwt = true
+
+[functions.account]
+verify_jwt = true
