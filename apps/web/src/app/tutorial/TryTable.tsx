@@ -323,6 +323,9 @@ function Table({
 
   const onFinalize = () => {
     if (!roll) return;
+    // 보스(GM 자동)는 방어 뒤에 따로 조정하지 않는다
+    if (roll.defense && !roll.defenseReady)
+      run(GM, { type: 'roll.defense_ready', payload: { rollId: roll.id } });
     const evs = run(ME, {
       type: 'roll.finalize',
       payload: { rollId: roll.id, reduceForBoost: false },

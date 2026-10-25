@@ -1,0 +1,33 @@
+.nudge {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  z-index: 100;
+  margin: 0;
+  padding: var(--s-2) var(--s-4);
+  border: 1px solid var(--gold);
+  border-radius: var(--r-token);
+  background: var(--panel-s);
+  color: var(--fg);
+  font-size: 14px;
+  white-space: nowrap;
+  box-shadow: 0 12px 30px rgb(0 0 0 / 0.5);
+  transform: translateX(-50%);
+  pointer-events: none;
+  animation: nudge-in 160ms ease-out;
+}
+
+@keyframes nudge-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 6px);
+  }
+}
+
+@media (max-width: 480px) {
+  .nudge {
+    white-space: normal;
+    width: calc(100% - 32px);
+    text-align: center;
+  }
+}

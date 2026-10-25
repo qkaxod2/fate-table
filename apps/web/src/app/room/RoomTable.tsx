@@ -17,6 +17,7 @@ import {
   type Character,
   type Command,
   type InvokeMode,
+  type InvokeSide,
   type Outcome,
   type PaidWith,
   type Reward,
@@ -208,7 +209,9 @@ export function RoomTable({
   const undone = useMemo(() => undoneSeqs(events), [events]);
   const liveEvents = useMemo(() => events.filter((e) => !undone.has(e.seq)), [events, undone]);
   const rollId = lastRollIdOf(liveEvents);
-  const roll = rollId ? state.rolls[rollId] : undefined;
+  // 장면이 바뀌며 취소된 판정은 무대에 남기지 않는다
+  const roll =
+    rollId && state.rolls[rollId]?.status !== 'cancelled' ? state.rolls[rollId] : undefined;
   const rollKey = roll ? `${roll.id}:${roll.active.animSeed}:${roll.defense?.animSeed ?? ''}` : '';
   const settled = !!roll && settledKey === rollKey;
   // 좁은 화면: 결과가 나오면 패널이 다시 보이게
@@ -277,30 +280,32 @@ export function RoomTable({
     setRolling(null);
   };
 
-  const choices: InvokeChoice[] = useMemo(() => {
-    if (!roll || roll.status !== 'open' || !activeChar) return [];
+  // 판정 뒤 조정: 공격자는 active, 방어자는 defense 쪽으로 발동·특기를 쓴다
+  const defenseChar = roll?.defense ? state.characters[roll.defense.characterId] : undefined;
+  const invokeChoices = (side: InvokeSide, payerChar: Character | undefined): InvokeChoice[] => {
+    if (!roll || roll.status !== 'open' || !payerChar) return [];
     const payer = {
-      characterId: activeChar.id,
-      fatePoints: activeChar.isNpc ? state.gmPool : activeChar.fatePoints,
+      characterId: payerChar.id,
+      fatePoints: payerChar.isNpc ? state.gmPool : payerChar.fatePoints,
     };
     const visible = Object.values(state.aspects).filter(
       (a) =>
         !a.hidden &&
         (a.ownerType !== 'character' ||
-          a.ownerId === activeChar.id ||
+          a.ownerId === roll.active.characterId ||
           (roll.defense && a.ownerId === roll.defense.characterId)),
     );
     return visible.map((a): InvokeChoice => {
-      const previews = previewInvokes(roll, [a], payer);
+      const previews = previewInvokes(roll, [a], payer, side);
       const owner = a.ownerType === 'character' ? state.characters[a.ownerId]?.name : undefined;
-      const against = a.ownerType === 'character' && a.ownerId !== activeChar.id;
+      const against = a.ownerType === 'character' && a.ownerId !== payerChar.id;
       const base = { aspect: a, ...(owner ? { owner } : {}), against };
       if (previews.length === 0) {
         const check = canInvoke(
           roll,
           a,
           payer,
-          'active',
+          side,
           a.freeInvokes > 0 ? 'free_invoke' : 'fate_point',
         );
         return {
@@ -312,9 +317,16 @@ export function RoomTable({
       const reroll = previews.find((p) => p.mode === 'reroll');
       return { ...base, ...(bonus ? { bonus } : {}), ...(reroll ? { reroll } : {}) };
     });
-  }, [roll, activeChar, state]);
+  };
+  const choices = invokeChoices('active', activeChar);
+  const defenseChoices = invokeChoices('defense', defenseChar);
 
-  const onInvoke = async (aspectId: string, mode: InvokeMode, paidWith: PaidWith) => {
+  const onInvoke = async (
+    side: InvokeSide,
+    aspectId: string,
+    mode: InvokeMode,
+    paidWith: PaidWith,
+  ) => {
     if (!roll || rerolling) return;
     setSelectedAspect(null);
     if (mode === 'reroll') {
@@ -323,15 +335,23 @@ export function RoomTable({
     }
     await run({
       type: 'invoke.apply',
-      payload: { rollId: roll.id, side: 'active', aspectId, mode, paidWith },
+      payload: { rollId: roll.id, side, aspectId, mode, paidWith },
     });
     setRerolling(false);
+  };
+
+  const onDefenseDone = () => {
+    if (!roll) return;
+    setSelectedAspect(null);
+    void run({ type: 'roll.defense_ready', payload: { rollId: roll.id } });
   };
 
   const [finalizing, setFinalizing] = useState(false);
   const onFinalize = async () => {
     if (!roll || finalizing) return;
     setFinalizing(true);
+    if (defenseAdjusting && !ownDefense && gmClosesDefense)
+      await run({ type: 'roll.defense_ready', payload: { rollId: roll.id } });
     const evs = await run({
       type: 'roll.finalize',
       payload: { rollId: roll.id, reduceForBoost: false },
@@ -391,6 +411,12 @@ export function RoomTable({
   const unusedStunt = myStunts.find(
     (s) => !roll?.active.modifiers.some((m) => m.source === `stunt:${s.id}`),
   );
+  const defenseStunt =
+    roll && roll.status === 'open' && roll.defense && defenseChar
+      ? stuntBonuses(defenseChar, 'defend', roll.defense.approach).find(
+          (s) => !roll.defense!.modifiers.some((m) => m.source === `stunt:${s.id}`),
+        )
+      : undefined;
 
   // 반대 굴림: 내가 움직이는 캐릭터가 공격받았을 때
   const defender =
@@ -398,6 +424,16 @@ export function RoomTable({
       ? state.characters[roll.targetId]
       : undefined;
   const iDefend = mineToAnswer(defender);
+  // 공개 뒤 방어자가 조정 중인지. 공격자는 방어도 자기 쪽(GM이면 NPC)일 때만 기다리지 않는다
+  const defenseAdjusting = !!roll && roll.status === 'open' && !!defenseChar && !roll.defenseReady;
+  const iAdjustDefense = defenseAdjusting && mineToAnswer(defenseChar) && !iRoll;
+  const ownDefense = !!defenseChar && (isGm ? defenseChar.isNpc : canControl(defenseChar));
+  // GM이 "대신 고르기"를 눌렀으면 방어 조정 완료를 대신 보내고 확정한다
+  const gmClosesDefense = isGm && gmTakeOver === roll?.id;
+  const finalizeWait =
+    defenseAdjusting && !ownDefense && !gmClosesDefense
+      ? `${josa(defenseChar!.name, '이/가')} 조정을 마치길 기다리는 중`
+      : undefined;
 
   const result =
     roll && roll.active.dice && (roll.defense?.dice ?? roll.targetId === null)
@@ -423,9 +459,11 @@ export function RoomTable({
   const waitingOn =
     defender && !iDefend
       ? `${josa(defender.name, '이/가')} 막을 방법을 고르는 중…`
-      : damageWait
-        ? `${josa(state.characters[damageWait.targetId]!.name, '이/가')} 피해를 받아내는 중…`
-        : null;
+      : settled && defenseAdjusting && !ownDefense && !iAdjustDefense
+        ? `${josa(defenseChar!.name, '이/가')} 방어를 조정하는 중…`
+        : damageWait
+          ? `${josa(state.characters[damageWait.targetId]!.name, '이/가')} 피해를 받아내는 중…`
+          : null;
 
   // ---------- 효과음 ----------
   const [sfxOn, setSfxOn] = useState(sfxEnabled);
@@ -501,15 +539,16 @@ export function RoomTable({
   const isFolded = !!roll && folded === rollKey && !rolling;
 
   // 나에게 무언가 물어볼 때: 탭 제목에 표시하고 화면 테두리를 한 번 빛낸다
-  const myCall = iDefend
-    ? '방어'
-    : compel && myCompel
-      ? term('compel')
-      : damage
-        ? '피해'
-        : myTurn && !busyRoll
-          ? '내 차례'
-          : null;
+  const myCall =
+    iDefend || (settled && iAdjustDefense)
+      ? '방어'
+      : compel && myCompel
+        ? term('compel')
+        : damage
+          ? '피해'
+          : myTurn && !busyRoll
+            ? '내 차례'
+            : null;
   useEffect(() => {
     const base = `${state.scene?.name ?? name} · 운명점 테이블`;
     document.title = myCall ? `● ${myCall} · ${base}` : base;
@@ -900,13 +939,46 @@ export function RoomTable({
                       fatePoints={activeChar?.isNpc ? state.gmPool : (activeChar?.fatePoints ?? 0)}
                       selectedId={selectedAspect}
                       onSelect={setSelectedAspect}
-                      onInvoke={(id, mode, paid) => void onInvoke(id, mode, paid)}
+                      onInvoke={(id, mode, paid) => void onInvoke('active', id, mode, paid)}
                       onFinalize={() => void onFinalize()}
+                      {...(finalizeWait ? { waiting: finalizeWait } : {})}
                     />
                   )}
                 </>
               )}
-              {settled && roll.status === 'open' && !iRoll && (
+              {settled && iAdjustDefense && (
+                <>
+                  {defenseStunt && (
+                    <button
+                      type="button"
+                      className={tryStyles.stunt}
+                      disabled={pending}
+                      onClick={() =>
+                        void run({
+                          type: 'stunt.apply',
+                          payload: { rollId: roll.id, side: 'defense', stuntId: defenseStunt.id },
+                        })
+                      }
+                    >
+                      {term('stunt')} 적용: {defenseStunt.text}
+                    </button>
+                  )}
+                  {!overlayOpen && !palette && !help && (
+                    <InvokeTray
+                      choices={defenseChoices}
+                      fatePoints={
+                        defenseChar?.isNpc ? state.gmPool : (defenseChar?.fatePoints ?? 0)
+                      }
+                      selectedId={selectedAspect}
+                      onSelect={setSelectedAspect}
+                      onInvoke={(id, mode, paid) => void onInvoke('defense', id, mode, paid)}
+                      onFinalize={onDefenseDone}
+                      finalizeLabel="방어 조정 완료"
+                    />
+                  )}
+                </>
+              )}
+              {settled && roll.status === 'open' && !iRoll && !iAdjustDefense && (
                 <p className={tryStyles.waiting}>
                   {josa(activeChar?.name ?? '', '이/가')} 결과를 정하는 중…
                 </p>

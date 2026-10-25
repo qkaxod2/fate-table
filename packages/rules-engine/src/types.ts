@@ -88,7 +88,8 @@ export interface RollSide {
   paidInvokes: string[];
 }
 
-export type RollStatus = 'awaiting_defense' | 'open' | 'final';
+/** cancelled: 끝나기 전에 장면·세션이 닫혀 더는 이어갈 수 없는 굴림 */
+export type RollStatus = 'awaiting_defense' | 'open' | 'final' | 'cancelled';
 
 export interface RollState {
   id: string;
@@ -98,6 +99,8 @@ export interface RollState {
   difficulty: number | null;
   targetId: string | null;
   status: RollStatus;
+  /** 방어자가 발동·특기 조정을 마쳤는지. 공격자가 조정하면 다시 false가 된다 */
+  defenseReady?: boolean;
   result?: { total: number; shifts: number; outcome: Outcome };
 }
 

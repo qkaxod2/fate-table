@@ -125,3 +125,25 @@ kbd {
     translate: none;
   }
 }
+
+/* 작성 중인 창을 바깥 클릭·Esc로 닫으려 할 때 한 번 막으며 살짝 흔든다 (components/ui/closeGuard) */
+[data-close-armed] {
+  animation: close-guard-shake 260ms ease-in-out;
+}
+
+@keyframes close-guard-shake {
+  20%,
+  60% {
+    translate: -6px 0;
+  }
+  40%,
+  80% {
+    translate: 6px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-close-armed] {
+    animation: none;
+  }
+}

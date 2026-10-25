@@ -11,6 +11,7 @@ import {
 import { useState, type ReactNode } from 'react';
 import { AspectCard } from '@/components/aspect/AspectCard';
 import { FatePointToken } from '@/components/fate/FatePointToken';
+import { CloseGuardScope, useCloseGuard } from '@/components/ui/closeGuard';
 import { useClosing } from '@/lib/motion';
 import styles from './GmConsole.module.css';
 
@@ -264,6 +265,7 @@ export function Modal({
   children,
   wide,
   closer,
+  dirty,
 }: {
   title: string;
   onClose: () => void;
@@ -271,20 +273,20 @@ export function Modal({
   wide?: boolean;
   /** 안쪽에서도 닫아야 할 때(할 일을 마치면 닫힘) 바깥에서 만든 useClosing을 넘긴다 */
   closer?: [boolean, () => void];
+  /** 적은 것 말고도 닫히면 잃는 게 있을 때 */
+  dirty?: boolean;
 }) {
   const own = useClosing(onClose);
   const [closing, close] = closer ?? own;
+  const guard = useCloseGuard(close, dirty);
   return (
-    <div className={styles.backdrop} data-closing={closing || undefined} onClick={close}>
+    <div className={styles.backdrop} data-closing={closing || undefined} {...guard.backdrop}>
       <section
         className={styles.modal}
         data-wide={wide || undefined}
         role="dialog"
         aria-label={title}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => {
-          if (e.key === 'Escape') close();
-        }}
+        {...guard.panel}
       >
         <header className={styles.modalHead}>
           <h2>{title}</h2>
@@ -292,8 +294,9 @@ export function Modal({
             ×
           </button>
         </header>
-        {children}
+        <CloseGuardScope value={guard.scope}>{children}</CloseGuardScope>
       </section>
+      {guard.nudge}
     </div>
   );
 }

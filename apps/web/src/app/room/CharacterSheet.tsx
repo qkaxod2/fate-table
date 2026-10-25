@@ -17,6 +17,7 @@ import {
 import { useState } from 'react';
 import { AspectCard } from '@/components/aspect/AspectCard';
 import { FatePointToken } from '@/components/fate/FatePointToken';
+import { useCloseGuard } from '@/components/ui/closeGuard';
 import styles from './CharacterSheet.module.css';
 import { josa } from '@/lib/josa';
 import { useClosing } from '@/lib/motion';
@@ -71,13 +72,15 @@ export function CharacterSheet({
     APPROACHES.some((a) => draft[a] !== c.approaches[a]) ||
     JSON.stringify(stunts) !== JSON.stringify(c.stunts);
 
+  const guard = useCloseGuard(close, changed || !!stuntText.trim() || editAspect !== null);
+
   return (
-    <div className={styles.backdrop} data-closing={closing || undefined} onClick={close}>
+    <div className={styles.backdrop} data-closing={closing || undefined} {...guard.backdrop}>
       <article
         className={styles.sheet}
         role="dialog"
         aria-label={`${c.name} 시트`}
-        onClick={(e) => e.stopPropagation()}
+        {...guard.panel}
       >
         <header className={styles.head}>
           {(c.portraitUrl || c.standing?.neutral) && (
@@ -445,6 +448,7 @@ export function CharacterSheet({
           </footer>
         )}
       </article>
+      {guard.nudge}
     </div>
   );
 }

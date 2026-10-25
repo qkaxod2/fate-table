@@ -162,3 +162,8 @@
     opacity: 0;
   }
 }
+
+.primary:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
