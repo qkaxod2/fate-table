@@ -107,7 +107,7 @@ export function InvokeTray({
   return (
     <div className={styles.tray}>
       <div className={styles.head}>
-        INVOKE · {term('aspect')} {term('invoke')} · +2 또는 다시 굴리기
+        INVOKE · {term('aspect')} {term('invoke')} · +2를 받거나 다시 굴려요
       </div>
       <div className={styles.cards} data-tour="invoke-cards">
         {choices.map((c, i) => (
@@ -132,7 +132,7 @@ export function InvokeTray({
               {...(c.blocked
                 ? { note: c.blocked }
                 : c.against
-                  ? { note: '쓰면 상대가 운명점 1을 받아요' }
+                  ? { note: '쓰면 상대가 운명점 1개를 받아요' }
                   : {})}
               onClick={() => onSelect(c.aspect.id)}
             />
@@ -160,7 +160,7 @@ export function InvokeTray({
                 </kbd>{' '}
                 다시 굴리기 · {cost}
                 {selected.reroll?.improveChance !== undefined && (
-                  <small> ({Math.round(selected.reroll.improveChance * 100)}%로 나아짐)</small>
+                  <small> · 나아질 확률 {Math.round(selected.reroll.improveChance * 100)}%</small>
                 )}
               </button>
               <button

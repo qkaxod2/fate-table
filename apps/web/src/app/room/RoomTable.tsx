@@ -736,9 +736,12 @@ export function RoomTable({
                 controllable.some((c) => c.id === id) ? setActingId(id) : setSheetId(id)
               }
               onSheet={setSheetId}
-              selectHint={(id) =>
-                controllable.some((c) => c.id === id) ? '(으)로 움직이기' : '시트 보기'
-              }
+              selectHint={(id) => {
+                const n = state.characters[id]?.name ?? '';
+                return controllable.some((c) => c.id === id)
+                  ? `${josa(n, '으로/로')} 움직이기`
+                  : `${n} 시트 보기`;
+              }}
               members={party.map((c) => ({
                 character: c,
                 ...(c.portraitUrl ? { image: c.portraitUrl } : {}),
@@ -908,7 +911,7 @@ export function RoomTable({
                     </div>
                   )}
                   {roll.status === 'awaiting_defense' && (
-                    <div className={tryStyles.waiting}>굴림 완료 · 상대 응답 대기 중</div>
+                    <div className={tryStyles.waiting}>다 굴렸어요. 상대를 기다리는 중이에요</div>
                   )}
                 </div>
                 {roll.targetId ? (

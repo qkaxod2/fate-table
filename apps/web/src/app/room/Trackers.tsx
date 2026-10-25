@@ -105,7 +105,7 @@ export function Trackers({ state, run, isGm, canControl, pending }: Props) {
                     checked={twoWins}
                     onChange={(e) => setTwoWins(e.target.checked)}
                   />
-                  {term('style')} (2승)
+                  {term('style')} · 2승
                 </label>
                 <button
                   type="button"
@@ -152,7 +152,7 @@ export function Trackers({ state, run, isGm, canControl, pending }: Props) {
                   void run({ type: 'contest.exchange', payload: { winnerId: null, victories: 1 } })
                 }
               >
-                무승부 (반전 요소)
+                무승부 · 판이 뒤집혀요
               </button>
             )}
           </div>

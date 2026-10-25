@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useSyncExternalStore } from 'react';
 import { PortraitStudio } from '@/components/media/PortraitStudio';
+import { josa } from '@/lib/josa';
 import { roomHref } from '@/lib/lobby';
 import { saveMyCharacter } from '@/lib/myCharacters';
 import styles from './create.module.css';
@@ -22,6 +23,13 @@ const STEPS = ['컨셉', term('approach'), term('stunt'), '초상화', '완성']
 const SPREAD = [3, 2, 2, 1, 1, 0];
 const VALUES = [3, 2, 1, 0];
 const MAX_STUNTS = 3;
+
+/** 나머지 특성 두 칸에 무엇을 적으면 좋을지 */
+const EXTRA_HELP = [
+  `${term('high')}과 ${term('trouble')} 말고도 캐릭터를 잘 보여 주는 점을 하나 더 적어요. 아끼는 물건, 특별한 재주, 남다른 버릇 같은 거요.`,
+  '다른 사람과의 관계나 지나온 일을 적어 봐요. 누구에게 빚을 졌는지, 누구와 원수인지 같은 거요. 비워 두고 게임하면서 채워도 돼요.',
+];
+const EXTRA_EXAMPLE = ['예: 아버지가 남긴 낡은 방패', '예: 세라에게는 목숨을 빚졌다'];
 
 type Ratings = Record<Approach, number | null>;
 
@@ -141,15 +149,35 @@ export function CreationWizard() {
         <div key={step} className={styles.pane} data-dir={dir}>
           {step === 0 && (
             <div className={styles.form}>
+              <div className={styles.lead}>
+                <p>
+                  {term('aspect')}은 캐릭터를 설명하는 짧은 문구예요. 숫자 대신 &quot;이 사람은 어떤
+                  사람인가&quot;를 말로 적어 두는 거죠.
+                </p>
+                <p>
+                  게임 중 굴림이 아쉬우면 {term('fatePoint')} 1개를 내고 내 {term('aspect')}을{' '}
+                  {term('invoke')}해 +2를 받아요. 그러려면 &quot;이 {term('aspect')} 덕분에
+                  잘한다&quot;는 이유를 이야기로 댈 수 있어야 해요. 반대로 GM이 {term('aspect')}{' '}
+                  때문에 일이 꼬인다고 제안하면, 받아들이는 대가로 {term('fatePoint')}을 얻어요.
+                </p>
+                <p>
+                  그래서 좋은 {term('aspect')}은 장점과 단점이 함께 보이는 문구예요. &quot;힘이
+                  세다&quot;보다 &quot;황소도 넘어뜨리는 대장장이&quot;가 쓸 곳이 많아요.
+                </p>
+              </div>
               <Field label="이름">
                 <input value={name} onChange={(e) => setName(e.target.value)} maxLength={40} />
               </Field>
-              <Field label={term('high')} help={tip('high')} example="예: 망한 왕국의 마지막 기사">
+              <Field
+                label={term('high')}
+                help={`캐릭터가 어떤 사람인지 한 줄로 요약해요. 직업이나 역할에 특징 하나를 붙이면 좋아요. 게임에서 가장 자주 ${term('invoke')}하게 될 ${term('aspect')}이에요.`}
+                example="예: 망한 왕국의 마지막 기사"
+              >
                 <input value={high} onChange={(e) => setHigh(e.target.value)} maxLength={80} />
               </Field>
               <Field
                 label={term('trouble')}
-                help={tip('trouble')}
+                help={`캐릭터를 자꾸 곤란하게 만드는 점이에요. 나쁜 버릇, 쫓아오는 원수, 꼭 지켜야 하는 맹세 같은 거요. GM이 이걸로 일을 꼬이게 하면 ${term('fatePoint')}을 받을 수 있어요.`}
                 example="예: 맹세를 어길 수 없다"
               >
                 <input
@@ -159,7 +187,12 @@ export function CreationWizard() {
                 />
               </Field>
               {extra.map((v, i) => (
-                <Field key={i} label={`${term('aspect')} ${i + 1} (선택)`}>
+                <Field
+                  key={i}
+                  label={`${term('aspect')} ${i + 1} (선택)`}
+                  help={EXTRA_HELP[i]}
+                  example={EXTRA_EXAMPLE[i]}
+                >
                   <input
                     value={v}
                     onChange={(e) =>
@@ -214,8 +247,9 @@ export function CreationWizard() {
           {step === 2 && (
             <div className={styles.form}>
               <p className={styles.lead}>
-                {term('stunt')}은 정해진 상황에서 +2를 받는 능력이에요. 3개까지 넣을 수 있고, 지금은
-                비워 둬도 괜찮아요. {term('refresh')} {refreshFor(stunts.length)}
+                {josa(term('stunt'), '은/는')} 정해진 상황에서 +2를 받는 능력이에요. 3개까지 넣을 수
+                있고, 지금은 비워 둬도 괜찮아요. 세션이 시작될 때마다 {term('fatePoint')}은{' '}
+                {refreshFor(stunts.length)}개까지 채워져요. 이 수를 {term('refresh')}이라고 해요.
               </p>
               {stunts.map((s, i) => (
                 <div key={i} className={styles.stunt}>
@@ -248,7 +282,9 @@ export function CreationWizard() {
                       </option>
                     ))}
                   </select>
-                  <span className={styles.muted}>으로</span>
+                  <span className={styles.muted}>
+                    {josa(term(s.approach), '으로/로').slice(term(s.approach).length)}
+                  </span>
                   <select
                     value={s.action}
                     aria-label="행동"
@@ -322,11 +358,12 @@ export function CreationWizard() {
                 </ul>
                 {stunts.map((s) => (
                   <p key={s.text} className={styles.muted}>
-                    {s.text}: {term(s.approach)}으로 {term(s.action)}할 때 +2
+                    {s.text}: {josa(term(s.approach), '으로/로')} {term(s.action)}할 때 +2
                   </p>
                 ))}
                 <p className={styles.muted}>
-                  {term('refresh')} {refreshFor(stunts.length)}
+                  {term('refresh')} {refreshFor(stunts.length)}: 세션마다 {term('fatePoint')}{' '}
+                  {refreshFor(stunts.length)}개로 시작해요
                 </p>
                 {saved ? (
                   <p className={styles.ok} role="status">

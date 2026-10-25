@@ -45,8 +45,8 @@ export function CompelOffer({ aspect, text, fatePoints, onAccept, onRefuse, targ
       </div>
       <p className={styles.text}>{text}</p>
       <p className={styles.explain}>
-        받아들이면 일이 꼬이는 대신 {term('fatePoint')} 1을 받아요. 거절하려면 {term('fatePoint')}{' '}
-        1을 내야 해요.
+        받아들이면 일이 꼬이는 대신 {term('fatePoint')} 1개를 받아요. 거절하려면 {term('fatePoint')}{' '}
+        1개를 내야 해요.
       </p>
       <div className={styles.buttons}>
         <button

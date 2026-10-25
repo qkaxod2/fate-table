@@ -448,3 +448,7 @@
     opacity: 0;
   }
 }
+
+.lead p {
+  margin: 0 0 var(--s-2);
+}
