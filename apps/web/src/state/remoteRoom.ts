@@ -48,7 +48,8 @@ export class RemoteRoom {
   private buffer = new Map<number, RoomEvent>();
   private listeners = new Set<() => void>();
   private channel: RealtimeChannel | null = null;
-  private filling = false;
+  /** 서버에서 채우는 중이면 그 작업 */
+  private filling: Promise<void> | null = null;
   /** 채우는 동안 새 이벤트가 와서 한 번 더 읽어야 하는지 */
   private refill = false;
   private snapshot: RoomSnapshot = { state: this.state, events: [], live: false };
@@ -102,6 +103,10 @@ export class RemoteRoom {
       res = await callFunction<{ events: RoomEvent[] }>('commands', body);
     }
     this.receive(res.events);
+    // 앞자리가 비어 서버에서 채우는 중이면, 내가 보낸 이벤트가 화면에 붙을 때까지 기다린다.
+    // 그래야 "보내는 중" 줄이 사라진 뒤 메시지가 잠깐 비는 일이 없다
+    const last = res.events.at(-1)?.seq ?? 0;
+    if (last > this.lastSeq && this.filling) await this.filling.catch(() => {});
     return res.events;
   }
 
@@ -138,12 +143,16 @@ export class RemoteRoom {
    * 조회를 기다리는 동안 실시간으로 먼저 받은 이벤트가 있을 수 있으므로, 이미 적용한 seq는 건너뛰고
    * lastSeq는 줄어들지 않는다.
    */
-  private async fill() {
+  private fill(): Promise<void> {
     if (this.filling) {
       this.refill = true;
-      return;
+      return this.filling;
     }
-    this.filling = true;
+    this.filling = this.fillLoop();
+    return this.filling;
+  }
+
+  private async fillLoop() {
     try {
       do {
         this.refill = false;
@@ -155,7 +164,8 @@ export class RemoteRoom {
         // 읽는 사이 도착한 이벤트 앞에 아직 빈 자리가 있으면 한 번 더 읽는다
       } while (this.refill && this.buffer.size > 0);
     } finally {
-      this.filling = false;
+      // 끝난 바로 그 순간에 들어온 요청은 새로 채우도록 여기서 비운다
+      this.filling = null;
     }
   }
 

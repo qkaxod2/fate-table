@@ -191,3 +191,24 @@ describe('RemoteRoom command resend', () => {
     expect(call.fn).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('RemoteRoom command result behind a gap', () => {
+  it('resolves run() only after its own event is on screen', async () => {
+    const { server, room } = await started();
+    call.fn.mockReset();
+    // 내가 볼 수 없는 GM 이벤트(1) 다음에 내 명령(2)이 기록된다
+    server.write(plusOne(1, 'gm'), plusOne(2));
+    call.fn.mockResolvedValueOnce({ events: [{ ...plusOne(2), actorId: 'gm', seq: 2 }] });
+    let done = false;
+    const sent = room
+      .run({ type: 'fate.adjust', payload: { target: 'gm_pool', delta: 1 } })
+      .then(() => (done = true));
+    await flush();
+    // 1이 비어 있어서 서버에서 확인하는 동안에는 아직 끝나지 않는다
+    expect(done).toBe(false);
+    expect(room.getSnapshot().events).toHaveLength(0);
+    await server.releaseNext();
+    await sent;
+    expect(room.getSnapshot().events.map((e) => e.seq)).toEqual([2]);
+  });
+});
