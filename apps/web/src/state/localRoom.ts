@@ -51,6 +51,12 @@ export class LocalRoom {
     return added;
   }
 
+  /** 체험 시나리오의 앞선 사정(이미 다친 두목 등)을 명령 없이 바로 깔아 둔다 */
+  seed(events: NewEvent[]): void {
+    events.forEach((e) => this.append(e));
+    this.emit();
+  }
+
   private append(e: NewEvent): RoomEvent {
     const full = { ...e, seq: this.state.seq + 1 } as RoomEvent;
     this.state = reduce(this.state, full);

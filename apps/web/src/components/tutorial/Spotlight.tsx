@@ -83,7 +83,8 @@ export function Spotlight({ open, ring }: Props) {
     let raf = 0;
     let lastPath = '';
     const root = document.documentElement;
-    let lastRing: Box[] = [];
+    // 처음 한 번은 꼭 다시 그리게 (고리가 없어진 단계에서 지난 고리가 남지 않도록)
+    let lastRing: Box[] | null = null;
     const tick = () => {
       const h = open
         .flatMap((sel) => [...document.querySelectorAll(sel)])
@@ -96,7 +97,7 @@ export function Spotlight({ open, ring }: Props) {
         : [];
       const d = dimPath(h, window.innerWidth, window.innerHeight);
       if (d !== lastPath) setPath((lastPath = d));
-      if (!same(r, lastRing)) setTarget((lastRing = r));
+      if (!lastRing || !same(r, lastRing)) setTarget((lastRing = r));
       // 좁은 화면에서는 안내 카드가 위에 붙어 있으니, 스크롤로 무언가를 보여 줄 때 그 밑으로 숨지 않게
       const coach = document.querySelector('[data-coach][data-pinned]');
       const pad =
