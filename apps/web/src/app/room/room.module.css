@@ -688,3 +688,27 @@ main.shell {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* 캐릭터 데려오기처럼 그 자리에서 펼쳐지는 판: 위에서 살짝 내려오며 열린다 */
+.panel {
+  animation: panel-open var(--dur-enter) var(--ease-out) backwards;
+}
+
+@keyframes panel-open {
+  from {
+    opacity: 0;
+    translate: 0 -6px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    animation-name: panel-fade;
+  }
+}
+
+@keyframes panel-fade {
+  from {
+    opacity: 0;
+  }
+}

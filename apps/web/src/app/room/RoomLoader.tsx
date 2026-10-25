@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { Loading } from '@/components/ui/Loading';
 import { ensureSession, getSupabase } from '@/lib/supabase';
 import { RemoteRoom } from '@/state/remoteRoom';
 import styles from '../rooms/lobby.module.css';
@@ -51,7 +52,7 @@ export function RoomLoader() {
     <main className={styles.main}>
       <div className={styles.card}>
         {load.kind === 'loading' ? (
-          <p className={styles.lead}>테이블을 펼치는 중…</p>
+          <Loading label="테이블을 펼치는 중…" />
         ) : (
           <>
             <h1 className={styles.title}>들어갈 수 없어요</h1>

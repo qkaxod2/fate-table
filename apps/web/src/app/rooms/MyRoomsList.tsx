@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { SkeletonRows } from '@/components/ui/Loading';
 import { fetchMyRooms, loadRecentRooms, ROLE_LABEL, roomHref } from '@/lib/lobby';
 import { getSupabase } from '@/lib/supabase';
 import styles from './lobby.module.css';
@@ -56,7 +57,7 @@ export function MyRoomsList({
   }, []);
 
   if (load.kind === 'loading')
-    return hideWhenEmpty ? null : <p className={styles.muted}>방 목록을 불러오는 중…</p>;
+    return hideWhenEmpty ? null : <SkeletonRows label="방 목록을 불러오는 중" />;
 
   const rows = limit ? load.rows.slice(0, limit) : load.rows;
   if (rows.length === 0)
