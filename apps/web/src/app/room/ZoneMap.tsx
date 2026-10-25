@@ -25,6 +25,9 @@ interface Props {
 
 type Tool = 'move' | 'link';
 
+/** 토큰 이동 요청 번호. 같은 토큰을 연달아 옮겼을 때 나중 요청을 가려낸다 */
+let moveSeq = 0;
+
 const clamp = (n: number) => Math.min(96, Math.max(4, Math.round(n)));
 
 /**
@@ -46,17 +49,19 @@ export function ZoneMap({ state, run, isGm, canControl, pending, auto = 'full' }
   const [aspectText, setAspectText] = useState('');
   const [rename, setRename] = useState('');
   const [userOpen, setUserOpen] = useState<boolean | null>(null);
-  useTokenGlide(box, state.tokens);
+  // 서버 답을 기다리지 않고 옮긴 자리를 먼저 그린다. 답이 오면 서버 상태로 돌아가고, 실패하면 제자리로 미끄러져 돌아간다
+  const [moving, setMoving] = useState<Record<string, { zoneId: string | null; req: number }>>({});
+  const tokens: Record<string, string | null | undefined> = { ...state.tokens };
+  for (const [id, m] of Object.entries(moving)) tokens[id] = m.zoneId;
+  useTokenGlide(box, tokens);
 
   if (!scene) return null;
   const zones = Object.values(scene.zones);
   if (zones.length === 0 && !isGm) return null;
 
   const characters = Object.values(state.characters);
-  const inZone = (zoneId: string) => characters.filter((c) => state.tokens[c.id] === zoneId);
-  const outside = characters.filter(
-    (c) => !state.tokens[c.id] || !scene.zones[state.tokens[c.id]!],
-  );
+  const inZone = (zoneId: string) => characters.filter((c) => tokens[c.id] === zoneId);
+  const outside = characters.filter((c) => !tokens[c.id] || !scene.zones[tokens[c.id]!]);
   const posOf = (z: Zone) => (drag?.id === z.id ? { x: drag.x, y: drag.y } : { x: z.x, y: z.y });
 
   const pointPct = (clientX: number, clientY: number) => {
@@ -69,8 +74,18 @@ export function ZoneMap({ state, run, isGm, canControl, pending, auto = 'full' }
 
   const moveToken = (characterId: string, zoneId: string | null) => {
     setPicked(null);
-    if ((state.tokens[characterId] ?? null) === zoneId) return;
-    void run({ type: 'token.move', payload: { characterId, zoneId } });
+    if ((tokens[characterId] ?? null) === zoneId) return;
+    const req = ++moveSeq;
+    setMoving((m) => ({ ...m, [characterId]: { zoneId, req } }));
+    // 같은 토큰을 그사이 또 옮겼다면 나중 것을 남긴다
+    const settle = () =>
+      setMoving((m) => {
+        if (m[characterId]?.req !== req) return m;
+        const rest = { ...m };
+        delete rest[characterId];
+        return rest;
+      });
+    run({ type: 'token.move', payload: { characterId, zoneId } }).then(settle, settle);
   };
 
   const onZoneClick = (z: Zone) => {
@@ -368,7 +383,7 @@ export function ZoneMap({ state, run, isGm, canControl, pending, auto = 'full' }
         <div className={styles.outside} data-outside {...dropProps(null)}>
           <span className={styles.hint}>지도 밖</span>
           {outside.map(token)}
-          {picked && state.tokens[picked] && (
+          {picked && tokens[picked] && (
             <button type="button" className={styles.ghost} onClick={() => moveToken(picked, null)}>
               여기로 빼기
             </button>
