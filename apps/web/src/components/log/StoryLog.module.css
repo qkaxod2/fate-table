@@ -146,19 +146,80 @@
   opacity: 0.55;
 }
 
+/* 새 줄은 옆에서 미끄러져 들어오며, 종류의 색으로 잠깐 밝게 물들었다가 가라앉는다 */
 .list > li:last-child:not([data-sending]) {
-  animation: line-in 260ms var(--ease);
+  --flash: rgb(255 255 255 / 0.06);
+  animation:
+    line-in var(--dur-enter) var(--ease-out),
+    line-flash 1.1s var(--ease-out);
+}
+
+.list > li[data-kind='fate']:last-child,
+.list > li[data-kind='scene']:last-child {
+  --flash: rgb(214 182 110 / 0.18);
+}
+
+.list > li[data-kind='gm']:last-child {
+  --flash: rgb(255 214 120 / 0.14);
+}
+
+.list > li[data-kind='roll']:last-child {
+  --flash: rgb(111 188 235 / 0.16);
 }
 
 @keyframes line-in {
   from {
     opacity: 0;
-    transform: translateX(-6px);
+    translate: -8px 0;
   }
 }
 
+@keyframes line-flash {
+  from {
+    background: var(--flash);
+  }
+}
+
+/* 보낸 채팅이 서버에 닿으면 흐림이 걷힌다 */
+.line[data-sending] {
+  animation: line-in var(--dur-enter) var(--ease-out);
+}
+
+.line {
+  transition: opacity var(--dur-hover) var(--ease-out);
+}
+
+.undo {
+  transition: var(--hover);
+}
+
+.undo:hover {
+  rotate: -40deg;
+}
+
+/* 다른 탭에 쌓인 알림 수는 바뀔 때마다 톡 튄다 */
+.badge {
+  animation: badge-pop 360ms var(--ease-spring);
+}
+
+@keyframes badge-pop {
+  from {
+    scale: 0.4;
+  }
+}
+
+.tab {
+  transition: var(--hover);
+}
+
+.tab:not([aria-selected='true']):hover {
+  color: var(--fg);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .list > li:last-child {
+  .list > li:last-child,
+  .line[data-sending],
+  .badge {
     animation: none;
   }
 }

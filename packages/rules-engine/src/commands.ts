@@ -53,6 +53,8 @@ export const CommandSchema = z.discriminatedUnion('type', [
     aspects: z.array(text).max(3).default([]),
     /** 캐릭터 만들기에서 그린 초상화 (공개 Storage URL) */
     portraitUrl: z.string().url().max(500).optional(),
+    /** 캐릭터 만들기에서 저장한 초안의 키. 같은 초안을 두 번 데려오지 않게 한다 */
+    sourceKey: id.optional(),
   }),
   cmd('character.update', {
     id,
@@ -96,6 +98,7 @@ export const CommandSchema = z.discriminatedUnion('type', [
     paidWith: z.enum(['fate_point', 'free_invoke']),
   }),
   cmd('stunt.apply', { rollId: id, side: side.default('active'), stuntId: id }),
+  cmd('roll.defense_ready', { rollId: id }),
   cmd('roll.finalize', { rollId: id, reduceForBoost: z.boolean().default(false) }),
 
   cmd('fate.adjust', { target: id, delta: z.number().int().min(-10).max(10) }),

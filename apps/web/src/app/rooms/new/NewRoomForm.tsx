@@ -70,6 +70,7 @@ export function NewRoomForm() {
             <p className={styles.muted}>서버가 연결된 배포 사이트에서만 방을 만들 수 있어요.</p>
           )}
           <button
+            aria-busy={busy || undefined}
             type="submit"
             className={styles.primary}
             disabled={busy || !online || !name.trim() || !nickname.trim()}

@@ -2,7 +2,15 @@
 
 import { term } from '@fate/glossary';
 import type { Character, Command, RoomEvent, RoomState, Zone } from '@fate/rules-engine';
-import { useRef, useState, type DragEvent, type PointerEvent as ReactPointerEvent } from 'react';
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+  type DragEvent,
+  type RefObject,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
+import { playSfx } from '@/fx/sfx';
 import styles from './ZoneMap.module.css';
 
 interface Props {
@@ -16,6 +24,9 @@ interface Props {
 }
 
 type Tool = 'move' | 'link';
+
+/** 토큰 이동 요청 번호. 같은 토큰을 연달아 옮겼을 때 나중 요청을 가려낸다 */
+let moveSeq = 0;
 
 const clamp = (n: number) => Math.min(96, Math.max(4, Math.round(n)));
 
@@ -38,16 +49,19 @@ export function ZoneMap({ state, run, isGm, canControl, pending, auto = 'full' }
   const [aspectText, setAspectText] = useState('');
   const [rename, setRename] = useState('');
   const [userOpen, setUserOpen] = useState<boolean | null>(null);
+  // 서버 답을 기다리지 않고 옮긴 자리를 먼저 그린다. 답이 오면 서버 상태로 돌아가고, 실패하면 제자리로 미끄러져 돌아간다
+  const [moving, setMoving] = useState<Record<string, { zoneId: string | null; req: number }>>({});
+  const tokens: Record<string, string | null | undefined> = { ...state.tokens };
+  for (const [id, m] of Object.entries(moving)) tokens[id] = m.zoneId;
+  useTokenGlide(box, tokens);
 
   if (!scene) return null;
   const zones = Object.values(scene.zones);
   if (zones.length === 0 && !isGm) return null;
 
   const characters = Object.values(state.characters);
-  const inZone = (zoneId: string) => characters.filter((c) => state.tokens[c.id] === zoneId);
-  const outside = characters.filter(
-    (c) => !state.tokens[c.id] || !scene.zones[state.tokens[c.id]!],
-  );
+  const inZone = (zoneId: string) => characters.filter((c) => tokens[c.id] === zoneId);
+  const outside = characters.filter((c) => !tokens[c.id] || !scene.zones[tokens[c.id]!]);
   const posOf = (z: Zone) => (drag?.id === z.id ? { x: drag.x, y: drag.y } : { x: z.x, y: z.y });
 
   const pointPct = (clientX: number, clientY: number) => {
@@ -60,8 +74,18 @@ export function ZoneMap({ state, run, isGm, canControl, pending, auto = 'full' }
 
   const moveToken = (characterId: string, zoneId: string | null) => {
     setPicked(null);
-    if ((state.tokens[characterId] ?? null) === zoneId) return;
-    void run({ type: 'token.move', payload: { characterId, zoneId } });
+    if ((tokens[characterId] ?? null) === zoneId) return;
+    const req = ++moveSeq;
+    setMoving((m) => ({ ...m, [characterId]: { zoneId, req } }));
+    // 같은 토큰을 그사이 또 옮겼다면 나중 것을 남긴다
+    const settle = () =>
+      setMoving((m) => {
+        if (m[characterId]?.req !== req) return m;
+        const rest = { ...m };
+        delete rest[characterId];
+        return rest;
+      });
+    run({ type: 'token.move', payload: { characterId, zoneId } }).then(settle, settle);
   };
 
   const onZoneClick = (z: Zone) => {
@@ -113,6 +137,7 @@ export function ZoneMap({ state, run, isGm, canControl, pending, auto = 'full' }
         key={c.id}
         type="button"
         className={styles.token}
+        data-token={c.id}
         data-npc={c.isNpc || undefined}
         data-out={c.takenOut || undefined}
         data-picked={picked === c.id || undefined}
@@ -358,7 +383,7 @@ export function ZoneMap({ state, run, isGm, canControl, pending, auto = 'full' }
         <div className={styles.outside} data-outside {...dropProps(null)}>
           <span className={styles.hint}>지도 밖</span>
           {outside.map(token)}
-          {picked && state.tokens[picked] && (
+          {picked && tokens[picked] && (
             <button type="button" className={styles.ghost} onClick={() => moveToken(picked, null)}>
               여기로 빼기
             </button>
@@ -367,4 +392,61 @@ export function ZoneMap({ state, run, isGm, canControl, pending, auto = 'full' }
       )}
     </section>
   );
+}
+
+/**
+ * 토큰이 다른 구역으로 옮겨지면 순간이동하지 않고 원래 자리에서 새 자리로 미끄러져 간다.
+ * 그린 뒤 위치를 재어 두고, 구역이 바뀐 토큰만 예전 자리에서부터 날아오게 한다(FLIP).
+ * 구역을 끌어 옮길 때처럼 구역이 그대로면 따라 움직이기만 한다.
+ */
+function useTokenGlide(
+  box: RefObject<HTMLDivElement | null>,
+  tokens: Record<string, string | null | undefined>,
+) {
+  const last = useRef(new Map<string, { zone: string | null; x: number; y: number }>());
+  useLayoutEffect(() => {
+    const section = box.current?.closest('section');
+    const seen = new Map<string, { zone: string | null; x: number; y: number }>();
+    if (!section) {
+      last.current = seen;
+      return;
+    }
+    const still =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    for (const el of section.querySelectorAll<HTMLElement>('[data-token]')) {
+      const id = el.dataset.token!;
+      const r = el.getBoundingClientRect();
+      const now = { zone: tokens[id] ?? null, x: r.left, y: r.top };
+      seen.set(id, now);
+      const before = last.current.get(id);
+      if (still || !before || before.zone === now.zone) continue;
+      const dx = before.x - now.x;
+      const dy = before.y - now.y;
+      if (Math.abs(dx) + Math.abs(dy) < 2) continue;
+      // 지나가는 길에 다른 구역 밑으로 숨지 않도록 도착 구역을 잠깐 위로 올린다
+      const zone = el.closest<HTMLElement>('[data-zone]');
+      if (zone) zone.style.zIndex = '2';
+      const lift = Math.min(60, Math.hypot(dx, dy) * 0.25 + 12);
+      const anim = el.animate(
+        [
+          { translate: `${dx}px ${dy}px`, scale: '1' },
+          { translate: `${dx * 0.5}px ${dy * 0.5 - lift}px`, scale: '1.18', offset: 0.5 },
+          { translate: '0 0', scale: '0.92', offset: 0.85 },
+          { translate: '0 0', scale: '1' },
+        ],
+        { duration: 520, easing: 'cubic-bezier(.45,0,.3,1)' },
+      );
+      el.dataset.landing = '';
+      // 내려앉을 때 말이 판에 닿는 작은 소리
+      const knock = window.setTimeout(() => playSfx('dice-settle', 0.12, 1.5), 440);
+      const done = () => {
+        window.clearTimeout(knock);
+        delete el.dataset.landing;
+        if (zone) zone.style.zIndex = '';
+      };
+      anim.finished.then(done, done);
+    }
+    last.current = seen;
+  });
 }

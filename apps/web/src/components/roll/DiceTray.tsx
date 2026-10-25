@@ -2,6 +2,7 @@
 
 import type { DieFace } from '@fate/rules-engine';
 import { useEffect, useState } from 'react';
+import { playSfx, tap } from '@/fx/sfx';
 import { Dice3D, TumblingDice } from './Dice3D';
 import styles from './DiceTray.module.css';
 
@@ -112,6 +113,9 @@ function FlatDice({
       window.setTimeout(
         () => {
           setProgress((p) => ({ key: rollKey, stopped: i + 1, flicker: p.flicker }));
+          // 3D처럼 하나씩 멈출 때마다 작게 딸깍
+          playSfx('dice-settle', 0.14, 1.15 + i * 0.08);
+          if (i === 0) tap(8);
           if (i === 3) {
             window.clearInterval(flicker);
             onSettled?.();
@@ -142,6 +146,7 @@ function FlatDice({
             className={styles.die}
             data-sealed={hidden || undefined}
             data-rolling={(!hidden && !settled) || undefined}
+            data-landed={(!hidden && animate && settled) || undefined}
             aria-label={
               face === null ? '주사위' : face === 1 ? '플러스' : face === -1 ? '마이너스' : '빈 면'
             }

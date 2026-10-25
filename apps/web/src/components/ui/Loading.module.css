@@ -1,0 +1,107 @@
+/* 금방 끝나면 아예 보이지 않도록 200ms 뒤에 나타난다 */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+  animation: appear var(--dur-enter) var(--ease-out) 200ms backwards;
+}
+
+.dice {
+  display: inline-flex;
+  gap: 6px;
+  perspective: 400px;
+}
+
+.die {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1.5px solid var(--dice-edge);
+  border-radius: 6px;
+  background: var(--dice-body);
+  color: var(--dice-pip);
+  font-family: var(--f-pop);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+  animation: die-flip 1.6s var(--ease-in-out) infinite;
+}
+.die:nth-child(2) {
+  animation-delay: 0.12s;
+}
+.die:nth-child(3) {
+  animation-delay: 0.24s;
+}
+.die:nth-child(4) {
+  animation-delay: 0.36s;
+}
+
+@keyframes die-flip {
+  0%,
+  55%,
+  100% {
+    transform: rotateX(0deg) translateY(0);
+  }
+  20% {
+    transform: rotateX(180deg) translateY(-6px);
+  }
+  40% {
+    transform: rotateX(360deg) translateY(0);
+  }
+}
+
+.label {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  letter-spacing: 0.5px;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  animation: appear var(--dur-enter) var(--ease-out) 120ms backwards;
+}
+
+.row {
+  height: 52px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background:
+    linear-gradient(100deg, transparent 30%, rgb(255 255 255 / 0.06) 50%, transparent 70%),
+    var(--panel-s);
+  background-size: 220% 100%;
+  animation: sweep 1.4s var(--ease-in-out) infinite;
+}
+.row:nth-child(2) {
+  opacity: 0.7;
+  animation-delay: 0.1s;
+}
+.row:nth-child(3) {
+  opacity: 0.45;
+  animation-delay: 0.2s;
+}
+
+@keyframes sweep {
+  from {
+    background-position: 110% 0;
+  }
+  to {
+    background-position: -110% 0;
+  }
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .die,
+  .row {
+    animation: none;
+  }
+}

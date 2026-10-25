@@ -15,11 +15,12 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
+  /* 말하는 쪽이 바뀔 때는 천천히 밝아지고 어두워진다 */
   transition:
-    filter 360ms var(--ease),
-    transform 360ms var(--ease),
-    opacity 360ms var(--ease);
-  animation: slideIn 520ms var(--ease) both;
+    filter 480ms var(--ease-in-out),
+    transform 480ms var(--ease-in-out),
+    opacity 480ms var(--ease-in-out);
+  animation: slideIn var(--dur-scene) var(--ease-out) backwards;
 }
 
 .sprite[data-side='left'] {
@@ -45,20 +46,25 @@
   object-fit: contain;
   object-position: 50% 100%;
   filter: drop-shadow(0 10px 30px rgb(0 0 0 / 0.6));
-  animation: faceIn 260ms var(--ease) both;
+  animation: faceIn 320ms var(--ease-out) backwards;
+}
+
+/* 바뀌기 전 표정: 새 그림 아래에서 사라진다 */
+.sprite img.leaving {
+  animation: faceOut 320ms var(--ease-in) forwards !important;
 }
 
 /* 배경을 딴 스탠딩은 숨 쉬듯 아주 조금 움직인다 */
 .sprite[data-cutout][data-focus] img {
   animation:
-    faceIn 260ms var(--ease) both,
+    faceIn 320ms var(--ease-out) backwards,
     breathe 5.5s ease-in-out 600ms infinite;
   transform-origin: 50% 100%;
 }
 
 .sprite[data-cutout][data-side='right'][data-focus] img {
   animation:
-    faceIn 260ms var(--ease) both,
+    faceIn 320ms var(--ease-out) backwards,
     breatheFlip 5.5s ease-in-out 600ms infinite;
 }
 
@@ -99,6 +105,34 @@
   opacity: 1;
 }
 
+/* 공격을 맞으면 하얗게 번쩍이며 뒤로 움찔한다 */
+/* slideIn을 목록에 남겨 둬야 data-hit가 빠질 때 들어오는 애니메이션이 다시 돌지 않는다 */
+.sprite[data-hit] {
+  animation:
+    slideIn var(--dur-scene) var(--ease-out) backwards,
+    hit 520ms var(--ease-out);
+}
+
+.sprite[data-hit][data-side='right'] {
+  --away: 1;
+}
+
+@keyframes hit {
+  0% {
+    filter: brightness(2.2) saturate(0.3);
+  }
+  15% {
+    translate: calc(var(--away, -1) * 14px) 0;
+  }
+  35% {
+    translate: calc(var(--away, -1) * -6px) 0;
+  }
+  55% {
+    translate: calc(var(--away, -1) * 3px) 0;
+    filter: brightness(1.1);
+  }
+}
+
 @keyframes slideIn {
   from {
     opacity: 0;
@@ -108,7 +142,13 @@
 
 @keyframes faceIn {
   from {
-    opacity: 0.35;
+    opacity: 0;
+  }
+}
+
+@keyframes faceOut {
+  to {
+    opacity: 0;
   }
 }
 
@@ -142,5 +182,8 @@
   .sprite img {
     animation: none !important;
     transition: none;
+  }
+  .sprite img.leaving {
+    display: none;
   }
 }

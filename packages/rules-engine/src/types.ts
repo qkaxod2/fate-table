@@ -46,6 +46,8 @@ export interface Character {
   consequences: Partial<Record<ConsequenceSlot, ConsequenceState>>;
   portraitAssetId?: string;
   portraitUrl?: string;
+  /** 캐릭터 만들기 초안에서 데려왔다면 그 초안의 키 */
+  sourceKey?: string;
   /** 라이트노벨풍 스탠딩: 표정 id → 투명 PNG URL. 'neutral'이 기본 */
   standing?: Record<string, string>;
   /** 지금 무대에서 짓고 있는 표정 */
@@ -88,7 +90,8 @@ export interface RollSide {
   paidInvokes: string[];
 }
 
-export type RollStatus = 'awaiting_defense' | 'open' | 'final';
+/** cancelled: 끝나기 전에 장면·세션이 닫혀 더는 이어갈 수 없는 굴림 */
+export type RollStatus = 'awaiting_defense' | 'open' | 'final' | 'cancelled';
 
 export interface RollState {
   id: string;
@@ -98,6 +101,8 @@ export interface RollState {
   difficulty: number | null;
   targetId: string | null;
   status: RollStatus;
+  /** 방어자가 발동·특기 조정을 마쳤는지. 공격자가 조정하면 다시 false가 된다 */
+  defenseReady?: boolean;
   result?: { total: number; shifts: number; outcome: Outcome };
 }
 

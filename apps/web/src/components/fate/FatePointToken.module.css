@@ -23,8 +23,27 @@
   position: relative;
 }
 
-.token[data-changed] {
-  animation: token-pop var(--dur-token) var(--ease);
+.token {
+  position: relative;
+}
+
+/* 받을 때: 토큰이 크게 튀고 금빛 고리가 퍼진다 */
+.row[data-bump='up'] .token[data-changed] {
+  animation: token-pop var(--dur-token) var(--ease-spring);
+}
+
+.row[data-bump='up'] .token[data-changed]::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border: 1.5px solid var(--gold-hi);
+  animation: token-ring 700ms var(--ease-out) forwards;
+  pointer-events: none;
+}
+
+/* 쓸 때: 채워져 있던 토큰이 빛을 내며 빠져나간다 */
+.row[data-bump='down'] .token[data-changed] {
+  animation: token-drain var(--dur-token) var(--ease-in);
 }
 
 .delta {
@@ -53,6 +72,29 @@
   }
 }
 
+@keyframes token-ring {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+
+@keyframes token-drain {
+  0% {
+    background: linear-gradient(135deg, var(--gold-hi), var(--gold));
+    box-shadow: 0 0 14px rgb(240 220 160 / 0.9);
+    opacity: 1;
+    transform: rotate(45deg) scale(1.2);
+  }
+  100% {
+    transform: rotate(45deg) scale(1);
+  }
+}
+
 @keyframes delta-rise {
   from {
     opacity: 0;
@@ -68,7 +110,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .token[data-changed],
+  .row .token[data-changed],
+  .row .token[data-changed]::after,
   .delta {
     animation: none;
   }

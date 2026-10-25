@@ -147,6 +147,8 @@ describe('opposed attack → damage', () => {
     expect(r.status).toBe('open');
     expect(r.active.dice).toEqual([1, 1, 0, 0]);
 
+    // 방어자가 조정을 마쳐야 공격자가 확정할 수 있다
+    t.run(P2, { type: 'roll.defense_ready', payload: { rollId } });
     // 공격 1+2=3, 방어 0-2=-2 → 차이 5, 대성공
     t.run(P1, { type: 'roll.finalize', payload: { rollId, reduceForBoost: true } });
     expect(t.state.rolls[rollId]!.result).toEqual({ total: 3, shifts: 5, outcome: 'style' });
@@ -277,6 +279,27 @@ describe('character creation', () => {
       'trouble',
       'normal',
     ]);
+  });
+
+  it('brings the same saved draft only once', () => {
+    const t = new Table();
+    const bring = () =>
+      t.run(P1, {
+        type: 'character.create',
+        payload: {
+          name: '하늘',
+          isNpc: false,
+          approaches: { careful: 1, clever: 3, flashy: 2, forceful: 0, quick: 2, sneaky: 1 },
+          stunts: [],
+          highConcept: '떠돌이 마법사',
+          trouble: '호기심을 못 참는다',
+          aspects: [],
+          sourceKey: 'draft-1',
+        },
+      });
+    bring();
+    expect(bring).toThrow('DUPLICATE_CHARACTER');
+    expect(Object.values(t.state.characters)).toHaveLength(1);
   });
 
   it('rejects a broken approach spread', () => {

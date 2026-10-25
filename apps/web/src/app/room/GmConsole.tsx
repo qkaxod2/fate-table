@@ -11,6 +11,8 @@ import {
 import { useState, type ReactNode } from 'react';
 import { AspectCard } from '@/components/aspect/AspectCard';
 import { FatePointToken } from '@/components/fate/FatePointToken';
+import { CloseGuardScope, useCloseGuard } from '@/components/ui/closeGuard';
+import { useClosing } from '@/lib/motion';
 import styles from './GmConsole.module.css';
 
 type Run = (cmd: Command) => Promise<RoomEvent[]>;
@@ -262,32 +264,39 @@ export function Modal({
   onClose,
   children,
   wide,
+  closer,
+  dirty,
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
   wide?: boolean;
+  /** 안쪽에서도 닫아야 할 때(할 일을 마치면 닫힘) 바깥에서 만든 useClosing을 넘긴다 */
+  closer?: [boolean, () => void];
+  /** 적은 것 말고도 닫히면 잃는 게 있을 때 */
+  dirty?: boolean;
 }) {
+  const own = useClosing(onClose);
+  const [closing, close] = closer ?? own;
+  const guard = useCloseGuard(close, dirty);
   return (
-    <div className={styles.backdrop} onClick={onClose}>
+    <div className={styles.backdrop} data-closing={closing || undefined} {...guard.backdrop}>
       <section
         className={styles.modal}
         data-wide={wide || undefined}
         role="dialog"
         aria-label={title}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => {
-          if (e.key === 'Escape') onClose();
-        }}
+        {...guard.panel}
       >
         <header className={styles.modalHead}>
           <h2>{title}</h2>
-          <button type="button" className={styles.close} onClick={onClose} aria-label="닫기">
+          <button type="button" className={styles.close} onClick={close} aria-label="닫기">
             ×
           </button>
         </header>
-        {children}
+        <CloseGuardScope value={guard.scope}>{children}</CloseGuardScope>
       </section>
+      {guard.nudge}
     </div>
   );
 }
@@ -308,14 +317,16 @@ export function GmPanel({
   notes: string[];
   onClose: () => void;
 }) {
+  // 할 일을 마쳐 닫힐 때도 ×를 누를 때처럼 흐려지며 닫힌다
+  const closer = useClosing(onClose);
   const done = async (cmd: Command) => {
     const evs = await run(cmd);
-    if (evs.length) onClose();
+    if (evs.length) closer[1]();
   };
   const title = TOOLS.find(([t]) => t === open.tool)?.[1] ?? 'GM';
-  const props = { state, run, pending, done, onClose };
+  const props = { state, run, pending, done, onClose: closer[1] };
   return (
-    <Modal title={title} onClose={onClose}>
+    <Modal title={title} onClose={onClose} closer={closer}>
       {open.tool === 'scene' && <ScenePanel {...props} />}
       {open.tool === 'aspect' && <AspectPanel {...props} />}
       {open.tool === 'npc' && <NpcPanel {...props} />}

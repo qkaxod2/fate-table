@@ -8,6 +8,7 @@ import {
   type MediaKind,
 } from '@fate/portrait';
 import { useState } from 'react';
+import { useCloseGuardDirty } from '@/components/ui/closeGuard';
 import { toast } from '@/components/ui/Toast';
 import { asset } from '@/lib/asset';
 import { downloadImage, useMyImages, type ShownImage } from '@/lib/myImages';
@@ -96,6 +97,9 @@ export function MediaStudio({ kind, context, applyLabel, onApply }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [drawn, setDrawn] = useState<Drawn[]>([]);
   const [picked, setPicked] = useState<string | null>(null);
+  const [applied, setApplied] = useState(false);
+  // 그리는 중이거나 그려 놓고 아직 안 붙인 그림은 창이 실수로 닫혀 날아가지 않게
+  const saved = useCloseGuardDirty(thinking || drawing || (drawn.length > 0 && !applied));
 
   const online = portraitAvailable();
   const preset = findPreset(presetId)!;
@@ -138,6 +142,7 @@ export function MediaStudio({ kind, context, applyLabel, onApply }: Props) {
       const d = { url: r.url, seed: r.seed, presetId, prompt };
       setDrawn((x) => [d, ...x].slice(0, 8));
       setPicked(r.url);
+      setApplied(false);
     } catch (e) {
       fail(e, '그림을 만들지 못했어요.');
     } finally {
@@ -161,7 +166,10 @@ export function MediaStudio({ kind, context, applyLabel, onApply }: Props) {
     if (!chosen || applying) return;
     setApplying(true);
     try {
-      await onApply(chosen);
+      if (await onApply(chosen)) {
+        setApplied(true);
+        saved?.();
+      }
     } finally {
       setApplying(false);
     }

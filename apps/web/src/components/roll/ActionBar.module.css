@@ -26,14 +26,12 @@
   font-weight: 700;
   font-size: var(--fs-lg);
   cursor: pointer;
-  transition:
-    background var(--dur-fast) var(--ease),
-    border-color var(--dur-fast) var(--ease),
-    transform var(--dur-fast) var(--ease);
+  transition: var(--hover), var(--press);
 }
 
-.action:not(:disabled):hover,
-.approach:not(:disabled):hover {
+/* 고른 버튼 위에 마우스가 있어도 금색이 풀리지 않게 */
+.action:not(:disabled, [aria-checked='true']):hover,
+.approach:not(:disabled, [aria-checked='true']):hover {
   border-color: var(--rule);
   background: #191c3a;
 }
@@ -43,12 +41,12 @@
   background: var(--gold);
   color: var(--ink);
   border-color: var(--gold-hi);
-  animation: pick 200ms var(--ease);
+  animation: pick 280ms var(--ease-spring);
 }
 
 @keyframes pick {
-  40% {
-    transform: scale(1.05);
+  from {
+    transform: scale(0.94);
   }
 }
 
@@ -56,6 +54,12 @@
 .approach:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+/* 튜토리얼이 다음 단계로 잠가도 이미 고른 버튼은 또렷하게 남긴다 */
+.action[aria-checked='true']:disabled,
+.approach[aria-checked='true']:disabled {
+  opacity: 1;
 }
 
 .num,
@@ -75,6 +79,37 @@
 
 .approach {
   font-size: var(--fs-md);
+}
+
+/* 행동을 고르면 접근법이 옆에서 하나씩 펼쳐진다 (Q W E / A S D 순서) */
+.approaches .approach {
+  animation: unfold var(--dur-enter) var(--ease-out) backwards;
+}
+.approaches .approach:nth-child(2) {
+  animation-delay: calc(var(--stagger) * 1);
+}
+.approaches .approach:nth-child(3) {
+  animation-delay: calc(var(--stagger) * 2);
+}
+.approaches .approach:nth-child(4) {
+  animation-delay: calc(var(--stagger) * 1);
+}
+.approaches .approach:nth-child(5) {
+  animation-delay: calc(var(--stagger) * 2);
+}
+.approaches .approach:nth-child(6) {
+  animation-delay: calc(var(--stagger) * 3);
+}
+
+.approaches .approach[aria-checked='true'] {
+  animation: pick 280ms var(--ease-spring);
+}
+
+@keyframes unfold {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
 }
 
 .rollCol {
@@ -98,8 +133,16 @@
   cursor: pointer;
 }
 
+.roll {
+  transition:
+    var(--hover),
+    var(--press),
+    filter var(--dur-hover) var(--ease-out);
+}
+
 .roll:not(:disabled):hover {
   box-shadow: 0 0 24px rgb(240 220 160 / 0.45);
+  filter: brightness(1.06);
 }
 
 .roll:not(:disabled) {
@@ -163,27 +206,38 @@
   }
 }
 
-/* 체험 안내가 가리키는 곳 */
+/* 체험 안내가 가리키는 곳: 금빛 테두리가 맥박처럼 크게 번진다 */
 .bar [data-focus] {
   border-radius: var(--r-card);
-  animation: focus-glow 1.4s ease-in-out infinite;
+  animation: focus-glow 1.1s ease-in-out infinite;
 }
 
 @keyframes focus-glow {
   0%,
   100% {
-    box-shadow: 0 0 0 2px var(--gold);
+    box-shadow:
+      0 0 0 3px var(--gold),
+      0 0 12px 2px rgb(214 182 110 / 0.5);
   }
   50% {
     box-shadow:
-      0 0 0 3px var(--gold-hi),
-      0 0 24px 4px rgb(214 182 110 / 0.55);
+      0 0 0 5px var(--gold-hi),
+      0 0 40px 10px rgb(240 220 160 / 0.75);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .approaches .approach {
+    animation-name: fade;
+  }
   .bar [data-focus] {
     animation: none;
     box-shadow: 0 0 0 3px var(--gold-hi);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
   }
 }
