@@ -84,6 +84,13 @@ export function describe(e: RoomEvent, state: RoomState): LogLine | null {
     }
     case 'stunt.applied':
       return line('roll', `${term('stunt')} 적용 +${e.payload.value}`);
+    case 'roll.defense_ready': {
+      const who = state.rolls[e.payload.rollId]?.defense?.characterId;
+      return line(
+        'roll',
+        `${josa(who ? name(state, who) : '방어자', '이/가')} 방어 조정을 마쳤어요`,
+      );
+    }
     case 'roll.finalized':
       return line(
         'roll',
@@ -240,7 +247,9 @@ export function describe(e: RoomEvent, state: RoomState): LogLine | null {
 export const ERROR_COPY: Record<string, string> = {
   NOT_ENOUGH_FATE_POINTS: '운명점이 부족해요. 무료 발동이 있는 특성을 써 보세요.',
   ASPECT_ALREADY_INVOKED: '이 특성은 이번 굴림에 이미 썼어요.',
-  ROLL_NOT_OPEN: '이미 확정된 굴림이에요.',
+  ROLL_NOT_OPEN: '이미 끝났거나 취소된 굴림이에요.',
+  AWAITING_DEFENSE: '상대가 방어 조정을 마칠 때까지 기다려 주세요.',
+  QUOTA_UNAVAILABLE: '사용량을 확인하지 못했어요. 잠시 뒤 다시 시도해 주세요.',
   FORBIDDEN_ROLE: 'GM만 할 수 있는 일이에요.',
   INVALID_CHARACTER: '캐릭터 시트에 고칠 곳이 있어요.',
   QUOTA_EXCEEDED: '이번 달 생성 한도를 다 썼어요.',

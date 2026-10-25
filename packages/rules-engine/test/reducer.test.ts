@@ -147,6 +147,8 @@ describe('opposed attack → damage', () => {
     expect(r.status).toBe('open');
     expect(r.active.dice).toEqual([1, 1, 0, 0]);
 
+    // 방어자가 조정을 마쳐야 공격자가 확정할 수 있다
+    t.run(P2, { type: 'roll.defense_ready', payload: { rollId } });
     // 공격 1+2=3, 방어 0-2=-2 → 차이 5, 대성공
     t.run(P1, { type: 'roll.finalize', payload: { rollId, reduceForBoost: true } });
     expect(t.state.rolls[rollId]!.result).toEqual({ total: 3, shifts: 5, outcome: 'style' });

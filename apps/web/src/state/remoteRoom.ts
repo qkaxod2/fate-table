@@ -8,7 +8,7 @@ import {
   type RoomState,
 } from '@fate/rules-engine';
 import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
-import { callFunction } from '@/lib/api';
+import { ApiError, callFunction } from '@/lib/api';
 
 interface Row {
   seq: number;
@@ -49,6 +49,8 @@ export class RemoteRoom {
   private listeners = new Set<() => void>();
   private channel: RealtimeChannel | null = null;
   private filling = false;
+  /** 채우는 동안 새 이벤트가 와서 한 번 더 읽어야 하는지 */
+  private refill = false;
   private snapshot: RoomSnapshot = { state: this.state, events: [], live: false };
 
   constructor(
@@ -90,11 +92,15 @@ export class RemoteRoom {
   }
 
   async run(command: Command): Promise<RoomEvent[]> {
-    const res = await callFunction<{ events: RoomEvent[] }>('commands', {
-      roomId: this.roomId,
-      clientCmdId: crypto.randomUUID(),
-      command,
-    });
+    const body = { roomId: this.roomId, clientCmdId: crypto.randomUUID(), command };
+    let res: { events: RoomEvent[] };
+    try {
+      res = await callFunction<{ events: RoomEvent[] }>('commands', body);
+    } catch (e) {
+      // 응답만 잃었을 수 있으니 같은 명령 id로 한 번 더 보낸다. 서버는 처리한 명령이면 그 결과를 돌려준다
+      if (!(e instanceof ApiError) || e.code !== 'NETWORK') throw e;
+      res = await callFunction<{ events: RoomEvent[] }>('commands', body);
+    }
     this.receive(res.events);
     return res.events;
   }
@@ -127,33 +133,45 @@ export class RemoteRoom {
     this.lastSeq = e.seq;
   }
 
-  /** lastSeq 이후를 서버에서 읽어 채운다. 읽은 범위 안에서 빠진 seq는 볼 수 없는 이벤트이므로 건너뛴다 */
+  /**
+   * lastSeq 이후를 서버에서 읽어 채운다. 읽은 범위 안에서 빠진 seq는 볼 수 없는 이벤트이므로 건너뛴다.
+   * 조회를 기다리는 동안 실시간으로 먼저 받은 이벤트가 있을 수 있으므로, 이미 적용한 seq는 건너뛰고
+   * lastSeq는 줄어들지 않는다.
+   */
   private async fill() {
-    if (this.filling) return;
+    if (this.filling) {
+      this.refill = true;
+      return;
+    }
     this.filling = true;
     try {
-      for (;;) {
-        const { data, error } = await this.sb
-          .from('events')
-          .select('seq, type, actor_id, payload, visibility, owner_id')
-          .eq('room_id', this.roomId)
-          .gt('seq', this.lastSeq)
-          .order('seq')
-          .limit(1000);
-        if (error) throw error;
-        const rows = (data as Row[]).map(fromRow);
-        for (const e of rows) {
-          if (e.seq > this.lastSeq) this.apply(e);
-          this.lastSeq = e.seq;
-        }
-        if (rows.length < 1000) break;
-      }
-      // 서버 head까지 읽었으니 그보다 작은 버퍼는 버린다
-      for (const k of this.buffer.keys()) if (k <= this.lastSeq) this.buffer.delete(k);
-      this.emit();
-      this.drain();
+      do {
+        this.refill = false;
+        await this.readFromServer();
+        // 서버 head까지 읽었으니 그보다 작은 버퍼는 버린다
+        for (const k of this.buffer.keys()) if (k <= this.lastSeq) this.buffer.delete(k);
+        this.emit();
+        this.drain();
+        // 읽는 사이 도착한 이벤트 앞에 아직 빈 자리가 있으면 한 번 더 읽는다
+      } while (this.refill && this.buffer.size > 0);
     } finally {
       this.filling = false;
+    }
+  }
+
+  private async readFromServer() {
+    for (;;) {
+      const { data, error } = await this.sb
+        .from('events')
+        .select('seq, type, actor_id, payload, visibility, owner_id')
+        .eq('room_id', this.roomId)
+        .gt('seq', this.lastSeq)
+        .order('seq')
+        .limit(1000);
+      if (error) throw error;
+      const rows = (data as Row[]).map(fromRow);
+      for (const e of rows) if (e.seq > this.lastSeq) this.apply(e);
+      if (rows.length < 1000) return;
     }
   }
 

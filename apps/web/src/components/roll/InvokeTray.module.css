@@ -98,3 +98,8 @@
     0 0 0 2px var(--gold-hi),
     0 0 18px rgb(240 220 160 / 0.35);
 }
+
+.primary:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}

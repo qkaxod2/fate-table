@@ -25,6 +25,10 @@ interface Props {
   onSelect: (aspectId: string) => void;
   onInvoke: (aspectId: string, mode: InvokeMode, paidWith: PaidWith) => void;
   onFinalize: () => void;
+  /** 확정 버튼 문구 (방어자는 "방어 조정 완료") */
+  finalizeLabel?: string;
+  /** 있으면 확정을 막고 이 문구를 보여 준다 (상대가 조정 중일 때) */
+  waiting?: string;
 }
 
 /** 굴림 직후 열리는 발동 트레이. 결과를 바꾸는 카드만 강조하고, 권하는 말은 하지 않는다. */
@@ -35,6 +39,8 @@ export function InvokeTray({
   onSelect,
   onInvoke,
   onFinalize,
+  finalizeLabel = '이대로 확정',
+  waiting,
 }: Props) {
   const selected = choices.find((c) => c.aspect.id === selectedId && !c.blocked);
   const paidWith: PaidWith = selected?.aspect.freeInvokes ? 'free_invoke' : 'fate_point';
@@ -55,14 +61,14 @@ export function InvokeTray({
       const k = e.key.toLowerCase();
       if (selected && k === 'f') onInvoke(selected.aspect.id, 'bonus', paidWith);
       else if (selected && k === 'r') onInvoke(selected.aspect.id, 'reroll', paidWith);
-      else if (e.key === 'Enter' && !e.repeat) {
+      else if (e.key === 'Enter' && !e.repeat && !waiting) {
         e.preventDefault();
         onFinalize();
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [choices, selected, paidWith, onSelect, onInvoke, onFinalize]);
+  }, [choices, selected, paidWith, onSelect, onInvoke, onFinalize, waiting]);
 
   return (
     <div className={styles.tray}>
@@ -129,11 +135,23 @@ export function InvokeTray({
               </button>
             </>
           )}
-          <button type="button" className={styles.primary} onClick={onFinalize}>
-            이대로 확정{' '}
-            <kbd className={styles.keyInline} aria-hidden>
-              Enter
-            </kbd>
+          <button
+            type="button"
+            className={styles.primary}
+            onClick={onFinalize}
+            disabled={!!waiting}
+            title={waiting}
+          >
+            {waiting ? (
+              <>{waiting}…</>
+            ) : (
+              <>
+                {finalizeLabel}{' '}
+                <kbd className={styles.keyInline} aria-hidden>
+                  Enter
+                </kbd>
+              </>
+            )}
           </button>
         </div>
       </div>
