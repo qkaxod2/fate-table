@@ -51,7 +51,11 @@ export function PartyRail({
               {status && <span className={styles.status}>{status}</span>}
             </div>
             <div className={styles.meters}>
-              {!c.isNpc && <FatePointToken count={c.fatePoints} />}
+              {!c.isNpc && (
+                <span data-fx-fp={c.id}>
+                  <FatePointToken count={c.fatePoints} />
+                </span>
+              )}
               <span className={styles.stress} aria-label={term('stress')}>
                 {c.stress.map((used, i) => (
                   <span key={i} className={styles.box} data-used={used || undefined}>

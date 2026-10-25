@@ -1,0 +1,10 @@
+/* 불투명도만 바꾼다. transform을 쓰면 안쪽 position: fixed 창의 기준이 바뀐다 */
+.page {
+  animation: page-in var(--dur-scene) var(--ease-out) backwards;
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+  }
+}

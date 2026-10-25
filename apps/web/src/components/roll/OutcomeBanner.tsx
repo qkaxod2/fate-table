@@ -1,7 +1,16 @@
+import type { CSSProperties } from 'react';
 import { term } from '@fate/glossary';
 import { formatRating, type Action, type Outcome } from '@fate/rules-engine';
 import { JUDGE, OUTCOME_COPY } from '@/lib/copy';
 import styles from './OutcomeBanner.module.css';
+
+/** 대성공 때 판정 글자에서 터져 나가는 금빛 불티 (자리는 고정이라 매번 같은 모양) */
+const SPARKS = Array.from({ length: 26 }, (_, i) => ({
+  a: Math.round((i * 360) / 26 + ((i * 47) % 13) - 6),
+  d: 110 + ((i * 37) % 110),
+  s: 4 + (i % 4),
+  t: (i % 5) * 30,
+}));
 
 interface Props {
   action: Action;
@@ -15,7 +24,25 @@ export function OutcomeBanner({ action, outcome, total, provisional }: Props) {
   const judge = JUDGE[outcome];
   return (
     <div className={styles.banner} data-tone={judge.tone} role="status">
-      <div className={styles.latin} aria-hidden>
+      {judge.tone === 'perfect' && (
+        <div className={styles.sparks} key={`sparks:${judge.latin}`} aria-hidden>
+          {SPARKS.map((p, i) => (
+            <span
+              key={i}
+              style={
+                {
+                  '--a': `${p.a}deg`,
+                  '--d': `${p.d}px`,
+                  '--s': `${p.s}px`,
+                  animationDelay: `${420 + p.t}ms`,
+                } as CSSProperties
+              }
+            />
+          ))}
+        </div>
+      )}
+      {/* 발동으로 판정이 뒤집히면 글자를 새로 찍는다 */}
+      <div className={styles.latin} key={judge.latin} aria-hidden>
         {judge.latin}
       </div>
       <div className={styles.kr}>

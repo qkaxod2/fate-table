@@ -296,3 +296,155 @@
 .ok {
   color: var(--good);
 }
+
+/* ---------- 움직임 ---------- */
+/* 단계 사이: 다음이면 오른쪽에서, 이전이면 왼쪽에서 미끄러져 들어온다 */
+.pane {
+  animation: pane-in var(--dur-enter) var(--ease-out) backwards;
+}
+
+.pane[data-dir='back'] {
+  --from: -24px;
+}
+
+@keyframes pane-in {
+  from {
+    opacity: 0;
+    translate: var(--from, 24px) 0;
+  }
+}
+
+/* 지금 단계 번호는 톡 튀며 금색으로 차고, 끝난 단계는 금테만 남는다 */
+.stepNo {
+  transition: var(--hover);
+}
+
+.steps li[data-state='now'] .stepNo {
+  border-color: var(--gold);
+  background: var(--gold);
+  color: var(--ink);
+  animation: step-pop 420ms var(--ease-spring);
+}
+
+.steps li[data-state='done'] .stepNo {
+  border-color: var(--gold);
+  color: var(--gold-hi);
+}
+
+@keyframes step-pop {
+  from {
+    transform: scale(0.6);
+  }
+}
+
+.values button[aria-pressed='true'] {
+  animation: value-pick 300ms var(--ease-spring);
+}
+
+@keyframes value-pick {
+  from {
+    transform: scale(0.85);
+  }
+}
+
+.primary:not(:disabled):hover {
+  filter: brightness(1.06);
+  box-shadow: 0 6px 18px rgb(214 182 110 / 0.3);
+}
+
+.ghost:not(:disabled):hover,
+.values button:not(:disabled, [aria-pressed='true']):hover {
+  border-color: var(--gold);
+}
+
+/* 완성: 초상화가 카드처럼 뒤집혀 나오고, 시트 줄이 차례로 적힌다 */
+.summary .portrait,
+.summary .noPortrait {
+  animation: card-flip 640ms var(--ease-out) 80ms backwards;
+}
+
+@keyframes card-flip {
+  from {
+    opacity: 0;
+    transform: perspective(900px) rotateY(80deg) scale(0.92);
+  }
+}
+
+.sheet > * {
+  animation: write-in var(--dur-enter) var(--ease-out) backwards;
+}
+.sheet > :nth-child(2) {
+  animation-delay: 120ms;
+}
+.sheet > :nth-child(3) {
+  animation-delay: 170ms;
+}
+.sheet > :nth-child(4) {
+  animation-delay: 220ms;
+}
+.sheet > :nth-child(5) {
+  animation-delay: 270ms;
+}
+.sheet > :nth-child(n + 6) {
+  animation-delay: 320ms;
+}
+
+@keyframes write-in {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}
+
+/* 저장하면 초상화에 금빛이 한 번 돌고, 안내가 도장처럼 찍힌다 */
+.summary[data-saved] .portrait,
+.summary[data-saved] .noPortrait {
+  animation: saved-glow 1.2s var(--ease-out);
+}
+
+@keyframes saved-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgb(240 220 160 / 0.9);
+  }
+  40% {
+    box-shadow:
+      0 0 0 6px rgb(240 220 160 / 0.5),
+      0 0 40px rgb(240 220 160 / 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(240 220 160 / 0);
+  }
+}
+
+.ok {
+  animation: stamp-ok 480ms var(--ease-spring) backwards;
+}
+
+@keyframes stamp-ok {
+  from {
+    opacity: 0;
+    transform: scale(1.2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pane,
+  .summary .portrait,
+  .summary .noPortrait,
+  .sheet > *,
+  .ok {
+    animation-name: fade;
+  }
+  .steps li[data-state='now'] .stepNo,
+  .values button[aria-pressed='true'],
+  .summary[data-saved] .portrait,
+  .summary[data-saved] .noPortrait {
+    animation: none;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}

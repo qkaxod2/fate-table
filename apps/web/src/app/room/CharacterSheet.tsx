@@ -17,8 +17,10 @@ import {
 import { useState } from 'react';
 import { AspectCard } from '@/components/aspect/AspectCard';
 import { FatePointToken } from '@/components/fate/FatePointToken';
+import { useCloseGuard } from '@/components/ui/closeGuard';
 import styles from './CharacterSheet.module.css';
 import { josa } from '@/lib/josa';
+import { useClosing } from '@/lib/motion';
 
 interface Props {
   character: Character;
@@ -50,6 +52,7 @@ export function CharacterSheet({
   onClose,
   onArt,
 }: Props) {
+  const [closing, close] = useClosing(onClose);
   const aspects = Object.values(state.aspects).filter(
     (a) => a.ownerType === 'character' && a.ownerId === c.id && (!a.hidden || isGm),
   );
@@ -69,13 +72,15 @@ export function CharacterSheet({
     APPROACHES.some((a) => draft[a] !== c.approaches[a]) ||
     JSON.stringify(stunts) !== JSON.stringify(c.stunts);
 
+  const guard = useCloseGuard(close, changed || !!stuntText.trim() || editAspect !== null);
+
   return (
-    <div className={styles.backdrop} onClick={onClose}>
+    <div className={styles.backdrop} data-closing={closing || undefined} {...guard.backdrop}>
       <article
         className={styles.sheet}
         role="dialog"
         aria-label={`${c.name} 시트`}
-        onClick={(e) => e.stopPropagation()}
+        {...guard.panel}
       >
         <header className={styles.head}>
           {(c.portraitUrl || c.standing?.neutral) && (
@@ -123,7 +128,7 @@ export function CharacterSheet({
               </p>
             )}
           </div>
-          <button type="button" className={styles.close} onClick={onClose} aria-label="닫기">
+          <button type="button" className={styles.close} onClick={close} aria-label="닫기">
             ×
           </button>
         </header>
@@ -443,6 +448,7 @@ export function CharacterSheet({
           </footer>
         )}
       </article>
+      {guard.nudge}
     </div>
   );
 }

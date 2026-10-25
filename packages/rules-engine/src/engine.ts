@@ -24,10 +24,12 @@ export type CommandErrorCode =
   | 'NOT_FOUND'
   | 'INVALID'
   | 'INVALID_CHARACTER'
+  | 'DUPLICATE_CHARACTER'
   | 'NOT_ENOUGH_FATE_POINTS'
   | 'ASPECT_ALREADY_INVOKED'
   | 'NO_FREE_INVOKES'
   | 'ROLL_NOT_OPEN'
+  | 'AWAITING_DEFENSE'
   | 'NO_ACTIVE_SESSION'
   | 'NO_ACTIVE_SCENE';
 
@@ -152,6 +154,12 @@ function openRoll(state: RoomState, rollId: string): RollState {
   return r;
 }
 
+/** 방어 측 조정(발동·특기·완료)은 방어자가 마쳤다고 하기 전까지만 받는다 */
+function defenseStillAdjusting(r: RollState): void {
+  if (!r.defense) throw new CommandError('INVALID', 'no defense side');
+  if (r.defenseReady) throw new CommandError('INVALID', 'defense already done');
+}
+
 function fatePointsOf(state: RoomState, c: Character): number {
   return c.isNpc ? state.gmPool : c.fatePoints;
 }
@@ -232,6 +240,9 @@ const resolvers: Resolvers = {
     if (a.role === 'spectator') throw new CommandError('FORBIDDEN_ROLE');
     if (a.role === 'player' && p.isNpc) throw new CommandError('FORBIDDEN_ROLE');
     const ownerId = p.isNpc ? null : a.role === 'gm' ? (p.ownerId ?? a.userId) : a.userId;
+    // 버튼을 연타해도 같은 초안은 한 번만 데려온다 (서버는 명령을 차례로 처리하므로 여기서 막힌다)
+    if (p.sourceKey && Object.values(s.characters).some((c) => c.sourceKey === p.sourceKey))
+      throw new CommandError('DUPLICATE_CHARACTER');
     const id = ctx.newId();
     const refresh = refreshFor(p.stunts.length);
     const character: Character = {
@@ -246,6 +257,7 @@ const resolvers: Resolvers = {
       stress: [false, false, false],
       consequences: {},
       ...(p.portraitUrl ? { portraitUrl: p.portraitUrl } : {}),
+      ...(p.sourceKey ? { sourceKey: p.sourceKey } : {}),
     };
     const mk = (kind: Aspect['kind'], text: string): Aspect => ({
       id: ctx.newId(),
@@ -392,6 +404,7 @@ const resolvers: Resolvers = {
   },
   'invoke.apply': (s, p, a, ctx) => {
     const r = openRoll(s, p.rollId);
+    if (p.side === 'defense') defenseStillAdjusting(r);
     const sideState = p.side === 'active' ? r.active : r.defense;
     const payer = controlled(s, a, need(sideState, 'side').characterId);
     const asp = need(s.aspects[p.aspectId], 'aspect');
@@ -432,6 +445,7 @@ const resolvers: Resolvers = {
   },
   'stunt.apply': (s, p, a) => {
     const r = openRoll(s, p.rollId);
+    if (p.side === 'defense') defenseStillAdjusting(r);
     const sideState = need(p.side === 'active' ? r.active : r.defense, 'side');
     const c = controlled(s, a, sideState.characterId);
     const stunt = need(
@@ -458,9 +472,20 @@ const resolvers: Resolvers = {
       }),
     );
   },
+  'roll.defense_ready': (s, p, a) => {
+    const r = openRoll(s, p.rollId);
+    defenseStillAdjusting(r);
+    controlled(s, a, need(r.defense, 'side').characterId);
+    return one(ev('roll.defense_ready', a, { rollId: r.id }));
+  },
   'roll.finalize': (s, p, a) => {
     const r = openRoll(s, p.rollId);
     controlled(s, a, r.active.characterId);
+    // 반대 굴림은 방어자도 조정을 마쳐야 확정한다. 방어자도 내 쪽(GM이면 NPC)일 때만 기다리지 않는다
+    const defender = r.defense ? s.characters[r.defense.characterId] : undefined;
+    const ownSide = defender && (a.role === 'gm' ? defender.isNpc : canControl(s, a, defender));
+    if (defender && !r.defenseReady && !ownSide)
+      throw new CommandError('AWAITING_DEFENSE', 'defense is still adjusting');
     const { total, shifts, outcome } = resolveRoll(r);
     const rewards = rewardsFor(r.action, outcome, shifts);
     const events: NewEvent[] = [

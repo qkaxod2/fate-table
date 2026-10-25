@@ -1,7 +1,7 @@
 import { startOfSessionFatePoints } from './character';
 import { applyInvoke } from './invoke';
 import type { EventPayloads, EventType, RoomEvent, SealedSide } from './events';
-import type { Character, RollSide, RoomState } from './types';
+import type { Character, RollSide, RollState, RoomState } from './types';
 
 export function initialState(): RoomState {
   return {
@@ -88,7 +88,7 @@ const handlers: Handlers = {
         next = clearConsequence(next, c.id, 'moderate');
       }
     }
-    return { ...next, session: null };
+    return { ...cancelUnfinishedRolls(next), session: null };
   },
 
   'scene.started': (s, p) => ({
@@ -130,6 +130,8 @@ const handlers: Handlers = {
       compels: {},
       pendingDamage: {},
     };
+    // 끝나지 않은 판정은 다음 장면으로 넘기지 않는다
+    next = cancelUnfinishedRolls(next);
     // 경상: 회복을 시작한 장면이 아닌 다음 장면이 끝날 때 해제
     for (const c of Object.values(next.characters)) {
       const mild = c.consequences.mild;
@@ -231,7 +233,7 @@ const handlers: Handlers = {
       rolls: {
         ...s.rolls,
         [r.id]: (() => {
-          const rolled = applyInvoke(r, {
+          const rolled = applyInvoke(p.side === 'active' ? reopenDefense(r) : r, {
             side: p.side,
             aspectId: p.aspectId,
             mode: p.mode,
@@ -267,7 +269,8 @@ const handlers: Handlers = {
       ...side,
       modifiers: [...side.modifiers, { source: `stunt:${p.stuntId}`, value: p.value }],
     };
-    const next = { ...s, rolls: { ...s.rolls, [r.id]: { ...r, [key]: updated } } };
+    const base = p.side === 'active' ? reopenDefense(r) : r;
+    const next = { ...s, rolls: { ...s.rolls, [r.id]: { ...base, [key]: updated } } };
     return patchCharacter(next, side.characterId, (c) => ({
       ...c,
       stunts: c.stunts.map((st) =>
@@ -276,6 +279,11 @@ const handlers: Handlers = {
           : st,
       ),
     }));
+  },
+
+  'roll.defense_ready': (s, p) => {
+    const r = s.rolls[p.rollId];
+    return r ? { ...s, rolls: { ...s.rolls, [r.id]: { ...r, defenseReady: true } } } : s;
   },
 
   'roll.finalized': (s, p) => {
@@ -553,6 +561,22 @@ function clearConsequence(
     aspects: withoutKey(s.aspects, cur.aspectId),
     characters: { ...s.characters, [characterId]: { ...c, consequences } },
   };
+}
+
+/** 공격자가 결과를 바꾸면 방어자가 다시 대응할 수 있게 조정 완료를 푼다 */
+function reopenDefense(r: RollState): RollState {
+  return r.defenseReady ? { ...r, defenseReady: false } : r;
+}
+
+/** 확정되지 않은 판정을 모두 취소한다. 취소된 판정은 방어·발동·확정을 받지 않는다 */
+function cancelUnfinishedRolls(s: RoomState): RoomState {
+  const open = Object.values(s.rolls).filter(
+    (r) => r.status === 'open' || r.status === 'awaiting_defense',
+  );
+  if (open.length === 0 && s.activeRollId === null) return s;
+  const rolls = { ...s.rolls };
+  for (const r of open) rolls[r.id] = { ...r, status: 'cancelled' };
+  return { ...s, rolls, activeRollId: null };
 }
 
 function dropDamageFor(s: RoomState, characterId: string): RoomState {

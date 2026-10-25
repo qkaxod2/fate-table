@@ -31,6 +31,7 @@
 }
 
 .step {
+  white-space: nowrap;
   font-family: var(--f-num);
   font-size: var(--fs-xs);
   letter-spacing: 2px;
@@ -101,9 +102,100 @@
   text-align: center;
 }
 
+/* 다 끝냈을 때: 테두리가 금빛으로 한 번 번지고 점들이 차례로 반짝인다 */
+.coach[data-clear] {
+  animation:
+    coach-in 320ms var(--ease) both,
+    coach-clear 1.2s var(--ease-out) 200ms;
+}
+
+@keyframes coach-clear {
+  30% {
+    box-shadow:
+      0 0 0 10px rgb(240 220 160 / 0.35),
+      0 0 60px rgb(240 220 160 / 0.5),
+      0 18px 48px rgb(0 0 0 / 0.55);
+  }
+}
+
+.coach[data-clear] .step {
+  color: #b07d12;
+  font-weight: 700;
+}
+
+.coach[data-clear] .dots li {
+  animation: dot-cheer 520ms var(--ease-spring) backwards;
+}
+.coach[data-clear] .dots li:nth-child(1) {
+  animation-delay: 260ms;
+}
+.coach[data-clear] .dots li:nth-child(2) {
+  animation-delay: 340ms;
+}
+.coach[data-clear] .dots li:nth-child(3) {
+  animation-delay: 420ms;
+}
+.coach[data-clear] .dots li:nth-child(n + 4) {
+  animation-delay: 500ms;
+}
+
+@keyframes dot-cheer {
+  from {
+    scale: 0.2;
+  }
+  50% {
+    scale: 1.6;
+  }
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin: var(--s-3) 0 0;
+}
+
+.links a {
+  padding: var(--s-1) var(--s-3);
+  border: 1px solid #8a6a24;
+  border-radius: var(--r-ctl);
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.links a:first-child {
+  border-color: var(--gold);
+  background: linear-gradient(180deg, var(--gold-hi), var(--gold));
+}
+
+.links a:hover {
+  box-shadow: 0 4px 14px rgb(138 106 36 / 0.35);
+  translate: 0 -1px;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .coach {
+  .coach,
+  .coach[data-clear],
+  .coach[data-clear] .dots li {
     animation: none;
+  }
+}
+
+/* 굴림 패널이 가운데를 쓰는 동안: 주사위를 가리지 않게 왼쪽 파티 칸 위로 비켜 선다 */
+@media (min-width: 1101px) {
+  .coach[data-dock] {
+    left: calc(-280px - var(--s-4));
+    width: 300px;
+    padding: var(--s-3) var(--s-4) var(--s-4);
+    transform: none;
+    animation-name: coach-fade;
+  }
+  .coach[data-dock] .head {
+    flex-wrap: wrap;
+  }
+  .coach[data-dock] .title {
+    font-size: var(--fs-lg);
   }
 }
 
@@ -114,6 +206,99 @@
     left: auto;
     transform: none;
     margin: 0 auto var(--s-4);
+    animation-name: coach-fade;
+  }
+}
+
+@keyframes coach-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.chapter {
+  white-space: nowrap;
+  padding: 2px var(--s-2);
+  border-radius: var(--r-ctl);
+  background: var(--ink);
+  color: var(--gold-hi);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.example {
+  margin: var(--s-3) 0 0;
+  padding: var(--s-2) var(--s-3);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 var(--r-ctl) var(--r-ctl) 0;
+  background: rgb(214 182 110 / 0.18);
+  font-size: var(--fs-md);
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.nextRow {
+  display: flex;
+  justify-content: flex-end;
+  margin: var(--s-4) 0 0;
+}
+
+.next {
+  padding: var(--s-2) var(--s-5);
+  border: 1px solid var(--gold);
+  border-radius: var(--r-ctl);
+  background: linear-gradient(180deg, var(--gold-hi), var(--gold));
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  animation: next-nudge 1.6s ease-in-out 1.2s infinite;
+}
+
+.next:hover {
+  box-shadow: 0 4px 14px rgb(138 106 36 / 0.35);
+  translate: 0 -1px;
+}
+
+@keyframes next-nudge {
+  0%,
+  70%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(214 182 110 / 0.6);
+  }
+  85% {
+    box-shadow: 0 0 0 8px rgb(214 182 110 / 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .next {
     animation: none;
+  }
+}
+
+/* 좁은 화면 단계별 진행: 화면 맨 위에 붙여 두고, 눌러야 할 곳은 아래쪽에 보이게 한다 */
+@media (max-width: 1100px) {
+  .coach[data-pinned] {
+    position: fixed;
+    top: var(--s-2);
+    right: var(--s-2);
+    left: var(--s-2);
+    z-index: 70;
+    width: auto;
+    max-height: 46dvh;
+    margin: 0;
+    overflow-y: auto;
+    padding: var(--s-3) var(--s-4) var(--s-4);
+  }
+  .coach[data-pinned] .title {
+    font-size: var(--fs-lg);
+  }
+}
+
+@media (max-width: 760px) {
+  .keys {
+    display: none;
   }
 }

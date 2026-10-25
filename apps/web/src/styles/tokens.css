@@ -82,6 +82,22 @@
   --dur-dice: 600ms;
   --dur-token: 700ms;
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /*
+   * 움직임 어휘 (design-system.md 18절). 들어올 때는 빠르게 출발해 천천히 멈추고(out),
+   * 나갈 때는 천천히 출발해 빨리 사라진다(in). 손에 닿는 것(누름·고름)은 살짝 튕긴다(spring).
+   */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in: cubic-bezier(0.55, 0, 0.75, 0.2);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-press: 90ms;
+  --dur-hover: 160ms;
+  --dur-enter: 320ms;
+  --dur-exit: 180ms;
+  --dur-scene: 560ms;
+  /* 여러 개가 차례로 들어올 때 하나씩 늦추는 간격 */
+  --stagger: 40ms;
 }
 
 [data-theme-mode='light'] {
@@ -104,5 +120,11 @@
   :root {
     --dur-dice: 0ms;
     --dur-token: 150ms;
+    /* 움직임은 빼고 색과 투명도만 짧게 바뀐다 */
+    --dur-enter: 120ms;
+    --dur-exit: 90ms;
+    --dur-scene: 160ms;
+    --stagger: 0ms;
+    --ease-spring: var(--ease-out);
   }
 }

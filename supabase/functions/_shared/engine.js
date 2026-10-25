@@ -336,7 +336,7 @@ var handlers = {
         next = clearConsequence(next, c.id, "moderate");
       }
     }
-    return { ...next, session: null };
+    return { ...cancelUnfinishedRolls(next), session: null };
   },
   "scene.started": (s, p) => ({
     ...s,
@@ -376,6 +376,7 @@ var handlers = {
       compels: {},
       pendingDamage: {}
     };
+    next = cancelUnfinishedRolls(next);
     for (const c of Object.values(next.characters)) {
       const mild = c.consequences.mild;
       if (mild?.recovering && mild.recoveringSince?.sceneId !== p.sceneId) {
@@ -468,7 +469,7 @@ var handlers = {
       rolls: {
         ...s.rolls,
         [r.id]: (() => {
-          const rolled = applyInvoke(r, {
+          const rolled = applyInvoke(p.side === "active" ? reopenDefense(r) : r, {
             side: p.side,
             aspectId: p.aspectId,
             mode: p.mode,
@@ -503,13 +504,18 @@ var handlers = {
       ...side2,
       modifiers: [...side2.modifiers, { source: `stunt:${p.stuntId}`, value: p.value }]
     };
-    const next = { ...s, rolls: { ...s.rolls, [r.id]: { ...r, [key]: updated } } };
+    const base = p.side === "active" ? reopenDefense(r) : r;
+    const next = { ...s, rolls: { ...s.rolls, [r.id]: { ...base, [key]: updated } } };
     return patchCharacter(next, side2.characterId, (c) => ({
       ...c,
       stunts: c.stunts.map(
         (st) => st.id === p.stuntId && st.kind === "once_per_session" ? { ...st, usedThisSession: true } : st
       )
     }));
+  },
+  "roll.defense_ready": (s, p) => {
+    const r = s.rolls[p.rollId];
+    return r ? { ...s, rolls: { ...s.rolls, [r.id]: { ...r, defenseReady: true } } } : s;
   },
   "roll.finalized": (s, p) => {
     const r = s.rolls[p.rollId];
@@ -765,6 +771,18 @@ function clearConsequence(s, characterId, slot2) {
     aspects: withoutKey(s.aspects, cur.aspectId),
     characters: { ...s.characters, [characterId]: { ...c, consequences } }
   };
+}
+function reopenDefense(r) {
+  return r.defenseReady ? { ...r, defenseReady: false } : r;
+}
+function cancelUnfinishedRolls(s) {
+  const open2 = Object.values(s.rolls).filter(
+    (r) => r.status === "open" || r.status === "awaiting_defense"
+  );
+  if (open2.length === 0 && s.activeRollId === null) return s;
+  const rolls = { ...s.rolls };
+  for (const r of open2) rolls[r.id] = { ...r, status: "cancelled" };
+  return { ...s, rolls, activeRollId: null };
 }
 function dropDamageFor(s, characterId) {
   return {
@@ -20550,7 +20568,9 @@ var CommandSchema = external_exports.discriminatedUnion("type", [
     trouble: text.optional(),
     aspects: external_exports.array(text).max(3).default([]),
     /** 캐릭터 만들기에서 그린 초상화 (공개 Storage URL) */
-    portraitUrl: external_exports.string().url().max(500).optional()
+    portraitUrl: external_exports.string().url().max(500).optional(),
+    /** 캐릭터 만들기에서 저장한 초안의 키. 같은 초안을 두 번 데려오지 않게 한다 */
+    sourceKey: id.optional()
   }),
   cmd("character.update", {
     id,
@@ -20592,6 +20612,7 @@ var CommandSchema = external_exports.discriminatedUnion("type", [
     paidWith: external_exports.enum(["fate_point", "free_invoke"])
   }),
   cmd("stunt.apply", { rollId: id, side: side.default("active"), stuntId: id }),
+  cmd("roll.defense_ready", { rollId: id }),
   cmd("roll.finalize", { rollId: id, reduceForBoost: external_exports.boolean().default(false) }),
   cmd("fate.adjust", { target: id, delta: external_exports.number().int().min(-10).max(10) }),
   cmd("compel.offer", { aspectId: id, targetId: id, text }),
@@ -20739,6 +20760,10 @@ function openRoll(state, rollId) {
   if (r.status !== "open") throw new CommandError("ROLL_NOT_OPEN");
   return r;
 }
+function defenseStillAdjusting(r) {
+  if (!r.defense) throw new CommandError("INVALID", "no defense side");
+  if (r.defenseReady) throw new CommandError("INVALID", "defense already done");
+}
 function fatePointsOf(state, c) {
   return c.isNpc ? state.gmPool : c.fatePoints;
 }
@@ -20803,6 +20828,8 @@ var resolvers = {
     if (a.role === "spectator") throw new CommandError("FORBIDDEN_ROLE");
     if (a.role === "player" && p.isNpc) throw new CommandError("FORBIDDEN_ROLE");
     const ownerId = p.isNpc ? null : a.role === "gm" ? p.ownerId ?? a.userId : a.userId;
+    if (p.sourceKey && Object.values(s.characters).some((c) => c.sourceKey === p.sourceKey))
+      throw new CommandError("DUPLICATE_CHARACTER");
     const id2 = ctx.newId();
     const refresh = refreshFor(p.stunts.length);
     const character = {
@@ -20816,7 +20843,8 @@ var resolvers = {
       fatePoints: p.isNpc ? 0 : refresh,
       stress: [false, false, false],
       consequences: {},
-      ...p.portraitUrl ? { portraitUrl: p.portraitUrl } : {}
+      ...p.portraitUrl ? { portraitUrl: p.portraitUrl } : {},
+      ...p.sourceKey ? { sourceKey: p.sourceKey } : {}
     };
     const mk = (kind, text2) => ({
       id: ctx.newId(),
@@ -20960,6 +20988,7 @@ var resolvers = {
   },
   "invoke.apply": (s, p, a, ctx) => {
     const r = openRoll(s, p.rollId);
+    if (p.side === "defense") defenseStillAdjusting(r);
     const sideState = p.side === "active" ? r.active : r.defense;
     const payer = controlled(s, a, need(sideState, "side").characterId);
     const asp = need(s.aspects[p.aspectId], "aspect");
@@ -20993,6 +21022,7 @@ var resolvers = {
   },
   "stunt.apply": (s, p, a) => {
     const r = openRoll(s, p.rollId);
+    if (p.side === "defense") defenseStillAdjusting(r);
     const sideState = need(p.side === "active" ? r.active : r.defense, "side");
     const c = controlled(s, a, sideState.characterId);
     const stunt2 = need(
@@ -21016,9 +21046,19 @@ var resolvers = {
       })
     );
   },
+  "roll.defense_ready": (s, p, a) => {
+    const r = openRoll(s, p.rollId);
+    defenseStillAdjusting(r);
+    controlled(s, a, need(r.defense, "side").characterId);
+    return one(ev("roll.defense_ready", a, { rollId: r.id }));
+  },
   "roll.finalize": (s, p, a) => {
     const r = openRoll(s, p.rollId);
     controlled(s, a, r.active.characterId);
+    const defender = r.defense ? s.characters[r.defense.characterId] : void 0;
+    const ownSide = defender && (a.role === "gm" ? defender.isNpc : canControl(s, a, defender));
+    if (defender && !r.defenseReady && !ownSide)
+      throw new CommandError("AWAITING_DEFENSE", "defense is still adjusting");
     const { total, shifts, outcome } = resolveRoll(r);
     const rewards = rewardsFor(r.action, outcome, shifts);
     const events = [

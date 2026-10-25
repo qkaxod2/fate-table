@@ -66,6 +66,7 @@ export function JoinForm() {
           </label>
           {error && <p className={styles.error}>{error}</p>}
           <button
+            aria-busy={busy || undefined}
             type="submit"
             className={styles.primary}
             disabled={busy || !online || !code.trim() || !nickname.trim()}

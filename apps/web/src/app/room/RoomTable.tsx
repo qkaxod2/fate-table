@@ -17,6 +17,7 @@ import {
   type Character,
   type Command,
   type InvokeMode,
+  type InvokeSide,
   type Outcome,
   type PaidWith,
   type Reward,
@@ -39,11 +40,14 @@ import {
 } from '@/components/roll/DiceTray';
 import { InvokeTray, type InvokeChoice } from '@/components/roll/InvokeTray';
 import { OutcomeBanner } from '@/components/roll/OutcomeBanner';
+import { SceneFade } from '@/components/scene/SceneFade';
 import { OUTCOME_FACES, pickFace, StageCast } from '@/components/scene/StageCast';
 import { toast, Toaster } from '@/components/ui/Toast';
 import { playSfx, setSfxEnabled, sfxEnabled, sfxForEvent, sfxForOutcome } from '@/fx/sfx';
 import { ApiError } from '@/lib/api';
 import { asset } from '@/lib/asset';
+import { Presence, revealOnNarrow } from '@/lib/motion';
+import { Typewriter } from '@/components/ui/Typewriter';
 import { describe, ERROR_COPY, JUDGE } from '@/lib/copy';
 import { josa } from '@/lib/josa';
 import type { RemoteRoom } from '@/state/remoteRoom';
@@ -205,9 +209,15 @@ export function RoomTable({
   const undone = useMemo(() => undoneSeqs(events), [events]);
   const liveEvents = useMemo(() => events.filter((e) => !undone.has(e.seq)), [events, undone]);
   const rollId = lastRollIdOf(liveEvents);
-  const roll = rollId ? state.rolls[rollId] : undefined;
+  // 장면이 바뀌며 취소된 판정은 무대에 남기지 않는다
+  const roll =
+    rollId && state.rolls[rollId]?.status !== 'cancelled' ? state.rolls[rollId] : undefined;
   const rollKey = roll ? `${roll.id}:${roll.active.animSeed}:${roll.defense?.animSeed ?? ''}` : '';
   const settled = !!roll && settledKey === rollKey;
+  // 좁은 화면: 결과가 나오면 패널이 다시 보이게
+  useEffect(() => {
+    if (settled) revealOnNarrow(document.querySelector('[data-roll-panel]'));
+  }, [settled]);
   const activeChar = roll ? state.characters[roll.active.characterId] : undefined;
   // GM은 NPC 쪽만 대신 고른다. PC는 그 플레이어가 고르고, GM 화면에는 기다림 표시만 뜬다
   const [gmTakeOver, setGmTakeOver] = useState('');
@@ -270,30 +280,32 @@ export function RoomTable({
     setRolling(null);
   };
 
-  const choices: InvokeChoice[] = useMemo(() => {
-    if (!roll || roll.status !== 'open' || !activeChar) return [];
+  // 판정 뒤 조정: 공격자는 active, 방어자는 defense 쪽으로 발동·특기를 쓴다
+  const defenseChar = roll?.defense ? state.characters[roll.defense.characterId] : undefined;
+  const invokeChoices = (side: InvokeSide, payerChar: Character | undefined): InvokeChoice[] => {
+    if (!roll || roll.status !== 'open' || !payerChar) return [];
     const payer = {
-      characterId: activeChar.id,
-      fatePoints: activeChar.isNpc ? state.gmPool : activeChar.fatePoints,
+      characterId: payerChar.id,
+      fatePoints: payerChar.isNpc ? state.gmPool : payerChar.fatePoints,
     };
     const visible = Object.values(state.aspects).filter(
       (a) =>
         !a.hidden &&
         (a.ownerType !== 'character' ||
-          a.ownerId === activeChar.id ||
+          a.ownerId === roll.active.characterId ||
           (roll.defense && a.ownerId === roll.defense.characterId)),
     );
     return visible.map((a): InvokeChoice => {
-      const previews = previewInvokes(roll, [a], payer);
+      const previews = previewInvokes(roll, [a], payer, side);
       const owner = a.ownerType === 'character' ? state.characters[a.ownerId]?.name : undefined;
-      const against = a.ownerType === 'character' && a.ownerId !== activeChar.id;
+      const against = a.ownerType === 'character' && a.ownerId !== payerChar.id;
       const base = { aspect: a, ...(owner ? { owner } : {}), against };
       if (previews.length === 0) {
         const check = canInvoke(
           roll,
           a,
           payer,
-          'active',
+          side,
           a.freeInvokes > 0 ? 'free_invoke' : 'fate_point',
         );
         return {
@@ -305,9 +317,16 @@ export function RoomTable({
       const reroll = previews.find((p) => p.mode === 'reroll');
       return { ...base, ...(bonus ? { bonus } : {}), ...(reroll ? { reroll } : {}) };
     });
-  }, [roll, activeChar, state]);
+  };
+  const choices = invokeChoices('active', activeChar);
+  const defenseChoices = invokeChoices('defense', defenseChar);
 
-  const onInvoke = async (aspectId: string, mode: InvokeMode, paidWith: PaidWith) => {
+  const onInvoke = async (
+    side: InvokeSide,
+    aspectId: string,
+    mode: InvokeMode,
+    paidWith: PaidWith,
+  ) => {
     if (!roll || rerolling) return;
     setSelectedAspect(null);
     if (mode === 'reroll') {
@@ -316,15 +335,23 @@ export function RoomTable({
     }
     await run({
       type: 'invoke.apply',
-      payload: { rollId: roll.id, side: 'active', aspectId, mode, paidWith },
+      payload: { rollId: roll.id, side, aspectId, mode, paidWith },
     });
     setRerolling(false);
+  };
+
+  const onDefenseDone = () => {
+    if (!roll) return;
+    setSelectedAspect(null);
+    void run({ type: 'roll.defense_ready', payload: { rollId: roll.id } });
   };
 
   const [finalizing, setFinalizing] = useState(false);
   const onFinalize = async () => {
     if (!roll || finalizing) return;
     setFinalizing(true);
+    if (defenseAdjusting && !ownDefense && gmClosesDefense)
+      await run({ type: 'roll.defense_ready', payload: { rollId: roll.id } });
     const evs = await run({
       type: 'roll.finalize',
       payload: { rollId: roll.id, reduceForBoost: false },
@@ -384,6 +411,12 @@ export function RoomTable({
   const unusedStunt = myStunts.find(
     (s) => !roll?.active.modifiers.some((m) => m.source === `stunt:${s.id}`),
   );
+  const defenseStunt =
+    roll && roll.status === 'open' && roll.defense && defenseChar
+      ? stuntBonuses(defenseChar, 'defend', roll.defense.approach).find(
+          (s) => !roll.defense!.modifiers.some((m) => m.source === `stunt:${s.id}`),
+        )
+      : undefined;
 
   // 반대 굴림: 내가 움직이는 캐릭터가 공격받았을 때
   const defender =
@@ -391,6 +424,16 @@ export function RoomTable({
       ? state.characters[roll.targetId]
       : undefined;
   const iDefend = mineToAnswer(defender);
+  // 공개 뒤 방어자가 조정 중인지. 공격자는 방어도 자기 쪽(GM이면 NPC)일 때만 기다리지 않는다
+  const defenseAdjusting = !!roll && roll.status === 'open' && !!defenseChar && !roll.defenseReady;
+  const iAdjustDefense = defenseAdjusting && mineToAnswer(defenseChar) && !iRoll;
+  const ownDefense = !!defenseChar && (isGm ? defenseChar.isNpc : canControl(defenseChar));
+  // GM이 "대신 고르기"를 눌렀으면 방어 조정 완료를 대신 보내고 확정한다
+  const gmClosesDefense = isGm && gmTakeOver === roll?.id;
+  const finalizeWait =
+    defenseAdjusting && !ownDefense && !gmClosesDefense
+      ? `${josa(defenseChar!.name, '이/가')} 조정을 마치길 기다리는 중`
+      : undefined;
 
   const result =
     roll && roll.active.dice && (roll.defense?.dice ?? roll.targetId === null)
@@ -416,9 +459,11 @@ export function RoomTable({
   const waitingOn =
     defender && !iDefend
       ? `${josa(defender.name, '이/가')} 막을 방법을 고르는 중…`
-      : damageWait
-        ? `${josa(state.characters[damageWait.targetId]!.name, '이/가')} 피해를 받아내는 중…`
-        : null;
+      : settled && defenseAdjusting && !ownDefense && !iAdjustDefense
+        ? `${josa(defenseChar!.name, '이/가')} 방어를 조정하는 중…`
+        : damageWait
+          ? `${josa(state.characters[damageWait.targetId]!.name, '이/가')} 피해를 받아내는 중…`
+          : null;
 
   // ---------- 효과음 ----------
   const [sfxOn, setSfxOn] = useState(sfxEnabled);
@@ -494,15 +539,16 @@ export function RoomTable({
   const isFolded = !!roll && folded === rollKey && !rolling;
 
   // 나에게 무언가 물어볼 때: 탭 제목에 표시하고 화면 테두리를 한 번 빛낸다
-  const myCall = iDefend
-    ? '방어'
-    : compel && myCompel
-      ? term('compel')
-      : damage
-        ? '피해'
-        : myTurn && !busyRoll
-          ? '내 차례'
-          : null;
+  const myCall =
+    iDefend || (settled && iAdjustDefense)
+      ? '방어'
+      : compel && myCompel
+        ? term('compel')
+        : damage
+          ? '피해'
+          : myTurn && !busyRoll
+            ? '내 차례'
+            : null;
   useEffect(() => {
     const base = `${state.scene?.name ?? name} · 운명점 테이블`;
     document.title = myCall ? `● ${myCall} · ${base}` : base;
@@ -572,14 +618,15 @@ export function RoomTable({
 
   const overlayOpen = !!(prompt || (compel && state.aspects[compel.aspectId]) || damage || iDefend);
 
+  const stageBg = `linear-gradient(180deg, rgb(12 14 26 / .35), rgb(12 14 26 / .92)), url(${state.scene?.backgroundUrl ?? asset('/try/bg.jpg')})`;
+
   return (
     <main
       className={`${tryStyles.stage} ${styles.shell}`}
       data-call={myCall ?? undefined}
-      style={{
-        backgroundImage: `linear-gradient(180deg, rgb(12 14 26 / .35), rgb(12 14 26 / .92)), url(${state.scene?.backgroundUrl ?? asset('/try/bg.jpg')})`,
-      }}
+      style={{ backgroundImage: stageBg }}
     >
+      <SceneFade background={stageBg} />
       <Toaster />
       <header className={tryStyles.top}>
         <div>
@@ -681,7 +728,13 @@ export function RoomTable({
           ) : (
             <p className={styles.empty}>아직 테이블에 캐릭터가 없어요.</p>
           )}
-          {role === 'player' && <BringCharacter run={run} has={controllable.length > 0} />}
+          {role === 'player' && (
+            <BringCharacter
+              run={run}
+              has={controllable.length > 0}
+              brought={new Set(controllable.flatMap((c) => (c.sourceKey ? [c.sourceKey] : [])))}
+            />
+          )}
         </div>
 
         <div className={`${tryStyles.center} ${styles.center}`}>
@@ -731,6 +784,10 @@ export function RoomTable({
                     character: castRight,
                     focus: roll?.status === 'awaiting_defense',
                     face: faceShown ? pickFace(castRight, OUTCOME_FACES[flip[outcome]]) : null,
+                    hit:
+                      !!faceShown &&
+                      roll?.action === 'attack' &&
+                      (outcome === 'success' || outcome === 'style'),
                   },
                 }
               : {})}
@@ -749,7 +806,7 @@ export function RoomTable({
           )}
 
           {rolling && (
-            <div className={tryStyles.rollPanel} data-pending>
+            <div className={tryStyles.rollPanel} data-pending ref={revealOnNarrow}>
               <div className={tryStyles.sides}>
                 <div className={tryStyles.side}>
                   <div className={tryStyles.sideHead}>{rolling.head}</div>
@@ -791,9 +848,14 @@ export function RoomTable({
           )}
 
           {roll && !rolling && !isFolded && (
-            <div className={tryStyles.rollPanel}>
+            <div
+              className={tryStyles.rollPanel}
+              data-continued={quickKey === roll.id || undefined}
+              ref={quickKey === roll.id ? undefined : revealOnNarrow}
+              data-roll-panel
+            >
               <div className={tryStyles.sides}>
-                <div className={tryStyles.side}>
+                <div className={tryStyles.side} data-fx="roll-dice">
                   <div className={tryStyles.sideHead}>
                     {activeChar?.name} · {term(roll.action)} · {term(roll.active.approach)}{' '}
                     {roll.active.rating >= 0 ? '+' : ''}
@@ -812,7 +874,7 @@ export function RoomTable({
                     />
                   )}
                   {roll.active.dice && settled && result && (
-                    <div className={tryStyles.total}>
+                    <div className={tryStyles.total} key={result.total} data-fx="roll-total">
                       {result.total >= 0 ? '+' : ''}
                       {result.total} <small>{formatRating(result.total).split(' ')[0]}</small>
                       {roll.active.modifiers.length > 0 && (
@@ -883,13 +945,46 @@ export function RoomTable({
                       fatePoints={activeChar?.isNpc ? state.gmPool : (activeChar?.fatePoints ?? 0)}
                       selectedId={selectedAspect}
                       onSelect={setSelectedAspect}
-                      onInvoke={(id, mode, paid) => void onInvoke(id, mode, paid)}
+                      onInvoke={(id, mode, paid) => void onInvoke('active', id, mode, paid)}
                       onFinalize={() => void onFinalize()}
+                      {...(finalizeWait ? { waiting: finalizeWait } : {})}
                     />
                   )}
                 </>
               )}
-              {settled && roll.status === 'open' && !iRoll && (
+              {settled && iAdjustDefense && (
+                <>
+                  {defenseStunt && (
+                    <button
+                      type="button"
+                      className={tryStyles.stunt}
+                      disabled={pending}
+                      onClick={() =>
+                        void run({
+                          type: 'stunt.apply',
+                          payload: { rollId: roll.id, side: 'defense', stuntId: defenseStunt.id },
+                        })
+                      }
+                    >
+                      {term('stunt')} 적용: {defenseStunt.text}
+                    </button>
+                  )}
+                  {!overlayOpen && !palette && !help && (
+                    <InvokeTray
+                      choices={defenseChoices}
+                      fatePoints={
+                        defenseChar?.isNpc ? state.gmPool : (defenseChar?.fatePoints ?? 0)
+                      }
+                      selectedId={selectedAspect}
+                      onSelect={setSelectedAspect}
+                      onInvoke={(id, mode, paid) => void onInvoke('defense', id, mode, paid)}
+                      onFinalize={onDefenseDone}
+                      finalizeLabel="방어 조정 완료"
+                    />
+                  )}
+                </>
+              )}
+              {settled && roll.status === 'open' && !iRoll && !iAdjustDefense && (
                 <p className={tryStyles.waiting}>
                   {josa(activeChar?.name ?? '', '이/가')} 결과를 정하는 중…
                 </p>
@@ -897,111 +992,120 @@ export function RoomTable({
             </div>
           )}
 
-          {iDefend && defender && roll && (
-            <div className={tryStyles.overlay}>
-              <div className={tryStyles.prompt}>
-                <div className={tryStyles.promptHead}>
-                  {activeChar?.name}의 {term(roll.action)}! {josa(defender.name, '은/는')} 어떻게
-                  막을까요?
+          <Presence show={!!(iDefend && defender && roll)}>
+            {iDefend && defender && roll && (
+              <div className={tryStyles.overlay}>
+                <div className={tryStyles.prompt}>
+                  <div className={tryStyles.promptHead}>
+                    {activeChar?.name}의 {term(roll.action)}! {josa(defender.name, '은/는')} 어떻게
+                    막을까요?
+                  </div>
+                  <p className={tryStyles.promptHelp}>
+                    {term('defend')}에 쓸 {term('approach')}을 골라요. 두 결과가 동시에 공개돼요.
+                    <br />
+                    <small>키보드 Q W E / A S D</small>
+                  </p>
+                  <DefendGrid
+                    defender={defender}
+                    pending={pending}
+                    onPick={(a) => {
+                      rollSound();
+                      void run({ type: 'roll.defend', payload: { rollId: roll.id, approach: a } });
+                    }}
+                  />
                 </div>
-                <p className={tryStyles.promptHelp}>
-                  {term('defend')}에 쓸 {term('approach')}을 골라요. 두 결과가 동시에 공개돼요.
-                  <br />
-                  <small>키보드 Q W E / A S D</small>
-                </p>
-                <DefendGrid
-                  defender={defender}
-                  pending={pending}
-                  onPick={(a) => {
-                    rollSound();
-                    void run({ type: 'roll.defend', payload: { rollId: roll.id, approach: a } });
-                  }}
+              </div>
+            )}
+          </Presence>
+
+          <Presence show={!!(compel && state.aspects[compel.aspectId])}>
+            {compel && state.aspects[compel.aspectId] && (
+              <div className={tryStyles.overlay}>
+                <CompelOffer
+                  aspect={state.aspects[compel.aspectId] as Aspect}
+                  text={compel.text}
+                  targetId={compel.targetId}
+                  fatePoints={
+                    state.characters[compel.targetId]?.isNpc
+                      ? state.gmPool
+                      : (state.characters[compel.targetId]?.fatePoints ?? 0)
+                  }
+                  onAccept={() =>
+                    void run({
+                      type: 'compel.respond',
+                      payload: { compelId: compel.id, accept: true },
+                    })
+                  }
+                  onRefuse={() =>
+                    void run({
+                      type: 'compel.respond',
+                      payload: { compelId: compel.id, accept: false },
+                    })
+                  }
                 />
               </div>
-            </div>
-          )}
+            )}
+          </Presence>
 
-          {compel && state.aspects[compel.aspectId] && (
-            <div className={tryStyles.overlay}>
-              <CompelOffer
-                aspect={state.aspects[compel.aspectId] as Aspect}
-                text={compel.text}
-                fatePoints={
-                  state.characters[compel.targetId]?.isNpc
-                    ? state.gmPool
-                    : (state.characters[compel.targetId]?.fatePoints ?? 0)
-                }
-                onAccept={() =>
-                  void run({
-                    type: 'compel.respond',
-                    payload: { compelId: compel.id, accept: true },
-                  })
-                }
-                onRefuse={() =>
-                  void run({
-                    type: 'compel.respond',
-                    payload: { compelId: compel.id, accept: false },
-                  })
-                }
-              />
-            </div>
-          )}
-
-          {damage && !compel && (
-            <div className={tryStyles.overlay}>
-              <DamagePrompt
-                damage={damage}
-                character={state.characters[damage.targetId]!}
-                run={run}
-                pending={pending}
-              />
-            </div>
-          )}
-
-          {prompt && (
-            <div className={tryStyles.overlay}>
-              <form
-                className={tryStyles.prompt}
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  submitPrompt();
-                }}
-              >
-                <div className={tryStyles.promptHead}>
-                  {prompt.kind === 'aspect'
-                    ? `새 ${term('aspect')} 이름 짓기 · ${term('freeInvoke')} ${prompt.freeInvokes}`
-                    : `${term('boost')} 이름 짓기`}
-                </div>
-                <p className={tryStyles.promptHelp}>
-                  {prompt.kind === 'aspect'
-                    ? '장면에 새로 생긴 사실을 짧은 문구로 적어요.'
-                    : '한 번 쓰고 사라지는 순간의 기회예요.'}
-                </p>
-                <input
-                  autoFocus
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Escape') setPrompt(null);
-                  }}
-                  maxLength={40}
-                  className={tryStyles.promptInput}
+          <Presence show={!!(damage && !compel)}>
+            {damage && !compel && (
+              <div className={tryStyles.overlay}>
+                <DamagePrompt
+                  damage={damage}
+                  character={state.characters[damage.targetId]!}
+                  run={run}
+                  pending={pending}
                 />
-                <div className={tryStyles.promptButtons}>
-                  <button
-                    type="button"
-                    onClick={() => setPrompt(null)}
-                    className={tryStyles.restart}
-                  >
-                    건너뛰기 <kbd aria-hidden>Esc</kbd>
-                  </button>
-                  <button type="submit" className={tryStyles.promptOk} disabled={!draft.trim()}>
-                    붙이기 <kbd aria-hidden>Enter</kbd>
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
+              </div>
+            )}
+          </Presence>
+
+          <Presence show={!!prompt}>
+            {prompt && (
+              <div className={tryStyles.overlay}>
+                <form
+                  className={tryStyles.prompt}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    submitPrompt();
+                  }}
+                >
+                  <div className={tryStyles.promptHead}>
+                    {prompt.kind === 'aspect'
+                      ? `새 ${term('aspect')} 이름 짓기 · ${term('freeInvoke')} ${prompt.freeInvokes}`
+                      : `${term('boost')} 이름 짓기`}
+                  </div>
+                  <p className={tryStyles.promptHelp}>
+                    {prompt.kind === 'aspect'
+                      ? '장면에 새로 생긴 사실을 짧은 문구로 적어요.'
+                      : '한 번 쓰고 사라지는 순간의 기회예요.'}
+                  </p>
+                  <input
+                    autoFocus
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') setPrompt(null);
+                    }}
+                    maxLength={40}
+                    className={tryStyles.promptInput}
+                  />
+                  <div className={tryStyles.promptButtons}>
+                    <button
+                      type="button"
+                      onClick={() => setPrompt(null)}
+                      className={tryStyles.restart}
+                    >
+                      건너뛰기 <kbd aria-hidden>Esc</kbd>
+                    </button>
+                    <button type="submit" className={tryStyles.promptOk} disabled={!draft.trim()}>
+                      붙이기 <kbd aria-hidden>Enter</kbd>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+          </Presence>
         </div>
 
         <div className={`${tryStyles.right} ${styles.right}`}>
@@ -1150,8 +1254,8 @@ export function RoomTable({
           <div className={tryStyles.dialogue}>
             <div className={tryStyles.speaker}>G M</div>
             {said && (
-              <p className={tryStyles.say} key={said} data-fresh>
-                {said}
+              <p className={tryStyles.say}>
+                <Typewriter text={said} />
               </p>
             )}
             {isGm && <NarrationInput run={run} onEcho={setNarrationEcho} />}
@@ -1159,7 +1263,8 @@ export function RoomTable({
         )}
         {me && (
           <div className={styles.actionWrap}>
-            {controllable.length > 1 && (
+            {/* 굴림이 끝나기 전에는 다음 굴림 준비 줄을 접어서 무대(발동 메뉴)에 높이를 내준다 */}
+            {controllable.length > 1 && !busyRoll && (
               <div className={styles.chipRow} role="radiogroup" aria-label="움직일 캐릭터">
                 <span className={styles.chipLabel}>누구로?</span>
                 {controllable
@@ -1172,7 +1277,6 @@ export function RoomTable({
                       aria-checked={c.id === me.id}
                       className={styles.who}
                       data-turn={c.id === turnId || undefined}
-                      disabled={busyRoll}
                       onClick={() => {
                         setActingId(c.id);
                         setTargetId('');
@@ -1188,7 +1292,7 @@ export function RoomTable({
                   ))}
               </div>
             )}
-            {action && (
+            {action && !busyRoll && (
               <div
                 className={styles.chipRow}
                 aria-label={action === 'attack' ? '공격 대상' : '난이도'}

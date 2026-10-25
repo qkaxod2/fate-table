@@ -13,6 +13,15 @@
   border: 1px solid var(--rule);
   border-radius: var(--r-card);
   background: var(--panel);
+  /* 카드가 살짝 떠오르며 펼쳐진다 */
+  animation: card-in var(--dur-scene) var(--ease-out) backwards;
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
 }
 
 .back {
@@ -86,10 +95,38 @@
   cursor: not-allowed;
 }
 
+.primary:not(:disabled):hover {
+  filter: brightness(1.06);
+  box-shadow: 0 6px 18px rgb(214 182 110 / 0.3);
+}
+
+/* 오류 문구는 고개를 젓듯 짧게 흔들린다 */
 .error {
   margin: 0;
   color: var(--danger);
   font-size: var(--fs-sm);
+  animation: shake 360ms var(--ease-out);
+}
+
+@keyframes shake {
+  25% {
+    translate: -5px 0;
+  }
+  50% {
+    translate: 4px 0;
+  }
+  75% {
+    translate: -2px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    animation-name: none;
+  }
+  .error {
+    animation: none;
+  }
 }
 
 .muted {
@@ -123,6 +160,7 @@
 .roomItem:focus-visible {
   border-color: var(--gold);
   outline: none;
+  translate: 2px 0;
 }
 
 .roomName {
