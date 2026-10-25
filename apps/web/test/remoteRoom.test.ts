@@ -65,8 +65,8 @@ function fakeServer() {
     },
     channel: () => {
       const ch = {
-        on: (_e: string, _f: unknown, cb: typeof onInsert) => {
-          onInsert = cb;
+        on: (kind: string, _f: unknown, cb: typeof onInsert) => {
+          if (kind === 'postgres_changes') onInsert = cb;
           return ch;
         },
         subscribe: (cb: typeof onStatus) => {

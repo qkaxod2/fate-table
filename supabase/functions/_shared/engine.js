@@ -315,6 +315,8 @@ function adjustFate(state, target, delta) {
 }
 var handlers = {
   "room.member_joined": (s, p) => ({ ...s, members: { ...s.members, [p.userId]: p } }),
+  "room.member_left": (s, p) => ({ ...s, members: withoutKey(s.members, p.userId) }),
+  "room.closed": (s) => s,
   "session.started": (s, p) => ({
     ...s,
     session: { id: p.sessionId, number: p.number },
@@ -20702,7 +20704,11 @@ function isGrowth(c, next, size) {
     return raised.every((v, j) => v === after[j]);
   });
 }
-var NOT_UNDOABLE = /* @__PURE__ */ new Set(["room.member_joined"]);
+var NOT_UNDOABLE = /* @__PURE__ */ new Set([
+  "room.member_joined",
+  "room.member_left",
+  "room.closed"
+]);
 var GM_ONLY = /* @__PURE__ */ new Set([
   "session.start",
   "session.end",

@@ -27,6 +27,9 @@ export interface SealedSide {
 /** type → payload. 이벤트 목록은 plan/architecture.md 3절과 1:1 */
 export interface EventPayloads {
   'room.member_joined': { userId: string; nickname: string; role: Role };
+  'room.member_left': { userId: string; nickname: string };
+  /** GM이 방을 터트렸다. 곧 방과 기록이 모두 지워진다 */
+  'room.closed': Record<string, never>;
   'session.started': { sessionId: string; number: number; title?: string };
   'session.ended': { sessionId: string; summary?: string };
   'scene.started': {

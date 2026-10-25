@@ -18,3 +18,9 @@ verify_jwt = true
 
 [functions.account]
 verify_jwt = true
+
+[functions.leave]
+verify_jwt = true
+
+[functions.close]
+verify_jwt = true

@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Loading } from '@/components/ui/Loading';
+import { forgetRoom } from '@/lib/lobby';
 import { ensureSession, getSupabase } from '@/lib/supabase';
 import { RemoteRoom } from '@/state/remoteRoom';
 import styles from '../rooms/lobby.module.css';
@@ -47,7 +48,7 @@ export function RoomLoader() {
   }, [id]);
 
   if (load.kind === 'ready')
-    return <RoomTable room={load.room} name={load.name} inviteCode={load.inviteCode} />;
+    return <OpenRoom room={load.room} name={load.name} inviteCode={load.inviteCode} />;
   return (
     <main className={styles.main}>
       <div className={styles.card}>
@@ -63,6 +64,41 @@ export function RoomLoader() {
             </div>
           </>
         )}
+      </div>
+    </main>
+  );
+}
+
+/** 테이블을 보여 주다가, GM이 방을 터트리면 닫혔다는 안내로 바꾼다 */
+function OpenRoom({
+  room,
+  name,
+  inviteCode,
+}: {
+  room: RemoteRoom;
+  name: string;
+  inviteCode: string;
+}) {
+  const { closed } = useSyncExternalStore(room.subscribe, room.getSnapshot, room.getSnapshot);
+  useEffect(() => {
+    if (!closed) return;
+    room.stop();
+    forgetRoom(room.roomId);
+  }, [closed, room]);
+
+  if (!closed) return <RoomTable room={room} name={name} inviteCode={inviteCode} />;
+  return (
+    <main className={styles.main}>
+      <div className={styles.card} role="alert">
+        <h1 className={styles.title}>방이 닫혔어요</h1>
+        <p className={styles.lead}>
+          {room.actor.role === 'gm' ? '' : 'GM이 '}「{name}」 방을 터트렸어요. 이야기 기록도 함께
+          정리됐어요. 함께해 주셔서 고마워요.
+        </p>
+        <div className={styles.links}>
+          <Link href="/rooms/">내 방 목록</Link>
+          <Link href="/join/">다른 방 참가하기</Link>
+        </div>
       </div>
     </main>
   );

@@ -35,6 +35,8 @@ export interface RoomSnapshot {
   events: RoomEvent[];
   /** 마지막으로 받은 이벤트가 화면을 연 뒤에 일어난 것인지 (연출·효과음 여부) */
   live: boolean;
+  /** GM이 방을 터트렸다 */
+  closed: boolean;
 }
 
 /**
@@ -52,7 +54,7 @@ export class RemoteRoom {
   private filling: Promise<void> | null = null;
   /** 채우는 동안 새 이벤트가 와서 한 번 더 읽어야 하는지 */
   private refill = false;
-  private snapshot: RoomSnapshot = { state: this.state, events: [], live: false };
+  private snapshot: RoomSnapshot = { state: this.state, events: [], live: false, closed: false };
 
   constructor(
     private readonly sb: SupabaseClient,
@@ -81,6 +83,8 @@ export class RemoteRoom {
         { event: 'INSERT', schema: 'public', table: 'events', filter: `room_id=eq.${this.roomId}` },
         (msg) => this.receive([fromRow(msg.new as Row)]),
       )
+      // 방 이벤트를 놓쳐도 닫혔다는 소식은 받도록 서버가 따로 한 번 더 알린다
+      .on('broadcast', { event: 'closed' }, () => this.close())
       .subscribe((status) => {
         // 다시 연결되면 놓친 이벤트를 채운다
         if (status === 'SUBSCRIBED') void this.fill();
@@ -131,7 +135,14 @@ export class RemoteRoom {
     if (changed) this.emit();
   }
 
+  private close() {
+    if (this.snapshot.closed) return;
+    this.snapshot = { ...this.snapshot, closed: true };
+    for (const fn of this.listeners) fn();
+  }
+
   private apply(e: RoomEvent) {
+    if (e.type === 'room.closed') this.snapshot = { ...this.snapshot, closed: true };
     this.events = [...this.events, e];
     // 되돌리기는 지난 이벤트를 빼고 처음부터 다시 접는다
     this.state = e.type === 'event.undone' ? replay(this.events) : reduce(this.state, e);
@@ -186,7 +197,7 @@ export class RemoteRoom {
   }
 
   private emit() {
-    this.snapshot = { state: this.state, events: this.events, live: this.snapshot.live };
+    this.snapshot = { ...this.snapshot, state: this.state, events: this.events };
     for (const fn of this.listeners) fn();
   }
 }

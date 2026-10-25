@@ -76,8 +76,12 @@ function isGrowth(
   });
 }
 
-/** 되돌릴 수 없는 이벤트: 입장 기록 */
-const NOT_UNDOABLE: ReadonlySet<EventType> = new Set<EventType>(['room.member_joined']);
+/** 되돌릴 수 없는 이벤트: 입장·퇴장 기록, 방 닫기 */
+const NOT_UNDOABLE: ReadonlySet<EventType> = new Set<EventType>([
+  'room.member_joined',
+  'room.member_left',
+  'room.closed',
+]);
 
 export interface ResolveResult {
   events: NewEvent[];
