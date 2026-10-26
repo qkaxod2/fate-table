@@ -1,20 +1,32 @@
+/*
+ * 로비 화면들(내 방·방 만들기·참가·계정·내 그림): 책상 위에 놓인 책 한 쪽.
+ * 랜딩 속표지와 같은 문법: 종이 위 먹 글자, 겹줄 표제, 누를 것은 주홍 봉인.
+ */
 .main {
   display: grid;
   place-items: center;
   min-height: 100dvh;
   padding: var(--s-5) var(--s-4);
-  background:
-    radial-gradient(ellipse at 50% 0%, rgb(168 50 28 / 0.14), transparent 60%), var(--night);
+  background: var(--paper-grain), var(--night);
 }
 
+/* 한 쪽짜리 종이. 아래로 몇 장이 더 깔려 있는 것처럼 가장자리를 겹친다 */
 .card {
-  width: min(440px, 100%);
-  padding: var(--s-6) var(--s-5);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-card);
-  background: var(--panel);
-  box-shadow: var(--shadow-panel);
-  /* 카드가 살짝 떠오르며 펼쳐진다 */
+  position: relative;
+  width: min(460px, 100%);
+  padding: 28px 28px 32px;
+  border-radius: 4px;
+  background:
+    linear-gradient(90deg, rgb(60 40 20 / 0.1), transparent 5%), var(--paper-grain), var(--card);
+  color: var(--ink-1);
+  box-shadow:
+    0 1px 0 var(--paper-edge),
+    3px 3px 0 -1px var(--card),
+    3px 3px 0 0 var(--paper-edge),
+    6px 6px 0 -1px var(--card),
+    6px 6px 0 0 var(--paper-edge),
+    0 30px 50px -26px rgb(40 25 10 / 0.6);
+  /* 종이가 살짝 떠오르며 놓인다 */
   animation: card-in var(--dur-scene) var(--ease-out) backwards;
 }
 
@@ -26,20 +38,28 @@
 }
 
 .back {
-  color: var(--faint);
-  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  font: 500 var(--fs-sm) / 1.4 var(--f-ui);
   text-decoration: none;
 }
 
+.back:hover,
+.back:focus-visible {
+  color: var(--seal);
+}
+
+/* 쪽 표제: 함렛 + 아래 겹줄 */
 .title {
-  margin: var(--s-2) 0 var(--s-1);
-  font-family: var(--f-story);
-  font-size: var(--fs-2xl);
+  margin: 12px 0 0;
+  padding-bottom: 10px;
+  border-bottom: 3px double var(--ink-3);
+  font: 800 var(--fs-2xl) / 1.2 var(--f-head);
 }
 
 .lead {
-  margin: 0 0 var(--s-5);
-  color: var(--muted);
+  margin: 12px 0 var(--s-5);
+  color: var(--ink-2);
+  font: 400 var(--fs-md) / 1.7 var(--f-book);
   text-wrap: pretty;
 }
 
@@ -52,64 +72,80 @@
 .field {
   display: flex;
   flex-direction: column;
-  gap: var(--s-2);
-  font-size: var(--fs-sm);
-  font-weight: 600;
+  gap: 6px;
+  color: var(--ink-2);
+  font: 600 var(--fs-sm) / 1.4 var(--f-ui);
 }
 
 .field input {
-  min-height: 44px;
+  min-height: 46px;
   padding: var(--s-2) var(--s-3);
-  border: 1px solid var(--line);
-  border-radius: var(--r-ctl);
+  border: 1px solid var(--paper-edge);
+  border-bottom: 2px solid var(--line-hi);
+  border-radius: 4px 4px 2px 2px;
   background: var(--plate);
-  color: var(--fg);
-  font: inherit;
-  font-family: var(--f-ui);
-  font-weight: 400;
+  color: var(--ink-1);
+  font: 400 var(--fs-md) / 1.4 var(--f-book);
 }
 
 .field input:focus-visible {
-  outline: 2px solid var(--gold);
+  border-bottom-color: var(--seal);
+  outline: 2px solid rgb(168 50 28 / 0.35);
   outline-offset: 1px;
 }
 
+/* 초대 코드: 도장 찍듯 또박또박 */
 .code {
-  font-family: var(--f-num) !important;
-  letter-spacing: 4px;
+  font: 500 22px / 1.2 var(--f-num) !important;
+  letter-spacing: 6px;
   text-transform: uppercase;
 }
 
+.code::placeholder {
+  font: 400 var(--fs-md) / 1.4 var(--f-ui);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.hint {
+  margin: -6px 0 0;
+  color: var(--ink-3);
+  font: 400 var(--fs-xs) / 1.5 var(--f-ui);
+}
+
+/* 1순위 버튼: 랜딩과 같은 주홍 봉인 */
 .primary {
-  padding: var(--s-3);
-  border: 1px solid var(--gold);
-  border-radius: var(--r-ctl);
-  background: linear-gradient(180deg, var(--gold-hi), var(--gold));
-  color: var(--ink);
-  font: inherit;
-  font-family: var(--f-story);
-  font-weight: 700;
-  font-size: var(--fs-lg);
+  padding: 13px var(--s-4);
+  border: 0;
+  border-radius: 999px;
+  background: var(--seal);
+  color: var(--seal-ink);
+  font: 600 var(--fs-lg) / 1.2 var(--f-head);
   cursor: pointer;
+  box-shadow:
+    0 3px 0 #7d2414,
+    0 12px 22px -12px rgb(125 36 20 / 0.7);
 }
 
 .primary:disabled {
-  border-color: var(--line);
   background: var(--plate);
   color: var(--faint);
+  box-shadow: inset 0 0 0 1px var(--line);
   cursor: not-allowed;
 }
 
 .primary:not(:disabled):hover {
-  filter: brightness(1.06);
-  box-shadow: 0 6px 18px rgb(168 50 28 / 0.3);
+  background: var(--seal-hi);
 }
 
-/* 오류 문구는 고개를 젓듯 짧게 흔들린다 */
+/* 오류 문구: 여백의 빨간 줄과 함께, 고개를 젓듯 짧게 흔들린다 */
 .error {
   margin: 0;
+  padding: 6px 10px;
+  border-left: 3px solid var(--danger);
+  background: rgb(179 38 30 / 0.07);
   color: var(--danger);
-  font-size: var(--fs-sm);
+  font: 500 var(--fs-sm) / 1.55 var(--f-ui);
   animation: shake 360ms var(--ease-out);
 }
 
@@ -127,119 +163,189 @@
 
 @media (prefers-reduced-motion: reduce) {
   .card {
-    animation-name: none;
+    animation-name: fade-only;
   }
   .error {
     animation: none;
   }
 }
 
-.muted {
-  color: var(--muted);
-  font-size: var(--fs-sm);
+@keyframes fade-only {
+  from {
+    opacity: 0;
+  }
 }
 
+.muted {
+  color: var(--ink-3);
+  font: 400 var(--fs-sm) / 1.6 var(--f-ui);
+}
+
+.muted a {
+  color: var(--ink-1);
+  text-underline-offset: 3px;
+}
+
+/* 서버가 없을 때·비어 있을 때: 종이 위 작은 쪽지 */
+.note {
+  margin: 0 0 var(--s-4);
+  padding: 12px 14px;
+  border: 1px dashed var(--line-hi);
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--ink-2);
+  font: 400 var(--fs-sm) / 1.6 var(--f-book);
+}
+
+.note strong {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--ink-1);
+  font: 600 var(--fs-md) / 1.4 var(--f-head);
+}
+
+.note a {
+  color: var(--seal);
+  font-family: var(--f-ui);
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+
+/* ---------- 방 목록: 책의 차례처럼 ---------- */
 .roomList {
   display: flex;
   flex-direction: column;
-  gap: var(--s-2);
   margin: 0 0 var(--s-3);
   padding: 0;
+  border-top: 1px solid var(--paper-edge);
   list-style: none;
+}
+
+.roomRow {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  border-bottom: 1px solid var(--paper-edge);
 }
 
 .roomItem {
   display: flex;
-  justify-content: space-between;
+  flex: 1;
   align-items: baseline;
-  gap: var(--s-3);
-  padding: var(--s-3);
-  border: 1px solid var(--line);
-  border-radius: var(--r-ctl);
-  background: var(--plate);
-  color: var(--fg);
+  gap: 10px;
+  min-width: 0;
+  padding: 12px 2px;
+  color: var(--ink-1);
   text-decoration: none;
 }
 
-.roomItem:hover,
 .roomItem:focus-visible {
-  border-color: var(--gold);
-  outline: none;
-  translate: 2px 0;
+  outline-offset: -2px;
 }
 
 .roomName {
   overflow: hidden;
-  font-family: var(--f-story);
-  font-weight: 700;
+  font: 600 var(--fs-lg) / 1.3 var(--f-head);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.roomMeta {
-  flex-shrink: 0;
-  color: var(--muted);
-  font-size: var(--fs-sm);
+.roomItem:hover .roomName,
+.roomItem:focus-visible .roomName {
+  color: var(--seal);
 }
 
+/* 이름과 역할을 잇는 점선 */
+.leader {
+  flex: 1;
+  min-width: 16px;
+  border-bottom: 2px dotted var(--line-hi);
+}
+
+.roomMeta {
+  flex-shrink: 0;
+  color: var(--ink-2);
+  font: 500 var(--fs-sm) / 1.4 var(--f-ui);
+}
+
+.roomMeta[data-role='gm'] {
+  color: var(--seal);
+  font-weight: 700;
+}
+
+.rowAction {
+  flex-shrink: 0;
+  padding: 4px 6px;
+  border: 0;
+  background: none;
+  color: var(--ink-3);
+  font: 500 var(--fs-xs) / 1.4 var(--f-ui);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.rowAction:hover,
+.rowAction:focus-visible {
+  color: var(--danger);
+}
+
+.listHeading {
+  margin: 0 0 6px;
+  color: var(--ink-2);
+  font: 600 var(--fs-sm) / 1.4 var(--f-ui);
+  letter-spacing: var(--label-track);
+}
+
+.more {
+  display: inline-block;
+  margin-bottom: var(--s-2);
+  color: var(--seal);
+  font: 600 var(--fs-sm) / 1.4 var(--f-ui);
+  text-decoration: none;
+}
+
+.more:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---------- 아래쪽 바로가기 ---------- */
 .links {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--s-2);
   margin-top: var(--s-5);
-  font-size: var(--fs-sm);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--paper-edge);
 }
 
 .links a {
-  padding: var(--s-2) var(--s-4);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-token);
-  color: var(--gold-hi);
+  padding: 7px 14px;
+  border: 1px solid var(--line-hi);
+  border-radius: 999px;
+  color: var(--ink-1);
+  font: 600 var(--fs-sm) / 1.3 var(--f-ui);
   text-decoration: none;
 }
 
 .links a:hover,
 .links a:focus-visible {
-  border-color: var(--gold);
-  background: rgb(168 50 28 / 0.1);
-}
-
-.listHeading {
-  margin: 0 0 var(--s-2);
-  font-family: var(--f-story);
-  font-size: var(--fs-lg);
+  border-color: var(--seal);
+  color: var(--seal);
 }
 
 .wide {
   width: min(960px, 100%);
 }
 
-.roomRow {
-  display: flex;
-  align-items: stretch;
-  gap: var(--s-2);
-}
-
-.roomRow .roomItem {
-  flex: 1;
-  min-width: 0;
-}
-
-.rowAction {
-  flex-shrink: 0;
-  padding: 0 var(--s-3);
-  border: 1px solid var(--line);
-  border-radius: var(--r-ctl);
-  background: transparent;
-  color: var(--muted);
-  font: inherit;
-  font-size: var(--fs-sm);
-  cursor: pointer;
-}
-
-.rowAction:hover,
-.rowAction:focus-visible {
-  border-color: var(--danger);
-  color: var(--danger);
-  outline: none;
+@media (max-width: 520px) {
+  .main {
+    place-items: start center;
+    padding: var(--s-3) var(--s-3) var(--s-5);
+  }
+  .card {
+    padding: 22px 18px 26px;
+  }
 }

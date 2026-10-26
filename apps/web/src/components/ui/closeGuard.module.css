@@ -5,13 +5,13 @@
   z-index: 100;
   margin: 0;
   padding: var(--s-2) var(--s-4);
-  border: 1px solid var(--gold);
-  border-radius: var(--r-token);
-  background: var(--panel-s);
-  color: var(--fg);
-  font-size: 14px;
+  border: 1px solid var(--seal);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink-1);
+  font: 500 var(--fs-sm) / 1.5 var(--f-ui);
   white-space: nowrap;
-  box-shadow: 0 12px 30px rgb(0 0 0 / 0.5);
+  box-shadow: 0 14px 30px -12px rgb(40 25 10 / 0.6);
   transform: translateX(-50%);
   pointer-events: none;
   animation: nudge-in 160ms ease-out;
@@ -21,6 +21,18 @@
   from {
     opacity: 0;
     transform: translate(-50%, 6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nudge {
+    animation: nudge-fade 120ms linear;
+  }
+}
+
+@keyframes nudge-fade {
+  from {
+    opacity: 0;
   }
 }
 

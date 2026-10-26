@@ -4,10 +4,22 @@
   gap: var(--s-3);
 }
 
+/* 비어 있을 때: 종이 위 점선 쪽지 */
 .empty {
   margin: 0;
-  color: var(--muted);
-  font-size: var(--fs-sm);
+  padding: 12px 14px;
+  border: 1px dashed var(--line-hi);
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--ink-2);
+  font: 400 var(--fs-sm) / 1.6 var(--f-book);
+}
+
+.empty strong {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--ink-1);
+  font: 600 var(--fs-md) / 1.4 var(--f-head);
 }
 
 .filters {
@@ -17,19 +29,19 @@
 }
 
 .filters button {
-  padding: 2px var(--s-3);
-  border: 1px solid var(--line);
+  padding: 3px var(--s-3);
+  border: 1px solid var(--line-hi);
   border-radius: 999px;
   background: var(--plate);
-  color: var(--fg);
-  font: inherit;
-  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  font: 500 var(--fs-sm) / 1.4 var(--f-ui);
   cursor: pointer;
 }
 
 .filters button[aria-pressed='true'] {
-  border-color: var(--gold);
-  color: var(--gold-hi);
+  border-color: var(--seal);
+  background: var(--seal);
+  color: var(--seal-ink);
 }
 
 .grid {
@@ -59,13 +71,17 @@
   grid-column: span 2;
 }
 
+/* 사진처럼 흰 테두리를 두르고, 스탠딩은 투명이라 옅은 체크무늬 위에 보여 준다 */
 .thumb {
-  border: 1px solid var(--line);
-  border-radius: var(--r-ctl);
   overflow: hidden;
-  /* 스탠딩은 투명이라 체크무늬 위에 보여 준다 */
-  background: repeating-conic-gradient(rgb(255 255 255 / 0.08) 0 25%, transparent 0 50%) 0 0 / 16px
-    16px;
+  border: 5px solid var(--plate);
+  border-radius: 2px;
+  background:
+    repeating-conic-gradient(rgb(36 28 21 / 0.06) 0 25%, transparent 0 50%) 0 0 / 16px 16px,
+    var(--paper);
+  box-shadow:
+    0 0 0 1px var(--paper-edge),
+    0 8px 14px -10px rgb(40 25 10 / 0.6);
 }
 
 .thumb img {
@@ -86,12 +102,12 @@
   flex-wrap: wrap;
   gap: 0 var(--s-2);
   margin: 0;
-  color: var(--muted);
-  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  font: 400 var(--fs-xs) / 1.5 var(--f-ui);
 }
 
 .meta b {
-  color: var(--fg);
+  color: var(--ink-1);
 }
 
 .gallery[data-compact] .meta {
@@ -105,21 +121,33 @@
 
 .actions button {
   flex: 1;
-  padding: 2px var(--s-1);
-  border: 1px solid var(--line);
-  border-radius: var(--r-ctl);
+  padding: 3px var(--s-1);
+  border: 1px solid var(--line-hi);
+  border-radius: 999px;
   background: var(--plate);
-  color: var(--fg);
-  font: inherit;
-  font-size: var(--fs-xs);
+  color: var(--ink-1);
+  font: 500 var(--fs-xs) / 1.4 var(--f-ui);
   cursor: pointer;
 }
 
+.actions button:hover {
+  border-color: var(--ink-2);
+}
+
 .actions .pick {
-  border-color: var(--gold);
-  color: var(--gold-hi);
+  border-color: var(--seal);
+  background: var(--seal);
+  color: var(--seal-ink);
+}
+
+.actions .pick:hover {
+  background: var(--seal-hi);
 }
 
 .actions .del {
   color: var(--danger);
+}
+
+.actions .del:hover {
+  border-color: var(--danger);
 }
