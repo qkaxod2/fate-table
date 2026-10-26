@@ -101,16 +101,18 @@
   z-index: 3;
 }
 
-/* 코치마크: 평소에는 무대 가운데 위, 굴리는 동안에는 왼쪽 위로 비켜 선다 */
+/*
+ * 안내 말풍선의 기본 자리. 말풍선 자체는 body로 꺼내 그리고(가리킬 곳 옆에 붙는다),
+ * 가리킬 곳이 없을 때만 이 칸의 오른쪽 위 모서리에 맞춰 선다: 상대 이름표 아래, 스탠딩 얼굴을 비켜서.
+ */
 .coachSlot {
-  --dock-left: 0px;
-  --dock-width: min(320px, 40cqw);
   position: absolute;
-  top: 112px;
-  left: 20px;
+  top: 272px;
+  right: 28px;
   z-index: 6;
-  width: min(460px, 50cqw);
+  width: min(352px, 44cqw);
   height: 0;
+  pointer-events: none;
 }
 
 /* 판정 카드 자리 */
@@ -374,11 +376,6 @@
   .stage .hero {
     left: -8%;
   }
-  .coachSlot {
-    right: 12px;
-    left: 12px;
-    width: auto;
-  }
   .table {
     overflow-x: auto;
     padding: 12px 4px 4px;
@@ -404,13 +401,6 @@
   .foePlate {
     top: 16px;
     right: 12px;
-  }
-  .coachSlot {
-    top: 132px;
-  }
-  .coachSlot [data-coach] {
-    max-height: 300px;
-    overflow-y: auto;
   }
   .stage[data-roll] .foePlate {
     display: none;

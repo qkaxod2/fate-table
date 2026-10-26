@@ -1,125 +1,326 @@
-.coach {
+/*
+ * 튜토리얼 안내 말풍선 (design-system.md 20절 "무대와 책").
+ * 책에서 떼어 낸 작은 쪽지: 불투명 종이, 먹 글자, 주홍은 누를 것에만.
+ * 대상 옆에 붙고 꼬리가 대상을 가리킨다. 좁은 화면에서는 아래 시트가 된다.
+ */
+
+/* 놓인 자리 표식 (가리킬 곳이 없을 때 이 자리를 기준으로 선다) */
+.home {
   position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.coach {
+  --tail: 50%;
+  position: fixed;
   top: 0;
-  left: 50%;
-  z-index: 5;
-  width: min(560px, 100%);
-  padding: var(--s-4) var(--s-5) var(--s-5);
-  border: 1px solid var(--gold);
-  border-radius: var(--r-card);
-  background: var(--card);
+  left: 0;
+  z-index: 70;
+  box-sizing: border-box;
+  width: min(352px, calc(100vw - 24px));
+  border: 1px solid var(--paper-edge);
+  border-radius: 8px;
+  background: var(--paper-grain), var(--card);
   color: var(--ink-1);
   box-shadow:
-    0 0 0 4px rgb(168 50 28 / 0.25),
-    0 18px 48px rgb(0 0 0 / 0.55);
-  transform: translateX(-50%);
-  animation: coach-in 320ms var(--ease) both;
+    0 1px 0 var(--paper-edge),
+    0 22px 44px -16px rgb(20 12 4 / 0.7),
+    0 2px 6px rgb(20 12 4 / 0.25);
+  opacity: 0;
+}
+
+/* 내용은 안에서 스크롤한다 (꼬리는 바깥으로 빠져 있어야 해서 겉은 자르지 않는다) */
+.inner {
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px 16px 14px;
+  border-radius: inherit;
+}
+
+/* 자리를 잰 뒤에만 보인다 (처음 한 프레임 엉뚱한 곳에 번쩍이지 않게) */
+.coach[data-ready] {
+  opacity: 1;
+  animation: coach-in var(--dur-enter) var(--ease-out) backwards;
+}
+
+/* 대상 쪽에서 살짝 밀려 나온다 */
+.coach[data-side='left'] {
+  --from: 8px 0;
+}
+.coach[data-side='right'] {
+  --from: -8px 0;
+}
+.coach[data-side='top'] {
+  --from: 0 8px;
+}
+.coach[data-side='bottom'] {
+  --from: 0 -8px;
 }
 
 @keyframes coach-in {
   from {
     opacity: 0;
-    transform: translate(-50%, -8px);
+    translate: var(--from, 0 6px);
   }
 }
 
+/* Presence가 사라지는 중이라고 알려 주면 흐려지며 물러난다 */
+.coach[data-leaving-coach] {
+  animation: coach-out var(--dur-exit) var(--ease-in) forwards;
+  pointer-events: none;
+}
+
+@keyframes coach-out {
+  to {
+    opacity: 0;
+    translate: 0 4px;
+  }
+}
+
+/* ---------- 꼬리 ---------- */
+.tail {
+  display: none;
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--paper-edge);
+  background: var(--card);
+  rotate: 45deg;
+}
+
+.coach[data-side='left'] .tail,
+.coach[data-side='right'] .tail,
+.coach[data-side='top'] .tail,
+.coach[data-side='bottom'] .tail {
+  display: block;
+}
+
+.coach[data-side='left'] .tail {
+  top: calc(var(--tail) - 7px);
+  right: -8px;
+  border-bottom-color: transparent;
+  border-left-color: transparent;
+}
+.coach[data-side='right'] .tail {
+  top: calc(var(--tail) - 7px);
+  left: -8px;
+  border-top-color: transparent;
+  border-right-color: transparent;
+}
+.coach[data-side='top'] .tail {
+  bottom: -8px;
+  left: calc(var(--tail) - 7px);
+  border-top-color: transparent;
+  border-left-color: transparent;
+}
+.coach[data-side='bottom'] .tail {
+  top: -8px;
+  left: calc(var(--tail) - 7px);
+  border-right-color: transparent;
+  border-bottom-color: transparent;
+}
+
+/* ---------- 머리줄: 장 이름 · 진행 · 건너뛰기 ---------- */
 .head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--s-3);
-  margin-bottom: var(--s-2);
+  gap: 4px 10px;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--paper-edge);
+}
+
+.chapter {
+  color: var(--seal);
+  font: 600 var(--fs-xs) / 1.4 var(--f-ui);
+  letter-spacing: var(--label-track);
+  white-space: nowrap;
 }
 
 .step {
+  color: var(--ink-3);
+  font: 500 var(--fs-xs) / 1.4 var(--f-fig);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
-  font: var(--label-font);
-  letter-spacing: var(--label-track);
-  color: #8a6a24;
 }
 
 .dots {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .dots li {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
+  border: 1px solid var(--ink-3);
   border-radius: 50%;
-  background: rgb(27 23 51 / 0.18);
 }
 
 .dots li[data-on] {
-  background: var(--gold);
+  border-color: var(--seal);
+  background: var(--seal);
 }
 
 .hide {
   margin-left: auto;
+  padding: 2px 0;
   border: 0;
   background: none;
-  color: rgb(27 23 51 / 0.6);
-  font: inherit;
-  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  font: 500 var(--fs-xs) / 1.4 var(--f-ui);
   text-decoration: underline;
+  text-underline-offset: 3px;
   cursor: pointer;
 }
 
+.hide:hover {
+  color: var(--ink-1);
+}
+
+/* ---------- 본문 ---------- */
 .title {
-  margin: 0 0 var(--s-1);
-  font-family: var(--f-story);
-  font-size: var(--fs-xl);
-  font-weight: 700;
-  line-height: 1.35;
+  margin: 0 0 4px;
+  font: 600 18px / 1.35 var(--f-head);
+  text-wrap: balance;
 }
 
 .body {
   margin: 0;
-  font-size: var(--fs-md);
-  line-height: 1.6;
+  color: var(--ink-1);
+  font: 400 15px / 1.65 var(--f-book);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+/* 지금 할 일·쉬운 예시: 여백에 펜으로 적은 메모 */
+.example {
+  margin: 8px 0 0;
+  padding-left: 10px;
+  border-left: 2px solid var(--rule-red);
+  color: var(--pen);
+  font: 400 21px / 1.25 var(--f-hand);
+  word-break: keep-all;
+}
+
+.more {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 8px 0 0;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: var(--seal);
+  font: 600 var(--fs-xs) / 1.4 var(--f-ui);
+  cursor: pointer;
+}
+
+.more:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.points {
+  margin: 6px 0 0;
+  padding: 8px 10px 8px 26px;
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--ink-2);
+  font: 400 var(--fs-sm) / 1.6 var(--f-book);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.points[hidden] {
+  display: none;
+}
+
+.points li + li {
+  margin-top: 4px;
+}
+
+.points li::marker {
+  color: var(--seal);
+}
+
+/* ---------- 아래줄: 단축키 · 다음 ---------- */
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
 }
 
 .keys {
-  margin: var(--s-3) 0 0;
-  font-size: var(--fs-sm);
-  color: rgb(27 23 51 / 0.7);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 0 auto 0 0;
+  color: var(--ink-3);
+  font: 500 var(--fs-xs) / 1.4 var(--f-ui);
+}
+
+.keys span {
+  margin-right: 2px;
 }
 
 .keys kbd {
   display: inline-block;
-  min-width: 24px;
-  margin-left: 4px;
-  padding: 1px 6px;
-  border: 1px solid rgb(27 23 51 / 0.3);
+  min-width: 22px;
+  padding: 0 5px;
+  border: 1px solid var(--line-hi);
   border-bottom-width: 2px;
   border-radius: 4px;
-  background: #fff;
-  font-family: var(--f-num);
-  font-size: var(--fs-xs);
+  background: var(--plate);
+  color: var(--ink-1);
+  font: 500 12px / 1.6 var(--f-num);
   text-align: center;
 }
 
-/* 다 끝냈을 때: 테두리가 금빛으로 한 번 번지고 점들이 차례로 반짝인다 */
-.coach[data-clear] {
-  animation:
-    coach-in 320ms var(--ease) both,
-    coach-clear 1.2s var(--ease-out) 200ms;
+.next {
+  flex-shrink: 0;
+  padding: 7px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--seal);
+  color: var(--seal-ink);
+  font: 600 var(--fs-sm) / 1.3 var(--f-ui);
+  cursor: pointer;
+  box-shadow: 0 2px 0 #7d2414;
+  animation: next-nudge 1.8s ease-in-out 1.4s infinite;
 }
 
-@keyframes coach-clear {
-  30% {
+.next:hover {
+  background: var(--seal-hi);
+}
+
+@keyframes next-nudge {
+  0%,
+  70%,
+  100% {
     box-shadow:
-      0 0 0 10px rgb(200 72 44 / 0.35),
-      0 0 60px rgb(200 72 44 / 0.5),
-      0 18px 48px rgb(0 0 0 / 0.55);
+      0 2px 0 #7d2414,
+      0 0 0 0 rgb(168 50 28 / 0.45);
+  }
+  85% {
+    box-shadow:
+      0 2px 0 #7d2414,
+      0 0 0 7px rgb(168 50 28 / 0);
   }
 }
 
+/* ---------- 다 끝냈을 때 ---------- */
 .coach[data-clear] .step {
-  color: #b07d12;
-  font-weight: 700;
+  color: var(--seal);
+  font-weight: 800;
 }
 
 .coach[data-clear] .dots li {
@@ -143,77 +344,122 @@
     scale: 0.2;
   }
   50% {
-    scale: 1.6;
+    scale: 1.8;
   }
 }
 
 .links {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--s-2);
-  margin: var(--s-3) 0 0;
+  gap: 8px;
+  margin: 12px 0 0;
 }
 
 .links a {
-  padding: var(--s-1) var(--s-3);
-  border: 1px solid #8a6a24;
-  border-radius: var(--r-ctl);
+  padding: 7px 14px;
+  border: 1px solid var(--ink-3);
+  border-radius: 999px;
   color: var(--ink-1);
-  font-weight: 700;
+  font: 600 var(--fs-sm) / 1.3 var(--f-ui);
   text-decoration: none;
 }
 
 .links a:first-child {
-  border-color: var(--gold);
-  background: linear-gradient(180deg, var(--gold-hi), var(--gold));
+  border-color: var(--seal);
+  background: var(--seal);
+  color: var(--seal-ink);
 }
 
 .links a:hover {
-  box-shadow: 0 4px 14px rgb(138 106 36 / 0.35);
-  translate: 0 -1px;
+  border-color: var(--seal);
+}
+
+/* ---------- 좁은 화면: 아래에서 올라오는 시트 ---------- */
+.coach[data-sheet] {
+  top: auto;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: auto;
+  border-width: 1px 0 0;
+  border-radius: 14px 14px 0 0;
+  box-shadow: 0 -12px 32px -10px rgb(20 12 4 / 0.55);
+}
+
+.coach[data-sheet][data-ready] {
+  animation-name: sheet-in;
+}
+
+@keyframes sheet-in {
+  from {
+    translate: 0 100%;
+  }
+}
+
+.coach[data-sheet] .inner {
+  max-height: 35dvh;
+  padding: 18px 16px 0;
+}
+
+/* 손잡이 */
+.coach[data-sheet]::before {
+  content: '';
+  position: absolute;
+  top: 7px;
+  left: 50%;
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line-hi);
+  translate: -50% 0;
+}
+
+.coach[data-sheet] .title {
+  font-size: 17px;
+}
+
+.coach[data-sheet] .body {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.coach[data-sheet] .example {
+  font-size: 20px;
+}
+
+/* 시트 안에서 스크롤해도 다음 버튼은 늘 손 닿는 곳에 */
+.coach[data-sheet] .foot {
+  position: sticky;
+  bottom: 0;
+  margin: 8px -16px 0;
+  padding: 8px 16px calc(10px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--paper-edge);
+  background: var(--card);
+}
+
+.coach[data-sheet] .inner:not(:has(.next)) {
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+}
+
+/* 휴대폰에는 키보드가 없으니 단축키는 숨긴다 (다음 버튼도 없으면 아래줄째) */
+@media (max-width: 760px) {
+  .keys,
+  .foot:not(:has(.next)) {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .coach,
-  .coach[data-clear],
+  .coach[data-ready],
+  .coach[data-sheet][data-ready] {
+    animation: coach-fade var(--dur-enter) linear backwards;
+  }
+  .coach[data-leaving-coach] {
+    animation: coach-fade-out var(--dur-exit) linear forwards;
+  }
+  .next,
   .coach[data-clear] .dots li {
     animation: none;
-  }
-}
-
-/* 굴림 패널이 가운데를 쓰는 동안: 주사위를 가리지 않게 왼쪽 파티 칸 위로 비켜 선다 */
-@media (min-width: 1101px) {
-  .coach[data-dock] {
-    /* 파티 칸 폭(--left-col)에 딱 맞춰서 굴림 패널의 발동 카드를 덮지 않는다 */
-    left: var(--dock-left, calc(-1 * var(--left-col, 280px) - var(--s-4)));
-    width: var(--dock-width, var(--left-col, 280px));
-    max-height: calc(100dvh - 150px);
-    overflow-y: auto;
-    padding: var(--s-3) var(--s-4) var(--s-4);
-    transform: none;
-    animation-name: coach-fade;
-  }
-  .coach[data-dock] .head {
-    flex-wrap: wrap;
-  }
-  .coach[data-dock] .title {
-    font-size: var(--fs-lg);
-  }
-  .coach[data-dock] .body,
-  .coach[data-dock] .points,
-  .coach[data-dock] .example {
-    font-size: var(--fs-sm);
-  }
-}
-
-@media (max-width: 1100px) {
-  .coach {
-    position: sticky;
-    top: var(--s-2);
-    left: auto;
-    transform: none;
-    margin: 0 auto var(--s-4);
-    animation-name: coach-fade;
   }
 }
 
@@ -223,104 +469,8 @@
   }
 }
 
-.chapter {
-  white-space: nowrap;
-  padding: 2px var(--s-2);
-  border-radius: var(--r-ctl);
-  background: var(--ink);
-  color: var(--gold-hi);
-  font-size: var(--fs-xs);
-  font-weight: 700;
-  letter-spacing: 1px;
-}
-
-.points {
-  margin: var(--s-2) 0 0;
-  padding: 0 0 0 1.2em;
-  font-size: var(--fs-sm);
-  line-height: 1.6;
-}
-
-.points li + li {
-  margin-top: 2px;
-}
-
-.points li::marker {
-  color: #b07d12;
-}
-
-.example {
-  margin: var(--s-3) 0 0;
-  padding: var(--s-2) var(--s-3);
-  border-left: 3px solid var(--gold);
-  border-radius: 0 var(--r-ctl) var(--r-ctl) 0;
-  background: rgb(168 50 28 / 0.18);
-  font-size: var(--fs-md);
-  font-weight: 700;
-  line-height: 1.55;
-}
-
-.nextRow {
-  display: flex;
-  justify-content: flex-end;
-  margin: var(--s-4) 0 0;
-}
-
-.next {
-  padding: var(--s-2) var(--s-5);
-  border: 1px solid var(--gold);
-  border-radius: var(--r-ctl);
-  background: linear-gradient(180deg, var(--gold-hi), var(--gold));
-  color: var(--ink);
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-  animation: next-nudge 1.6s ease-in-out 1.2s infinite;
-}
-
-.next:hover {
-  box-shadow: 0 4px 14px rgb(138 106 36 / 0.35);
-  translate: 0 -1px;
-}
-
-@keyframes next-nudge {
-  0%,
-  70%,
-  100% {
-    box-shadow: 0 0 0 0 rgb(168 50 28 / 0.6);
-  }
-  85% {
-    box-shadow: 0 0 0 8px rgb(168 50 28 / 0);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .next {
-    animation: none;
-  }
-}
-
-/* 좁은 화면 단계별 진행: 화면 맨 위에 붙여 두고, 눌러야 할 곳은 아래쪽에 보이게 한다 */
-@media (max-width: 1100px) {
-  .coach[data-pinned] {
-    position: fixed;
-    top: var(--s-2);
-    right: var(--s-2);
-    left: var(--s-2);
-    z-index: 70;
-    width: auto;
-    max-height: 46dvh;
-    margin: 0;
-    overflow-y: auto;
-    padding: var(--s-3) var(--s-4) var(--s-4);
-  }
-  .coach[data-pinned] .title {
-    font-size: var(--fs-lg);
-  }
-}
-
-@media (max-width: 760px) {
-  .keys {
-    display: none;
+@keyframes coach-fade-out {
+  to {
+    opacity: 0;
   }
 }

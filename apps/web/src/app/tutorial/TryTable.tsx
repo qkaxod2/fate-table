@@ -75,23 +75,23 @@ const LESSONS: Action[] = ['overcome', 'create_advantage', 'attack', 'defend'];
 const LESSON_COPY: Record<Action, { title: string; body: string; example: string }> = {
   overcome: {
     title: `${term('overcome')}: 앞을 막는 걸 넘어서요`,
-    body: '길을 막는 장애물이 있을 때 써요. 불길을 뚫고 달리기, 잠긴 문 열기, 무너지는 다리 건너기 같은 일이죠. 정해진 난이도보다 높게 나오면 넘어간 거예요.',
-    example: `지금은 불길이 앞을 막고 있어요. 빛나는 1번 "${term('overcome')}" 버튼을 눌러 불길을 뚫어 봐요.`,
+    body: '길을 막는 장애물을 넘을 때 써요. 불길 뚫고 달리기, 잠긴 문 열기 같은 일이죠. 정해진 난이도보다 높게 나오면 넘어가요.',
+    example: `불길이 앞을 막고 있어요. 1번 ${josa(`"${term('overcome')}"`, '을/를')} 눌러 뚫어 봐요.`,
   },
   create_advantage: {
     title: `${term('create_advantage')}: 싸우기 전에 판을 깔아요`,
-    body: `바로 이기기보다 나에게 유리한 상황을 준비하는 행동이에요. 성공하면 장면에 새 ${term('aspect')}을 붙이고, 그 ${term('aspect')}을 공짜로 쓸 수 있는 ${term('freeInvoke')}도 받아요. 예: 연기로 두목의 눈을 가리기, 바닥에 기름 뿌리기, 상대의 빈틈 찾아내기.`,
-    example: `2번 "${term('create_advantage')}" 버튼을 눌러 두목과 싸우기 전에 판을 깔아 봐요.`,
+    body: `바로 이기기보다 유리한 상황을 준비해요. 성공하면 장면에 새 ${term('aspect')}을 붙이고, 그걸 공짜로 쓸 ${term('freeInvoke')}도 받아요. 연기로 두목의 눈을 가리는 것처럼요.`,
+    example: `2번 ${josa(`"${term('create_advantage')}"`, '을/를')} 눌러 싸우기 전에 판을 깔아 봐요.`,
   },
   attack: {
     title: `${term('attack')}: 상대에게 피해를 줘요`,
-    body: `상대를 쓰러뜨리거나 물러나게 하려 할 때 써요. 상대도 ${term('defend')}로 맞서 굴리고, 내가 이긴 만큼 피해가 들어가요. 피해를 버티지 못하면 상대는 장면에서 탈락해요.`,
-    example: `3번 "${term('attack')}" 버튼을 눌러 다락 위의 두목을 노려 봐요.`,
+    body: `상대를 쓰러뜨리거나 물러나게 할 때 써요. 상대도 ${term('defend')}로 맞서 굴리고, 내가 이긴 만큼 피해가 들어가요. 못 버티면 상대는 장면에서 탈락해요.`,
+    example: `3번 ${josa(`"${term('attack')}"`, '을/를')} 눌러 다락 위 두목을 노려 봐요.`,
   },
   defend: {
     title: `${term('defend')}: 공격이나 방해를 막아요`,
-    body: '누가 나를 공격하거나 방해하면, 내 차례가 아니어도 바로 굴려서 맞서요. 이기면 피해를 피하고, 지면 진 차이만큼 피해를 받아요.',
-    example: `두목이 도끼를 치켜들었어요! 4번 "${term('defend')}" 버튼을 눌러 막아요.`,
+    body: '누가 나를 공격하거나 방해하면, 내 차례가 아니어도 바로 굴려 맞서요. 이기면 피해를 피하고, 지면 진 차이만큼 받아요.',
+    example: `두목이 도끼를 치켜들었어요! 4번 ${josa(`"${term('defend')}"`, '을/를')} 눌러 막아요.`,
   },
 };
 
@@ -147,6 +147,8 @@ interface Note {
   title: string;
   body: string;
   points?: string[];
+  /** "더 보기" 대신 쓸 문구 */
+  moreLabel?: string;
   example?: string;
   open?: string[];
   ring?: string;
@@ -607,7 +609,8 @@ function Table({
         title: `방금 결과: ${OUTCOME_COPY[a][o]}`,
         body: OUTCOME_DETAIL[a][o],
         points: OUTCOME_ORDER.filter((x) => x !== o).map((x) => OUTCOME_DETAIL[a][x]),
-        example: `결과가 달랐다면 위처럼 됐을 거예요. ${josa(term(a), '은/는')} 결과마다 이렇게 달라요.`,
+        moreLabel: '다른 결과였다면?',
+        example: `${josa(term(a), '은/는')} 결과마다 이렇게 달라져요.`,
         label: '알겠어요',
       },
     ];
@@ -630,12 +633,13 @@ function Table({
         chapter,
         step: 4,
         title: `${term('freeInvoke')}은 공짜 +2예요`,
-        body: `방금 이름 지은 ${term('aspect')}이 무대 아래 장면 카드로 붙었어요. 카드의 ●가 ${term('freeInvoke')}이에요. ${josa(term('fatePoint'), '을/를')} 내지 않고 이 ${term('aspect')}을 ${term('invoke')}할 수 있어요.`,
+        body: `방금 이름 지은 ${term('aspect')}이 무대 아래 장면 카드로 붙었어요. 카드의 ●만큼 ${josa(term('fatePoint'), '을/를')} 내지 않고 ${term('invoke')}할 수 있어요.`,
         points: [
           `${term('freeInvoke')}은 이 ${term('aspect')}을 만든 나나 동료가 쓸 수 있어요.`,
           `다 써도 ${term('aspect')}은 장면에 남아요. 그 뒤로는 ${josa(term('fatePoint'), '을/를')} 내고 ${term('invoke')}하면 돼요.`,
           `이게 ${term('create_advantage')}의 핵심이에요. 미리 준비해 두고, 결정적인 공격에서 공짜로 꺼내 써요.`,
         ],
+        moreLabel: '누가, 언제 쓰나요?',
         open: ['[data-tour="aspects"]'],
         ring: '[data-tour="aspects"]',
         example: `다음 장 ${term('attack')}에서 굴림이 아쉬우면 이 카드를 써 봐요.`,
@@ -652,12 +656,13 @@ function Table({
           `${term('consequence')}: ${term('mild')}은 피해 2, ${term('moderate')}은 4, ${term('severe')}는 6까지 막아 줘요. 대신 상처가 ${term('aspect')}으로 남고, 때린 쪽은 그 상처에 ${term('freeInvoke')} 하나를 얻어요.`,
           '칸과 후유증을 다 써도 못 막으면 탈락해요. 장면에서 빠지고, 어떻게 쓰러지는지는 이긴 쪽이 정해요.',
         ],
+        moreLabel: `${term('stress')} · ${term('consequence')} 다시 보기`,
         open: ['[data-tour="party"]'],
         ring: '[data-tour="party"]',
         example:
           a === 'defend'
-            ? `책 위쪽 내 기록지에서 ${term('stress')} 칸과 ${term('consequence')} 줄을 확인해 봐요.`
-            : `${josa(BOSS.name, '은/는')} 이미 ${term('moderate')}·${term('severe')}가 차 있어서, 남은 건 ${term('stress')} 3번 칸과 ${term('mild')}뿐이에요. 조금만 더!`,
+            ? `내 기록지에서 ${term('stress')} 칸과 ${term('consequence')} 줄을 확인해 봐요.`
+            : `${josa(BOSS.name, '은/는')} 이제 ${term('stress')} 3번 칸과 ${term('mild')}만 남았어요. 조금만 더!`,
         label: '다음',
       });
     if (a === 'overcome')
@@ -665,12 +670,14 @@ function Table({
         chapter: '막간 · 강요',
         step: 4,
         title: `GM이 ${josa(term('trouble'), '을/를')} 건드려요: ${term('compel')}`,
-        body: `${josa(term('compel'), '은/는')} GM이 "네 ${term('trouble')} 때문에 일이 이렇게 꼬여"라고 제안하는 거예요. 서사형 TRPG에서는 캐릭터가 곤란해질수록 이야기가 재미있어져요.`,
+        body: `GM이 "네 ${term('trouble')} 때문에 일이 이렇게 꼬여"라고 제안하는 거예요. 받아들이면 곤란해지는 대신 ${term('fatePoint')} 1개를 받아요.`,
         points: [
           `받아들이면: 일이 꼬이는 대신 ${term('fatePoint')} 1개를 받아요. ${josa(term('fatePoint'), '을/를')} 모으는 가장 기본적인 방법이에요.`,
           `거절하면: ${term('fatePoint')} 1개를 내고 꼬이는 걸 막아요.`,
           `모은 ${josa(term('fatePoint'), '으로/로')} 나중에 ${josa(term('aspect'), '을/를')} ${term('invoke')}해 +2를 받아요. 꼬였다가 멋지게 뒤집는 흐름이죠.`,
+          '서사형 TRPG에서는 캐릭터가 곤란해질수록 이야기가 재미있어져요.',
         ],
+        moreLabel: '받으면? 거절하면?',
         example: '처음이라면 받아들이는 걸 추천해요.',
         label: '강요받아 보기',
         then: offerCompel,
@@ -706,8 +713,8 @@ function Table({
         ? `${term('fatePoint')} +1! 이야기가 꼬였어요`
         : `${term('fatePoint')} 1개를 내고 막았어요`,
       body: accepted
-        ? `내 기록지의 운명점 동전이 하나 늘었어요. 이렇게 모은 ${josa(term('fatePoint'), '으로/로')} 굴림이 아쉬울 때 ${josa(term('aspect'), '을/를')} ${term('invoke')}해요. 곤란해진 대가로 나중에 멋지게 뒤집을 힘을 얻은 거예요.`
-        : `거절은 언제든 할 수 있지만 ${josa(term('fatePoint'), '이/가')} 들어요. 이야기가 재미있어진다면 받아들이는 편이 대개 더 이득이에요.`,
+        ? `기록지의 동전이 하나 늘었어요. 곤란해진 대가로, 나중에 ${josa(term('aspect'), '을/를')} ${term('invoke')}해 멋지게 뒤집을 힘을 얻은 거예요.`
+        : `거절은 언제든 할 수 있지만 ${josa(term('fatePoint'), '이/가')} 들어요. 이야기가 재미있어진다면 받아들이는 편이 대개 이득이에요.`,
       open: ['[data-tour="party"]'],
       ring: '[data-tour="party"]',
       example: `${josa(term('fatePoint'), '은/는')} ${josa(term('compel'), '을/를')} 받아들여서 얻고, ${term('invoke')}할 때 써요.`,
@@ -798,17 +805,18 @@ function Table({
       const oppName = other ? (state.characters[other.characterId]?.name ?? '상대') : '난이도';
       const summary = `내 ${sign(m.total)} − ${oppName} ${sign(opp)} = 차이 ${sign(shifts)} → ${OUTCOME_COPY[action][outcome]}`;
       return {
-        title: '결과를 하나씩 읽어 볼까요?',
-        body: `${term('fateDice')}는 ＋를 +1, ○를 0, －를 −1로 읽어요. 내 쪽부터 차례로 더해 봐요.`,
+        title: '결과를 읽어 볼까요?',
+        body: summary,
         points: [
+          `${term('fateDice')}는 ＋를 +1, ○를 0, －를 −1로 읽어요.`,
           `나: ${m.line}`,
           o ? `${oppName}: ${o.line}` : `넘어야 할 난이도: ${formatRating(opp)}`,
-          summary,
           OUTCOME_RULE,
         ],
+        moreLabel: '한 줄씩 계산해 보기',
         example:
           side === 'active' && (outcome === 'fail' || outcome === 'tie')
-            ? `${OUTCOME_DETAIL[action][outcome]} 하지만 아직 확정 전이라 ${josa(term('aspect'), '을/를')} ${term('invoke')}해 바꿀 수 있어요.`
+            ? `하지만 아직 확정 전이라 ${josa(term('aspect'), '을/를')} ${term('invoke')}해 바꿀 수 있어요.`
             : OUTCOME_DETAIL[action][outcome],
         summary,
       };
@@ -847,6 +855,7 @@ function Table({
           title: note.title,
           body: note.body,
           ...(note.points ? { points: note.points } : {}),
+          ...(note.moreLabel ? { moreLabel: note.moreLabel } : {}),
           ...(note.example ? { example: note.example } : {}),
           next: {
             label: note.label ?? '다음',
@@ -869,8 +878,10 @@ function Table({
             total,
             chapter: '시작하기',
             title: '서사형 TRPG는 다 같이 이야기를 만드는 놀이예요',
-            body: '진행을 맡은 GM이 장면을 들려주면, 나는 내 캐릭터가 무엇을 할지 말로 정해요. 결과가 뻔하지 않을 때만 주사위를 굴려서 어떻게 될지 정하고요. 이기고 지는 것보다, 멋진 장면이 나오면 그게 성공이에요.',
-            example: '정답은 없어요. "내 캐릭터라면 어떻게 할까?"만 생각하면 돼요.',
+            body: 'GM이 장면을 들려주면, 나는 내 캐릭터가 뭘 할지 말로 정해요. 결과가 뻔하지 않을 때만 주사위를 굴려요.',
+            example: '정답은 없어요. "내 캐릭터라면 어떻게 할까?"만 떠올리면 돼요.',
+            points: ['이기고 지는 것보다, 멋진 장면이 나오면 그게 성공이에요.'],
+            moreLabel: '이기면 끝인가요?',
             next: next('알겠어요'),
           },
         },
@@ -881,9 +892,10 @@ function Table({
             step: 2,
             total,
             chapter: '시작하기',
-            title: '오른쪽 책의 본문이 GM의 목소리예요',
-            body: '이야기는 언제나 GM의 묘사에서 시작해요. 지금은 불타는 곡물 창고에 도적들이 튀어나왔고, 다락 위에서는 도적 두목이 도끼를 들고 웃고 있어요. 두목은 앞서 동료들과 싸우다 이미 크게 다친 상태예요.',
-            example: 'GM의 말을 읽고 "지금 무슨 상황이지?"를 먼저 떠올려요.',
+            title: '책 본문이 GM의 목소리예요',
+            body: '불타는 곡물 창고에 도적들이 튀어나왔어요. 다락 위에선 도적 두목이 도끼를 들고 웃고 있고요. 두목은 앞서 동료들과 싸우다 이미 크게 다쳤어요.',
+            example: 'GM의 말을 읽고 "지금 무슨 상황이지?"부터 떠올려요.',
+            points: ['이야기는 언제나 GM의 묘사에서 시작해요. 새 장면이 열리면 여기부터 읽어요.'],
             next: next('읽었어요'),
           },
         },
@@ -895,8 +907,8 @@ function Table({
             total,
             chapter: '시작하기',
             title: `이게 내 캐릭터, ${josa(pick.name, '이에요/예요')}`,
-            body: `이 게임에서는 캐릭터를 숫자보다 짧은 문구로 표현해요. ${pick.name}의 ${term('high')}은 "${pick.create.highConcept}", ${term('trouble')}은 ${josa(`"${pick.create.trouble}"`, '이에요/예요')}. 이렇게 캐릭터나 장면을 설명하는 문구를 ${term('aspect')}이라고 불러요.`,
-            example: `${term('trouble')}은 일을 꼬이게 만들지만, 그 대신 ${josa(term('fatePoint'), '을/를')} 받을 기회가 돼요.`,
+            body: `캐릭터는 숫자보다 짧은 문구로 표현해요. ${term('high')}은 "${pick.create.highConcept}", ${term('trouble')}은 ${josa(`"${pick.create.trouble}"`, '이에요/예요')}. 이런 문구를 ${term('aspect')}이라고 불러요.`,
+            example: `${term('trouble')}은 일을 꼬이게 하지만, 대신 ${josa(term('fatePoint'), '을/를')} 받을 기회예요.`,
             next: next('다음'),
           },
         },
@@ -907,14 +919,15 @@ function Table({
             step: 4,
             total,
             chapter: '시작하기',
-            title: `${term('aspect')}은 이 이야기에서 "사실"이에요`,
-            body: `무대 아래 카드가 지금 장면의 ${term('aspect')}이에요. "사방에 번지는 불길"처럼 지금 이 장면에서 실제로 벌어지고 있는 일이죠. 굴림이 아쉬울 때 ${term('fatePoint')} 1개를 내고 ${term('aspect')}을 ${term('invoke')}하면, 그 사실을 근거로 +2를 받아요.`,
+            title: `${term('aspect')}은 이 이야기의 "사실"이에요`,
+            body: `무대 아래 카드가 지금 장면의 ${term('aspect')}이에요. 굴림이 아쉬울 때 ${term('fatePoint')} 1개를 내고 ${term('aspect')}을 ${term('invoke')}하면, 그 사실을 근거로 +2를 받아요.`,
+            example: '쓸 때는 이유를 붙여요. "불길을 등지면 두목이 못 다가와!"처럼요.',
             points: [
               `캐릭터 ${term('aspect')}: 어떤 사람인지 보여 주는 ${term('high')}, 발목을 잡는 ${term('trouble')}, 그 밖의 특징`,
-              `장면 ${term('aspect')}: 지금 장소와 상황을 설명하는 사실이에요. 누구나 쓸 수 있어요`,
+              `장면 ${term('aspect')}: 지금 장소와 상황에 대한 사실이에요. 누구나 쓸 수 있어요`,
               `${term('aspect')}은 좋게도 나쁘게도 쓰여요. 불길은 나를 막기도, 적을 막기도 하죠`,
             ],
-            example: `${term('aspect')}을 쓸 때는 꼭 이야기로 이유를 붙여요. "불길을 등지면 두목이 다가오기 어려워!"처럼요.`,
+            moreLabel: `${term('aspect')}의 종류`,
             next: next('다음'),
           },
         },
@@ -926,15 +939,16 @@ function Table({
             total,
             chapter: '시작하기',
             title: `${josa(term('fatePoint'), '은/는')} 딱 ${me.fatePoints}개뿐이에요`,
-            body: `오른쪽 기록지의 동전 하나가 ${term('fatePoint')} 1개예요(설명에서는 ◆로 적어요). ${josa(term('aspect'), '을/를')} ${term('invoke')}할 때마다 1개씩 없어지고, 저절로 다시 생기지 않아요. 아무 때나 쓰면 금방 바닥나요.`,
+            body: `기록지의 동전 하나가 ${term('fatePoint')} 1개예요(설명에서는 ◆로 적어요). ${term('invoke')}할 때마다 1개씩 줄고, 저절로 다시 생기지 않아요.`,
+            example: '그래서 진짜 중요한 굴림에만 써요.',
             points: [
               `쓸 때: ${term('invoke')}할 때마다 1개, ${josa(term('compel'), '을/를')} 거절할 때 1개`,
-              `다 쓰고 나면 ${josa(term('fatePoint'), '으로/로')}는 더 ${term('invoke')}할 수 없어요. 그때는 ${term('freeInvoke')}만 쓸 수 있어요.`,
+              `다 쓰면 ${josa(term('fatePoint'), '으로/로')}는 더 ${term('invoke')}할 수 없어요. 그때는 ${term('freeInvoke')}만 쓸 수 있어요.`,
               `얻는 법: GM의 ${josa(term('compel'), '을/를')} 받아들여 일이 꼬이게 두면 1개, 상대가 내 ${josa(term('aspect'), '을/를')} 나에게 불리하게 쓰면 1개`,
               `세션이 새로 시작되면 ${pick.name}의 ${josa(term('fatePoint'), '은/는')} ${me.refresh}개까지 다시 채워져요. 이걸 ${term('refresh')}이라고 해요. 이미 그보다 많으면 줄지 않아요.`,
+              '곤란을 받아들여 모으고, 결정적인 순간에 써서 뒤집는 게 기본 흐름이에요.',
             ],
-            example:
-              '그래서 진짜 중요한 굴림에만 써요. 곤란을 받아들여 모으고, 결정적인 순간에 써서 뒤집는 게 기본 흐름이에요.',
+            moreLabel: '쓰는 법 · 얻는 법',
             next: next('다음'),
           },
         },
@@ -946,14 +960,16 @@ function Table({
             total,
             chapter: '시작하기',
             title: `카드의 ●는 ${josa(term('freeInvoke'), '이에요/예요')}`,
-            body: `${term('freeInvoke')}은 ${josa(term('fatePoint'), '을/를')} 내지 않고 그 ${term('aspect')}을 한 번 ${term('invoke')}하는 거예요. ${term('aspect')} 카드에 붙은 ● 하나가 ${term('freeInvoke')} 1회예요.`,
+            body: `${josa(term('fatePoint'), '을/를')} 내지 않고 그 ${term('aspect')}을 한 번 ${term('invoke')}하는 거예요. 카드에 붙은 ● 하나가 1회예요.`,
+            example: `${BOSS.name}의 상처 카드에 꽂힌 핀(●)은 동료들이 남긴 거라 내가 공짜로 쓸 수 있어요.`,
             points: [
-              `쓰는 법: ${term('fatePoint')} ◆ 대신 카드의 ● 하나를 지우면, 똑같이 +2를 받거나 다시 굴릴 수 있어요.`,
+              `쓰는 법: ◆ 대신 카드의 ● 하나를 지우면, 똑같이 +2를 받거나 다시 굴릴 수 있어요.`,
               `●를 다 써도 ${term('aspect')}은 남아요. 그 뒤로는 ◆를 내야 ${term('invoke')}할 수 있어요.`,
-              `얻는 법: ${term('create_advantage')}에 성공하면 ● 1개, 대성공하면 2개가 붙어요. 상대에게 ${josa(term('consequence'), '을/를')} 남겨도 1개를 얻어요. ${term('boost')}에는 처음부터 ●가 1개 붙어 있고, 쓰면 카드째 사라져요.`,
-              `무대 아래 ${BOSS.name}의 상처 카드에 꽂힌 핀(●)이 보이죠? 앞서 동료들이 남긴 ${term('freeInvoke')}이라 내가 공짜로 쓸 수 있어요.`,
+              `얻는 법: ${term('create_advantage')}에 성공하면 ● 1개, 대성공하면 2개가 붙어요. 상대에게 ${josa(term('consequence'), '을/를')} 남겨도 1개를 얻어요.`,
+              `${term('boost')}에는 처음부터 ●가 1개 붙어 있고, 쓰면 카드째 사라져요.`,
+              `${josa(term('fatePoint'), '은/는')} 개수가 정해져 있으니, ●가 있는 카드부터 쓰는 게 이득이에요.`,
             ],
-            example: `${josa(term('fatePoint'), '은/는')} 개수가 정해져 있으니, ●가 있는 카드부터 쓰는 게 이득이에요.`,
+            moreLabel: '쓰는 법 · 얻는 법',
             next: next('다음'),
           },
         },
@@ -964,11 +980,10 @@ function Table({
             total,
             chapter: '시작하기',
             title: `숫자에는 이름이 있어요: ${term('ladder')}`,
-            body: `모든 수치와 결과에는 ${term('ladder')}의 이름이 붙어요. "+3"보다 "양호"가 더 이야기 같죠.`,
-            points: [8, 6, 5, 4, 3, 2, 1, 0, -1, -2]
-              .filter((n) => n <= 5)
-              .map((n) => `${sign(n)} ${LADDER_LABELS[n]}`),
-            example: `${josa(pick.name, '은/는')} ${term(best[0])} 수치가 ${sign(best[1])} ${josa(LADDER_LABELS[best[1]] ?? '', '으로/로')} 가장 높아요. 일반인은 +0 평범, 전문가는 +3 양호 정도예요.`,
+            body: `모든 수치와 결과에 이름이 붙어요. "+3"보다 "양호"가 더 이야기 같죠.`,
+            example: `${josa(pick.name, '은/는')} ${term(best[0])} 수치가 ${sign(best[1])} ${josa(LADDER_LABELS[best[1]] ?? '', '으로/로')} 가장 높아요. 보통 사람은 +0 평범, 전문가는 +3 양호쯤이에요.`,
+            points: [5, 4, 3, 2, 1, 0, -1, -2].map((n) => `${sign(n)} ${LADDER_LABELS[n]}`),
+            moreLabel: `${term('ladder')} 전체 보기`,
             next: next('다음'),
           },
         },
@@ -980,13 +995,15 @@ function Table({
             total,
             chapter: '시작하기',
             title: `다치면 이렇게 버텨요: ${term('stress')}와 ${term('consequence')}`,
-            body: `공격을 막지 못하면 진 차이만큼 피해가 들어와요. 피해를 받았다고 바로 쓰러지지는 않아요. 아래 두 가지로 버텨요.`,
+            body: `공격을 못 막으면 진 차이만큼 피해가 들어와요. 바로 쓰러지진 않아요. 먼저 ${term('stress')} 칸으로, 모자라면 ${josa(term('consequence'), '으로/로')} 버텨요.`,
+            example: `무대 위 ${BOSS.name}의 이름표를 봐요. 칸이 거의 다 차 있어서 한두 번만 제대로 맞히면 쓰러져요.`,
             points: [
               `${term('stress')}(1·2·3번 칸): 숨이 차거나 살짝 긁힌 정도예요. 받은 피해와 같거나 더 큰 번호의 빈 칸 하나를 채우면 그 피해를 통째로 막아요. 장면이 끝나면 다시 비워져요.`,
               `${term('consequence')}(${term('mild')} 2 · ${term('moderate')} 4 · ${term('severe')} 6): 진짜로 다친 거예요. 적힌 숫자만큼 피해를 막아 주는 대신, "삐끗한 발목"처럼 다친 곳이 ${term('aspect')}으로 남아요. 상대는 그 ${josa(term('consequence'), '을/를')} 공짜로 한 번 이용할 수 있어요.`,
               `둘 다 써도 못 막으면 탈락이에요. 그 전에 스스로 ${term('concede')}하면 어떻게 물러날지 내가 정하고, ${josa(term('fatePoint'), '을/를')} 받아요.`,
+              `${josa(BOSS.name, '은/는')} ${term('stress')} 1·2번 칸과 ${term('moderate')}·${term('severe')}가 이미 차 있어요.`,
             ],
-            example: `무대 오른쪽 위 ${BOSS.name}의 이름표를 봐요. ${term('stress')} 1·2번 칸과 ${term('moderate')}·${term('severe')}가 이미 차 있어서, 한두 번만 제대로 맞히면 쓰러져요.`,
+            moreLabel: `${term('stress')} · ${term('consequence')} 자세히`,
             next: next('다음'),
           },
         },
@@ -998,8 +1015,8 @@ function Table({
             total,
             chapter: '시작하기',
             title: '할 수 있는 일은 딱 네 가지 행동이에요',
-            body: `무엇을 하든 오른쪽 아래 목차의 네 행동 중 하나로 표현해요. 1 ${term('overcome')}, 2 ${term('create_advantage')}, 3 ${term('attack')}, 4 ${term('defend')}. 이제 1번부터 하나씩 직접 해 볼게요.`,
-            example: '장마다 지금 눌러야 할 곳만 빛나요. 빛나는 곳만 따라 누르면 돼요.',
+            body: `뭘 하든 책 아래 목차의 네 행동 중 하나로 해요. 1 ${term('overcome')}, 2 ${term('create_advantage')}, 3 ${term('attack')}, 4 ${term('defend')}. 이제 1번부터 하나씩 해 볼게요.`,
+            example: '장마다 지금 누를 곳만 빛나요. 빛나는 곳만 따라 누르면 돼요.',
             next: { label: '1장 시작', onClick: () => setLesson('overcome') },
           },
         },
@@ -1068,6 +1085,7 @@ function Table({
           focus: 'action',
           ...copy,
           points: OUTCOME_ORDER.map((x) => OUTCOME_DETAIL[lesson][x]),
+          moreLabel: '결과마다 어떻게 되나요?',
           keys: [String(n + 1)],
         },
       };
@@ -1083,11 +1101,12 @@ function Table({
           step: 2,
           focus: 'approach',
           title: `어떻게 할지 ${term('approach')}을 골라요`,
-          body: `같은 행동도 방식은 여러 가지예요. 내 캐릭터라면 어떻게 할지 골라요. 고른 ${term('approach')}의 수치가 그대로 주사위에 더해져요.`,
+          body: `같은 행동도 방식은 여러 가지예요. 내 캐릭터답게 골라요. 고른 ${term('approach')}의 수치가 그대로 주사위에 더해져요.`,
           points: APPROACHES.map(
             (a) =>
               `${term(a)} ${sign(me.approaches[a])}(${LADDER_LABELS[me.approaches[a]]}): ${tip(a)}`,
           ),
+          moreLabel: `${term('approach')} 여섯 가지 보기`,
           example: stunt?.bonus
             ? `"${stunt.text}"라는 ${josa(term('stunt'), '이/가')} 있어요. ${josa(term(stunt.bonus.approach), '을/를')} 고르면 +2를 더 받아요.`
             : `${josa(pick.name, '은/는')} ${term(best[0])} 수치가 ${josa(`+${best[1]}`, '으로/로')} 가장 높아요. 이야기에 어울리는 방식을 골라도 괜찮아요.`,
@@ -1106,13 +1125,14 @@ function Table({
           step: 3,
           focus: 'roll',
           title: '주사위를 굴려요',
-          body: `${term('fateDice')} 4개를 굴려요. 내 결과는 주사위 합에 ${term('approach')} 수치를 더한 값이에요. 상황에 맞는 ${josa(term('stunt'), '이/가')} 있으면 +2가 더 붙어요.`,
+          body: `${term('fateDice')} 4개를 굴려 합에 ${term('approach')} 수치를 더해요. 맞는 ${josa(term('stunt'), '이/가')} 있으면 +2가 더 붙어요.`,
           points: [
             '주사위 한 개에는 ＋, ○, － 면이 있고, 셋이 나올 확률은 똑같아요. ＋는 +1, ○는 0, －는 −1로 쳐요.',
             `4개를 더하면 −4에서 +4 사이인데, 대부분 −1~+1 근처에서 나와요. 그래서 ${term('approach')} 수치가 가장 중요해요.`,
             '튜토리얼에서는 결과 네 가지를 골고루 겪어 보도록 주사위 눈이 미리 정해져 있어요. 자유 진행부터는 진짜로 굴려요.',
             `내 결과와 상대 수치의 점수 차를 ${term('shifts')}라고 해요. ${OUTCOME_RULE}`,
           ],
+          moreLabel: '주사위는 어떻게 읽나요?',
           example:
             lesson === 'defend'
               ? `${boss.name}의 주사위는 이미 굴러갔지만 가려져 있어요. 내가 굴리면 둘 다 공개돼요.`
@@ -1178,7 +1198,7 @@ function Table({
           ...base,
           step: 4,
           title: `아쉬워요! ${term('aspect')}을 ${term('invoke')}해서 뒤집어요`,
-          body: `확정하기 전이라면 결과를 바꿀 수 있어요. 지금 상황에 어울리는 ${term('aspect')} 카드를 누르고 "+2"를 골라요. 비용은 ${term('fatePoint')} ◆ 1개예요. 카드에 ●가 있으면 ${term('freeInvoke')}이라 공짜예요.`,
+          body: `확정 전이라면 결과를 바꿀 수 있어요. 어울리는 ${term('aspect')} 카드를 누르고 "+2"를 골라요. ${term('fatePoint')} ◆ 1개가 들고, ●가 있는 카드는 공짜예요.`,
           points: [
             `+2: 합계에 2를 더해요. 실패가 동점이나 성공으로 바뀔 수 있어요.`,
             `다시 굴리기: 주사위 4개를 새로 굴려요. 더 나빠질 수도 있으니 주사위가 아주 나쁠 때 써요.`,
@@ -1187,9 +1207,10 @@ function Table({
             `한 번 굴릴 때 같은 ${term('aspect')}은 한 번만 쓸 수 있어요. 다른 ${term('aspect')}이라면 여러 개를 함께 써도 돼요.`,
             `상대 캐릭터의 ${term('aspect')}을 ◆로 쓰면 상대가 ◆ 1개를 받아요.`,
           ],
+          moreLabel: `${term('invoke')} 규칙 자세히`,
           example: freeCard
             ? `"${freeCard.aspect.text}"에 ● ${freeCard.aspect.freeInvokes}개가 있어요. 이걸 쓰면 ${josa(term('fatePoint'), '을/를')} 아낄 수 있어요!`
-            : `지금 ●가 있는 카드는 없어요. ${josa(term('fatePoint'), '을/를')} 1개 써서 "${josa(scenePlay?.text ?? '사방에 번지는 불길', '을/를')} 이용하면 할 수 있어!"처럼 이야기로 근거를 대 봐요.`,
+            : `●가 있는 카드는 없어요. ◆ 1개를 내고 "${josa(scenePlay?.text ?? '사방에 번지는 불길', '을/를')} 이용하면 할 수 있어!"처럼 이유를 대 봐요.`,
           keys: ['F'],
         },
       };
@@ -1216,9 +1237,15 @@ function Table({
         title: `${OUTCOME_COPY[lesson][o]}`,
         body:
           o === 'fail' || o === 'tie'
-            ? `괜찮아요. 서사형 TRPG에서는 실패도 이야기가 돼요. 일이 꼬이면서 장면이 더 재미있어지거든요. ${OUTCOME_DETAIL[lesson][o]}`
+            ? `괜찮아요, 실패도 이야기가 돼요. ${OUTCOME_DETAIL[lesson][o]}`
             : OUTCOME_DETAIL[lesson][o],
-        points: [explainRoll(roll, 'active').summary],
+        points: [
+          explainRoll(roll, 'active').summary,
+          ...(o === 'fail' || o === 'tie'
+            ? ['서사형 TRPG에서는 일이 꼬일수록 장면이 더 재미있어져요.']
+            : []),
+        ],
+        moreLabel: '이번 굴림 다시 보기',
         example: `"이대로 확정"을 눌러요. ${after[lesson]}`,
         keys: ['Enter'],
       },
@@ -1345,13 +1372,15 @@ function Table({
               <CoachMark
                 key={coach.clear ? 'clear' : `${lesson}:${introStep}:${coach.step}:${coach.title}`}
                 coach={coach}
-                hideLabel={guided ? '건너뛰고 자유롭게 하기' : '안내 숨기기'}
-                // 파티 칸을 가리키는 안내는 그 위를 덮지 않게 가운데 위에 둔다
-                dock={
-                  (!!roll || previewing) &&
-                  !coach.clear &&
-                  !tour?.open.includes('[data-tour="party"]')
+                hideLabel={guided ? '튜토리얼 건너뛰기' : '안내 숨기기'}
+                // 말풍선은 눌러야 할 곳(고리) 옆에 붙는다. 고리가 없으면 밝게 남긴 곳, 그것도 없으면
+                // 굴림 중엔 판정 카드 옆, 아니면 무대 위 기본 자리에 선다
+                anchor={
+                  tour?.ring ??
+                  tour?.open[0] ??
+                  (roll && !coach.clear ? '[data-roll-panel]' : undefined)
                 }
+                avoid={tour?.open}
                 pinned={guided}
                 onHide={() => {
                   if (!guided) return setCoachHidden(true);
