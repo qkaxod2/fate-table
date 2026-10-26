@@ -146,7 +146,7 @@ button.card:not(:disabled):hover::after {
   color: var(--seal);
 }
 
-/* 무료 발동 ●: 카드에 꽂힌 놋쇠 핀 */
+/* 무료 발동 ●: 카드에 꽂힌 빨간 압정 (놋쇠 동전인 운명점과 헷갈리지 않게 색을 나눈다) */
 .free {
   display: inline-flex;
   gap: 4px;
@@ -157,7 +157,7 @@ button.card:not(:disabled):hover::after {
   width: 15px;
   height: 15px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, var(--brass-hi), var(--brass) 60%, #7a5a22);
+  background: radial-gradient(circle at 35% 35%, #f08a74, var(--seal) 60%, #5e170b);
   box-shadow: 0 1px 2px rgb(0 0 0 / 0.45);
 }
 

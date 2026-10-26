@@ -630,7 +630,7 @@ function Table({
         chapter,
         step: 4,
         title: `${term('freeInvoke')}은 공짜 +2예요`,
-        body: `방금 이름 지은 ${term('aspect')}이 오른쪽 장면 카드에 붙었어요. 카드의 ●가 ${term('freeInvoke')}이에요. ${josa(term('fatePoint'), '을/를')} 내지 않고 이 ${term('aspect')}을 ${term('invoke')}할 수 있어요.`,
+        body: `방금 이름 지은 ${term('aspect')}이 무대 아래 장면 카드로 붙었어요. 카드의 ●가 ${term('freeInvoke')}이에요. ${josa(term('fatePoint'), '을/를')} 내지 않고 이 ${term('aspect')}을 ${term('invoke')}할 수 있어요.`,
         points: [
           `${term('freeInvoke')}은 이 ${term('aspect')}을 만든 나나 동료가 쓸 수 있어요.`,
           `다 써도 ${term('aspect')}은 장면에 남아요. 그 뒤로는 ${josa(term('fatePoint'), '을/를')} 내고 ${term('invoke')}하면 돼요.`,
@@ -656,7 +656,7 @@ function Table({
         ring: '[data-tour="party"]',
         example:
           a === 'defend'
-            ? `왼쪽 파티 칸에서 내 ${term('stress')} 칸을 확인해 봐요.`
+            ? `책 위쪽 내 기록지에서 ${term('stress')} 칸과 ${term('consequence')} 줄을 확인해 봐요.`
             : `${josa(BOSS.name, '은/는')} 이미 ${term('moderate')}·${term('severe')}가 차 있어서, 남은 건 ${term('stress')} 3번 칸과 ${term('mild')}뿐이에요. 조금만 더!`,
         label: '다음',
       });
@@ -706,7 +706,7 @@ function Table({
         ? `${term('fatePoint')} +1! 이야기가 꼬였어요`
         : `${term('fatePoint')} 1개를 내고 막았어요`,
       body: accepted
-        ? `왼쪽 파티 칸의 ◆가 하나 늘었어요. 이렇게 모은 ${josa(term('fatePoint'), '으로/로')} 굴림이 아쉬울 때 ${josa(term('aspect'), '을/를')} ${term('invoke')}해요. 곤란해진 대가로 나중에 멋지게 뒤집을 힘을 얻은 거예요.`
+        ? `내 기록지의 운명점 동전이 하나 늘었어요. 이렇게 모은 ${josa(term('fatePoint'), '으로/로')} 굴림이 아쉬울 때 ${josa(term('aspect'), '을/를')} ${term('invoke')}해요. 곤란해진 대가로 나중에 멋지게 뒤집을 힘을 얻은 거예요.`
         : `거절은 언제든 할 수 있지만 ${josa(term('fatePoint'), '이/가')} 들어요. 이야기가 재미있어진다면 받아들이는 편이 대개 더 이득이에요.`,
       open: ['[data-tour="party"]'],
       ring: '[data-tour="party"]',
@@ -860,7 +860,7 @@ function Table({
 
     if (lesson === 'intro') {
       const next = (label: string) => ({ label, onClick: () => setIntroStep((n) => n + 1) });
-      const total = 8;
+      const total = 9;
       const steps: Tour[] = [
         {
           open: [],
@@ -881,7 +881,7 @@ function Table({
             step: 2,
             total,
             chapter: '시작하기',
-            title: '아래 대사창이 GM의 목소리예요',
+            title: '오른쪽 책의 본문이 GM의 목소리예요',
             body: '이야기는 언제나 GM의 묘사에서 시작해요. 지금은 불타는 곡물 창고에 도적들이 튀어나왔고, 다락 위에서는 도적 두목이 도끼를 들고 웃고 있어요. 두목은 앞서 동료들과 싸우다 이미 크게 다친 상태예요.',
             example: 'GM의 말을 읽고 "지금 무슨 상황이지?"를 먼저 떠올려요.',
             next: next('읽었어요'),
@@ -908,7 +908,7 @@ function Table({
             total,
             chapter: '시작하기',
             title: `${term('aspect')}은 이 이야기에서 "사실"이에요`,
-            body: `오른쪽 카드가 지금 장면의 ${term('aspect')}이에요. "사방에 번지는 불길"처럼 지금 이 장면에서 실제로 벌어지고 있는 일이죠. 굴림이 아쉬울 때 ${term('fatePoint')} 1개를 내고 ${term('aspect')}을 ${term('invoke')}하면, 그 사실을 근거로 +2를 받아요.`,
+            body: `무대 아래 카드가 지금 장면의 ${term('aspect')}이에요. "사방에 번지는 불길"처럼 지금 이 장면에서 실제로 벌어지고 있는 일이죠. 굴림이 아쉬울 때 ${term('fatePoint')} 1개를 내고 ${term('aspect')}을 ${term('invoke')}하면, 그 사실을 근거로 +2를 받아요.`,
             points: [
               `캐릭터 ${term('aspect')}: 어떤 사람인지 보여 주는 ${term('high')}, 발목을 잡는 ${term('trouble')}, 그 밖의 특징`,
               `장면 ${term('aspect')}: 지금 장소와 상황을 설명하는 사실이에요. 누구나 쓸 수 있어요`,
@@ -926,7 +926,7 @@ function Table({
             total,
             chapter: '시작하기',
             title: `${josa(term('fatePoint'), '은/는')} 딱 ${me.fatePoints}개뿐이에요`,
-            body: `왼쪽 파티 칸의 ◆ 하나가 ${term('fatePoint')} 1개예요. ${josa(term('aspect'), '을/를')} ${term('invoke')}할 때마다 1개씩 없어지고, 저절로 다시 생기지 않아요. 아무 때나 쓰면 금방 바닥나요.`,
+            body: `오른쪽 기록지의 동전 하나가 ${term('fatePoint')} 1개예요(설명에서는 ◆로 적어요). ${josa(term('aspect'), '을/를')} ${term('invoke')}할 때마다 1개씩 없어지고, 저절로 다시 생기지 않아요. 아무 때나 쓰면 금방 바닥나요.`,
             points: [
               `쓸 때: ${term('invoke')}할 때마다 1개, ${josa(term('compel'), '을/를')} 거절할 때 1개`,
               `다 쓰고 나면 ${josa(term('fatePoint'), '으로/로')}는 더 ${term('invoke')}할 수 없어요. 그때는 ${term('freeInvoke')}만 쓸 수 있어요.`,
@@ -951,7 +951,7 @@ function Table({
               `쓰는 법: ${term('fatePoint')} ◆ 대신 카드의 ● 하나를 지우면, 똑같이 +2를 받거나 다시 굴릴 수 있어요.`,
               `●를 다 써도 ${term('aspect')}은 남아요. 그 뒤로는 ◆를 내야 ${term('invoke')}할 수 있어요.`,
               `얻는 법: ${term('create_advantage')}에 성공하면 ● 1개, 대성공하면 2개가 붙어요. 상대에게 ${josa(term('consequence'), '을/를')} 남겨도 1개를 얻어요. ${term('boost')}에는 처음부터 ●가 1개 붙어 있고, 쓰면 카드째 사라져요.`,
-              `오른쪽 ${BOSS.name}의 상처 카드에 ●가 보이죠? 앞서 동료들이 남긴 ${term('freeInvoke')}이라 내가 공짜로 쓸 수 있어요.`,
+              `무대 아래 ${BOSS.name}의 상처 카드에 꽂힌 핀(●)이 보이죠? 앞서 동료들이 남긴 ${term('freeInvoke')}이라 내가 공짜로 쓸 수 있어요.`,
             ],
             example: `${josa(term('fatePoint'), '은/는')} 개수가 정해져 있으니, ●가 있는 카드부터 쓰는 게 이득이에요.`,
             next: next('다음'),
@@ -973,14 +973,32 @@ function Table({
           },
         },
         {
-          open: ['[data-tour="actions"]'],
-          ring: '[data-tour="actions"]',
+          open: ['[data-tour="party"]', '[data-tour="foe"]'],
+          ring: '[data-tour="party"]',
           coach: {
             step: 8,
             total,
             chapter: '시작하기',
+            title: `다치면 이렇게 버텨요: ${term('stress')}와 ${term('consequence')}`,
+            body: `공격을 막지 못하면 진 차이만큼 피해가 들어와요. 피해를 받았다고 바로 쓰러지지는 않아요. 아래 두 가지로 버텨요.`,
+            points: [
+              `${term('stress')}(1·2·3번 칸): 숨이 차거나 살짝 긁힌 정도예요. 받은 피해와 같거나 더 큰 번호의 빈 칸 하나를 채우면 그 피해를 통째로 막아요. 장면이 끝나면 다시 비워져요.`,
+              `${term('consequence')}(${term('mild')} 2 · ${term('moderate')} 4 · ${term('severe')} 6): 진짜 부상이에요. 적힌 숫자만큼 피해를 막아 주는 대신, "삐끗한 발목"처럼 부상이 ${term('aspect')}으로 남아요. 상대는 그 부상을 공짜로 한 번 이용할 수 있어요.`,
+              `둘 다 써도 못 막으면 탈락이에요. 그 전에 스스로 ${term('concede')}하면 어떻게 물러날지 내가 정하고, ${josa(term('fatePoint'), '을/를')} 받아요.`,
+            ],
+            example: `무대 오른쪽 위 ${BOSS.name}의 이름표를 봐요. ${term('stress')} 1·2번 칸과 ${term('moderate')}·${term('severe')}가 이미 차 있어서, 한두 번만 제대로 맞히면 쓰러져요.`,
+            next: next('다음'),
+          },
+        },
+        {
+          open: ['[data-tour="actions"]'],
+          ring: '[data-tour="actions"]',
+          coach: {
+            step: 9,
+            total,
+            chapter: '시작하기',
             title: '할 수 있는 일은 딱 네 가지 행동이에요',
-            body: `무엇을 하든 아래 네 행동 중 하나로 표현해요. 1 ${term('overcome')}, 2 ${term('create_advantage')}, 3 ${term('attack')}, 4 ${term('defend')}. 이제 1번부터 하나씩 직접 해 볼게요.`,
+            body: `무엇을 하든 오른쪽 아래 목차의 네 행동 중 하나로 표현해요. 1 ${term('overcome')}, 2 ${term('create_advantage')}, 3 ${term('attack')}, 4 ${term('defend')}. 이제 1번부터 하나씩 직접 해 볼게요.`,
             example: '장마다 지금 눌러야 할 곳만 빛나요. 빛나는 곳만 따라 누르면 돼요.',
             next: { label: '1장 시작', onClick: () => setLesson('overcome') },
           },
@@ -1317,7 +1335,7 @@ function Table({
           <h1 key={state.scene?.id ?? 'none'}>{state.scene?.name}</h1>
         </header>
 
-        <div className={book.foePlate}>
+        <div className={book.foePlate} data-tour="foe">
           <FoePlate character={boss} image={asset(SCENE.bossImage)} note={BOSS.highConcept} />
         </div>
 
