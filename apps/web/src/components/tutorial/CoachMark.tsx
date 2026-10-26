@@ -40,6 +40,10 @@ interface Props {
   anchor?: string;
   /** 말풍선이 되도록 가리지 말아야 할 곳 (밝게 남긴 곳들) */
   avoid?: string[];
+  /** 되도록 비켜 설 곳 (예: 책 본문·기록지). 밝게 남긴 곳보다는 덜 피한다 */
+  shy?: string[];
+  /** 가리킬 곳이 없을 때 말풍선이 설 수 있는 영역 (예: 무대). 없으면 기본 자리에 선다 */
+  region?: string;
   /** 단계별 진행 중 (좁은 화면 스크롤 보정에 쓴다) */
   pinned?: boolean;
 }
@@ -87,14 +91,26 @@ const area = (a: Box, b: Box) =>
   Math.max(0, Math.min(a.r, b.r) - Math.max(a.l, b.l)) *
   Math.max(0, Math.min(a.b, b.b) - Math.max(a.t, b.t));
 
+/** 말풍선이 덮으면 안 되는 정도: 가리키는 대상 ≫ 밝게 남긴 곳 ≫ 되도록 비킬 곳(책 본문 등) */
+const W_TARGET = 60;
+const W_AVOID = 12;
+const W_SHY = 2;
+
 /**
- * 대상 옆에 말풍선을 놓을 자리.
- * - 대상을 가리지 않는 쪽(넓적한 대상은 위아래, 나머지는 좌우)부터, 여유가 큰 쪽을 먼저 본다.
- * - 같은 쪽 안에서는 밝게 남긴 다른 곳(avoid, 예: 판정 카드)을 덜 가리는 위치로 미끄러진다.
- *   꼬리는 늘 대상에 닿는 범위 안에 둔다.
- * - 어느 쪽에도 다 들어가지 않으면 말풍선 크기에 비해 여유가 가장 큰 쪽에 화면 안으로 밀어 넣는다.
+ * 대상 옆에 말풍선을 놓을 자리. 네 방향 모두 후보를 만들고 점수가 가장 낮은 자리를 고른다.
+ * - 후보: 방향마다 대상 가운데·양 끝 맞춤, 피할 곳 바로 바깥으로 비킨 위치. 꼬리는 늘 대상에 닿는다.
+ * - 점수: 대상을 덮은 넓이(가장 무겁게) + 밝게 남긴 곳(avoid)을 덮은 넓이 + 되도록 비킬 곳(shy)을 덮은 넓이.
+ * - 점수가 같으면 여유가 큰 방향(넓적한 대상은 위아래, 나머지는 좌우), 그다음 대상 가운데에 가까운 자리.
  */
-function placeBeside(t: Box, w: number, h: number, vw: number, vh: number, avoid: Box[]): Place {
+function placeBeside(
+  t: Box,
+  w: number,
+  h: number,
+  vw: number,
+  vh: number,
+  avoid: Box[],
+  shy: Box[],
+): Place {
   const room: Record<Side, number> = {
     left: t.l - GAP - M,
     right: vw - t.r - GAP - M,
@@ -102,81 +118,115 @@ function placeBeside(t: Box, w: number, h: number, vw: number, vh: number, avoid
     bottom: vh - t.b - GAP - M,
   };
   const across = (s: Side) => s === 'left' || s === 'right';
-  const fits = (s: Side) => room[s] >= (across(s) ? w : h);
   const horiz: Side[] = room.left >= room.right ? ['left', 'right'] : ['right', 'left'];
   const vert: Side[] = room.top >= room.bottom ? ['top', 'bottom'] : ['bottom', 'top'];
   const order = t.r - t.l > vw * 0.5 ? [...vert, ...horiz] : [...horiz, ...vert];
   const cx = (t.l + t.r) / 2;
   const cy = (t.t + t.b) / 2;
+  const cost = (box: Box) =>
+    area(box, t) * W_TARGET +
+    avoid.reduce((n, a) => n + area(box, a), 0) * W_AVOID +
+    shy.reduce((n, a) => n + area(box, a), 0) * W_SHY;
 
-  const at = (side: Side) => {
+  type Cand = { place: Place; cost: number; rank: number; off: number };
+  const cands: Cand[] = [];
+  order.forEach((side, rank) => {
     if (across(side)) {
       const x = clamp(side === 'left' ? t.l - GAP - w : t.r + GAP, M, vw - w - M);
       const reach = (y: number) => [Math.max(y + TAIL_PAD, t.t), Math.min(y + h - TAIL_PAD, t.b)];
-      // 세로 후보: 대상 가운데, 대상 위·아래 끝 맞춤, 피할 곳의 위·아래로 비키기
-      let ys = [cy - h / 2, t.t, t.b - h, ...avoid.flatMap((a) => [a.t - h - 8, a.b + 8])]
+      const ys = [
+        cy - h / 2,
+        t.t,
+        t.b - h,
+        ...[...avoid, ...shy].flatMap((a) => [a.t - h - 8, a.b + 8]),
+      ]
         .map((y) => clamp(y, M, vh - h - M))
         .filter((y) => reach(y)[1]! - reach(y)[0]! >= 0);
-      if (ys.length === 0) ys = [clamp(cy - h / 2, M, vh - h - M)];
-      const scored = ys.map((y) => {
-        const box = { l: x, t: y, r: x + w, b: y + h };
-        return {
-          y,
-          cost: avoid.reduce((n, a) => n + area(box, a), 0),
+      if (ys.length === 0) ys.push(clamp(cy - h / 2, M, vh - h - M));
+      for (const y of ys) {
+        const [lo, hi] = reach(y);
+        const tail = hi! >= lo! ? (lo! + hi!) / 2 - y : cy - y;
+        cands.push({
+          place: { mode: 'float', x, y, side, tail: clamp(tail, TAIL_PAD, h - TAIL_PAD) },
+          cost: cost({ l: x, t: y, r: x + w, b: y + h }),
+          rank,
           off: Math.abs(y + h / 2 - cy),
-        };
-      });
-      const best = scored.reduce((a, b) =>
-        b.cost < a.cost || (b.cost === a.cost && b.off < a.off) ? b : a,
-      );
-      const [lo, hi] = reach(best.y);
-      const tail = hi! >= lo! ? (lo! + hi!) / 2 - best.y : cy - best.y;
-      return {
-        cost: best.cost,
-        place: {
-          mode: 'float',
-          x,
-          y: best.y,
-          side,
-          tail: clamp(tail, TAIL_PAD, h - TAIL_PAD),
-        } as Place,
-      };
+        });
+      }
+      return;
     }
     const y = clamp(side === 'top' ? t.t - GAP - h : t.b + GAP, M, vh - h - M);
     const reach = (x: number) => [Math.max(x + TAIL_PAD, t.l), Math.min(x + w - TAIL_PAD, t.r)];
-    let xs = [cx - w / 2, t.l, t.r - w, ...avoid.flatMap((a) => [a.l - w - 8, a.r + 8])]
+    const xs = [
+      cx - w / 2,
+      t.l,
+      t.r - w,
+      ...[...avoid, ...shy].flatMap((a) => [a.l - w - 8, a.r + 8]),
+    ]
       .map((x) => clamp(x, M, vw - w - M))
       .filter((x) => reach(x)[1]! - reach(x)[0]! >= 0);
-    if (xs.length === 0) xs = [clamp(cx - w / 2, M, vw - w - M)];
-    const scored = xs.map((x) => {
-      const box = { l: x, t: y, r: x + w, b: y + h };
-      return {
-        x,
-        cost: avoid.reduce((n, a) => n + area(box, a), 0),
+    if (xs.length === 0) xs.push(clamp(cx - w / 2, M, vw - w - M));
+    for (const x of xs) {
+      const [lo, hi] = reach(x);
+      const tail = hi! >= lo! ? (lo! + hi!) / 2 - x : cx - x;
+      cands.push({
+        place: { mode: 'float', x, y, side, tail: clamp(tail, TAIL_PAD, w - TAIL_PAD) },
+        cost: cost({ l: x, t: y, r: x + w, b: y + h }),
+        rank,
         off: Math.abs(x + w / 2 - cx),
-      };
-    });
-    const best = scored.reduce((a, b) =>
-      b.cost < a.cost || (b.cost === a.cost && b.off < a.off) ? b : a,
-    );
-    const [lo, hi] = reach(best.x);
-    const tail = hi! >= lo! ? (lo! + hi!) / 2 - best.x : cx - best.x;
-    return {
-      cost: best.cost,
-      place: {
-        mode: 'float',
-        x: best.x,
-        y,
-        side,
-        tail: clamp(tail, TAIL_PAD, w - TAIL_PAD),
-      } as Place,
-    };
-  };
+      });
+    }
+  });
+  // 넓이 차이가 아주 작으면(가장자리 몇 줄) 같은 점수로 본다
+  const q = (c: Cand) => Math.round(c.cost / 4000);
+  return cands.reduce((a, b) =>
+    q(b) < q(a) || (q(b) === q(a) && (b.rank < a.rank || (b.rank === a.rank && b.off < a.off)))
+      ? b
+      : a,
+  ).place;
+}
 
-  const fitting = order.filter(fits).map(at);
-  if (fitting.length > 0) return fitting.reduce((a, b) => (b.cost < a.cost ? b : a)).place;
-  const ratio = (s: Side) => room[s] / (across(s) ? w : h);
-  return at(order.reduce((a, b) => (ratio(b) > ratio(a) ? b : a))).place;
+/**
+ * 가리킬 곳이 없을 때: 무대(region) 안에서 밝게 남긴 곳·비킬 곳을 가장 덜 가리는 자리.
+ * 점수가 같으면 기본 자리(home)에 가장 가까운 곳.
+ */
+function placeFree(
+  home: { x: number; y: number },
+  region: Box,
+  w: number,
+  h: number,
+  vw: number,
+  vh: number,
+  avoid: Box[],
+  shy: Box[],
+): Place {
+  const xs = [
+    home.x,
+    region.l + M,
+    region.r - w - M,
+    ...[...avoid, ...shy].flatMap((a) => [a.l - w - 8, a.r + 8]),
+  ];
+  const ys = [
+    home.y,
+    region.t + M,
+    region.b - h - M,
+    ...[...avoid, ...shy].flatMap((a) => [a.t - h - 8, a.b + 8]),
+  ];
+  let best = { x: home.x, y: home.y, cost: Infinity, off: Infinity };
+  for (const rx of xs)
+    for (const ry of ys) {
+      const x = clamp(rx, Math.max(M, region.l), Math.min(vw, region.r) - w - M);
+      const y = clamp(ry, Math.max(M, region.t), Math.min(vh, region.b) - h - M);
+      const box = { l: x, t: y, r: x + w, b: y + h };
+      const c = Math.round(
+        (avoid.reduce((n, a) => n + area(box, a), 0) * W_AVOID +
+          shy.reduce((n, a) => n + area(box, a), 0) * W_SHY) /
+          4000,
+      );
+      const off = Math.hypot(x - home.x, y - home.y);
+      if (c < best.cost || (c === best.cost && off < best.off)) best = { x, y, cost: c, off };
+    }
+  return { mode: 'float', x: best.x, y: best.y, side: null, tail: 0 };
 }
 
 const samePlace = (a: Place | null, b: Place) =>
@@ -205,6 +255,8 @@ export function CoachMark({
   hideLabel = '안내 숨기기',
   anchor,
   avoid = [],
+  shy = [],
+  region,
   pinned = false,
 }: Props) {
   const home = useRef<HTMLSpanElement>(null);
@@ -215,6 +267,7 @@ export function CoachMark({
   const moreId = useId();
   // 선택자 목록은 매번 새 배열이라 내용으로 비교한다
   const avoidKey = avoid.join('\n');
+  const shyKey = shy.join('\n');
   const client = useSyncExternalStore(
     noop,
     () => true,
@@ -242,20 +295,15 @@ export function CoachMark({
           const w = el.offsetWidth;
           const h = el.offsetHeight;
           const t = anchor ? visibleBoxes(anchor)[0] : undefined;
-          if (t) {
-            const keepClear = avoidKey ? avoidKey.split('\n').flatMap(visibleBoxes) : [];
-            next = placeBeside(t, w, h, vw, vh, keepClear);
-          } else {
-            // 가리킬 곳이 없으면 무대 위 안내 자리(.coachSlot)의 오른쪽 위 모서리에 맞춘다
-            const s = spot.getBoundingClientRect();
-            next = {
-              mode: 'float',
-              x: clamp(s.right - w, M, vw - w - M),
-              y: clamp(s.top, M, vh - h - M),
-              side: null,
-              tail: 0,
-            };
-          }
+          const keepClear = avoidKey ? avoidKey.split('\n').flatMap(visibleBoxes) : [];
+          const soft = shyKey ? shyKey.split('\n').flatMap(visibleBoxes) : [];
+          // 가리킬 곳이 없으면 무대 위 안내 자리(.coachSlot)의 오른쪽 위 모서리가 기본 자리다
+          const s = spot.getBoundingClientRect();
+          const home = { x: clamp(s.right - w, M, vw - w - M), y: clamp(s.top, M, vh - h - M) };
+          const zone = region ? visibleBoxes(region)[0] : undefined;
+          if (t) next = placeBeside(t, w, h, vw, vh, keepClear, soft);
+          else if (zone) next = placeFree(home, zone, w, h, vw, vh, keepClear, soft);
+          else next = { mode: 'float', ...home, side: null, tail: 0 };
         }
         if (!samePlace(last, next)) setPlace((last = next));
       }
@@ -263,17 +311,21 @@ export function CoachMark({
     };
     tick();
     return () => cancelAnimationFrame(raf);
-  }, [anchor, avoidKey, client]);
+  }, [anchor, avoidKey, shyKey, region, client]);
 
-  // 시트가 떠 있는 동안에는 페이지 끝에 시트 높이만큼 여백을 둬서 맨 아래 행동 목록도 가려지지 않게 한다
+  // 시트가 떠 있는 동안에는 페이지 끝에 시트 높이만큼 여백을 둬서 맨 아래 행동 목록도 가려지지 않게 한다.
+  // 화면 아래에 붙는 행동 띠(Dock)·판정 시트(RollSheet)·예고 카드는 --coach-sheet만큼 시트 위로 올라앉는다
+  // (튜토리얼을 다 마친 자유 진행처럼 Spotlight가 없을 때도 같다)
   const sheet = place?.mode === 'sheet';
   useLayoutEffect(() => {
     if (!sheet) return;
     const el = box.current;
     if (!el) return;
     const body = document.body;
+    const root = document.documentElement;
     const sync = () => {
       body.style.paddingBottom = `${el.offsetHeight + M}px`;
+      root.style.setProperty('--coach-sheet', `${el.offsetHeight}px`);
     };
     sync();
     const ro = new ResizeObserver(sync);
@@ -281,6 +333,7 @@ export function CoachMark({
     return () => {
       ro.disconnect();
       body.style.paddingBottom = '';
+      root.style.removeProperty('--coach-sheet');
     };
   }, [sheet]);
 

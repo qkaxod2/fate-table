@@ -28,7 +28,7 @@ export interface SealedSide {
 export interface EventPayloads {
   'room.member_joined': { userId: string; nickname: string; role: Role };
   'room.member_left': { userId: string; nickname: string };
-  /** GM이 방을 터트렸다. 곧 방과 기록이 모두 지워진다 */
+  /** GM이 방을 지웠다. 곧 방과 기록이 모두 지워진다 */
   'room.closed': Record<string, never>;
   'session.started': { sessionId: string; number: number; title?: string };
   'session.ended': { sessionId: string; summary?: string };

@@ -63,7 +63,7 @@ export async function leaveRoom(id: string): Promise<void> {
   forgetRoom(id);
 }
 
-/** 방 터트리기 (GM만). 방과 기록이 모두 지워지고 접속 중인 사람은 내보내진다 */
+/** 방 지우기 (GM만). 방과 기록이 모두 지워지고 접속 중인 사람은 내보내진다 */
 export async function closeRoom(id: string): Promise<void> {
   await callFunction('close', { roomId: id });
   forgetRoom(id);

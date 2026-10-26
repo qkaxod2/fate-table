@@ -13,6 +13,11 @@
   padding: var(--s-4) var(--s-5) var(--s-4) var(--s-6);
 }
 
+/* 초상이 없으면(방에서 그림을 아직 안 붙인 캐릭터) 글이 한 칸을 다 쓴다 */
+.me:not(:has(> .portrait)) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .portrait {
   width: 92px;
   height: 116px;
@@ -254,6 +259,10 @@
   gap: var(--s-3);
   align-items: center;
   padding-block: var(--s-2);
+}
+
+.sheet[data-compact] .me:not(:has(> .portrait)) {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .sheet[data-compact] .portrait {

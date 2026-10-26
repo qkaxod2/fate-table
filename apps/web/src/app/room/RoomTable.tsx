@@ -683,7 +683,7 @@ export function RoomTable({
           />
         </div>
 
-        <header className={book.chapter}>
+        <header className={`${book.chapter} ${styles.chapter}`}>
           <p>
             {state.session ? `세션 ${state.session.number}` : '방'} · {name}
           </p>
@@ -695,7 +695,7 @@ export function RoomTable({
             <FoePlate
               character={foe}
               {...(foe.portraitUrl ? { image: foe.portraitUrl } : {})}
-              compact={showRoll || !!rolling}
+              compact
             />
           </div>
         )}
@@ -706,7 +706,7 @@ export function RoomTable({
           summary={
             settled && outcome && result && roll ? (
               <>
-                <b>{JUDGE[outcome].latin}</b> · {activeChar?.name} {term(roll.action)} ·{' '}
+                <b>{JUDGE[outcome].word}</b> · {activeChar?.name} {term(roll.action)} ·{' '}
                 {signed(result.total)}
               </>
             ) : (
@@ -787,7 +787,7 @@ export function RoomTable({
                 onClick={() => setFolded('')}
                 title="굴림 결과 펼치기"
               >
-                <b>{JUDGE[outcome].latin}</b>
+                <b>{JUDGE[outcome].word}</b>
                 <span className={styles.foldedText}>
                   {activeChar?.name} · {term(roll.action)} · {term(roll.active.approach)}{' '}
                   <em>
@@ -948,7 +948,8 @@ export function RoomTable({
                 className={styles.addAspect}
                 onClick={() => setGmOpen({ tool: 'aspect' })}
               >
-                + {term('aspect')} 붙이기
+                <span className={styles.addLabel}>빈 카드</span>
+                <span className={styles.addText}>+ {term('aspect')} 붙이기</span>
               </button>
             )}
             {roll && settled && roll?.status === 'open' && iRoll && (
@@ -1108,71 +1109,84 @@ export function RoomTable({
 
       <section className={`${book.book} ${styles.book}`}>
         <div className={`${book.running} ${styles.running}`}>
-          <span className={styles.runTitle}>{name}</span>
-          <span className={styles.runTools}>
+          <span className={styles.runHead}>
+            <span className={styles.runTitle} title={name}>
+              {name}
+            </span>
             {!isGm && (
               <span className={styles.role}>{role === 'player' ? '플레이어' : '관전'}</span>
             )}
             <button
               type="button"
-              className={styles.topBtn}
+              className={styles.invite}
               onClick={() => {
                 void navigator.clipboard?.writeText(joinUrl);
                 setCopied(true);
                 toast({ text: '초대 링크를 복사했어요', tone: 'success', key: 'copy' });
                 setTimeout(() => setCopied(false), 1600);
               }}
-              title={joinUrl}
+              title={`초대 링크 복사: ${joinUrl}`}
+              aria-label={`초대 코드 ${inviteCode}, 누르면 초대 링크를 복사해요`}
             >
-              {copied ? '복사됨 ✓' : `초대 ${inviteCode}`}
+              {copied ? (
+                '복사했어요 ✓'
+              ) : (
+                <>
+                  초대 <b>{inviteCode}</b>
+                </>
+              )}
             </button>
-            <select
-              className={styles.diceSel}
-              aria-label="주사위 연출"
-              title="주사위 연출"
-              value={diceMode}
-              onChange={(e) => {
-                const m = e.target.value as DiceMode;
-                setDiceMode(m);
-                saveDiceMode(m);
-              }}
-            >
-              {DICE_MODES.map(([v, label]) => (
-                <option key={v} value={v}>
-                  주사위 {label}
-                </option>
-              ))}
-            </select>
+          </span>
+          <span className={styles.runTools}>
+            <span className={styles.prefs} role="group" aria-label="화면 설정">
+              <select
+                className={styles.diceSel}
+                aria-label="주사위 연출"
+                title="주사위 연출"
+                value={diceMode}
+                onChange={(e) => {
+                  const m = e.target.value as DiceMode;
+                  setDiceMode(m);
+                  saveDiceMode(m);
+                }}
+              >
+                {DICE_MODES.map(([v, label]) => (
+                  <option key={v} value={v}>
+                    주사위 {label}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className={styles.prefBtn}
+                aria-pressed={sfxOn}
+                title={sfxOn ? '효과음 끄기' : '효과음 켜기'}
+                aria-label="효과음"
+                data-sfx=""
+                onClick={() => {
+                  setSfxEnabled(!sfxOn);
+                  setSfxOn(!sfxOn);
+                }}
+              >
+                <span aria-hidden>♪</span>
+              </button>
+              <button
+                type="button"
+                className={styles.prefBtn}
+                title="명령 창 (Ctrl+K) · 단축키는 ?"
+                aria-label="명령 창 열기"
+                onClick={() => setPalette(true)}
+              >
+                <kbd>Ctrl K</kbd>
+              </button>
+            </span>
             <button
               type="button"
-              className={styles.topBtn}
-              aria-pressed={sfxOn}
-              title={sfxOn ? '효과음 끄기' : '효과음 켜기'}
-              aria-label="효과음"
-              data-sfx=""
-              onClick={() => {
-                setSfxEnabled(!sfxOn);
-                setSfxOn(!sfxOn);
-              }}
-            >
-              <span aria-hidden>♪</span>
-            </button>
-            <button
-              type="button"
-              className={styles.topBtn}
-              title="명령 창 (Ctrl+K) · 단축키는 ?"
-              aria-label="명령 창 열기"
-              onClick={() => setPalette(true)}
-            >
-              <kbd>Ctrl K</kbd>
-            </button>
-            <button
-              type="button"
-              className={styles.topBtn}
-              title={isGm ? '방 터트리기' : '방 나가기'}
+              className={styles.exit}
+              title={isGm ? '방을 지우고 모두 내보내요' : '이 방에서 나가요'}
               onClick={() => setExitOpen(true)}
             >
-              {isGm ? '터트리기' : '나가기'}
+              {isGm ? '방 지우기' : '나가기'}
             </button>
           </span>
         </div>
@@ -1236,10 +1250,10 @@ export function RoomTable({
         {role !== 'spectator' && (
           <div className={styles.composer}>
             {isGm && (
-              <div className={styles.composeTabs} role="tablist" aria-label="쓸 곳">
+              <div className={styles.composeTabs} role="tablist" aria-label="무엇을 쓸까요">
                 {(
                   [
-                    ['narrate', 'GM 대사'],
+                    ['narrate', '대사'],
                     ['chat', '말하기'],
                   ] as const
                 ).map(([m, label]) => (
@@ -1248,6 +1262,9 @@ export function RoomTable({
                     type="button"
                     role="tab"
                     aria-selected={composeMode === m}
+                    title={
+                      m === 'narrate' ? 'GM 대사: 장면 묘사로 책에 적혀요' : '말하기: 테이블 대화'
+                    }
                     onClick={() => setComposeMode(m)}
                   >
                     {label}

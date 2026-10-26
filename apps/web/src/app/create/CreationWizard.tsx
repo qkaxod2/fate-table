@@ -170,7 +170,8 @@ export function CreationWizard() {
                 <div className={styles.lead}>
                   <p>
                     {term('aspect')}은 캐릭터를 설명하는 짧은 문구예요. 숫자 대신 &quot;이 사람은
-                    어떤 사람인가&quot;를 말로 적어 두는 거죠. 적는 대로 오른쪽 카드에 바로 써져요.
+                    어떤 사람인가&quot;를 말로 적어 두는 거죠. 적는 대로 미리보기 카드에 바로
+                    써져요.
                   </p>
                   <p>
                     굴림이 아쉬우면 {term('fatePoint')} 1개를 내고 {term('aspect')}을{' '}

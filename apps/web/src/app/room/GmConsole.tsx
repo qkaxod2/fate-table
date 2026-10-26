@@ -251,7 +251,7 @@ function SceneForm({
       </div>
       <button type="submit" className={styles.primary} disabled={pending || !name.trim()}>
         {submitLabel}
-        {!state.session && ' (세션도 같이 시작)'}
+        {!state.session && ' (세션도 함께 시작해요)'}
       </button>
     </form>
   );
@@ -279,7 +279,7 @@ export function SceneStarter({
   return (
     <div className={styles.starter}>
       <h2>첫 장면을 열어 볼까요?</h2>
-      <p>이름만 적어도 바로 시작할 수 있어요. 지도와 NPC는 나중에 위쪽 버튼으로 더해요.</p>
+      <p>이름만 적어도 바로 시작할 수 있어요. 구역 지도와 NPC는 나중에 GM 도구에서 더해도 돼요.</p>
       <SceneForm state={state} run={run} pending={pending} />
     </div>
   );
@@ -316,7 +316,8 @@ export function NarrationInput({
       <textarea
         rows={2}
         value={text}
-        placeholder="장면을 묘사하면 모두의 책에 적혀요 (Enter 보내기)"
+        placeholder="장면을 묘사해요… (Enter)"
+        aria-label="GM 대사"
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {

@@ -30,8 +30,9 @@
   align-items: flex-end;
   gap: var(--s-3);
   /* 카드가 많으면 줄어들지 않고 옆으로 민다. 들린 카드·번호 배지가 잘리지 않게 위를 비워 둔다 */
-  margin: -14px -8px 0;
-  padding: 28px 8px 6px;
+  margin: -14px -16px 0;
+  padding: 28px 16px 6px;
+  scroll-padding-inline: 16px;
   overflow-x: auto;
   scroll-snap-type: x proximity;
   scrollbar-width: thin;
@@ -113,7 +114,7 @@
 .key {
   position: absolute;
   top: -10px;
-  left: -8px;
+  left: -4px;
   z-index: 2;
   background: var(--ink-1);
   color: var(--paper);

@@ -117,17 +117,12 @@ export function Spotlight({ open, ring }: Props) {
       const coachH = sheet ? Math.round(window.innerHeight - sheet.getBoundingClientRect().top) : 0;
       const pad = sheet ? `${coachH + 12}px` : '';
       if (root.style.scrollPaddingBottom !== pad) root.style.scrollPaddingBottom = pad;
-      // 판정 시트(RollSheet)는 이 값만큼 안내 시트 위로 올라앉는다
-      const lift = sheet ? `${coachH}px` : '';
-      if (root.style.getPropertyValue('--coach-sheet') !== lift)
-        root.style.setProperty('--coach-sheet', lift);
       raf = requestAnimationFrame(tick);
     };
     tick();
     return () => {
       cancelAnimationFrame(raf);
       root.style.scrollPaddingBottom = '';
-      root.style.removeProperty('--coach-sheet');
     };
     // open은 매번 새 배열이라 내용(key)으로 비교한다
     // eslint-disable-next-line react-hooks/exhaustive-deps
