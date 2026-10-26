@@ -319,7 +319,7 @@ main.shell {
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  scrollbar-width: none;
+  scrollbar-width: thin;
 }
 
 /* 무대 열이 이미 화면 높이에 맞춰져 있으니, 굴림 패널은 그 높이를 다 쓰고 넘칠 때만 안에서 스크롤한다 */

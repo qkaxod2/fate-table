@@ -58,6 +58,27 @@
   gap: var(--s-2);
 }
 
+/* 굴림 패널이 안에서 스크롤될 만큼 길어져도 운명점과 확정 버튼은 패널 아래에 붙어 있다 */
+@media (min-width: 1101px) {
+  .foot {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    margin: 0 calc(var(--s-3) * -1) calc(var(--s-3) * -1);
+    padding: var(--s-2) var(--s-3) var(--s-3);
+    border-top: 1px solid var(--line);
+    background: var(--panel-s);
+  }
+}
+
+/* 터치 화면에서는 키보드 단축키 표시를 감춘다 */
+@media (hover: none) and (pointer: coarse) {
+  .key,
+  .keyInline {
+    display: none;
+  }
+}
+
 .fp {
   display: inline-flex;
   align-items: center;
