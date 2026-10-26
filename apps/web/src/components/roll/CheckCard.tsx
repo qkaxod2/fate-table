@@ -46,7 +46,7 @@ export function sumLine(side: RollState['active']): string | null {
 }
 
 /**
- * 판정 기록 카드 (design-system.md 21절). 굴리기 전 예고 카드와 같은 종이·겹테두리에
+ * 판정 기록 카드 (design-system.md 20절). 굴리기 전 예고 카드와 같은 종이·겹테두리에
  * 내 쪽 | vs | 상대 쪽을 한 축(가운데)으로 놓는다. 주사위 → 합계 → 이름 순으로 위에서 아래로 읽고,
  * 판정 띠가 그 아래 가로로 찍힌다. 판정 4색은 띠 안에서만 쓴다.
  */

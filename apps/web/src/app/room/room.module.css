@@ -407,6 +407,8 @@
 }
 
 .role {
+  /* 넓은 화면(1500px 이상)과 좁은 화면에서만: 그 사이에서는 도구에 자리를 내준다 */
+  display: none;
   flex: none;
   padding: 0 8px;
   border: 1px solid var(--seal);
@@ -469,6 +471,9 @@
 @media (min-width: 1500px) {
   .runTitle {
     display: block;
+  }
+  .role {
+    display: inline-block;
   }
 }
 
@@ -798,6 +803,9 @@
   .stage .center > [data-pending] {
     margin-right: -346px;
   }
+  .stage:has([data-invoke-slot]) .center {
+    bottom: 262px;
+  }
   /* 책은 머리글·기록지·기록·입력이 한 화면에 들어가고, 넘치면 책만 스크롤한다 */
   .book {
     overflow-y: auto;
@@ -838,7 +846,8 @@
     padding: 8px 12px 0;
     scrollbar-width: none;
   }
-  .runTitle {
+  .runTitle,
+  .role {
     display: block;
   }
   .running {

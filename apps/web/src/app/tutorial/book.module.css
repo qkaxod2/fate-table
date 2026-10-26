@@ -148,6 +148,11 @@
   padding-right: 5cqw;
 }
 
+/* 발동 카드 줄이 깔리면 테이블이 높아지니 판정 카드 자리가 그만큼 비켜 선다 */
+.stage:has([data-invoke-slot]) .center {
+  bottom: 262px;
+}
+
 /* 판정 예고 카드 자리: 넓은 화면에서는 무대 가운데 그대로, 좁은 화면에서는 행동 띠 바로 위에 뜬다 */
 .previewDock {
   display: contents;
@@ -193,6 +198,12 @@
 .tray {
   flex: 1;
   min-width: 0;
+}
+
+/* 발동 카드 줄은 카드마다 기울어 있으니 줄 전체는 기울이지 않는다 */
+.table > .tray {
+  rotate: none;
+  translate: none;
 }
 
 /* 찢어진 종이 가장자리 */

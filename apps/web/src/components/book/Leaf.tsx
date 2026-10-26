@@ -110,7 +110,7 @@ interface Props {
 }
 
 /**
- * 책의 한 장 (design-system.md 21절). 시트·GM 도구·그림·나가기·명령 창이 모두 이 종이 한 장 위에 열린다.
+ * 책의 한 장 (design-system.md 20절). 시트·GM 도구·그림·나가기·명령 창이 모두 이 종이 한 장 위에 열린다.
  * 바깥 누르기·Esc·×로 닫히고, 작성 중이면 한 번 막는다(closeGuard). 좁은 화면에서는 아래에서 올라오는 시트다.
  */
 export function Leaf({

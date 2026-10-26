@@ -29,13 +29,19 @@
   display: flex;
   align-items: flex-end;
   gap: var(--s-3);
-  padding-top: 14px;
+  /* 카드가 많으면 줄어들지 않고 옆으로 민다. 들린 카드·번호 배지가 잘리지 않게 위를 비워 둔다 */
+  margin: -14px -8px 0;
+  padding: 28px 8px 6px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
 }
 
 .cards > * {
-  flex: 1 1 0;
-  min-width: 0;
+  flex: 1 0 150px;
+  min-width: 150px;
   max-width: 240px;
+  scroll-snap-align: start;
   animation: tray-in var(--dur-enter) var(--ease-out) backwards;
 }
 .cards > :nth-child(1) {
@@ -183,14 +189,12 @@
 
 @media (max-width: 760px) {
   .cards {
-    overflow-x: auto;
     padding-bottom: var(--s-2);
     scroll-snap-type: x mandatory;
   }
   .cards > * {
     flex: 0 0 72%;
     max-width: none;
-    scroll-snap-align: start;
   }
 }
 
