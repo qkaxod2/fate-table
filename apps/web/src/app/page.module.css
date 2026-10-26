@@ -4,7 +4,7 @@
   place-items: center;
   padding: var(--s-6) var(--s-4);
   background:
-    radial-gradient(ellipse 80% 50% at 50% 0%, rgb(214 182 110 / 0.16), transparent 70%),
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgb(168 50 28 / 0.16), transparent 70%),
     radial-gradient(ellipse 60% 40% at 50% 100%, rgb(111 188 235 / 0.06), transparent 70%),
     var(--night);
 }
@@ -58,7 +58,7 @@
   font-weight: 700;
   font-size: var(--fs-lg);
   text-decoration: none;
-  box-shadow: 0 8px 28px -8px rgb(214 182 110 / 0.55);
+  box-shadow: 0 8px 28px -8px rgb(168 50 28 / 0.55);
 }
 
 .startNote {
@@ -234,13 +234,13 @@
 
 .primary:hover {
   filter: brightness(1.06);
-  box-shadow: 0 10px 32px -6px rgb(214 182 110 / 0.6);
+  box-shadow: 0 10px 32px -6px rgb(168 50 28 / 0.6);
 }
 
 .path:hover,
 .path:focus-visible {
   border-color: var(--rule);
-  background: rgb(214 182 110 / 0.07);
+  background: rgb(168 50 28 / 0.07);
 }
 
 .primary:active,

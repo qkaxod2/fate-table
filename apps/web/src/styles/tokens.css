@@ -1,23 +1,24 @@
 /*
- * 디자인 토큰. 이름은 plan/design-system.md 2절·17절("밤의 무대 v2")과 같다.
- * 테마: data-theme-mode="light|dark" (기본은 시스템 설정), data-genre="paper|fantasy".
+ * 디자인 토큰 (design-system.md 20절 "무대와 책").
+ * 옛 이름(--panel, --fg, --gold, --ink …)은 그대로 두고 값만 종이·먹·주홍으로 옮겼다.
+ * 그래서 --gold는 이제 주홍(봉인) 강조색이고, --ink는 그 위에 얹는 밝은 글자다.
+ * 종이 위 본문 글자는 --fg(= --ink-1)를 쓴다.
  */
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
   /* surface */
-  --night: #0c0e1a;
-  --bg: #111218;
-  --panel: rgb(14 15 28 / 0.9);
-  --panel-s: #151831;
-  --plate: #1c1e2b;
-  --line: #33364a;
-  --line-hi: #4a4e66;
-  --fg: #f1efe9;
-  --muted: #b6b8c6;
-  --faint: #8a8da0;
-  --paper: #f6f0e4;
-  --ink: #1b1733;
+  --night: #e3d7c0;
+  --bg: #efe6d3;
+  --panel: #fbf8f0;
+  --panel-s: #f4ede0;
+  --plate: #fffdf8;
+  --line: #d3c5aa;
+  --line-hi: #b9a98a;
+  --fg: #241c15;
+  --muted: #54483b;
+  --faint: #6f6252;
+  --ink: #fff3e8;
 
   /*
    * 무대와 책 (design-system.md 20절). 읽는 것은 모두 종이 위에 둔다.
@@ -46,15 +47,15 @@
   --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .3 0 0 0 0 .22 0 0 0 0 .12 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 
   /* accents */
-  --gold: #d6b66e;
-  --gold-hi: #f0dca0;
-  --rule: rgb(214 182 110 / 0.42);
-  --hi: #ff6fb5;
-  --danger: #ff5a63;
+  --gold: #a8321c;
+  --gold-hi: #c8482c;
+  --rule: rgb(168 50 28 / 0.32);
+  --hi: #a8321c;
+  --danger: #b3261e;
 
   /* fate token */
-  --token: var(--gold);
-  --token-hi: var(--gold-hi);
+  --token: #b08a45;
+  --token-hi: #e2c27e;
 
   /* judgement (판정) */
   --perfect: #f27bad;
@@ -70,9 +71,9 @@
   --k-high: var(--gold);
   --k-trouble: var(--danger);
   --k-normal: var(--muted);
-  --k-scene: #4fb3a0;
-  --k-consequence: #a880c6;
-  --k-boost: #e59ab3;
+  --k-scene: #4f7a5a;
+  --k-consequence: #8a3b2e;
+  --k-boost: #b08a45;
 
   /* dice */
   --dice-body: #11132a;
@@ -113,18 +114,18 @@
   --s-6: 32px;
   --r-card: 10px;
   --r-ctl: 10px;
-  --shadow-panel: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 12px 32px -12px rgb(0 0 0 / 0.6);
+  --shadow-panel: 0 1px 0 #d3c5aa, 0 12px 28px -14px rgb(60 40 20 / 0.45);
 
   /*
    * 면 재질 (19절). 무대 위에 붙어 있는 패널(파티·기록·대사창)은 모두 같은 반투명 흐림 재질,
    * 떠 있는 창(굴림 패널·모달)은 불투명. 종이(--paper)는 "지금 낼 수 있는 카드"에만 쓴다.
    */
-  --surface-1: rgb(10 11 22 / 0.74);
-  --surface-2: #161931;
-  --edge: rgb(255 255 255 / 0.09);
+  --surface-1: rgb(251 248 240 / 0.94);
+  --surface-2: #f6f0e3;
+  --edge: rgb(36 28 21 / 0.14);
   --r-panel: 14px;
   --blur: blur(12px) saturate(1.2);
-  --sh-float: 0 24px 60px -20px rgb(0 0 0 / 0.7);
+  --sh-float: 0 24px 60px -20px rgb(40 25 10 / 0.55);
   --r-token: 999px;
   --dur-fast: 120ms;
   --dur-dice: 600ms;
@@ -146,18 +147,6 @@
   --dur-scene: 560ms;
   /* 여러 개가 차례로 들어올 때 하나씩 늦추는 간격 */
   --stagger: 40ms;
-}
-
-[data-theme-mode='light'] {
-  color-scheme: light;
-  --bg: #f1f0ed;
-  --plate: #ffffff;
-  --line: #d6d4cf;
-  --line-hi: #b9b6ae;
-  --fg: #16161c;
-  --muted: #4f515b;
-  --faint: #6e707a;
-  --hi: #c9367e;
 }
 
 [data-genre='fantasy'] {

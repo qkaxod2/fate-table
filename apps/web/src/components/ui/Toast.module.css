@@ -18,7 +18,7 @@
   padding: var(--s-2) var(--s-4);
   border: 1px solid var(--rule);
   border-radius: var(--r-token);
-  background: rgb(17 19 42 / 0.96);
+  background: var(--card);
   box-shadow: 0 8px 28px rgb(0 0 0 / 0.45);
   color: var(--fg);
   font-size: var(--fs-sm);

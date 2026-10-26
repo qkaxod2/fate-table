@@ -163,7 +163,7 @@
 
 .list > li[data-kind='fate']:last-child,
 .list > li[data-kind='scene']:last-child {
-  --flash: rgb(214 182 110 / 0.18);
+  --flash: rgb(168 50 28 / 0.18);
 }
 
 .list > li[data-kind='gm']:last-child {

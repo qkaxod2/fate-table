@@ -73,7 +73,7 @@
 @keyframes token-pop {
   0% {
     transform: scale(1.9);
-    box-shadow: 0 0 16px rgb(240 220 160 / 0.95);
+    box-shadow: 0 0 16px rgb(200 72 44 / 0.95);
   }
   100% {
     transform: scale(1);
@@ -94,7 +94,7 @@
 @keyframes token-drain {
   0% {
     background: linear-gradient(135deg, var(--gold-hi), var(--gold));
-    box-shadow: 0 0 14px rgb(240 220 160 / 0.9);
+    box-shadow: 0 0 14px rgb(200 72 44 / 0.9);
     opacity: 1;
     transform: scale(1.2);
   }

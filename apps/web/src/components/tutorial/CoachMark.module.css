@@ -7,10 +7,10 @@
   padding: var(--s-4) var(--s-5) var(--s-5);
   border: 1px solid var(--gold);
   border-radius: var(--r-card);
-  background: rgb(246 240 228 / 0.97);
-  color: var(--ink);
+  background: var(--card);
+  color: var(--ink-1);
   box-shadow:
-    0 0 0 4px rgb(214 182 110 / 0.25),
+    0 0 0 4px rgb(168 50 28 / 0.25),
     0 18px 48px rgb(0 0 0 / 0.55);
   transform: translateX(-50%);
   animation: coach-in 320ms var(--ease) both;
@@ -111,8 +111,8 @@
 @keyframes coach-clear {
   30% {
     box-shadow:
-      0 0 0 10px rgb(240 220 160 / 0.35),
-      0 0 60px rgb(240 220 160 / 0.5),
+      0 0 0 10px rgb(200 72 44 / 0.35),
+      0 0 60px rgb(200 72 44 / 0.5),
       0 18px 48px rgb(0 0 0 / 0.55);
   }
 }
@@ -158,7 +158,7 @@
   padding: var(--s-1) var(--s-3);
   border: 1px solid #8a6a24;
   border-radius: var(--r-ctl);
-  color: var(--ink);
+  color: var(--ink-1);
   font-weight: 700;
   text-decoration: none;
 }
@@ -254,7 +254,7 @@
   padding: var(--s-2) var(--s-3);
   border-left: 3px solid var(--gold);
   border-radius: 0 var(--r-ctl) var(--r-ctl) 0;
-  background: rgb(214 182 110 / 0.18);
+  background: rgb(168 50 28 / 0.18);
   font-size: var(--fs-md);
   font-weight: 700;
   line-height: 1.55;
@@ -287,10 +287,10 @@
   0%,
   70%,
   100% {
-    box-shadow: 0 0 0 0 rgb(214 182 110 / 0.6);
+    box-shadow: 0 0 0 0 rgb(168 50 28 / 0.6);
   }
   85% {
-    box-shadow: 0 0 0 8px rgb(214 182 110 / 0);
+    box-shadow: 0 0 0 8px rgb(168 50 28 / 0);
   }
 }
 

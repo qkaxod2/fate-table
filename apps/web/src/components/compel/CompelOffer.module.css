@@ -67,17 +67,17 @@
 
 .accept:not(:disabled):hover {
   filter: brightness(1.08);
-  box-shadow: 0 0 18px rgb(240 220 160 / 0.5);
+  box-shadow: 0 0 18px rgb(200 72 44 / 0.5);
 }
 
 @keyframes beckon {
   0%,
   70%,
   100% {
-    box-shadow: 0 0 0 0 rgb(240 220 160 / 0);
+    box-shadow: 0 0 0 0 rgb(200 72 44 / 0);
   }
   35% {
-    box-shadow: 0 0 0 4px rgb(240 220 160 / 0.25);
+    box-shadow: 0 0 0 4px rgb(200 72 44 / 0.25);
   }
 }
 

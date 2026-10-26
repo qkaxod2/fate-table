@@ -48,7 +48,7 @@
 
 @keyframes glow {
   50% {
-    box-shadow: 0 0 14px rgb(214 182 110 / 0.7);
+    box-shadow: 0 0 14px rgb(168 50 28 / 0.7);
   }
 }
 

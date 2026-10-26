@@ -4,7 +4,7 @@
   min-height: 100dvh;
   padding: var(--s-5) var(--s-4);
   background:
-    radial-gradient(ellipse at 50% 0%, rgb(214 182 110 / 0.14), transparent 60%), var(--night);
+    radial-gradient(ellipse at 50% 0%, rgb(168 50 28 / 0.14), transparent 60%), var(--night);
 }
 
 .card {
@@ -102,7 +102,7 @@
 
 .primary:not(:disabled):hover {
   filter: brightness(1.06);
-  box-shadow: 0 6px 18px rgb(214 182 110 / 0.3);
+  box-shadow: 0 6px 18px rgb(168 50 28 / 0.3);
 }
 
 /* 오류 문구는 고개를 젓듯 짧게 흔들린다 */
@@ -201,7 +201,7 @@
 .links a:hover,
 .links a:focus-visible {
   border-color: var(--gold);
-  background: rgb(214 182 110 / 0.1);
+  background: rgb(168 50 28 / 0.1);
 }
 
 .listHeading {

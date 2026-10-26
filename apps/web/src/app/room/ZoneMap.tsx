@@ -175,7 +175,7 @@ export function ZoneMap({ state, run, isGm, canControl, pending, auto = 'full' }
   return (
     <section className={styles.wrap} aria-label={`${term('zone')} 지도`}>
       <div className={styles.head}>
-        <span className={styles.kicker}>MAP · {term('zone')}</span>
+        <span className={styles.kicker}>{term('zone')} 지도</span>
         {picked && !editing && <span className={styles.hint}>옮길 구역을 눌러 주세요</span>}
         <button
           type="button"

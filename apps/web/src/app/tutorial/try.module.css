@@ -3,7 +3,7 @@
   min-height: 100dvh;
   padding: var(--s-6) var(--s-4);
   background:
-    radial-gradient(ellipse at 50% 0%, rgb(214 182 110 / 0.14), transparent 60%), var(--night);
+    radial-gradient(ellipse at 50% 0%, rgb(168 50 28 / 0.14), transparent 60%), var(--night);
   text-align: center;
 }
 
@@ -52,7 +52,7 @@
   border-color: var(--gold);
   box-shadow:
     0 14px 36px rgb(0 0 0 / 0.45),
-    0 0 24px rgb(214 182 110 / 0.18);
+    0 0 24px rgb(168 50 28 / 0.18);
 }
 
 .pickImg {
@@ -384,8 +384,8 @@
   padding: var(--s-2) var(--s-3);
   border: 1px solid var(--gold);
   border-radius: var(--r-ctl);
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--card);
+  color: var(--ink-1);
   font-family: var(--f-story);
   font-weight: 700;
   font-size: var(--fs-lg);
@@ -497,8 +497,8 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgb(214 182 110 / 0.55) 15%,
-    rgb(214 182 110 / 0.55) 85%,
+    rgb(168 50 28 / 0.55) 15%,
+    rgb(168 50 28 / 0.55) 85%,
     transparent
   );
   pointer-events: none;
@@ -669,7 +669,7 @@
   border-color: var(--gold-hi);
   box-shadow:
     0 18px 44px rgb(0 0 0 / 0.5),
-    0 0 40px rgb(240 220 160 / 0.45);
+    0 0 40px rgb(200 72 44 / 0.45);
 }
 
 /* 무대: 배경이 밝아지고, 스탠딩이 들어선 뒤 패널들이 차례로 자리 잡는다 */
@@ -733,7 +733,7 @@
     rotate: 0deg;
   }
   12% {
-    filter: brightness(2.4) saturate(0.2) drop-shadow(0 0 30px rgb(255 240 200 / 0.8));
+    filter: brightness(2.4) saturate(0.2) drop-shadow(0 0 30px rgb(255 236 220 / 0.8));
   }
   30% {
     opacity: 1;
@@ -809,7 +809,7 @@
   margin: 0 0 var(--s-2);
   padding: var(--s-2) var(--s-3) var(--s-2) calc(var(--s-3) + 1em);
   border-left: 3px solid var(--gold);
-  background: rgb(214 182 110 / 0.12);
+  background: rgb(168 50 28 / 0.12);
   font-size: var(--fs-sm);
   line-height: 1.6;
 }

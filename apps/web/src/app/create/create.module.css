@@ -2,7 +2,7 @@
   min-height: 100dvh;
   padding: var(--s-5) var(--s-4) var(--s-6);
   background:
-    radial-gradient(ellipse at 50% 0%, rgb(214 182 110 / 0.12), transparent 60%), var(--night);
+    radial-gradient(ellipse at 50% 0%, rgb(168 50 28 / 0.12), transparent 60%), var(--night);
 }
 
 .top,
@@ -354,7 +354,7 @@
 
 .primary:not(:disabled):hover {
   filter: brightness(1.06);
-  box-shadow: 0 6px 18px rgb(214 182 110 / 0.3);
+  box-shadow: 0 6px 18px rgb(168 50 28 / 0.3);
 }
 
 .ghost:not(:disabled):hover,
@@ -409,15 +409,15 @@
 
 @keyframes saved-glow {
   0% {
-    box-shadow: 0 0 0 0 rgb(240 220 160 / 0.9);
+    box-shadow: 0 0 0 0 rgb(200 72 44 / 0.9);
   }
   40% {
     box-shadow:
-      0 0 0 6px rgb(240 220 160 / 0.5),
-      0 0 40px rgb(240 220 160 / 0.5);
+      0 0 0 6px rgb(200 72 44 / 0.5),
+      0 0 40px rgb(200 72 44 / 0.5);
   }
   100% {
-    box-shadow: 0 0 0 0 rgb(240 220 160 / 0);
+    box-shadow: 0 0 0 0 rgb(200 72 44 / 0);
   }
 }
 

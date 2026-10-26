@@ -34,7 +34,7 @@ h3 {
 }
 
 ::selection {
-  background: rgb(214 182 110 / 0.35);
+  background: rgb(168 50 28 / 0.35);
 }
 
 input,
@@ -131,7 +131,7 @@ kbd {
   border-radius: var(--r-token);
   background: linear-gradient(180deg, var(--gold-hi), var(--gold));
   box-shadow:
-    0 0 18px rgb(240 220 160 / 0.7),
+    0 0 18px rgb(200 72 44 / 0.7),
     0 6px 16px rgb(0 0 0 / 0.5);
   color: var(--ink);
   font-family: var(--f-pop);
