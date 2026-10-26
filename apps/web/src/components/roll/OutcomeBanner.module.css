@@ -1,7 +1,7 @@
 /*
  * 판정 띠 (design-system.md 20절). 판정 기록 카드 안에 가로로 찍히는 띠.
  * 판정 4색(--perfect/--great/--good/--miss)은 이 띠 안에서만 쓰고, 종이 위에서 읽히도록 먹에 섞어 진하게 찍는다.
- * 연출 글자(PERFECT·GREAT·GOOD·MISS)는 숫자와 같은 Fraunces로, 금박·빛 번짐은 쓰지 않는다.
+ * 판정 글자(실패·동점·성공·대성공)는 한국어로 Hahmlet 800에 크게 찍는다. 금박·빛 번짐은 쓰지 않는다.
  */
 .banner {
   --c: var(--ink-2);
@@ -29,12 +29,12 @@
   --c: var(--miss);
 }
 
-.latin {
+.word {
   color: var(--c-ink);
-  font: 800 clamp(38px, 4.4vw, 54px) / 1.02 var(--f-fig);
-  letter-spacing: 0.08em;
+  font: 800 clamp(40px, 4.4vw, 54px) / 1.08 var(--f-head);
+  letter-spacing: 0.12em;
   /* 가운데 맞춤에서 마지막 글자 뒤 자간만큼 왼쪽으로 쏠리지 않게 */
-  text-indent: 0.08em;
+  text-indent: 0.12em;
   /* 띠가 펼쳐진 뒤 판정 글자가 도장처럼 찍힌다 */
   animation: stamp 520ms var(--ease-spring) 90ms backwards;
 }
@@ -50,11 +50,8 @@
   justify-content: center;
   gap: var(--s-3);
   margin-top: 2px;
-  font: 700 17px/1.4 var(--f-book);
-}
-
-.kr b {
-  font: 800 18px var(--f-fig);
+  color: var(--ink-2);
+  font: 700 15px/1.4 var(--f-book);
 }
 
 .rule {
@@ -124,7 +121,7 @@
 }
 
 /* 실패는 글자가 무겁게 떨어져 한 번 흔들린다 */
-.banner[data-tone='miss'] .latin {
+.banner[data-tone='miss'] .word {
   animation-name: thud;
   animation-timing-function: var(--ease-out);
 }
@@ -184,7 +181,7 @@
 }
 
 @media (min-width: 1101px) and (max-height: 820px) {
-  .latin {
+  .word {
     font-size: 40px;
   }
   .copy {
@@ -193,11 +190,11 @@
 }
 
 @media (max-width: 760px) {
-  .latin {
+  .word {
     font-size: 40px;
   }
   .kr {
-    font-size: 16px;
+    font-size: 14px;
   }
   .copy {
     font-size: 14px;
@@ -206,7 +203,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .banner,
-  .latin,
+  .word,
   .kr,
   .copy {
     animation-name: fade;
@@ -215,7 +212,7 @@
   .sparks {
     display: none;
   }
-  .banner[data-tone='miss'] .latin {
+  .banner[data-tone='miss'] .word {
     animation-name: fade;
   }
 }

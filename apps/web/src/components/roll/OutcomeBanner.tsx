@@ -1,5 +1,4 @@
 import type { CSSProperties } from 'react';
-import { term } from '@fate/glossary';
 import { formatRating, type Action, type Outcome } from '@fate/rules-engine';
 import { JUDGE, OUTCOME_COPY } from '@/lib/copy';
 import styles from './OutcomeBanner.module.css';
@@ -25,7 +24,7 @@ export function OutcomeBanner({ action, outcome, total, provisional }: Props) {
   return (
     <div className={styles.banner} data-tone={judge.tone} role="status">
       {judge.tone === 'perfect' && (
-        <div className={styles.sparks} key={`sparks:${judge.latin}`} aria-hidden>
+        <div className={styles.sparks} key={`sparks:${outcome}`} aria-hidden>
           {SPARKS.map((p, i) => (
             <span
               key={i}
@@ -41,13 +40,13 @@ export function OutcomeBanner({ action, outcome, total, provisional }: Props) {
           ))}
         </div>
       )}
-      {/* 발동으로 판정이 뒤집히면 글자를 새로 찍는다 */}
-      <div className={styles.latin} key={judge.latin} aria-hidden>
-        {judge.latin}
+      {/* 판정 글자는 한국어로 크게 찍는다. 발동으로 판정이 뒤집히면 글자를 새로 찍는다 */}
+      <div className={styles.word} key={outcome}>
+        {judge.word}
       </div>
       <div className={styles.kr}>
         <span className={styles.rule} />
-        {term(outcome)} · {formatRating(total)}
+        합계 {formatRating(total)}
         <span className={styles.rule} />
       </div>
       <p className={styles.copy}>

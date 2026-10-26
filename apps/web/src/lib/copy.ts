@@ -2,15 +2,18 @@ import { term } from '@fate/glossary';
 import type { Action, Outcome, RoomEvent, RoomState } from '@fate/rules-engine';
 import { josa } from '@/lib/josa';
 
-/** 판정 연출 라벨 (design-system.md 17절). 한국어 결과 표기와 항상 같이 쓴다. */
+/**
+ * 판정 연출 (design-system.md 17·21절). 크게 찍는 글자는 한국어 결과(word)다.
+ * latin은 예전 연출 글자로, 화면에 크게 쓰지 않는다 (방 화면이 옮겨 가면 지운다).
+ */
 export const JUDGE: Record<
   Outcome,
-  { latin: string; tone: 'perfect' | 'great' | 'good' | 'miss' }
+  { word: string; latin: string; tone: 'perfect' | 'great' | 'good' | 'miss' }
 > = {
-  style: { latin: 'PERFECT', tone: 'perfect' },
-  success: { latin: 'GREAT', tone: 'great' },
-  tie: { latin: 'GOOD', tone: 'good' },
-  fail: { latin: 'MISS', tone: 'miss' },
+  style: { word: term('style'), latin: 'PERFECT', tone: 'perfect' },
+  success: { word: term('success'), latin: 'GREAT', tone: 'great' },
+  tie: { word: term('tie'), latin: 'GOOD', tone: 'good' },
+  fail: { word: term('fail'), latin: 'MISS', tone: 'miss' },
 };
 
 /** 행동 × 결과 안내 문구 (design-system.md 6절) */
@@ -31,11 +34,11 @@ export const OUTCOME_COPY: Record<Action, Record<Outcome, string>> = {
     fail: '빗나갔어요',
     tie: '부스트를 얻어요',
     success: '차이만큼 피해를 줘요',
-    style: '차이만큼 피해를 줘요. 피해를 1 덜 주고 부스트를 얻을 수도 있어요',
+    style: '차이만큼 피해를 줘요. 피해를 1 줄이고 부스트를 얻을 수도 있어요',
   },
   defend: {
-    fail: '막지 못했어요. 상대의 행동이 통해요',
-    tie: '비겼어요. 상대 행동은 동점 결과로 처리돼요',
+    fail: '막지 못했어요. 상대 뜻대로 돼요',
+    tie: '비겼어요. 막긴 했지만 상대가 작은 이득을 얻어요',
     success: '막아냈어요',
     style: '막아내고 부스트를 얻어요',
   },
