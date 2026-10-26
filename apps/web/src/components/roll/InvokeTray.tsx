@@ -107,7 +107,7 @@ export function InvokeTray({
   }, [choices, selected, paidWith, firing, onSelect, onInvoke, onFinalize, waiting, lockFinalize]);
 
   return (
-    <div className={styles.tray}>
+    <div className={styles.tray} data-roll-tray="">
       <div className={styles.head}>
         {term('aspect')} {term('invoke')} · 카드를 집어 +2를 받거나 다시 굴려요
       </div>

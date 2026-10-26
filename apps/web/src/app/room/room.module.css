@@ -829,7 +829,7 @@
     position: fixed;
     top: auto;
     right: 0;
-    bottom: calc(var(--dock-h, 0px) + 50px);
+    bottom: calc(var(--coach-sheet, 0px) + var(--dock-h, 0px) + 50px);
     padding: 0 16px;
   }
   .stage .center {

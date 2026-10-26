@@ -22,7 +22,19 @@ const PAD = 8;
 function boxOf(el: Element, pad = PAD): Box | null {
   const r = el.getBoundingClientRect();
   if (r.width === 0 && r.height === 0) return null;
-  return { x: r.left - pad, y: r.top - pad, w: r.width + pad * 2, h: r.height + pad * 2 };
+  // 카드 밖으로 걸쳐 나온 버튼(굴리기 봉인 등)도 구멍 안에 들어오게 넓힌다
+  let [l, t, rt, b] = [r.left, r.top, r.right, r.bottom];
+  for (const btn of el.querySelectorAll('button')) {
+    const q = btn.getBoundingClientRect();
+    if (q.width === 0 && q.height === 0) continue;
+    [l, t, rt, b] = [
+      Math.min(l, q.left),
+      Math.min(t, q.top),
+      Math.max(rt, q.right),
+      Math.max(b, q.bottom),
+    ];
+  }
+  return { x: l - pad, y: t - pad, w: rt - l + pad * 2, h: b - t + pad * 2 };
 }
 
 const same = (a: Box[], b: Box[]) =>
@@ -102,16 +114,20 @@ export function Spotlight({ open, ring }: Props) {
       if (!lastRing || !same(r, lastRing)) setTarget((lastRing = r));
       // 좁은 화면에서는 안내가 아래 시트로 떠 있으니, 스크롤로 무언가를 보여 줄 때 그 밑으로 숨지 않게
       const sheet = document.querySelector('[data-coach][data-sheet]');
-      const pad = sheet
-        ? `${Math.round(window.innerHeight - sheet.getBoundingClientRect().top + 12)}px`
-        : '';
+      const coachH = sheet ? Math.round(window.innerHeight - sheet.getBoundingClientRect().top) : 0;
+      const pad = sheet ? `${coachH + 12}px` : '';
       if (root.style.scrollPaddingBottom !== pad) root.style.scrollPaddingBottom = pad;
+      // 판정 시트(RollSheet)는 이 값만큼 안내 시트 위로 올라앉는다
+      const lift = sheet ? `${coachH}px` : '';
+      if (root.style.getPropertyValue('--coach-sheet') !== lift)
+        root.style.setProperty('--coach-sheet', lift);
       raf = requestAnimationFrame(tick);
     };
     tick();
     return () => {
       cancelAnimationFrame(raf);
       root.style.scrollPaddingBottom = '';
+      root.style.removeProperty('--coach-sheet');
     };
     // open은 매번 새 배열이라 내용(key)으로 비교한다
     // eslint-disable-next-line react-hooks/exhaustive-deps

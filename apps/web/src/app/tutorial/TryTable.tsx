@@ -501,7 +501,7 @@ function Table({
               : used?.kind === 'boost'
                 ? `${term('boost')}에는 ●가 하나뿐이라, 쓰자마자 카드째 사라져요.`
                 : `"${used?.text ?? ''}"의 ●가 하나 줄었어요. ●를 다 써도 ${term('aspect')}은 남고, 그 뒤로는 ◆를 내야 해요.`,
-          open: ['[data-roll-panel]'],
+          open: ['[data-roll-panel]', '[data-roll-tray]'],
           ring: paidWith === 'fate_point' ? '[data-tour="fate"]' : '[data-tour="invoke-cards"]',
           example:
             mode === 'bonus'
@@ -1089,7 +1089,9 @@ function Table({
     const copy = LESSON_COPY[lesson];
     const chapter = `${n + 1}장 · ${term(lesson)}`;
     const base = { total: 4, chapter };
+    // 판정 카드와 아래 특성 카드 줄은 함께 밝게 남긴다
     const panel = '[data-roll-panel]';
+    const tray = '[data-roll-tray]';
     const live = !!roll && !final;
 
     // 4장은 두목의 공격으로 시작한다
@@ -1179,7 +1181,7 @@ function Table({
 
     if (!roll || !settled || roll.status === 'awaiting_defense')
       return {
-        open: [panel],
+        open: [panel, tray],
         guide: { focus: null },
         coach: {
           ...base,
@@ -1191,7 +1193,7 @@ function Table({
 
     if (explained !== roll.id)
       return {
-        open: [panel],
+        open: [panel, tray],
         guide: { focus: null },
         lockFinalize: true,
         coach: {
@@ -1205,7 +1207,7 @@ function Table({
     if (lesson === 'defend') {
       const o = outcomeFor(roll, 'defense');
       return {
-        open: [panel],
+        open: [panel, tray],
         ring: '[data-tour="finalize"]',
         guide: { focus: null },
         coach: {
@@ -1224,7 +1226,7 @@ function Table({
     const o = outcomeFor(roll, 'active');
     if ((o === 'fail' || o === 'tie') && canInvokeNow && invokedRoll !== roll.id)
       return {
-        open: [panel],
+        open: [panel, tray],
         ring: '[data-tour="invoke-cards"]',
         guide: { focus: null },
         lockFinalize: true,
@@ -1262,7 +1264,7 @@ function Table({
       defend: '',
     };
     return {
-      open: [panel],
+      open: [panel, tray],
       ring: '[data-tour="finalize"]',
       guide: { focus: null },
       coach: {

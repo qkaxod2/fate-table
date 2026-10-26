@@ -23,6 +23,8 @@
 @media (max-width: 1100px) {
   .dock {
     position: fixed;
+    /* 튜토리얼 안내가 아래 시트로 떠 있으면 그 위에 붙는다 */
+    bottom: var(--coach-sheet, 0px);
     left: 0;
     z-index: 30;
     width: auto;
@@ -31,7 +33,7 @@
       0 -1px 0 var(--paper-edge),
       0 -12px 28px -14px rgb(40 25 10 / 0.6);
   }
-  :global(body:has([data-sheet])) .dock {
+  :global(body:has([data-sheet]:not([data-coach]))) .dock {
     display: none;
   }
 }
