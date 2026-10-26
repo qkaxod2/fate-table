@@ -2,9 +2,11 @@
   position: relative;
   z-index: 1;
   width: min(100%, 680px);
-  padding: var(--s-2) var(--s-3);
+  padding: var(--s-3);
   border: 1px solid var(--rule);
+  border-radius: var(--r-card);
   background: var(--panel);
+  box-shadow: var(--shadow-panel);
   backdrop-filter: blur(6px);
 }
 

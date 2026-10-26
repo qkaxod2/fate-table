@@ -5,6 +5,7 @@
   max-width: 420px;
   padding: var(--s-4);
   border: 1px solid var(--hi);
+  border-radius: var(--r-card);
   background: var(--panel);
   box-shadow: 0 0 40px -10px var(--hi);
   animation: in var(--dur-enter) var(--ease-spring) backwards;

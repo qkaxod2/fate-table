@@ -7,13 +7,16 @@
   padding: var(--s-2) var(--s-3);
   border: 1px solid var(--rule);
   border-left: 3px solid var(--hi);
+  border-radius: var(--r-card);
   background: var(--panel);
+  box-shadow: var(--shadow-panel);
   backdrop-filter: blur(6px);
 }
 
 .badge {
   padding: 2px var(--s-2);
   border: 1px solid var(--hi);
+  border-radius: var(--r-token);
   color: var(--hi);
   font: var(--label-font);
   letter-spacing: var(--label-track);
