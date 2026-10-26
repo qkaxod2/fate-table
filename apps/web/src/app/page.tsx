@@ -27,11 +27,17 @@ const CONTENTS = [
 
 const NUMERALS = ['i', 'ii', 'iii'];
 
+/** 책갈피: 해 본 사람이 돌아갈 곳 */
+const SHELF = [
+  { href: '/rooms/', title: '내 방', desc: '들어갔던 방 다시 열기' },
+  { href: '/gallery/', title: '내 그림', desc: '방에서 그린 그림 모음' },
+];
+
 /** 표지 아래에 핀으로 꽂아 둔 규칙 카드 세 장: 이 게임에서 알아야 할 것 전부 */
 const RULE_CARDS = [
   { label: term('aspect'), text: '캐릭터와 장면을 한 줄로', note: '"사방에 번지는 불길"' },
-  { label: term('fatePoint'), text: '내면 +2, 곤란을 받으면 +1', note: '◆ ◆ ◆' },
-  { label: term('fateDice'), text: '넷을 굴려 접근법에 더해요', note: '＋ ○ － ＋' },
+  { label: term('fatePoint'), text: '쓰면 +2, 곤란을 받으면 하나 더', note: '◆ ◆ ◆' },
+  { label: term('fateDice'), text: '넷을 굴려 접근법 수치에 더해요', note: '＋ ○ － ＋' },
 ];
 
 export default function Landing() {
@@ -111,10 +117,16 @@ export default function Landing() {
                 </li>
               ))}
             </ol>
-            <p className={styles.more}>
-              <Link href="/rooms/">내 방 목록</Link>
-              <Link href="/gallery/">내 그림</Link>
-            </p>
+          </nav>
+
+          {/* 책갈피: 이미 해 본 사람이 돌아갈 곳 */}
+          <nav className={styles.shelf} aria-label="내 기록">
+            {SHELF.map((s) => (
+              <Link key={s.href} href={s.href} className={styles.tab}>
+                <strong>{s.title}</strong>
+                <span>{s.desc}</span>
+              </Link>
+            ))}
           </nav>
 
           <div className={styles.recent}>
