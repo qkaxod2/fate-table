@@ -30,11 +30,13 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { AspectCard } from '@/components/aspect/AspectCard';
 import { CompelOffer } from '@/components/compel/CompelOffer';
 import { StoryLog } from '@/components/log/StoryLog';
-import { PartyRail } from '@/components/party/PartyRail';
+import { FoePlate } from '@/components/book/FoePlate';
+import { MySheet } from '@/components/book/MySheet';
 import { ActionBar, type CoachFocus } from '@/components/roll/ActionBar';
 import { DICE_MODES, DiceTray, saveDiceMode, type DiceMode } from '@/components/roll/DiceTray';
 import { InvokeTray, type InvokeChoice } from '@/components/roll/InvokeTray';
 import { OutcomeBanner } from '@/components/roll/OutcomeBanner';
+import { RollPreview } from '@/components/roll/RollPreview';
 import { CoachMark, type Coach } from '@/components/tutorial/CoachMark';
 import { Spotlight } from '@/components/tutorial/Spotlight';
 import { BOSS, SAMPLE_CHARACTERS, SCENE, type SampleCharacter } from '@/content/oneshot';
@@ -45,6 +47,7 @@ import { Typewriter } from '@/components/ui/Typewriter';
 import { describe, ERROR_COPY, OUTCOME_COPY } from '@/lib/copy';
 import { josa } from '@/lib/josa';
 import { LocalRoom } from '@/state/localRoom';
+import book from './book.module.css';
 import styles from './try.module.css';
 
 const ME: Actor = { userId: 'me', role: 'player' };
@@ -618,7 +621,8 @@ function Table({
         step: 4,
         title: `${term('boost')}가 뭐예요?`,
         body: `순간적으로 생긴 작은 기회예요. ${term('aspect')}처럼 ${term('invoke')}해서 +2를 받지만, 한 번 쓰면 사라지고 ${term('fatePoint')}도 들지 않아요.`,
-        example: '예: "흔들리는 발판", "연기 사이로 난 틈". 다음 굴림이 아쉬울 때 공짜 +2로 써 봐요.',
+        example:
+          '예: "흔들리는 발판", "연기 사이로 난 틈". 다음 굴림이 아쉬울 때 공짜 +2로 써 봐요.',
         label: '다음',
       });
     if (a === 'create_advantage' && (o === 'success' || o === 'style'))
@@ -749,7 +753,6 @@ function Table({
       !a.hidden && (a.ownerType !== 'character' || a.kind === 'boost' || a.kind === 'consequence'),
   );
   const lines = events.map((e) => describe(e, state)).filter((l) => l !== null);
-  const narration = [...events].reverse().find((e) => e.type === 'narration.posted');
 
   const myOutcomeNow =
     roll?.status === 'open' && roll.active.dice && myRoll ? outcomeFor(roll, 'active') : null;
@@ -1270,72 +1273,55 @@ function Table({
   }, [outcomeKey]);
   const showBoss = roll?.targetId === bossId || action === 'attack' || boss.takenOut === true;
 
+  const companions = SAMPLE_CHARACTERS.filter((s) => s.name !== pick.name).map((s) => ({
+    character: state.characters[findId(state, s.name)]!,
+    image: asset(s.image),
+  }));
+  const previewing = !!action && !!approach && (!roll || defending);
+  const stuntPlus = action && approach ? stuntBonuses(me, action, approach).length * 2 : 0;
+  const invokable = Object.values(state.aspects).filter(
+    (a) => !a.hidden && (a.ownerType !== 'character' || a.ownerId === meId || a.freeInvokes > 0),
+  ).length;
+  const lastLine = lines.at(-1);
+  const heroSpeaks = lastLine?.kind === 'chat' && lastLine.text.startsWith(`${pick.name}:`);
+
   return (
-    <main
-      className={styles.stage}
-      style={{
-        backgroundImage: `linear-gradient(180deg, rgb(12 14 26 / .25), rgb(12 14 26 / .85)), url(${asset(SCENE.background)})`,
-      }}
-    >
-      <header className={styles.top}>
-        <div>
-          <div className={styles.kicker}>튜토리얼 · 첫 장면</div>
-          <h1 className={styles.sceneName}>{state.scene?.name}</h1>
-        </div>
-        <div className={styles.topRight}>
-          <label className={styles.mode}>
-            주사위 연출
-            <select
-              value={diceMode}
-              onChange={(e) => {
-                const m = e.target.value as DiceMode;
-                setDiceMode(m);
-                saveDiceMode(m);
-              }}
-            >
-              {DICE_MODES.map(([v, label]) => (
-                <option key={v} value={v}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button
-            type="button"
-            className={styles.restart}
-            aria-pressed={sfxOn}
-            onClick={() => {
-              setSfxEnabled(!sfxOn);
-              setSfxOn(!sfxOn);
-            }}
-          >
-            효과음 {sfxOn ? '켜짐' : '꺼짐'}
-          </button>
-          <button type="button" className={styles.restart} onClick={onRestart}>
-            처음부터
-          </button>
-        </div>
-      </header>
-
-      <div className={styles.body}>
-        <div className={styles.left} data-tour="party">
-          <PartyRail
-            members={[
-              ...SAMPLE_CHARACTERS.map((s) => {
-                const c = state.characters[findId(state, s.name)]!;
-                return {
-                  character: c,
-                  image: asset(s.image),
-                  active: c.id === meId,
-                  ...(c.id === meId ? {} : { status: '동료' }),
-                };
-              }),
-              { character: boss, image: asset(SCENE.bossImage), status: 'NPC' },
-            ]}
+    <main className={book.shell}>
+      <section
+        className={book.stage}
+        data-roll={!!roll || undefined}
+        style={{ backgroundImage: `url(${asset(SCENE.background)})` }}
+      >
+        <img
+          className={`${styles.standee} ${book.hero}`}
+          src={asset(pick.image)}
+          alt={pick.name}
+          data-focus={heroSpeaks || undefined}
+        />
+        {showBoss && (
+          <img
+            className={`${styles.bossStandee} ${book.foe}`}
+            src={asset(SCENE.bossImage)}
+            alt={boss.name}
+            data-out={boss.takenOut || undefined}
+            data-hit={
+              (final &&
+                roll?.action === 'attack' &&
+                (roll.result?.outcome === 'success' || roll.result?.outcome === 'style')) ||
+              undefined
+            }
           />
+        )}
+        <header className={book.chapter}>
+          <p>튜토리얼 · 첫 장면</p>
+          <h1 key={state.scene?.id ?? 'none'}>{state.scene?.name}</h1>
+        </header>
+
+        <div className={book.foePlate}>
+          <FoePlate character={boss} image={asset(SCENE.bossImage)} note={BOSS.highConcept} />
         </div>
 
-        <div className={styles.center}>
+        <div className={book.coachSlot}>
           <Presence show={showCoach}>
             {coach && showCoach && (
               <CoachMark
@@ -1343,7 +1329,11 @@ function Table({
                 coach={coach}
                 hideLabel={guided ? '건너뛰고 자유롭게 하기' : '안내 숨기기'}
                 // 파티 칸을 가리키는 안내는 그 위를 덮지 않게 가운데 위에 둔다
-                dock={!!roll && !coach.clear && !tour?.open.includes('[data-tour="party"]')}
+                dock={
+                  (!!roll || previewing) &&
+                  !coach.clear &&
+                  !tour?.open.includes('[data-tour="party"]')
+                }
                 pinned={guided}
                 onHide={() => {
                   if (!guided) return setCoachHidden(true);
@@ -1353,24 +1343,35 @@ function Table({
               />
             )}
           </Presence>
-          <img className={styles.standee} src={asset(pick.image)} alt={pick.name} />
-          {showBoss && (
-            <img
-              className={styles.bossStandee}
-              src={asset(SCENE.bossImage)}
-              alt={boss.name}
-              data-out={boss.takenOut || undefined}
-              data-hit={
-                (final &&
-                  roll?.action === 'attack' &&
-                  (roll.result?.outcome === 'success' || roll.result?.outcome === 'style')) ||
-                undefined
+        </div>
+
+        <div className={book.center}>
+          {previewing && (
+            <RollPreview
+              name={me.name}
+              action={action!}
+              approach={approach!}
+              rating={me.approaches[approach!]}
+              stunt={stuntPlus}
+              difficulty={action === 'attack' || defending ? null : SCENE.overcomeDifficulty}
+              opponent={boss.name}
+              canInvoke={invokable > 0}
+              disabled={
+                (busy && !defending) ||
+                !!compel ||
+                !!prompt ||
+                (guided && !!tour?.guide && tour.guide.focus !== 'roll')
               }
+              focus={coach?.focus === 'roll' && showCoach}
+              onRoll={onRoll}
             />
           )}
-
           {roll && (
-            <div className={styles.rollPanel} ref={revealOnNarrow} data-roll-panel>
+            <div
+              className={`${styles.rollPanel} ${book.check}`}
+              ref={revealOnNarrow}
+              data-roll-panel
+            >
               <div className={styles.sides}>
                 <div className={styles.side} data-fx="roll-dice">
                   <div className={styles.sideHead}>
@@ -1469,124 +1470,15 @@ function Table({
                       {term('stunt')} 적용: {unusedStunt.text}
                     </button>
                   )}
-                  <InvokeTray
-                    choices={choices}
-                    fatePoints={me.fatePoints}
-                    selectedId={selectedAspect}
-                    onSelect={setSelectedAspect}
-                    onInvoke={onInvoke}
-                    onFinalize={onFinalize}
-                    lockFinalize={guided && !!tour?.lockFinalize}
-                  />
                 </>
               )}
             </div>
           )}
-
-          <Presence show={!!compel}>
-            {compel && (
-              <div className={styles.overlay}>
-                <CompelOffer
-                  aspect={state.aspects[compel.aspectId]!}
-                  text={compel.text}
-                  targetId={meId}
-                  fatePoints={me.fatePoints}
-                  onAccept={() => {
-                    run(ME, {
-                      type: 'compel.respond',
-                      payload: { compelId: compel.id, accept: true },
-                    });
-                    if (lesson !== 'free') setNotes(compelNotes(true));
-                  }}
-                  onRefuse={() => {
-                    run(ME, {
-                      type: 'compel.respond',
-                      payload: { compelId: compel.id, accept: false },
-                    });
-                    if (lesson !== 'free') setNotes(compelNotes(false));
-                  }}
-                />
-              </div>
-            )}
-          </Presence>
-
-          <Presence show={!!prompt}>
-            {prompt && (
-              <div className={styles.overlay}>
-                <form
-                  className={styles.prompt}
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    submitPrompt();
-                  }}
-                >
-                  <div className={styles.promptHead}>
-                    {prompt.kind === 'aspect'
-                      ? `새 ${term('aspect')} 이름 짓기 · ${term('freeInvoke')} ${prompt.freeInvokes}`
-                      : `${term('boost')} 이름 짓기`}
-                  </div>
-                  <ul className={styles.promptExplain}>
-                    {prompt.kind === 'aspect' ? (
-                      <>
-                        <li>
-                          방금 만든 유리한 상황이 장면의 새 {term('aspect')}이 돼요. 이야기에서
-                          &quot;사실&quot;이 되는 거예요.
-                        </li>
-                        <li>
-                          카드에 ● {prompt.freeInvokes}개가 붙어요. ● 하나가 {term('freeInvoke')} 한
-                          번이에요. {term('fatePoint')} ◆ 없이도 이 {term('aspect')}으로 +2를 받거나
-                          다시 굴릴 수 있어요.
-                        </li>
-                        <li>●를 다 써도 {term('aspect')}은 남아요. 그 뒤로는 ◆를 내야 써요.</li>
-                      </>
-                    ) : (
-                      <>
-                        <li>
-                          {term('boost')}는 굴림 덕분에 잠깐 생긴 작은 기회예요. 오래가는{' '}
-                          {term('aspect')}이 아니에요.
-                        </li>
-                        <li>
-                          ●가 하나 붙은 {term('aspect')}이라, {term('fatePoint')} 없이 딱 한 번 +2를
-                          받을 수 있어요. 쓰자마자 카드째 사라져요.
-                        </li>
-                        <li>바로 다음 굴림에서 쓰는 게 좋아요. 장면이 바뀌면 없어지거든요.</li>
-                      </>
-                    )}
-                  </ul>
-                  <p className={styles.promptHelp}>
-                    {prompt.kind === 'aspect'
-                      ? '장면에 새로 생긴 사실을 짧은 문구로 적어요. 예: "연기에 가려진 뒷문"'
-                      : '그 순간의 기회를 짧게 적어요. 예: "흔들리는 발판", "연기 사이로 난 틈"'}
-                  </p>
-                  <input
-                    autoFocus
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    maxLength={40}
-                    className={styles.promptInput}
-                  />
-                  <div className={styles.promptButtons}>
-                    <button
-                      type="button"
-                      onClick={() => setPrompt(null)}
-                      className={styles.restart}
-                    >
-                      건너뛰기
-                    </button>
-                    <button type="submit" className={styles.promptOk} disabled={!draft.trim()}>
-                      붙이기
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
-          </Presence>
         </div>
 
-        <div className={styles.right}>
-          <div className={styles.aspectsHead}>무대 위 특성</div>
-          <div className={styles.aspects} data-tour="aspects">
-            {sceneAspects.map((a: Aspect) => (
+        <div className={book.table} data-tour="aspects">
+          {!(roll && settled && roll.status === 'open' && myRoll) &&
+            sceneAspects.map((a: Aspect) => (
               <AspectCard
                 key={a.id}
                 aspect={a}
@@ -1595,27 +1487,170 @@ function Table({
                   : {})}
               />
             ))}
-          </div>
-          <StoryLog lines={lines} />
+          {roll && settled && roll.status === 'open' && myRoll && (
+            <div className={book.tray}>
+              <InvokeTray
+                choices={choices}
+                fatePoints={me.fatePoints}
+                selectedId={selectedAspect}
+                onSelect={setSelectedAspect}
+                onInvoke={onInvoke}
+                onFinalize={onFinalize}
+                lockFinalize={guided && !!tour?.lockFinalize}
+              />
+            </div>
+          )}
         </div>
-      </div>
 
-      <footer className={styles.bottom}>
-        <div className={styles.dialogue} data-tour="dialogue">
-          <div className={styles.speaker}>GM</div>
-          <p className={styles.say}>
-            <Typewriter
-              text={
-                narration && narration.type === 'narration.posted' ? narration.payload.text : ''
-              }
-            />
-          </p>
-          {error && <p className={styles.error}>{error}</p>}
+        <Presence show={!!compel}>
+          {compel && (
+            <div className={styles.overlay}>
+              <CompelOffer
+                aspect={state.aspects[compel.aspectId]!}
+                text={compel.text}
+                targetId={meId}
+                fatePoints={me.fatePoints}
+                onAccept={() => {
+                  run(ME, {
+                    type: 'compel.respond',
+                    payload: { compelId: compel.id, accept: true },
+                  });
+                  if (lesson !== 'free') setNotes(compelNotes(true));
+                }}
+                onRefuse={() => {
+                  run(ME, {
+                    type: 'compel.respond',
+                    payload: { compelId: compel.id, accept: false },
+                  });
+                  if (lesson !== 'free') setNotes(compelNotes(false));
+                }}
+              />
+            </div>
+          )}
+        </Presence>
+
+        <Presence show={!!prompt}>
+          {prompt && (
+            <div className={styles.overlay}>
+              <form
+                className={styles.prompt}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  submitPrompt();
+                }}
+              >
+                <div className={styles.promptHead}>
+                  {prompt.kind === 'aspect'
+                    ? `새 ${term('aspect')} 이름 짓기 · ${term('freeInvoke')} ${prompt.freeInvokes}`
+                    : `${term('boost')} 이름 짓기`}
+                </div>
+                <ul className={styles.promptExplain}>
+                  {prompt.kind === 'aspect' ? (
+                    <>
+                      <li>
+                        방금 만든 유리한 상황이 장면의 새 {term('aspect')}이 돼요. 이야기에서
+                        &quot;사실&quot;이 되는 거예요.
+                      </li>
+                      <li>
+                        카드에 ● {prompt.freeInvokes}개가 붙어요. ● 하나가 {term('freeInvoke')} 한
+                        번이에요. {term('fatePoint')} ◆ 없이도 이 {term('aspect')}으로 +2를 받거나
+                        다시 굴릴 수 있어요.
+                      </li>
+                      <li>●를 다 써도 {term('aspect')}은 남아요. 그 뒤로는 ◆를 내야 써요.</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>
+                        {term('boost')}는 굴림 덕분에 잠깐 생긴 작은 기회예요. 오래가는{' '}
+                        {term('aspect')}이 아니에요.
+                      </li>
+                      <li>
+                        ●가 하나 붙은 {term('aspect')}이라, {term('fatePoint')} 없이 딱 한 번 +2를
+                        받을 수 있어요. 쓰자마자 카드째 사라져요.
+                      </li>
+                      <li>바로 다음 굴림에서 쓰는 게 좋아요. 장면이 바뀌면 없어지거든요.</li>
+                    </>
+                  )}
+                </ul>
+                <p className={styles.promptHelp}>
+                  {prompt.kind === 'aspect'
+                    ? '장면에 새로 생긴 사실을 짧은 문구로 적어요. 예: "연기에 가려진 뒷문"'
+                    : '그 순간의 기회를 짧게 적어요. 예: "흔들리는 발판", "연기 사이로 난 틈"'}
+                </p>
+                <input
+                  autoFocus
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  maxLength={40}
+                  className={styles.promptInput}
+                />
+                <div className={styles.promptButtons}>
+                  <button type="button" onClick={() => setPrompt(null)} className={styles.restart}>
+                    건너뛰기
+                  </button>
+                  <button type="submit" className={styles.promptOk} disabled={!draft.trim()}>
+                    붙이기
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+        </Presence>
+      </section>
+
+      <div className={book.deckle} aria-hidden />
+
+      <section className={book.book}>
+        <div className={book.running}>
+          <span>세션 1 · 튜토리얼</span>
+          <span className={book.tools}>
+            <select
+              aria-label="주사위 연출"
+              value={diceMode}
+              onChange={(e) => {
+                const m = e.target.value as DiceMode;
+                setDiceMode(m);
+                saveDiceMode(m);
+              }}
+            >
+              {DICE_MODES.map(([v, label]) => (
+                <option key={v} value={v}>
+                  주사위 {label}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              aria-pressed={sfxOn}
+              onClick={() => {
+                setSfxEnabled(!sfxOn);
+                setSfxOn(!sfxOn);
+              }}
+            >
+              효과음 {sfxOn ? '켜짐' : '꺼짐'}
+            </button>
+            <button type="button" onClick={onRestart}>
+              처음부터
+            </button>
+          </span>
         </div>
+        <div data-tour="party">
+          <MySheet
+            character={me}
+            aspects={state.aspects}
+            image={asset(pick.image)}
+            companions={companions}
+          />
+        </div>
+        <div className={book.text} data-tour="dialogue">
+          <StoryLog lines={lines} variant="book" />
+        </div>
+        {error && <p className={book.error}>{error}</p>}
         <ActionBar
           character={me}
           action={action}
           approach={approach}
+          hideRoll
           disabled={(busy && !defending) || !!compel || !!prompt || me.takenOut === true}
           canDefend={defending}
           {...(coach?.focus && showCoach && !guided ? { focus: coach.focus } : {})}
@@ -1624,7 +1659,7 @@ function Table({
           onApproach={setApproach}
           onRoll={onRoll}
         />
-      </footer>
+      </section>
       {guided && tour && <Spotlight open={[...tour.open, '[data-coach]']} ring={tour.ring} />}
     </main>
   );

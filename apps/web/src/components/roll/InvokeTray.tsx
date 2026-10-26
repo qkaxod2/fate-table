@@ -107,7 +107,7 @@ export function InvokeTray({
   return (
     <div className={styles.tray}>
       <div className={styles.head}>
-        {term('aspect')} {term('invoke')} · +2를 받거나 다시 굴려요
+        {term('aspect')} {term('invoke')} · 카드를 집어 +2를 받거나 다시 굴려요
       </div>
       <div className={styles.cards} data-tour="invoke-cards">
         {choices.map((c, i) => (
@@ -125,7 +125,6 @@ export function InvokeTray({
             )}
             <AspectCard
               aspect={c.aspect}
-              size="sm"
               {...(c.owner ? { owner: c.owner } : {})}
               highlight={(c.bonus?.improves ?? false) && !c.blocked}
               disabled={!!c.blocked}

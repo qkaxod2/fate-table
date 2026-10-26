@@ -1,211 +1,355 @@
-.bar {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: var(--s-3);
-  align-items: stretch;
+/*
+ * 행동 고르기 = 책 아래쪽의 목차 (design-system.md 20절).
+ * 줄마다 로마 숫자 · 행동 · 설명 · 점선 지시선. 고른 줄 끝에 접근법 버튼이 붙고, 누르면 2×3으로 펼쳐진다.
+ * 어디에 놓여도 읽히게 종이 바탕을 스스로 깐다.
+ */
+.toc {
+  position: relative;
+  padding: var(--s-3) var(--s-5) var(--s-4) var(--s-6);
+  background: linear-gradient(180deg, var(--paper-2), var(--paper));
+  color: var(--ink-1);
 }
 
-.actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(96px, 1fr));
+.head {
+  margin: 0 0 var(--s-1);
+  color: var(--ink-2);
+  font: 600 12px var(--f-ui);
+  letter-spacing: 0.2em;
+}
+
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
   gap: var(--s-2);
 }
 
-.action,
+/* 고른 줄: 왼쪽 여백에 주홍 줄 */
+.row[data-on]::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--s-5) * -1);
+  top: 50%;
+  width: 16px;
+  height: 2px;
+  background: var(--seal);
+}
+
+.action {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: baseline;
+  gap: var(--s-2);
+  padding: 7px 0;
+  border: 0;
+  background: none;
+  color: var(--ink-1);
+  font: 400 16px var(--f-book);
+  text-align: left;
+  cursor: pointer;
+}
+
+.n {
+  flex: none;
+  width: 22px;
+  color: var(--ink-3);
+  font: italic 500 16px var(--f-fig);
+}
+
+.row[data-on] .n {
+  color: var(--seal);
+}
+
+.k {
+  flex: none;
+  color: var(--seal);
+  font-weight: 700;
+}
+
+.desc {
+  overflow: hidden;
+  color: var(--ink-2);
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dots {
+  flex: 1;
+  min-width: 16px;
+  border-bottom: 1.5px dotted var(--ink-3);
+  translate: 0 -4px;
+}
+
+.num {
+  flex: none;
+  color: var(--ink-3);
+  font: 500 12px var(--f-num);
+}
+
+.action:not(:disabled):hover .k,
+.action:not(:disabled):hover .desc {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.action:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.row[data-on] .action:disabled {
+  opacity: 1;
+}
+
+/* 접근법 버튼 */
+.apBtn {
+  flex: none;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 12px;
+  border: 1.5px solid var(--seal);
+  border-radius: var(--r-token);
+  background: var(--card);
+  color: var(--seal);
+  font: 700 14px var(--f-book);
+  cursor: pointer;
+}
+
+.apBtn b {
+  font: 800 17px var(--f-fig);
+}
+
+.apBtn::after {
+  content: '▾';
+  font-size: 11px;
+}
+
+.apBtn[aria-expanded='true']::after {
+  content: '▴';
+}
+
+.apBtn[data-empty] {
+  background: var(--seal);
+  color: var(--seal-ink);
+}
+
+/* 펼쳐진 접근법 */
+.picker {
+  position: absolute;
+  right: -10px;
+  bottom: calc(100% + 10px);
+  z-index: 20;
+  width: min(420px, calc(100vw - 32px));
+  padding: var(--s-3);
+  border-radius: 10px;
+  background: var(--card);
+  box-shadow:
+    0 0 0 1px var(--paper-edge),
+    0 18px 40px -12px rgb(0 0 0 / 0.55);
+  animation: picker-in var(--dur-enter) var(--ease-out) backwards;
+}
+
+.picker::after {
+  content: '';
+  position: absolute;
+  right: 48px;
+  bottom: -8px;
+  width: 16px;
+  height: 16px;
+  rotate: 45deg;
+  background: var(--card);
+  box-shadow: 3px 3px 4px -2px rgb(0 0 0 / 0.15);
+}
+
+@keyframes picker-in {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+
+.pickHead {
+  margin: 0 0 var(--s-2);
+  color: var(--ink-2);
+  font: 600 12px var(--f-ui);
+  letter-spacing: 0.16em;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s-2);
+}
+
 .approach {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 2px;
-  padding: var(--s-2) var(--s-3);
-  border: 1px solid var(--edge);
-  border-radius: var(--r-ctl);
-  background: rgb(255 255 255 / 0.03);
-  color: var(--fg);
+  padding: 10px 12px 9px;
+  border: 1.5px solid var(--paper-edge);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink-1);
   font: inherit;
-  font-weight: 600;
-  font-size: var(--fs-md);
+  text-align: left;
   cursor: pointer;
-  transition: var(--hover), var(--press);
 }
 
-/* 고른 버튼 위에 마우스가 있어도 금색이 풀리지 않게 */
-.action:not(:disabled, [aria-checked='true']):hover,
-.approach:not(:disabled, [aria-checked='true']):hover {
-  border-color: var(--rule);
-  background: rgb(255 255 255 / 0.06);
+.approach b {
+  font: 800 28px/1 var(--f-fig);
 }
 
-/* 고른 버튼은 금색 면 대신 금 테두리와 옅은 금빛으로. 화면에서 꽉 찬 금색은 굴리기 하나뿐이다 */
-.action[aria-checked='true'],
+.apName {
+  font: 700 15px var(--f-book);
+}
+
+.apTip {
+  margin-top: 2px;
+  color: var(--ink-2);
+  font: 400 12px/1.35 var(--f-book);
+}
+
+.approach:not(:disabled):hover {
+  border-color: var(--ink-3);
+}
+
 .approach[aria-checked='true'] {
-  background: rgb(214 182 110 / 0.16);
-  color: var(--gold-hi);
-  border-color: var(--gold);
-  animation: pick 280ms var(--ease-spring);
+  border-color: var(--seal);
+  background: #f7e9e2;
 }
 
-@keyframes pick {
-  from {
-    transform: scale(0.94);
-  }
+.approach[aria-checked='true'] b,
+.approach[aria-checked='true'] .apName {
+  color: var(--seal);
 }
 
-.action:disabled,
 .approach:disabled {
-  opacity: 0.4;
   cursor: not-allowed;
+  opacity: 0.45;
 }
 
-/* 튜토리얼이 다음 단계로 잠가도 이미 고른 버튼은 또렷하게 남긴다 */
-.action[aria-checked='true']:disabled,
-.approach[aria-checked='true']:disabled {
-  opacity: 1;
-}
-
-.num,
-.key,
-.space {
-  display: inline-grid;
-  place-items: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 5px;
-  border: 1px solid currentColor;
-  border-bottom-width: 2px;
-  border-radius: 5px;
-  font-family: var(--f-num);
-  font-size: 11px;
-  font-weight: 400;
-  line-height: 1;
-  opacity: 0.6;
-}
-
-.approaches {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--s-2);
-  align-content: start;
-}
-
-.approach {
-  font-size: var(--fs-md);
-}
-
-/* 행동을 고르면 접근법이 옆에서 하나씩 펼쳐진다 (Q W E / A S D 순서) */
-.approaches .approach {
-  animation: unfold var(--dur-enter) var(--ease-out) backwards;
-}
-.approaches .approach:nth-child(2) {
-  animation-delay: calc(var(--stagger) * 1);
-}
-.approaches .approach:nth-child(3) {
-  animation-delay: calc(var(--stagger) * 2);
-}
-.approaches .approach:nth-child(4) {
-  animation-delay: calc(var(--stagger) * 1);
-}
-.approaches .approach:nth-child(5) {
-  animation-delay: calc(var(--stagger) * 2);
-}
-.approaches .approach:nth-child(6) {
-  animation-delay: calc(var(--stagger) * 3);
-}
-
-.approaches .approach[aria-checked='true'] {
-  animation: pick 280ms var(--ease-spring);
-}
-
-@keyframes unfold {
-  from {
-    opacity: 0;
-    transform: translateX(-10px);
-  }
-}
-
-.rollCol {
+.tags {
+  position: absolute;
+  top: 7px;
+  right: 7px;
   display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.tags em {
+  padding: 1px 6px;
+  border-radius: var(--r-token);
+  background: var(--ink-1);
+  color: var(--paper);
+  font: 600 10px/1.5 var(--f-ui);
+  font-style: normal;
+}
+
+.tags .stunt {
+  background: var(--brass);
+}
+
+.key {
+  color: var(--ink-3);
+  font: 500 11px var(--f-num);
+}
+
+/* 굴린다: 밀랍 봉인 */
+.rollRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--s-2);
+}
+
+.seal {
+  position: relative;
+  display: inline-flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--s-1);
-}
-
-.roll {
-  min-width: 112px;
-  padding: var(--s-3) var(--s-4);
-  border: 1px solid var(--gold);
-  border-radius: var(--r-ctl);
-  background: var(--gold);
-  color: var(--ink);
-  font: inherit;
-  font-family: var(--f-story);
-  font-weight: 700;
-  font-size: var(--fs-xl);
+  width: 92px;
+  height: 92px;
+  border: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, var(--seal-hi), var(--seal) 55%, #6e1e10);
+  color: var(--seal-ink);
+  font: 800 20px var(--f-head);
+  letter-spacing: 0.04em;
+  text-shadow: 0 -1px 0 rgb(0 0 0 / 0.35);
+  box-shadow:
+    0 10px 22px -6px rgb(0 0 0 / 0.6),
+    inset 0 -6px 12px rgb(0 0 0 / 0.35),
+    inset 0 4px 8px rgb(255 255 255 / 0.18);
   cursor: pointer;
 }
 
-.roll {
-  transition:
-    var(--hover),
-    var(--press),
-    filter var(--dur-hover) var(--ease-out);
-}
-
-.roll:not(:disabled):hover {
-  background: var(--gold-hi);
-}
-
-
-.roll[data-busy] {
-  opacity: 1;
-  cursor: progress;
-  background: linear-gradient(110deg, var(--gold) 30%, var(--gold-hi) 50%, var(--gold) 70%);
-  background-size: 250% 100%;
-  animation: shimmer 0.9s linear infinite;
-}
-
-@keyframes shimmer {
-  from {
-    background-position: 100% 0;
-  }
-  to {
-    background-position: -150% 0;
-  }
-}
-
-.roll:disabled {
-  border-color: var(--rule);
-  background: rgb(214 182 110 / 0.06);
-  color: rgb(240 220 160 / 0.45);
-  cursor: not-allowed;
+.seal::before {
+  content: '';
+  position: absolute;
+  inset: 9px;
+  border: 1.5px dashed rgb(255 243 232 / 0.45);
+  border-radius: 50%;
 }
 
 .space {
-  color: var(--muted);
-  opacity: 1;
+  margin-top: 2px;
+  font: 600 9px var(--f-ui);
+  letter-spacing: 0.18em;
+  opacity: 0.75;
 }
 
-@media (max-width: 760px) {
-  .bar {
-    grid-template-columns: 1fr;
+.seal:not(:disabled):hover {
+  filter: brightness(1.08);
+}
+
+.seal:disabled {
+  background: none;
+  box-shadow: none;
+  border: 2px dashed var(--ink-3);
+  color: var(--ink-3);
+  text-shadow: none;
+  cursor: not-allowed;
+}
+
+.seal:disabled::before {
+  display: none;
+}
+
+.seal[data-busy] {
+  cursor: progress;
+}
+
+.toc[data-disabled] .rows {
+  opacity: 0.55;
+}
+
+/* 체험 안내가 가리키는 곳: 주홍 빛이 맥박처럼 번진다 */
+.toc [data-focus] {
+  border-radius: 10px;
+  animation: focus-glow 1.1s ease-in-out infinite;
+}
+
+@keyframes focus-glow {
+  50% {
+    box-shadow: 0 0 0 4px rgb(200 72 44 / 0.35);
   }
-  .actions {
-    grid-template-columns: repeat(4, 1fr);
-  }
-  .action {
-    font-size: var(--fs-md);
-    padding: var(--s-2);
-    white-space: nowrap;
-  }
-  .rollCol {
-    flex-direction: row;
-  }
-  .roll {
-    flex: 1;
-  }
-  .space {
-    display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toc [data-focus],
+  .picker {
+    animation: none;
   }
 }
 
@@ -218,38 +362,14 @@
   }
 }
 
-/* 체험 안내가 가리키는 곳: 금빛 테두리가 맥박처럼 크게 번진다 */
-.bar [data-focus] {
-  border-radius: var(--r-card);
-  animation: focus-glow 1.1s ease-in-out infinite;
-}
-
-@keyframes focus-glow {
-  0%,
-  100% {
-    box-shadow:
-      0 0 0 3px var(--gold),
-      0 0 12px 2px rgb(214 182 110 / 0.5);
+@media (max-width: 760px) {
+  .toc {
+    padding-inline: var(--s-4);
   }
-  50% {
-    box-shadow:
-      0 0 0 5px var(--gold-hi),
-      0 0 40px 10px rgb(240 220 160 / 0.75);
+  .desc {
+    display: none;
   }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .approaches .approach {
-    animation-name: fade;
-  }
-  .bar [data-focus] {
-    animation: none;
-    box-shadow: 0 0 0 3px var(--gold-hi);
-  }
-}
-
-@keyframes fade {
-  from {
-    opacity: 0;
+  .row[data-on]::before {
+    display: none;
   }
 }

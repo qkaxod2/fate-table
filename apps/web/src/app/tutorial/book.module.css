@@ -1,0 +1,415 @@
+/*
+ * 무대와 책 (design-system.md 20절).
+ * 왼쪽 무대: 배경·스탠딩·장 제목·상대 이름표·판정 카드, 아래 테이블에 특성 카드.
+ * 오른쪽 책: 머리글·내 기록지·이야기 본문·목차형 행동.
+ */
+.shell {
+  --book-w: clamp(440px, 36vw, 560px);
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--book-w);
+  height: 100dvh;
+  overflow: hidden;
+  background: #0d0b09;
+}
+
+/* ---------- 무대 ---------- */
+.stage {
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  overflow: hidden;
+  background-color: #0d0b09;
+  background-position: 38% center;
+  background-size: cover;
+  container-type: inline-size;
+  animation: fade var(--dur-scene) var(--ease-out) backwards;
+}
+
+.stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 70% at 45% 55%, transparent 40%, rgb(13 11 9 / 0.7)),
+    linear-gradient(180deg, rgb(13 11 9 / 0.4), transparent 25%, transparent 62%, rgb(13 11 9 / 0.88));
+  pointer-events: none;
+}
+
+.stage .hero,
+.stage .foe {
+  z-index: 1;
+  height: min(92%, 980px);
+  max-width: none;
+  mask-image: linear-gradient(180deg, #000 80%, transparent);
+  transition:
+    translate 600ms var(--ease-out),
+    filter 400ms var(--ease-out);
+}
+
+.stage .hero {
+  left: 2%;
+}
+
+.stage .foe {
+  right: -6%;
+  height: min(84%, 900px);
+  filter: brightness(0.6) saturate(0.75);
+}
+
+/* 판정 중: 두 사람이 양옆으로 벌어져 대결 구도가 되고, 상대도 밝아진다 */
+.stage[data-roll] .hero {
+  translate: -9cqw 0;
+}
+
+.stage[data-roll] .foe {
+  translate: 10cqw 0;
+  filter: none;
+}
+
+.stage .hero[data-focus] {
+  filter: brightness(1.06) drop-shadow(0 24px 40px rgb(0 0 0 / 0.7));
+}
+
+.chapter {
+  position: absolute;
+  top: 28px;
+  left: 32px;
+  z-index: 3;
+  max-width: 46cqw;
+  color: var(--stage-ink);
+  text-shadow: 0 2px 14px rgb(0 0 0 / 0.85);
+}
+
+.chapter p {
+  margin: 0;
+  color: var(--brass-hi);
+  font: 600 13px var(--f-ui);
+  letter-spacing: 0.06em;
+}
+
+.chapter h1 {
+  margin: 4px 0 0;
+  font: 800 clamp(28px, 3.2cqw, 40px) / 1.15 var(--f-head);
+}
+
+.foePlate {
+  position: absolute;
+  top: 24px;
+  right: 28px;
+  z-index: 3;
+}
+
+/* 코치마크: 평소에는 무대 가운데 위, 굴리는 동안에는 왼쪽 위로 비켜 선다 */
+.coachSlot {
+  --dock-left: 0px;
+  --dock-width: min(320px, 40cqw);
+  position: absolute;
+  top: 112px;
+  left: 20px;
+  z-index: 6;
+  width: min(460px, 50cqw);
+  height: 0;
+}
+
+/* 판정 카드 자리 */
+.center {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 210px;
+  left: 0;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  padding: 120px 24px 24px;
+  pointer-events: none;
+}
+
+.center > * {
+  pointer-events: auto;
+}
+
+/* 안내 카드가 왼쪽 위로 비켜 서 있으면 판정 카드는 그 오른쪽에 선다 */
+.stage:has([data-dock]) .center {
+  padding-left: calc(min(320px, 40cqw) + 32px);
+}
+
+/* 굴린 뒤: 판정 카드는 두 사람 사이 오른쪽으로 비켜 내 얼굴을 가리지 않는다 */
+.stage[data-roll] .center {
+  justify-items: end;
+  padding-right: 5cqw;
+}
+
+/* 굴린 뒤의 판정 카드: 종이 위에 주사위·결과 */
+.center .check {
+  width: min(420px, 100%);
+  max-height: 100%;
+  border: 0;
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--ink-1);
+  box-shadow: 0 30px 60px -18px rgb(0 0 0 / 0.85);
+  backdrop-filter: none;
+  rotate: 0.6deg;
+}
+
+.center .check [class*='sideHead'] {
+  color: var(--seal);
+  font-weight: 700;
+}
+
+.center .check [class*='total'] {
+  color: var(--ink-1);
+  font-family: var(--f-fig);
+}
+
+.center .check [class*='total'] small,
+.center .check [class*='mods'] {
+  color: var(--ink-2);
+}
+
+.center .check [class*='vs'] {
+  color: var(--ink-3);
+  font-family: var(--f-fig);
+  font-style: italic;
+}
+
+.center .check [class*='difficulty'] {
+  border-color: var(--ink-3);
+  border-radius: 6px;
+  color: var(--ink-1);
+}
+
+.center .check [class*='waiting'] {
+  background: var(--ink-1);
+  color: var(--paper);
+}
+
+/* 판정 띠: 종이 위에서는 판정 색을 먹에 섞어 진하게 찍는다 */
+.center .check [role='status'] {
+  margin-top: var(--s-2);
+  background: color-mix(in srgb, var(--c) 16%, transparent);
+  border-block: 1.5px solid color-mix(in srgb, var(--c) 60%, var(--ink-1));
+}
+
+.center .check [role='status'] > div:nth-last-child(2) {
+  color: var(--ink-1);
+}
+
+.center .check [role='status'] [aria-hidden]:not([class*='sparks']) {
+  background: none;
+  color: color-mix(in srgb, var(--c) 65%, var(--ink-1));
+  -webkit-text-fill-color: currentColor;
+  filter: none;
+}
+
+.center .check [role='status'] p {
+  color: var(--ink-2);
+}
+
+.center .check [role='status'] span {
+  background: color-mix(in srgb, var(--c) 60%, var(--ink-1));
+}
+
+.center .check [class*='defenseOk'],
+.center .check [class*='stunt'] {
+  margin-bottom: var(--s-3);
+}
+
+/* 테이블: 무대 아래 특성 카드 줄 */
+.table {
+  position: absolute;
+  right: 28px;
+  bottom: 20px;
+  left: 24px;
+  z-index: 5;
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+}
+
+.table > :not(.tray) {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 240px;
+}
+
+.table > :nth-child(1) {
+  rotate: -2deg;
+}
+.table > :nth-child(2) {
+  rotate: 1.2deg;
+  translate: 0 6px;
+}
+.table > :nth-child(3) {
+  rotate: -0.8deg;
+  translate: 0 -4px;
+}
+.table > :nth-child(4) {
+  rotate: 1.8deg;
+  translate: 0 4px;
+}
+.table > :nth-child(5) {
+  rotate: -1.4deg;
+}
+
+.tray {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 찢어진 종이 가장자리 */
+.deckle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: calc(var(--book-w) - 12px);
+  z-index: 7;
+  width: 30px;
+  background: var(--paper);
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='120' preserveAspectRatio='none'%3E%3Cpath d='M30 0 L30 120 L9 120 L13 112 L6 104 L12 95 L4 86 L11 78 L7 69 L14 61 L5 52 L10 44 L3 35 L12 27 L6 18 L13 9 L8 0Z'/%3E%3C/svg%3E");
+  mask-size: 30px 120px;
+  filter: drop-shadow(-6px 0 10px rgb(0 0 0 / 0.5));
+  pointer-events: none;
+}
+
+/* ---------- 책 ---------- */
+.book {
+  position: relative;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--paper-grain), var(--paper);
+  color: var(--ink-1);
+  box-shadow: inset 18px 0 30px -18px rgb(90 60 20 / 0.35);
+}
+
+.running {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-5) 0 var(--s-6);
+  color: var(--ink-2);
+  font: 600 12px var(--f-ui);
+  letter-spacing: 0.14em;
+}
+
+.tools {
+  display: flex;
+  gap: 6px;
+  letter-spacing: 0;
+}
+
+.tools select,
+.tools button {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--r-token);
+  background: var(--card);
+  color: var(--ink-2);
+  font: 600 12px var(--f-ui);
+  cursor: pointer;
+}
+
+.tools button[aria-pressed='false'] {
+  color: var(--ink-3);
+}
+
+.tools select:hover,
+.tools button:hover {
+  border-color: var(--ink-3);
+}
+
+.text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.text > section {
+  flex: 1;
+}
+
+.error {
+  margin: 0;
+  padding: var(--s-2) var(--s-6);
+  color: var(--seal);
+  font: 600 13px var(--f-ui);
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ---------- 좁은 화면: 무대 위, 책 아래 ---------- */
+@media (max-width: 1100px) {
+  .shell {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+  .stage {
+    height: max(560px, 72dvh);
+    flex: none;
+  }
+  .deckle {
+    display: none;
+  }
+  .book {
+    border-top: 6px solid var(--paper-edge);
+  }
+  .text > section {
+    max-height: 60dvh;
+  }
+  .stage .hero {
+    left: -8%;
+  }
+  .table {
+    overflow-x: auto;
+    padding: 12px 4px 4px;
+    scroll-snap-type: x mandatory;
+  }
+  .table > :not(.tray) {
+    flex: 0 0 min(200px, 46%);
+    scroll-snap-align: start;
+  }
+}
+
+@media (max-width: 760px) {
+  .chapter {
+    top: 16px;
+    left: 16px;
+  }
+  .foePlate {
+    top: auto;
+    right: 12px;
+    bottom: 196px;
+  }
+  .stage[data-roll] .foePlate {
+    display: none;
+  }
+  .center {
+    padding: 88px 12px 12px;
+  }
+  .running {
+    flex-wrap: wrap;
+    padding-inline: var(--s-4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage .hero,
+  .stage .foe {
+    transition: none;
+  }
+}
