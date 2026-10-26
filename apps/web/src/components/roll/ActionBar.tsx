@@ -3,6 +3,7 @@
 import { term, tip } from '@fate/glossary';
 import { APPROACHES, type Action, type Approach, type Character } from '@fate/rules-engine';
 import { useEffect, useState } from 'react';
+import { isDialogOpen } from '../book/Leaf';
 import styles from './ActionBar.module.css';
 
 const ACTIONS: Action[] = ['overcome', 'create_advantage', 'attack', 'defend'];
@@ -81,6 +82,8 @@ export function ActionBar({
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
+      // 시트·명령 창 같은 창이 열려 있으면 테이블 단축키는 쉰다
+      if (isDialogOpen()) return;
       const n = Number(e.key);
       if (n >= 1 && n <= 4) {
         const a = ACTIONS[n - 1]!;

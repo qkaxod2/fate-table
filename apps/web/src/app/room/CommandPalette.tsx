@@ -9,7 +9,7 @@ import {
   type RoomState,
 } from '@fate/rules-engine';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useCloseGuard } from '@/components/ui/closeGuard';
+import { Leaf } from '@/components/book/Leaf';
 import { josa } from '@/lib/josa';
 import { useClosing } from '@/lib/motion';
 import type { GmOpen } from './GmConsole';
@@ -245,7 +245,8 @@ export function CommandPalette({
   onClose: () => void;
 }) {
   const entries = build();
-  const [closing, close] = useClosing(onClose);
+  const closer = useClosing(onClose);
+  const close = closer[1];
   const [input, setInput] = useState('');
   const [index, setIndex] = useState(0);
   const field = useRef<HTMLInputElement>(null);
@@ -265,8 +266,6 @@ export function CommandPalette({
 
   useEffect(() => field.current?.focus(), []);
 
-  const guard = useCloseGuard(close);
-
   const exec = (e: PaletteEntry) => {
     const exactHead = e.words.some((w) => w.toLowerCase() === head.toLowerCase());
     void e.act(exactHead ? rest : '');
@@ -274,10 +273,11 @@ export function CommandPalette({
   };
 
   return (
-    <div className={styles.backdrop} data-closing={closing || undefined} {...guard.backdrop}>
-      <div className={styles.box} role="dialog" aria-label="명령" {...guard.panel}>
+    <Leaf label="명령 창" onClose={onClose} closer={closer} top>
+      <div className={styles.box}>
         <input
           ref={field}
+          aria-label="명령"
           className={styles.input}
           value={input}
           placeholder="무엇을 할까요?  예: npc 밀수꾼 은밀 · 특성 짙은 안개 · 대사 문이 열린다"
@@ -328,15 +328,12 @@ export function CommandPalette({
           <kbd>↓</kbd> 고르기 · <kbd>Tab</kbd> 채우기 · <kbd>Enter</kbd> 실행 · <kbd>Esc</kbd> 닫기
         </div>
       </div>
-      {guard.nudge}
-    </div>
+    </Leaf>
   );
 }
 
 /** ? 단축키 목록 */
 export function ShortcutHelp({ isGm, onClose }: { isGm: boolean; onClose: () => void }) {
-  const [closing, close] = useClosing(onClose);
-  const guard = useCloseGuard(close);
   const rows: Array<[string[], string]> = [
     [['Ctrl', 'K'], '명령 창 열기 (/ 도 돼요)'],
     [['1', '–', '4'], '행동 고르기 (극복 · 이점 만들기 · 공격 · 방어)'],
@@ -350,18 +347,15 @@ export function ShortcutHelp({ isGm, onClose }: { isGm: boolean; onClose: () => 
     [['Esc'], '창 닫기'],
   ];
   return (
-    <div className={styles.backdrop} data-closing={closing || undefined} {...guard.backdrop}>
-      <div className={styles.box} role="dialog" aria-label="단축키" {...guard.panel}>
-        <h2 className={styles.title}>단축키</h2>
-        <dl className={styles.keys}>
-          {rows.map(([k, v], i) => (
-            <div key={i}>
-              <dt>{k.map((part, j) => (part === '–' ? ' – ' : <kbd key={j}>{part}</kbd>))}</dt>
-              <dd>{v}</dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-    </div>
+    <Leaf label="단축키" kicker="도움말" title="단축키" onClose={onClose} size="sm">
+      <dl className={styles.keys}>
+        {rows.map(([k, v], i) => (
+          <div key={i}>
+            <dt>{k.map((part, j) => (part === '–' ? ' – ' : <kbd key={j}>{part}</kbd>))}</dt>
+            <dd>{v}</dd>
+          </div>
+        ))}
+      </dl>
+    </Leaf>
   );
 }

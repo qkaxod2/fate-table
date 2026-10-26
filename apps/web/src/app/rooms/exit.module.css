@@ -1,36 +1,15 @@
-.backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  display: grid;
-  place-items: center;
-  padding: var(--s-4);
-  background: rgb(8 9 18 / 0.66);
-  backdrop-filter: blur(3px);
-}
-
+/* 방 나가기 · 터트리기: 책의 한 장(components/book/Leaf) 위의 확인 */
 .box {
   display: flex;
   flex-direction: column;
   gap: var(--s-3);
-  width: min(440px, 100%);
-  padding: var(--s-5);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-card);
-  background: var(--panel-s);
-  box-shadow: 0 24px 60px rgb(0 0 0 / 0.55);
   text-align: left;
-}
-
-.title {
-  margin: 0;
-  font-family: var(--f-story);
-  font-size: var(--fs-xl);
 }
 
 .text {
   margin: 0;
-  line-height: 1.6;
+  color: var(--ink-1);
+  font: 400 16px/1.7 var(--f-book);
 }
 
 .text strong {
@@ -39,36 +18,40 @@
 
 .note {
   margin: 0;
-  color: var(--muted);
-  font-size: var(--fs-sm);
+  padding-left: var(--s-3);
+  border-left: 2px solid var(--paper-edge);
+  color: var(--ink-2);
+  font: 400 14px/1.6 var(--f-book);
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: var(--s-1);
-  font-size: var(--fs-sm);
+  gap: 6px;
+  color: var(--ink-2);
+  font: 600 13px var(--f-ui);
 }
 
 .field input {
-  padding: var(--s-2) var(--s-3);
-  border: 1px solid var(--line);
-  border-radius: var(--r-ctl);
-  background: var(--plate);
-  color: var(--fg);
-  font: inherit;
-  font-size: var(--fs-md);
+  padding: 9px 12px;
+  border: 1px solid var(--paper-edge);
+  border-bottom: 1.5px solid var(--ink-3);
+  border-radius: 6px 6px 2px 2px;
+  background: var(--paper);
+  color: var(--ink-1);
+  font: 400 16px var(--f-book);
 }
 
 .field input:focus-visible {
-  outline: 2px solid var(--danger);
-  outline-offset: 1px;
+  border-bottom-color: var(--danger);
+  outline: 2px solid color-mix(in srgb, var(--danger) 35%, transparent);
+  outline-offset: 0;
 }
 
 .error {
   margin: 0;
   color: var(--danger);
-  font-size: var(--fs-sm);
+  font: 600 14px var(--f-ui);
 }
 
 .actions {
@@ -80,31 +63,43 @@
 
 .cancel,
 .danger {
-  padding: var(--s-2) var(--s-4);
-  border-radius: var(--r-ctl);
-  font: inherit;
-  font-weight: 700;
+  min-height: 40px;
+  padding: 0 var(--s-5);
+  border-radius: var(--r-token);
+  font: 700 15px var(--f-ui);
   cursor: pointer;
 }
 
 .cancel {
-  border: 1px solid var(--line);
+  border: 1px solid var(--ink-3);
   background: transparent;
-  color: var(--fg);
+  color: var(--ink-1);
 }
 
+.cancel:not(:disabled):hover {
+  border-color: var(--ink-1);
+}
+
+/* 위험한 버튼: 주홍보다 짙은 위험색 면. 비활성은 흐리지 않고 종이 위 점선으로 */
 .danger {
   border: 1px solid var(--danger);
   background: var(--danger);
   color: #fff;
 }
 
-.danger:disabled,
-.cancel:disabled {
-  opacity: 0.45;
+.danger:not(:disabled):hover {
+  filter: brightness(1.08);
+}
+
+.danger:disabled {
+  border-style: dashed;
+  border-color: var(--ink-3);
+  background: transparent;
+  color: var(--ink-2);
   cursor: not-allowed;
 }
 
-.danger:not(:disabled):hover {
-  filter: brightness(1.08);
+.cancel:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
