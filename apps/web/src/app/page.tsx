@@ -36,7 +36,7 @@ const SHELF = [
 /** 표지 아래에 핀으로 꽂아 둔 규칙 카드 세 장: 이 게임에서 알아야 할 것 전부 */
 const RULE_CARDS = [
   { label: term('aspect'), text: '캐릭터와 장면을 한 줄로', note: '"사방에 번지는 불길"' },
-  { label: term('fatePoint'), text: '쓰면 +2, 곤란을 받으면 하나 더', note: '◆ ◆ ◆' },
+  { label: term('fatePoint'), text: '쓰면 +2, 곤란을 받으면 하나 더', note: '동전 3개로 시작해요' },
   { label: term('fateDice'), text: '넷을 굴려 접근법 수치에 더해요', note: '＋ ○ － ＋' },
 ];
 

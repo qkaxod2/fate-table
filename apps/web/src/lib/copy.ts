@@ -2,19 +2,14 @@ import { term } from '@fate/glossary';
 import type { Action, Outcome, RoomEvent, RoomState } from '@fate/rules-engine';
 import { josa } from '@/lib/josa';
 
-/**
- * 판정 연출 (design-system.md 17·21절). 크게 찍는 글자는 한국어 결과(word)다.
- * latin은 예전 연출 글자로, 화면에 크게 쓰지 않는다 (방 화면이 옮겨 가면 지운다).
- */
-export const JUDGE: Record<
-  Outcome,
-  { word: string; latin: string; tone: 'perfect' | 'great' | 'good' | 'miss' }
-> = {
-  style: { word: term('style'), latin: 'PERFECT', tone: 'perfect' },
-  success: { word: term('success'), latin: 'GREAT', tone: 'great' },
-  tie: { word: term('tie'), latin: 'GOOD', tone: 'good' },
-  fail: { word: term('fail'), latin: 'MISS', tone: 'miss' },
-};
+/** 판정 연출 (design-system.md 17·21절). 크게 찍는 글자는 한국어 결과(word)다. */
+export const JUDGE: Record<Outcome, { word: string; tone: 'perfect' | 'great' | 'good' | 'miss' }> =
+  {
+    style: { word: term('style'), tone: 'perfect' },
+    success: { word: term('success'), tone: 'great' },
+    tie: { word: term('tie'), tone: 'good' },
+    fail: { word: term('fail'), tone: 'miss' },
+  };
 
 /** 행동 × 결과 안내 문구 (design-system.md 6절) */
 export const OUTCOME_COPY: Record<Action, Record<Outcome, string>> = {

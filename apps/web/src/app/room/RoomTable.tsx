@@ -706,7 +706,7 @@ export function RoomTable({
           summary={
             settled && outcome && result && roll ? (
               <>
-                <b>{JUDGE[outcome].latin}</b> · {activeChar?.name} {term(roll.action)} ·{' '}
+                <b>{JUDGE[outcome].word}</b> · {activeChar?.name} {term(roll.action)} ·{' '}
                 {signed(result.total)}
               </>
             ) : (
@@ -787,7 +787,7 @@ export function RoomTable({
                 onClick={() => setFolded('')}
                 title="굴림 결과 펼치기"
               >
-                <b>{JUDGE[outcome].latin}</b>
+                <b>{JUDGE[outcome].word}</b>
                 <span className={styles.foldedText}>
                   {activeChar?.name} · {term(roll.action)} · {term(roll.active.approach)}{' '}
                   <em>
