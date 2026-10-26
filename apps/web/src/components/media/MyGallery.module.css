@@ -71,6 +71,11 @@
   grid-column: span 2;
 }
 
+/* 대화창 안(작게): 배경도 한 칸씩 써서 좁은 화면에서 옆 칸이 비지 않게 한다 */
+.gallery[data-compact] .item[data-kind='scene'] {
+  grid-column: auto;
+}
+
 /* 사진처럼 흰 테두리를 두르고, 스탠딩은 투명이라 옅은 체크무늬 위에 보여 준다 */
 .thumb {
   overflow: hidden;

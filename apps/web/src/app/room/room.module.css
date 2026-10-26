@@ -263,23 +263,58 @@
   color: var(--seal);
 }
 
-/* GM: 테이블 끝의 빈 인덱스 카드 자리 */
+/*
+ * GM: 테이블 끝의 빈 인덱스 카드. 특성 카드(AspectCard)와 같은 빨간 머리줄·파란 가로줄을
+ * 옅게 깔고 점선으로 둘러 "여기에 한 장 더 놓을 수 있다"는 자리로 보인다.
+ */
 .addAspect {
-  flex: 0 0 auto;
-  align-self: center;
-  padding: var(--s-4) var(--s-4);
-  border: 2px dashed var(--paper-edge);
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--card) 88%, transparent);
-  color: var(--ink-1);
-  font: 700 14px var(--f-ui);
-  rotate: 1deg;
+  --line-h: 34px;
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  justify-content: flex-start;
+  min-height: 88px;
+  padding: 10px 16px 12px;
+  border: 0;
+  border-radius: 3px;
+  outline: 1.5px dashed color-mix(in srgb, var(--ink-3) 70%, transparent);
+  outline-offset: -6px;
+  background:
+    linear-gradient(var(--rule-red), var(--rule-red)) 0 30px / 100% 1.5px no-repeat,
+    repeating-linear-gradient(
+        180deg,
+        transparent 0 calc(var(--line-h) - 1px),
+        var(--rule-blue) calc(var(--line-h) - 1px) var(--line-h)
+      )
+      0 31px / 100% 100% no-repeat,
+    var(--paper);
+  color: var(--ink-3);
+  text-align: left;
+  box-shadow: 0 10px 20px -12px rgb(0 0 0 / 0.7);
   cursor: pointer;
+  transition: translate var(--dur-hover) var(--ease-out);
 }
 
-.addAspect:hover {
-  border-color: var(--seal);
-  color: var(--seal);
+.addLabel {
+  height: 20px;
+  font: 600 12px/20px var(--f-ui);
+}
+
+.addText {
+  padding-top: 4px;
+  color: color-mix(in srgb, var(--pen) 70%, var(--card));
+  font: 400 clamp(24px, 2vw, 30px) / var(--line-h) var(--f-hand);
+  white-space: nowrap;
+}
+
+.addAspect:hover,
+.addAspect:focus-visible {
+  translate: 0 -3px;
+  outline-color: var(--seal);
+}
+
+.addAspect:focus-visible {
+  outline-style: solid;
 }
 
 /* 방어 접근법 고르기 (오버레이 안의 2×3 카드) */
@@ -383,98 +418,162 @@
 
 /* ===================== 책 ===================== */
 
+/*
+ * 머리글 한 줄: 왼쪽은 방 이름·내 역할·초대 코드, 오른쪽은 조용한 화면 설정 묶음과 나가기.
+ * 책 본문을 가리지 않게 테두리 없는 글자 단추로만 둔다.
+ */
 .running {
   flex-wrap: nowrap;
-  letter-spacing: 0.04em;
+  min-height: 40px;
+  padding-top: var(--s-2);
+  letter-spacing: 0;
+}
+
+.runHead {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: baseline;
+  gap: var(--s-2);
+  min-width: 0;
 }
 
 .runTitle {
-  /* 방 이름은 무대 장 제목에도 있으니, 책이 좁으면 도구에 자리를 내준다 */
-  display: none;
   min-width: 0;
   overflow: hidden;
+  color: var(--ink-1);
+  font: 700 14px var(--f-head);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.role {
+  flex: none;
+  color: var(--seal);
+  font: 600 12px var(--f-ui);
+}
+
+.invite {
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px dotted var(--ink-3);
+  background: none;
+  color: var(--ink-2);
+  font: 500 12px var(--f-ui);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.invite b {
+  color: var(--ink-1);
+  font: 700 12px var(--f-fig);
+  letter-spacing: 0.08em;
+}
+
+.invite:hover {
+  border-bottom-color: var(--seal);
+  color: var(--seal);
 }
 
 .runTools {
   display: flex;
   flex: none;
-  margin-left: auto;
-  gap: 6px;
+  gap: var(--s-2);
   align-items: center;
-  letter-spacing: 0;
 }
 
-.role {
-  /* 넓은 화면(1500px 이상)과 좁은 화면에서만: 그 사이에서는 도구에 자리를 내준다 */
-  display: none;
-  flex: none;
-  padding: 0 8px;
-  border: 1px solid var(--seal);
-  border-radius: var(--r-token);
-  color: var(--seal);
-  font: 600 12px/1.6 var(--f-ui);
-  letter-spacing: 0.02em;
-}
-
-.topBtn,
-.diceSel {
-  height: 30px;
-  padding: 0 10px;
+/* 화면 설정(주사위·효과음·명령 창)은 한 알약 안에 가는 칸막이로 묶는다 */
+.prefs {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
   border: 1px solid var(--paper-edge);
   border-radius: var(--r-token);
-  background: var(--card);
-  color: var(--ink-1);
-  font: 600 13px var(--f-ui);
+  background: color-mix(in srgb, var(--card) 70%, transparent);
+}
+
+.prefs > * + * {
+  border-left: 1px solid var(--paper-edge) !important;
+}
+
+.diceSel,
+.prefBtn {
+  height: 100%;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-2);
+  font: 600 12px var(--f-ui);
   white-space: nowrap;
   cursor: pointer;
 }
 
-.topBtn:hover,
-.diceSel:hover {
-  border-color: var(--ink-3);
-}
-
-.topBtn[aria-pressed='false'] {
-  color: var(--ink-2);
-}
-
-.topBtn kbd {
-  color: var(--seal);
-  font-size: 12px;
-}
-
 .diceSel {
-  padding-right: 4px;
+  padding-left: 12px;
+  border-radius: var(--r-token) 0 0 var(--r-token);
+}
+
+.prefBtn:last-child {
+  padding-right: 10px;
+  border-radius: 0 var(--r-token) var(--r-token) 0;
+}
+
+.diceSel:hover,
+.prefBtn:hover {
+  color: var(--ink-1);
+}
+
+.prefBtn kbd {
+  color: var(--ink-2);
+  font: 600 11px var(--f-ui);
 }
 
 /* 효과음: 꺼지면 음표에 사선이 그어진다 (색만으로 가르지 않는다) */
-.topBtn[data-sfx] {
+.prefBtn[data-sfx] {
   position: relative;
   width: 30px;
   padding: 0;
-  font-size: 15px;
+  font-size: 14px;
 }
 
-.topBtn[data-sfx][aria-pressed='false']::after {
+.prefBtn[data-sfx][aria-pressed='false'] {
+  color: var(--ink-3);
+}
+
+.prefBtn[data-sfx][aria-pressed='false']::after {
   content: '';
   position: absolute;
   top: 50%;
-  left: 7px;
-  right: 7px;
+  left: 8px;
+  right: 8px;
   height: 1.5px;
   background: currentColor;
   rotate: -40deg;
 }
 
-@media (min-width: 1500px) {
+.exit {
+  flex: none;
+  height: 28px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  font: 600 12px var(--f-ui);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* 책이 좁은 노트북 화면: 방 이름은 무대 장 제목에도 있으니 머리글에서는 뺀다 */
+@media (min-width: 1101px) and (max-width: 1359px) {
   .runTitle {
-    display: block;
+    display: none;
   }
-  .role {
-    display: inline-block;
-  }
+}
+
+.exit:hover {
+  color: var(--seal);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .empty {
@@ -489,48 +588,86 @@
   min-height: 120px;
 }
 
-/* 입력 자리: 플레이어는 말하기, GM은 [GM 대사 | 말하기] 탭으로 한 자리를 바꿔 쓴다 */
+/* 좁은 화면: 책은 페이지와 함께 내려가니 기록에 화면 절반쯤을 넉넉히 준다 */
+@media (max-width: 1100px) {
+  .book > div:has(> section[aria-label='이야기 기록']) {
+    flex: none;
+    height: max(320px, 55dvh);
+  }
+}
+
+/* 터치 화면에는 키보드 단축키 단추가 필요 없다 */
+@media (hover: none) {
+  .prefBtn:has(kbd) {
+    display: none;
+  }
+  .prefBtn[data-sfx] {
+    border-radius: 0 var(--r-token) var(--r-token) 0;
+  }
+}
+
+/*
+ * 입력 자리: 플레이어는 말하기 한 줄, GM은 왼쪽 작은 [대사 | 말하기] 전환 + 입력 한 줄.
+ * 띠를 한 겹으로 두어 기록이 높이를 더 받는다.
+ */
 .composer {
+  display: flex;
   flex: none;
-  padding: var(--s-2) var(--s-5) var(--s-2) var(--s-6);
+  align-items: center;
+  gap: var(--s-2);
+  padding: 6px var(--s-5) 6px var(--s-6);
   border-top: 1px solid var(--paper-edge);
+}
+
+.composer > :last-child {
+  flex: 1;
+  min-width: 0;
 }
 
 .composeTabs {
   display: flex;
+  flex: none;
+  flex-direction: column;
   gap: 2px;
-  margin-bottom: 6px;
 }
 
 .composeTabs button {
-  padding: 2px 10px 3px;
-  border: 0;
-  border-bottom: 2px solid transparent;
+  min-width: 46px;
+  height: 20px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: var(--r-token);
   background: none;
-  color: var(--ink-2);
-  font: 600 13px var(--f-ui);
+  color: var(--ink-3);
+  font: 600 12px/18px var(--f-ui);
   cursor: pointer;
 }
 
-.composeTabs button[aria-selected='true'] {
-  border-bottom-color: var(--seal);
+.composeTabs button:hover {
   color: var(--ink-1);
+}
+
+.composeTabs button[aria-selected='true'] {
+  border-color: var(--seal);
+  background: color-mix(in srgb, var(--seal) 10%, var(--card));
+  color: var(--seal);
 }
 
 .narrate textarea {
   width: 100%;
-  height: 46px;
-  min-height: 46px;
+  height: 42px;
+  min-height: 42px;
   max-height: 140px;
-  padding: var(--s-2) var(--s-3);
+  padding: 9px var(--s-3);
   border: 1px solid var(--paper-edge);
   border-radius: 8px;
   background: var(--card);
   color: var(--ink-1);
-  font: 400 15px/1.6 var(--f-book);
+  font: 400 15px/1.5 var(--f-book);
 }
 
 .narrate form {
+  align-items: center;
   margin: 0;
 }
 
@@ -592,6 +729,21 @@
 .ghost:hover {
   border-color: var(--seal);
   color: var(--seal);
+}
+
+/* 이미 캐릭터가 있으면 기록지 아래 작은 글자 단추로만 */
+.ghost[data-quiet] {
+  align-self: flex-end;
+  margin-block: 2px 0;
+  padding: 2px 4px;
+  border: 0;
+  color: var(--ink-2);
+  font: 600 12px var(--f-ui);
+}
+
+.ghost[data-quiet]:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .ghost:disabled {
@@ -741,6 +893,17 @@
   padding: 2px 10px;
 }
 
+/* 난이도 일곱 칸이 넓은 책에서 한 줄에 들어가도록 촘촘하게 */
+.level {
+  gap: 3px;
+  padding: 2px 7px;
+  font-size: 13px;
+}
+
+.level small {
+  font-size: 12px;
+}
+
 .level small {
   color: var(--ink-2);
   font-weight: 400;
@@ -846,22 +1009,24 @@
     padding: 8px 12px 0;
     scrollbar-width: none;
   }
-  .runTitle,
-  .role {
-    display: block;
-  }
-  .running {
-    flex-wrap: wrap;
-  }
-  .runTools {
-    flex: 1 1 auto;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    min-width: 0;
-  }
 }
 
 @media (max-width: 760px) {
+  /* 장 제목이 오른쪽 위 상대 이름표 밑으로 들어가지 않게 줄을 바꾼다 */
+  .chapter {
+    max-width: calc(100% - 196px - 40px);
+  }
+  .chapter h1 {
+    word-break: keep-all;
+  }
+  /* 머리글: 방 정보와 설정이 한 줄에 안 들어가면 두 줄로 */
+  .running {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+  .runTools {
+    margin-left: auto;
+  }
   .composer,
   .ghost,
   .panel {
@@ -873,9 +1038,6 @@
   }
   .defendGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .sfxText {
-    display: none;
   }
 }
 

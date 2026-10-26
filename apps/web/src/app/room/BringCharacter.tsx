@@ -64,8 +64,13 @@ export function BringCharacter({ run, has, brought }: Props) {
 
   if (!open)
     return (
-      <button type="button" className={styles.ghost} onClick={() => setOpen(true)}>
-        + 캐릭터 데려오기
+      <button
+        type="button"
+        className={styles.ghost}
+        data-quiet={has || undefined}
+        onClick={() => setOpen(true)}
+      >
+        {has ? '+ 다른 캐릭터 데려오기' : '+ 캐릭터 데려오기'}
       </button>
     );
   return (
