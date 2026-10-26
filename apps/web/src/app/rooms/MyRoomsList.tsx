@@ -92,10 +92,10 @@ export function MyRoomsList({
                 type="button"
                 className={styles.rowAction}
                 onClick={() => setExiting(r)}
-                aria-label={r.role === 'gm' ? `${r.name} 터트리기` : `${r.name}에서 나가기`}
-                title={r.role === 'gm' ? '방 터트리기' : '방 나가기'}
+                aria-label={r.role === 'gm' ? `${r.name} 지우기` : `${r.name}에서 나가기`}
+                title={r.role === 'gm' ? '방 지우기' : '방 나가기'}
               >
-                {r.role === 'gm' ? '터트리기' : '나가기'}
+                {r.role === 'gm' ? '지우기' : '나가기'}
               </button>
             ) : (
               <button

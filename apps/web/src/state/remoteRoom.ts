@@ -35,7 +35,7 @@ export interface RoomSnapshot {
   events: RoomEvent[];
   /** 마지막으로 받은 이벤트가 화면을 연 뒤에 일어난 것인지 (연출·효과음 여부) */
   live: boolean;
-  /** GM이 방을 터트렸다 */
+  /** GM이 방을 지웠다 */
   closed: boolean;
 }
 

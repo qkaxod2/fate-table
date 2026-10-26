@@ -187,7 +187,7 @@ export function MediaStudio({ kind, context, applyLabel, onApply }: Props) {
             {context.aspects?.map((a) => (
               <span key={a}>「{a}」</span>
             ))}
-            <small>도 함께 읽어요</small>
+            <small>· 함께 참고해요</small>
           </p>
         )}
         <textarea

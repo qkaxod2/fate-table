@@ -363,6 +363,55 @@ button:disabled {
   }
 }
 
+/* 접힌 지도: 무대 왼쪽 위에 꽂힌 작은 종이 꼬리표 */
+.tab {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: baseline;
+  gap: var(--s-2);
+  padding: 5px 12px 6px;
+  border: 0;
+  border-left: 3px solid var(--brass);
+  border-radius: 2px 6px 6px 2px;
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  color: var(--ink-1);
+  font: 600 13px var(--f-ui);
+  rotate: -0.6deg;
+  box-shadow: 0 8px 18px -10px rgb(0 0 0 / 0.8);
+  cursor: pointer;
+  transition:
+    translate var(--dur-hover) var(--ease-out),
+    box-shadow var(--dur-hover) var(--ease-out);
+}
+
+.tab:hover {
+  translate: 0 -2px;
+  box-shadow: 0 12px 22px -10px rgb(0 0 0 / 0.85);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--seal);
+  outline-offset: 2px;
+}
+
+.tabKicker {
+  color: var(--ink-1);
+  font: 700 13px var(--f-head);
+}
+
+.tabMore {
+  color: var(--seal);
+  font: 600 12px var(--f-ui);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab {
+    transition: none;
+  }
+}
+
 @media (max-width: 700px) {
   .map {
     height: 300px;

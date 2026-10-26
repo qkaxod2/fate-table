@@ -1,4 +1,4 @@
-// 방 터트리기: GM만 할 수 있다. 접속 중인 사람에게 닫혔다고 알린 뒤 방과 모든 기록을 지운다.
+// 방 지우기: GM만 할 수 있다. 접속 중인 사람에게 닫혔다고 알린 뒤 방과 모든 기록을 지운다.
 // 요청: { roomId }  응답: { closed: true }
 import { admin, appendEvents, CORS, currentUser, fail, ok, readJson } from '../_shared/http.ts';
 
@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
     .eq('user_id', user.id)
     .maybeSingle();
   if (!me) return fail(404, 'NOT_FOUND', '이미 없어진 방이에요.');
-  if (me.role !== 'gm') return fail(403, 'FORBIDDEN', '방은 GM만 터트릴 수 있어요.');
+  if (me.role !== 'gm') return fail(403, 'FORBIDDEN', '방은 GM만 지울 수 있어요.');
 
   await appendEvents(db, roomId, null, [
     { type: 'room.closed', actorId: user.id, payload: {}, visibility: 'public' },

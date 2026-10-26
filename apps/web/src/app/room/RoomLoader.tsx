@@ -69,7 +69,7 @@ export function RoomLoader() {
   );
 }
 
-/** 테이블을 보여 주다가, GM이 방을 터트리면 닫혔다는 안내로 바꾼다 */
+/** 테이블을 보여 주다가, GM이 방을 지우면 닫혔다는 안내로 바꾼다 */
 function OpenRoom({
   room,
   name,
@@ -92,7 +92,7 @@ function OpenRoom({
       <div className={styles.card} role="alert">
         <h1 className={styles.title}>방이 닫혔어요</h1>
         <p className={styles.lead}>
-          {room.actor.role === 'gm' ? '' : 'GM이 '}「{name}」 방을 터트렸어요. 이야기 기록도 함께
+          {room.actor.role === 'gm' ? '' : 'GM이 '}「{name}」 방을 지웠어요. 이야기 기록도 함께
           정리됐어요. 함께해 주셔서 고마워요.
         </p>
         <div className={styles.links}>

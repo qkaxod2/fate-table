@@ -130,6 +130,28 @@ export function ZoneMap({ state, run, isGm, canControl, pending, auto = 'full' }
   const open = editing || (userOpen ?? (auto !== 'hidden' && zones.length > 0));
   const compact = !editing && userOpen === null && auto === 'compact';
 
+  const startEditing = () => {
+    setEditing(!editing);
+    setSelected(null);
+    setPlacing(null);
+    setTool('move');
+  };
+
+  // 접혀 있으면 무대를 가리지 않게 작은 종이 꼬리표 하나만 남긴다
+  if (!open)
+    return (
+      <button
+        type="button"
+        className={styles.tab}
+        aria-expanded={false}
+        aria-label={zones.length ? `${term('zone')} 지도 펼치기` : `${term('zone')} 지도 그리기`}
+        onClick={() => (zones.length ? setUserOpen(true) : startEditing())}
+      >
+        <span className={styles.tabKicker}>{term('zone')} 지도</span>
+        <span className={styles.tabMore}>{zones.length ? `${zones.length}곳 ▾` : '+ 그리기'}</span>
+      </button>
+    );
+
   const token = (c: Character) => {
     const mine = canControl(c);
     return (
@@ -180,22 +202,20 @@ export function ZoneMap({ state, run, isGm, canControl, pending, auto = 'full' }
         <button
           type="button"
           className={styles.fold}
-          aria-expanded={open}
-          onClick={() => setUserOpen(!open)}
+          aria-expanded
+          onClick={() => {
+            setUserOpen(false);
+            setEditing(false);
+          }}
         >
-          {open ? '접기' : '펼치기'}
+          접기 ▴
         </button>
         {isGm && (
           <button
             type="button"
             className={styles.toggle}
             aria-pressed={editing}
-            onClick={() => {
-              setEditing(!editing);
-              setSelected(null);
-              setPlacing(null);
-              setTool('move');
-            }}
+            onClick={startEditing}
           >
             {editing ? '편집 끝' : '지도 편집'}
           </button>
