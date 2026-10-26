@@ -468,34 +468,64 @@
   border-color: var(--k-boost);
 }
 
+/*
+ * 비주얼 노벨형 HUD (19절): 대사와 행동이 화면 아래에 깔린 한 몸의 띠다.
+ * 테두리 상자 대신 아래에서 올라오는 어둠 위에 놓이고, 맨 위에 금빛 실선 하나만 지난다.
+ */
 .bottom {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--s-4);
-  align-items: end;
-  padding: 0 var(--s-5) var(--s-4);
+  gap: 0;
+  align-items: stretch;
+  padding: var(--s-5) var(--s-5) var(--s-4);
+  background: linear-gradient(
+    180deg,
+    rgb(8 9 18 / 0) 0%,
+    rgb(8 9 18 / 0.86) 26%,
+    rgb(8 9 18 / 0.96) 100%
+  );
+}
+
+.bottom::before {
+  content: '';
+  position: absolute;
+  top: calc(var(--s-5) * 0.6);
+  right: var(--s-5);
+  left: var(--s-5);
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(214 182 110 / 0.55) 15%,
+    rgb(214 182 110 / 0.55) 85%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+.bottom > :last-child:not(:first-child) {
+  padding-left: var(--s-5);
+  border-left: 1px solid var(--edge);
 }
 
 .dialogue {
   position: relative;
-  padding: var(--s-5) var(--s-5) var(--s-4);
-  border: 1px solid var(--edge);
-  border-radius: var(--r-panel);
-  background: var(--surface-1);
-  backdrop-filter: var(--blur);
+  padding: var(--s-3) var(--s-5) 0 var(--s-1);
 }
 
 .speaker {
   position: absolute;
-  top: -13px;
-  left: var(--s-4);
-  padding: 3px var(--s-3);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-token);
-  background: var(--surface-2);
+  position: static;
+  display: inline-block;
+  margin-bottom: var(--s-2);
+  padding: 0 var(--s-4) 2px 0;
+  border-bottom: 2px solid var(--gold);
   color: var(--gold-hi);
-  font: var(--label-font);
-  letter-spacing: var(--label-track);
+  font-family: var(--f-story);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  letter-spacing: 0.06em;
 }
 
 .say {
@@ -552,8 +582,8 @@
   .body {
     padding-block: var(--s-2);
   }
-  .dialogue {
-    padding: var(--s-4) var(--s-4) var(--s-3);
+  .bottom {
+    padding-top: var(--s-4);
   }
   .say {
     font-size: var(--fs-md);
@@ -587,6 +617,11 @@
   }
   .bottom {
     grid-template-columns: 1fr;
+    row-gap: var(--s-3);
+  }
+  .bottom > :last-child:not(:first-child) {
+    padding-left: 0;
+    border-left: 0;
   }
   .standee {
     opacity: 0.35;

@@ -20,8 +20,7 @@
   padding: var(--s-2) var(--s-3);
   border: 1px solid var(--edge);
   border-radius: var(--r-ctl);
-  background: var(--surface-1);
-  backdrop-filter: var(--blur);
+  background: rgb(255 255 255 / 0.03);
   color: var(--fg);
   font: inherit;
   font-weight: 600;
@@ -34,14 +33,15 @@
 .action:not(:disabled, [aria-checked='true']):hover,
 .approach:not(:disabled, [aria-checked='true']):hover {
   border-color: var(--rule);
-  background: #191c3a;
+  background: rgb(255 255 255 / 0.06);
 }
 
+/* 고른 버튼은 금색 면 대신 금 테두리와 옅은 금빛으로. 화면에서 꽉 찬 금색은 굴리기 하나뿐이다 */
 .action[aria-checked='true'],
 .approach[aria-checked='true'] {
-  background: var(--gold);
-  color: var(--ink);
-  border-color: var(--gold-hi);
+  background: rgb(214 182 110 / 0.16);
+  color: var(--gold-hi);
+  border-color: var(--gold);
   animation: pick 280ms var(--ease-spring);
 }
 
@@ -134,9 +134,9 @@
 .roll {
   min-width: 112px;
   padding: var(--s-3) var(--s-4);
-  border: 1px solid var(--gold-hi);
+  border: 1px solid var(--gold);
   border-radius: var(--r-ctl);
-  background: linear-gradient(180deg, var(--gold-hi), var(--gold));
+  background: var(--gold);
   color: var(--ink);
   font: inherit;
   font-family: var(--f-story);
@@ -153,19 +153,9 @@
 }
 
 .roll:not(:disabled):hover {
-  box-shadow: 0 0 24px rgb(240 220 160 / 0.45);
-  filter: brightness(1.06);
+  background: var(--gold-hi);
 }
 
-.roll:not(:disabled) {
-  animation: ready 1.8s ease-in-out infinite;
-}
-
-@keyframes ready {
-  50% {
-    box-shadow: 0 0 18px rgb(240 220 160 / 0.35);
-  }
-}
 
 .roll[data-busy] {
   opacity: 1;

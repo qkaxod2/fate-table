@@ -111,10 +111,9 @@
   padding-inline: var(--s-5);
   border: 1px solid var(--gold-hi);
   border-radius: var(--r-ctl);
-  background: linear-gradient(180deg, var(--gold-hi), var(--gold));
+  background: var(--gold);
   color: var(--ink);
   font-weight: 700;
-  box-shadow: 0 6px 20px -8px rgb(214 182 110 / 0.7);
 }
 
 .ghost small {
