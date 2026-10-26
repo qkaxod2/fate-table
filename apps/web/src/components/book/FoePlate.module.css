@@ -101,6 +101,53 @@
   }
 }
 
+/* 판정 중: 이름 한 줄 + 칸 한 줄로 접혀 판정 카드 자리를 비켜 준다 */
+.plate[data-compact] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  padding: 10px 14px 12px;
+}
+
+.plate[data-compact] .head {
+  flex: 1 0 100%;
+  margin: 0;
+}
+
+.plate[data-compact] .head img {
+  width: 34px;
+  height: 34px;
+}
+
+.plate[data-compact] .head b {
+  font-size: 18px;
+}
+
+.plate[data-compact] .head small,
+.plate[data-compact] .label {
+  display: none;
+}
+
+.plate[data-compact] .row {
+  gap: 5px;
+  margin: 0;
+}
+
+.plate[data-compact] .row:last-child {
+  flex: 1;
+}
+
+.plate[data-compact] .slot {
+  height: 26px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.plate[data-compact] .sq {
+  flex-basis: 26px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .slot[data-used] {
     animation: none;

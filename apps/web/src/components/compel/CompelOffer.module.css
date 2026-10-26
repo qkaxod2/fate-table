@@ -1,63 +1,102 @@
+/*
+ * 강요 = GM이 테이블 너머로 내미는 카드. 주홍 책갈피 탭에 "GM의 강요", 가운데에 걸린 특성 카드가
+ * 클립으로 꽂혀 있고, 아래에 GM이 적은 사정과 두 갈래(수락 +1 / 거절 −1)가 놓인다.
+ */
 .offer {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--s-2);
-  max-width: 420px;
-  padding: var(--s-4);
-  border: 1px solid var(--hi);
-  border-radius: var(--r-card);
-  background: var(--panel);
-  box-shadow: 0 0 40px -10px var(--hi);
-  animation: in var(--dur-enter) var(--ease-spring) backwards;
+  gap: var(--s-3);
+  width: min(440px, 100%);
+  margin-top: 18px;
+  padding: 26px 24px 20px;
+  border-radius: 6px;
+  background: var(--paper-grain), var(--card);
+  color: var(--ink-1);
+  rotate: -0.8deg;
+  box-shadow:
+    0 1px 0 var(--paper-edge),
+    0 34px 70px -22px rgb(0 0 0 / 0.9);
+  animation: hand-over var(--dur-enter) var(--ease-spring) backwards;
+  outline: none;
 }
 
+/* 책갈피 탭 */
 .head {
-  font: var(--label-font);
-  letter-spacing: var(--label-track);
-  color: var(--hi);
+  position: absolute;
+  top: -16px;
+  left: 20px;
+  padding: 4px 14px 6px;
+  border-radius: 4px 4px 0 0;
+  background: var(--seal);
+  color: var(--seal-ink);
+  font: 700 14px var(--f-ui);
+  letter-spacing: 0.04em;
+  box-shadow: 0 -4px 10px -6px rgb(0 0 0 / 0.5);
+}
+
+.card {
+  rotate: 1.2deg;
 }
 
 .text {
   margin: 0;
-  font-family: var(--f-story);
-  font-size: var(--fs-lg);
+  padding-left: var(--s-3);
+  border-left: 2px solid var(--seal);
+  font: 700 18px/1.6 var(--f-book);
 }
 
 .explain {
   margin: 0;
-  font-size: var(--fs-sm);
-  color: var(--muted);
+  color: var(--ink-2);
+  font: 400 14px/1.6 var(--f-book);
 }
 
 .buttons {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: var(--s-2);
-  justify-content: flex-end;
 }
 
 .refuse,
 .accept {
-  padding: var(--s-2) var(--s-4);
-  font: inherit;
-  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  padding: 6px var(--s-3);
+  border-radius: 10px;
+  font: 700 16px var(--f-ui);
   cursor: pointer;
 }
 
+.refuse small,
+.accept small {
+  font: 600 13px var(--f-ui);
+  opacity: 0.9;
+}
+
 .refuse {
-  border: 1px solid var(--line);
+  border: 1.5px solid var(--ink-3);
   background: transparent;
-  color: var(--fg);
+  color: var(--ink-1);
+}
+
+.refuse:not(:disabled):hover {
+  border-color: var(--ink-1);
 }
 
 .refuse:disabled {
-  opacity: 0.4;
+  border-style: dashed;
+  color: var(--ink-3);
   cursor: not-allowed;
 }
 
 .accept {
-  border: 1px solid var(--gold-hi);
-  background: var(--gold);
-  color: var(--ink);
+  border: 0;
+  background: var(--seal);
+  color: var(--seal-ink);
 }
 
 /* 수락 버튼은 은은하게 손짓한다 */
@@ -66,8 +105,18 @@
 }
 
 .accept:not(:disabled):hover {
-  filter: brightness(1.08);
-  box-shadow: 0 0 18px rgb(200 72 44 / 0.5);
+  background: var(--seal-hi);
+}
+
+.accept:disabled {
+  opacity: 0.6;
+}
+
+.coins {
+  --coin: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 @keyframes beckon {
@@ -81,10 +130,11 @@
   }
 }
 
-@keyframes in {
+/* GM 쪽(오른쪽 위)에서 테이블 위로 밀어 건네는 움직임 */
+@keyframes hand-over {
   from {
     opacity: 0;
-    transform: translateY(16px) scale(0.96);
+    transform: translate(40px, -24px) rotate(4deg);
   }
 }
 
@@ -100,5 +150,16 @@
 @keyframes fade {
   from {
     opacity: 0;
+  }
+}
+
+@media (max-width: 1100px) {
+  .offer {
+    margin-top: 0;
+    padding: 46px 18px calc(18px + env(safe-area-inset-bottom));
+  }
+  .head {
+    top: 0;
+    border-radius: 0 0 4px 4px;
   }
 }

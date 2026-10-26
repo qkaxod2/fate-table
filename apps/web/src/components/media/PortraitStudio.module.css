@@ -12,7 +12,7 @@
 
 .h {
   margin: 0;
-  font-family: var(--f-story);
+  font-family: var(--f-book);
   font-size: var(--fs-lg);
   font-weight: 700;
 }
@@ -21,7 +21,7 @@
 .count,
 .wait {
   margin: 0;
-  color: var(--muted);
+  color: var(--ink-2);
   font-size: var(--fs-sm);
 }
 
@@ -54,11 +54,11 @@
   flex-direction: column;
   gap: 2px;
   padding: 0 0 var(--s-2);
-  border: 1px solid var(--line);
+  border: 1px solid var(--paper-edge);
   border-radius: var(--r-card);
   overflow: hidden;
-  background: var(--panel-s);
-  color: var(--fg);
+  background: var(--card);
+  color: var(--ink-1);
   font: inherit;
   text-align: left;
   cursor: pointer;
@@ -74,9 +74,9 @@
 }
 
 .preset[data-on] {
-  border-color: var(--gold);
+  border-color: var(--seal);
   box-shadow:
-    0 0 0 1px var(--gold),
+    0 0 0 1px var(--seal),
     0 6px 24px rgb(168 50 28 / 0.18);
 }
 
@@ -95,7 +95,7 @@
 
 .pBlurb {
   padding: 0 var(--s-2);
-  color: var(--muted);
+  color: var(--ink-2);
   font-size: var(--fs-xs);
 }
 
@@ -108,35 +108,35 @@
 
 .chip {
   padding: 2px var(--s-3);
-  border: 1px solid var(--line);
+  border: 1px solid var(--paper-edge);
   border-radius: var(--r-token);
   background: transparent;
-  color: var(--muted);
+  color: var(--ink-2);
   font: inherit;
   font-size: var(--fs-sm);
   cursor: pointer;
 }
 
 .chip[aria-pressed='true'] {
-  border-color: var(--gold);
+  border-color: var(--seal);
   background: rgb(168 50 28 / 0.14);
-  color: var(--gold-hi);
+  color: var(--seal);
 }
 
 .look {
   width: 100%;
   padding: var(--s-3);
-  border: 1px solid var(--line);
+  border: 1px solid var(--paper-edge);
   border-radius: var(--r-ctl);
-  background: var(--plate);
-  color: var(--fg);
+  background: var(--paper);
+  color: var(--ink-1);
   font-family: var(--f-num);
   font-size: var(--fs-sm);
   resize: vertical;
 }
 
 .look:focus-visible {
-  outline: 2px solid var(--gold);
+  outline: 2px solid var(--seal);
   outline-offset: 1px;
 }
 
@@ -154,7 +154,7 @@
 
 .num {
   margin-left: var(--s-2);
-  color: var(--gold);
+  color: var(--seal);
   font-family: var(--f-num);
   font-size: var(--fs-md);
 }
@@ -162,7 +162,7 @@
 .link {
   border: 0;
   background: none;
-  color: var(--muted);
+  color: var(--ink-2);
   font: inherit;
   font-size: var(--fs-sm);
   text-decoration: underline;
@@ -171,13 +171,13 @@
 
 .slider {
   width: 100%;
-  accent-color: var(--gold);
+  accent-color: var(--seal);
 }
 
 .scale {
   display: flex;
   justify-content: space-between;
-  color: var(--muted);
+  color: var(--ink-2);
   font-size: var(--fs-xs);
 }
 
@@ -192,10 +192,10 @@
 .draw {
   min-width: 160px;
   padding: var(--s-3) var(--s-5);
-  border: 1px solid var(--gold);
-  border-radius: var(--r-ctl);
-  background: linear-gradient(180deg, var(--gold-hi), var(--gold));
-  color: var(--ink);
+  border: 0;
+  border-radius: var(--r-token);
+  background: var(--seal);
+  color: var(--seal-ink);
   font: inherit;
   font-weight: 700;
   cursor: pointer;
@@ -217,7 +217,7 @@
   border: 2px solid transparent;
   border-radius: var(--r-card);
   overflow: hidden;
-  background: var(--plate);
+  background: var(--paper);
   cursor: pointer;
 }
 
@@ -229,12 +229,12 @@
 }
 
 .cand[data-on] {
-  border-color: var(--gold);
+  border-color: var(--seal);
 }
 
 .mine summary {
   margin-bottom: var(--s-2);
-  color: var(--muted);
+  color: var(--ink-2);
   font-size: var(--fs-sm);
   cursor: pointer;
 }

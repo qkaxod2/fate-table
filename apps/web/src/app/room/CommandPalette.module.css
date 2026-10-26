@@ -1,62 +1,50 @@
-.backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 12vh var(--s-4) var(--s-4);
-  background: rgb(8 9 18 / 0.6);
-  backdrop-filter: blur(3px);
-  animation: fade 140ms var(--ease);
-}
-
+/* 명령 창: 책의 한 장 위쪽에 펜으로 한 줄 적는 자리 + 목차처럼 늘어선 명령 */
 .box {
   display: flex;
   flex-direction: column;
-  width: min(640px, 100%);
+  min-height: 0;
   max-height: 70vh;
-  border: 1px solid var(--gold);
-  background: var(--panel-s);
-  box-shadow: 0 24px 60px rgb(0 0 0 / 0.55);
-  animation: rise 180ms var(--ease);
 }
 
 .input {
-  padding: var(--s-4);
+  padding: 18px 22px 14px;
   border: 0;
-  border-bottom: 1px solid var(--rule);
+  border-bottom: 3px double var(--paper-edge);
   background: transparent;
-  color: var(--fg);
-  font: inherit;
-  font-size: var(--fs-lg);
+  color: var(--ink-1);
+  font: 400 19px/1.4 var(--f-book);
   outline: none;
+}
+
+.input::placeholder {
+  color: var(--ink-3);
 }
 
 .list {
   margin: 0;
-  padding: var(--s-1) 0;
+  padding: 6px 0;
   overflow-y: auto;
   list-style: none;
+  scrollbar-width: thin;
 }
 
 .item {
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
+  grid-template-columns: 76px minmax(0, 1fr);
   gap: 0 var(--s-3);
   width: 100%;
-  padding: var(--s-2) var(--s-4);
+  padding: 8px 22px;
   border: 0;
   background: transparent;
-  color: var(--fg);
+  color: var(--ink-1);
   font: inherit;
   text-align: left;
   cursor: pointer;
 }
 
 .item[data-active] {
-  background: rgb(168 50 28 / 0.14);
-  box-shadow: inset 3px 0 0 var(--gold);
+  background: #f7e9e2;
+  box-shadow: inset 3px 0 0 var(--seal);
 }
 
 .item:active {
@@ -67,92 +55,77 @@
 .word {
   grid-row: span 2;
   align-self: center;
-  font-family: var(--f-num);
-  font-size: var(--fs-sm);
-  color: var(--gold-hi);
+  color: var(--seal);
+  font: 500 14px var(--f-num);
 }
 
 .label {
-  font-weight: 700;
+  font: 700 15px var(--f-book);
 }
 
 .label em {
+  color: var(--ink-2);
+  font: 400 14px var(--f-ui);
   font-style: normal;
-  font-weight: 400;
-  color: var(--muted);
-  font-size: var(--fs-sm);
 }
 
 .hint {
-  color: var(--muted);
-  font-size: var(--fs-xs);
+  color: var(--ink-2);
+  font: 400 13px var(--f-ui);
 }
 
 .none {
-  padding: var(--s-3) var(--s-4);
-  color: var(--muted);
+  padding: var(--s-3) 22px;
+  color: var(--ink-2);
+  font: 400 15px var(--f-book);
 }
 
 .foot {
-  padding: var(--s-2) var(--s-4);
-  border-top: 1px solid var(--line);
-  color: var(--muted);
-  font-size: var(--fs-xs);
+  padding: 8px 22px 12px;
+  border-top: 1px solid var(--paper-edge);
+  color: var(--ink-2);
+  font: 400 13px var(--f-ui);
 }
 
 .foot kbd,
 .keys kbd {
   display: inline-block;
-  min-width: 20px;
+  min-width: 22px;
   margin: 0 2px;
   padding: 1px 6px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--paper-edge);
   border-bottom-width: 2px;
   border-radius: 4px;
-  background: var(--night);
-  color: var(--fg);
-  font-size: 11px;
+  background: var(--paper);
+  color: var(--ink-1);
+  font-size: 12px;
   text-align: center;
-}
-
-.title {
-  margin: 0;
-  padding: var(--s-4) var(--s-4) var(--s-2);
-  font-family: var(--f-story);
-  font-size: var(--fs-xl);
 }
 
 .keys {
   margin: 0;
-  padding: 0 var(--s-4) var(--s-4);
 }
 
 .keys div {
   display: grid;
-  grid-template-columns: 180px minmax(0, 1fr);
+  grid-template-columns: 170px minmax(0, 1fr);
   gap: var(--s-3);
-  padding: 6px 0;
-  border-bottom: 1px solid var(--line);
+  padding: 7px 0;
+  border-bottom: 1px solid var(--paper-edge);
 }
 
 .keys dt {
-  color: var(--muted);
+  color: var(--ink-2);
 }
 
 .keys dd {
   margin: 0;
+  font: 400 15px/1.5 var(--f-book);
 }
 
-@keyframes fade {
-  from {
-    opacity: 0;
-  }
-}
-
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(-8px) scale(0.98);
+@media (hover: none) and (pointer: coarse) {
+  .foot {
+    display: none;
   }
 }
 
@@ -160,5 +133,9 @@
   .keys div {
     grid-template-columns: 1fr;
     gap: 2px;
+  }
+  .item {
+    grid-template-columns: 60px minmax(0, 1fr);
+    padding-inline: 16px;
   }
 }

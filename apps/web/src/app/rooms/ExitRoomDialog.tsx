@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useCloseGuard } from '@/components/ui/closeGuard';
+import { Leaf } from '@/components/book/Leaf';
 import { ApiError } from '@/lib/api';
 import { josa } from '@/lib/josa';
 import { closeRoom, leaveRoom } from '@/lib/lobby';
@@ -30,7 +30,6 @@ export function ExitRoomDialog({
   const [typed, setTyped] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const guard = useCloseGuard(() => !busy && onCancel());
   const nameInput = useRef<HTMLInputElement>(null);
   const leaveBtn = useRef<HTMLButtonElement>(null);
   useEffect(() => (nameInput.current ?? leaveBtn.current)?.focus(), []);
@@ -50,21 +49,24 @@ export function ExitRoomDialog({
   };
 
   return (
-    <div className={styles.backdrop} {...guard.backdrop}>
+    <Leaf
+      role="alertdialog"
+      size="sm"
+      kicker={isGm ? '되돌릴 수 없어요' : '방 나가기'}
+      title={isGm ? '방 터트리기' : '방에서 나갈까요?'}
+      label={isGm ? '방 터트리기' : '방에서 나갈까요?'}
+      onClose={onCancel}
+      locked={busy}
+    >
       <form
         className={styles.box}
-        role="alertdialog"
-        aria-labelledby="exit-title"
         aria-describedby="exit-desc"
-        {...guard.panel}
+        data-danger={isGm || undefined}
         onSubmit={(e) => {
           e.preventDefault();
           void go();
         }}
       >
-        <h2 id="exit-title" className={styles.title}>
-          {isGm ? '방 터트리기' : '방에서 나갈까요?'}
-        </h2>
         {isGm ? (
           <>
             <p id="exit-desc" className={styles.text}>
@@ -112,6 +114,6 @@ export function ExitRoomDialog({
           </button>
         </div>
       </form>
-    </div>
+    </Leaf>
   );
 }

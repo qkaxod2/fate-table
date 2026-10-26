@@ -35,6 +35,22 @@
   font: 800 26px/1.2 var(--f-head);
 }
 
+.open {
+  margin-left: var(--s-2);
+  padding: 2px 10px;
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--r-token);
+  background: var(--card);
+  color: var(--seal);
+  font: 600 13px var(--f-ui);
+  vertical-align: 4px;
+  cursor: pointer;
+}
+
+.open:hover {
+  border-color: var(--seal);
+}
+
 .concept {
   margin: 2px 0 var(--s-3);
   color: var(--ink-2);
@@ -202,4 +218,84 @@
 .miniStress i[data-used] {
   border-color: var(--seal);
   background: var(--seal);
+}
+
+/* 낮은 화면: 기록지를 줄여 기록과 행동이 한 화면에 남게 한다 */
+@media (min-width: 1101px) and (max-height: 820px) {
+  .me {
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: var(--s-3);
+    padding-block: var(--s-3);
+  }
+  .portrait {
+    width: 64px;
+    height: 82px;
+  }
+  .name {
+    font-size: 22px;
+  }
+  .concept {
+    overflow: hidden;
+    margin-bottom: var(--s-2);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .label {
+    margin-bottom: 3px;
+  }
+  .companions {
+    padding-block: 6px;
+  }
+}
+
+/* 한 줄 기록: 작은 초상 · 이름 · 칸들만 */
+.sheet[data-compact] .me {
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: var(--s-3);
+  align-items: center;
+  padding-block: var(--s-2);
+}
+
+.sheet[data-compact] .portrait {
+  width: 44px;
+  height: 52px;
+  padding: 2px;
+  rotate: none;
+}
+
+.sheet[data-compact] .name {
+  font-size: 19px;
+}
+
+.sheet[data-compact] .concept,
+.sheet[data-compact] .label {
+  display: none;
+}
+
+.sheet[data-compact] .stats {
+  flex-wrap: nowrap;
+  gap: var(--s-3);
+  margin-top: 2px;
+}
+
+.sheet[data-compact] .coins {
+  --coin: 16px;
+  min-height: 0;
+}
+
+.sheet[data-compact] .box {
+  width: 22px;
+  height: 22px;
+  border-width: 1.5px;
+  font-size: 12px;
+}
+
+.sheet[data-compact] .slot {
+  min-width: 0;
+  padding: 1px 4px;
+  font-size: 12px;
+}
+
+.sheet[data-compact] .companions {
+  padding-block: 6px;
 }

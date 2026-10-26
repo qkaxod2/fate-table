@@ -13,17 +13,21 @@ export function FoePlate({
   character: c,
   image,
   note,
+  compact,
 }: {
   character: Character;
   image?: string;
   /** 이름 아래 한 줄 (예: 핵심 컨셉) */
   note?: string;
+  /** 판정 중: 한 줄로 접혀 판정 카드 자리를 비켜 준다 */
+  compact?: boolean;
 }) {
   return (
     <section
       className={styles.plate}
       aria-label={`${c.name} 상태`}
       data-out={c.takenOut || undefined}
+      data-compact={compact || undefined}
     >
       <div className={styles.head}>
         {image && <img src={image} alt="" />}

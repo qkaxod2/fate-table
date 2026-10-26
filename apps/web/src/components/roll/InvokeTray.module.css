@@ -9,26 +9,39 @@
   animation: tray-in var(--dur-enter) var(--ease-out) 100ms backwards;
 }
 
+/* 카드 줄 머리표: 종이 쪽지에 먹 글자 (그림 위에 반투명 판을 깔지 않는다) */
 .head {
   align-self: flex-start;
-  padding: 4px 12px;
-  border-radius: var(--r-token);
-  background: rgb(13 11 9 / 0.75);
-  color: var(--stage-ink);
+  padding: 3px 12px 3px 10px;
+  border-left: 3px solid var(--seal);
+  border-radius: 3px;
+  background: var(--card);
+  color: var(--ink-2);
   font: 600 13px var(--f-ui);
+  box-shadow: 0 6px 14px -8px rgb(0 0 0 / 0.7);
+}
+
+.head b {
+  color: var(--ink-1);
 }
 
 .cards {
   display: flex;
   align-items: flex-end;
   gap: var(--s-3);
-  padding-top: 14px;
+  /* 카드가 많으면 줄어들지 않고 옆으로 민다. 들린 카드·번호 배지가 잘리지 않게 위를 비워 둔다 */
+  margin: -14px -8px 0;
+  padding: 28px 8px 6px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
 }
 
 .cards > * {
-  flex: 1 1 0;
-  min-width: 0;
+  flex: 1 0 150px;
+  min-width: 150px;
   max-width: 240px;
+  scroll-snap-align: start;
   animation: tray-in var(--dur-enter) var(--ease-out) backwards;
 }
 .cards > :nth-child(1) {
@@ -176,14 +189,12 @@
 
 @media (max-width: 760px) {
   .cards {
-    overflow-x: auto;
     padding-bottom: var(--s-2);
     scroll-snap-type: x mandatory;
   }
   .cards > * {
     flex: 0 0 72%;
     max-width: none;
-    scroll-snap-align: start;
   }
 }
 

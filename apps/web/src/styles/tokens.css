@@ -75,14 +75,18 @@
   --k-consequence: #8a3b2e;
   --k-boost: #b08a45;
 
-  /* dice */
-  --dice-body: #11132a;
-  --dice-edge: #d6b66e;
-  --dice-pip: #ffe9b0;
-  --dice-body-op: #3a1328;
-  --dice-edge-op: #e59ab3;
-  --dice-pip-op: #ffe0ea;
-  --dice-table: #141629;
+  /*
+   * 주사위 (design-system.md 20절). 판정 기록 카드(종이) 위에 놓인다.
+   * 내 주사위는 상아에 먹 눈, 상대 주사위는 먹에 상아 눈. 색 대신 명암으로 편을 가른다.
+   * 눈 바뀜 모드는 같은 색으로 종이에 찍힌 도장처럼 그린다.
+   */
+  --dice-body: #f6eedc;
+  --dice-edge: #3b2f24;
+  --dice-pip: #241c15;
+  --dice-body-op: #2e251d;
+  --dice-edge-op: #120d09;
+  --dice-pip-op: #f4ecdc;
+  --dice-table: #e6dbc4;
 
   /* type */
   --f-ui: 'IBM Plex Sans KR', system-ui, sans-serif;
@@ -152,7 +156,6 @@
 [data-genre='fantasy'] {
   --paper: #efe2c4;
   --gold: #c99a4a;
-  --dice-table: #1b1410;
 }
 
 @media (prefers-reduced-motion: reduce) {
