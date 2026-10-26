@@ -125,7 +125,7 @@ function SignInForms({
               }
             : {
                 tone: 'ok',
-                text: `${email.trim()}로 확인 메일을 보냈어요. 링크를 누르면 이 화면으로 돌아와요.`,
+                text: `${email.trim()} 주소로 확인 메일을 보냈어요. 링크를 누르면 이 화면으로 돌아와요.`,
               },
         );
       }

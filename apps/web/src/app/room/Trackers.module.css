@@ -25,9 +25,8 @@
 
 .kicker {
   color: var(--gold);
-  font-family: var(--f-num);
-  font-size: var(--fs-xs);
-  letter-spacing: 2px;
+  font: var(--label-font);
+  letter-spacing: var(--label-track);
 }
 
 .actions {

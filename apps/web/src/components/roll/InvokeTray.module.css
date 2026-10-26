@@ -39,9 +39,8 @@
 }
 
 .head {
-  font-family: var(--f-num);
-  font-size: 11px;
-  letter-spacing: 2px;
+  font: var(--label-font);
+  letter-spacing: var(--label-track);
   color: var(--gold);
 }
 

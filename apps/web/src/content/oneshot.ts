@@ -93,7 +93,7 @@ export const BOSS: Extract<Command, { type: 'character.create' }>['payload'] = {
   approaches: spread({ forceful: 3, quick: 2, flashy: 1, careful: 1, sneaky: 1 }),
   stunts: [],
   highConcept: '곡물 창고를 노리는 도적 두목',
-  trouble: '눈먼 왼쪽',
+  trouble: '왼쪽 눈이 보이지 않는다',
   aspects: [],
 };
 

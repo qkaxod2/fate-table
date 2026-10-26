@@ -3,14 +3,16 @@
   flex-direction: column;
   gap: var(--s-2);
   padding: var(--s-3);
+  border: 1px solid var(--line);
   border-top: 2px solid var(--gold);
+  border-radius: var(--r-card);
   background: var(--panel);
+  box-shadow: var(--shadow-panel);
 }
 
 .head {
-  font-family: var(--f-num);
-  font-size: 11px;
-  letter-spacing: 3px;
+  font: var(--label-font);
+  letter-spacing: var(--label-track);
   color: var(--gold);
 }
 
@@ -18,7 +20,7 @@
   display: flex;
   gap: var(--s-3);
   align-items: center;
-  padding: var(--s-1) 0;
+  padding: var(--s-2) 0;
   border-bottom: 1px solid var(--line);
 }
 
@@ -40,6 +42,7 @@
   object-fit: cover;
   object-position: top;
   border: 1px solid var(--gold);
+  border-radius: 8px;
   background: var(--panel-s);
 }
 
@@ -80,7 +83,8 @@
   place-items: center;
   width: 14px;
   height: 14px;
-  border: 1.5px solid var(--fg);
+  border: 1.5px solid var(--muted);
+  border-radius: 3px;
   font-size: 9px;
   color: transparent;
 }

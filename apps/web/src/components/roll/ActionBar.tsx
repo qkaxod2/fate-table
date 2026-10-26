@@ -101,7 +101,7 @@ export function ActionBar({
             onClick={() => onAction(a)}
             title={tip(a)}
           >
-            <span className={styles.num}>0{i + 1}</span>
+            <kbd className={styles.num}>{i + 1}</kbd>
             {term(a)}
           </button>
         ))}
@@ -143,7 +143,7 @@ export function ActionBar({
         >
           {busy ? '굴리는 중' : '굴리기'}
         </button>
-        <span className={styles.space}>SPACE</span>
+        <kbd className={styles.space}>Space</kbd>
       </div>
     </div>
   );

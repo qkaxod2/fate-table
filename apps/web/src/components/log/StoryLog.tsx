@@ -60,7 +60,7 @@ export function StoryLog({ lines, undone, onUndo, sending = [] }: Props) {
             className={styles.tab}
             onClick={() => open(t)}
           >
-            {t === 'story' ? 'STORY' : 'SYSTEM'}
+            {t === 'story' ? '이야기' : '알림'}
             {t === other && unread > 0 && (
               <span key={unread} className={styles.badge}>
                 {unread}

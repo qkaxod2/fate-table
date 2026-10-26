@@ -8,12 +8,14 @@
   /* surface */
   --night: #0c0e1a;
   --bg: #111218;
-  --panel: rgb(11 12 22 / 0.86);
-  --panel-s: #11132a;
-  --plate: #1a1b22;
-  --line: #2a2c35;
-  --fg: #ecebe7;
-  --muted: #9ea0aa;
+  --panel: rgb(14 15 28 / 0.9);
+  --panel-s: #151831;
+  --plate: #1c1e2b;
+  --line: #33364a;
+  --line-hi: #4a4e66;
+  --fg: #f1efe9;
+  --muted: #b6b8c6;
+  --faint: #8a8da0;
   --paper: #f6f0e4;
   --ink: #1b1733;
 
@@ -61,12 +63,20 @@
   --f-pop: 'Cinzel', serif;
   --f-deco: 'Cinzel Decorative', 'Cinzel', serif;
   --f-num: 'IBM Plex Mono', ui-monospace, monospace;
-  --fs-xs: 12px;
-  --fs-sm: 13px;
-  --fs-md: 15px;
-  --fs-lg: 18px;
+  --fs-xs: 13px;
+  --fs-sm: 14px;
+  --fs-md: 16px;
+  --fs-lg: 19px;
   --fs-xl: 24px;
   --fs-2xl: 32px;
+
+  /*
+   * 작은 머리말(패널 이름, 단계 표시 등). 한글은 자간을 벌리면 읽기 힘들어서
+   * 고정폭·넓은 자간 대신 UI 글꼴 굵게 + 살짝만 벌린다.
+   */
+  --label-font: 600 var(--fs-xs) / 1.4 var(--f-ui);
+  --label-track: 0.04em;
+  --label-color: var(--gold);
 
   /* space / radius / motion */
   --s-1: 4px;
@@ -75,8 +85,9 @@
   --s-4: 16px;
   --s-5: 24px;
   --s-6: 32px;
-  --r-card: 6px;
+  --r-card: 10px;
   --r-ctl: 10px;
+  --shadow-panel: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 12px 32px -12px rgb(0 0 0 / 0.6);
   --r-token: 999px;
   --dur-fast: 120ms;
   --dur-dice: 600ms;
@@ -105,8 +116,10 @@
   --bg: #f1f0ed;
   --plate: #ffffff;
   --line: #d6d4cf;
+  --line-hi: #b9b6ae;
   --fg: #16161c;
-  --muted: #5e606a;
+  --muted: #4f515b;
+  --faint: #6e707a;
   --hi: #c9367e;
 }
 

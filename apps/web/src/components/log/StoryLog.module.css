@@ -1,16 +1,19 @@
 .log {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
-  min-height: 0;
+  min-height: 160px;
   overflow-y: auto;
   padding: var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
   background: var(--panel);
+  scrollbar-width: thin;
 }
 
 .head {
-  font-family: var(--f-num);
-  font-size: 11px;
-  letter-spacing: 3px;
+  font: var(--label-font);
+  letter-spacing: var(--label-track);
   color: var(--gold);
   margin-bottom: var(--s-2);
 }
@@ -32,9 +35,9 @@
 
 .line {
   padding: var(--s-1) var(--s-2);
-  border-left: 2px solid var(--line);
+  border-left: 2px solid var(--line-hi);
   font-size: var(--fs-sm);
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .line[data-kind='fate'] {
@@ -98,24 +101,28 @@
 }
 
 .tabs {
+  position: sticky;
+  top: calc(var(--s-3) * -1);
+  z-index: 1;
   display: flex;
   gap: var(--s-1);
-  margin-bottom: var(--s-2);
+  margin: calc(var(--s-3) * -1) calc(var(--s-3) * -1) var(--s-2);
+  padding: var(--s-2) var(--s-3) 0;
   border-bottom: 1px solid var(--line);
+  background: var(--panel-s);
 }
 
 .tab {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: var(--s-1) var(--s-2);
+  padding: var(--s-1) var(--s-2) var(--s-2);
   border: 0;
   border-bottom: 2px solid transparent;
   background: none;
   color: var(--muted);
-  font-family: var(--f-num);
-  font-size: 11px;
-  letter-spacing: 3px;
+  font: var(--label-font);
+  letter-spacing: var(--label-track);
   cursor: pointer;
 }
 

@@ -15,9 +15,8 @@
   padding: 2px var(--s-2);
   border: 1px solid var(--hi);
   color: var(--hi);
-  font-family: var(--f-num);
-  font-size: var(--fs-xs);
-  letter-spacing: 3px;
+  font: var(--label-font);
+  letter-spacing: var(--label-track);
 }
 
 .tool {

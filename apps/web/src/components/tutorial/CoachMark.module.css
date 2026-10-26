@@ -32,9 +32,8 @@
 
 .step {
   white-space: nowrap;
-  font-family: var(--f-num);
-  font-size: var(--fs-xs);
-  letter-spacing: 2px;
+  font: var(--label-font);
+  letter-spacing: var(--label-track);
   color: #8a6a24;
 }
 

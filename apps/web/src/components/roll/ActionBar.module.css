@@ -19,6 +19,7 @@
   gap: 2px;
   padding: var(--s-2) var(--s-3);
   border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
   background: var(--panel-s);
   color: var(--fg);
   font: inherit;
@@ -63,11 +64,21 @@
 }
 
 .num,
-.key {
+.key,
+.space {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border: 1px solid currentColor;
+  border-bottom-width: 2px;
+  border-radius: 5px;
   font-family: var(--f-num);
-  font-size: var(--fs-xs);
+  font-size: 11px;
   font-weight: 400;
-  opacity: 0.75;
+  line-height: 1;
+  opacity: 0.6;
 }
 
 .approaches {
@@ -124,6 +135,7 @@
   min-width: 112px;
   padding: var(--s-3) var(--s-4);
   border: 1px solid var(--gold-hi);
+  border-radius: var(--r-ctl);
   background: linear-gradient(180deg, var(--gold-hi), var(--gold));
   color: var(--ink);
   font: inherit;
@@ -173,15 +185,15 @@
 }
 
 .roll:disabled {
-  opacity: 0.4;
+  border-color: var(--line);
+  background: var(--plate);
+  color: var(--faint);
   cursor: not-allowed;
 }
 
 .space {
-  font-family: var(--f-num);
-  font-size: 10px;
-  letter-spacing: 3px;
   color: var(--muted);
+  opacity: 1;
 }
 
 @media (max-width: 760px) {
@@ -194,6 +206,7 @@
   .action {
     font-size: var(--fs-md);
     padding: var(--s-2);
+    white-space: nowrap;
   }
   .rollCol {
     flex-direction: row;

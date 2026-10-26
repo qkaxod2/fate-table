@@ -13,6 +13,7 @@
   border: 1px solid var(--rule);
   border-radius: var(--r-card);
   background: var(--panel);
+  box-shadow: var(--shadow-panel);
   /* 카드가 살짝 떠오르며 펼쳐진다 */
   animation: card-in var(--dur-scene) var(--ease-out) backwards;
 }
@@ -25,7 +26,7 @@
 }
 
 .back {
-  color: var(--muted);
+  color: var(--faint);
   font-size: var(--fs-sm);
   text-decoration: none;
 }
@@ -39,6 +40,7 @@
 .lead {
   margin: 0 0 var(--s-5);
   color: var(--muted);
+  text-wrap: pretty;
 }
 
 .form {
@@ -50,12 +52,13 @@
 .field {
   display: flex;
   flex-direction: column;
-  gap: var(--s-1);
-  font-family: var(--f-story);
-  font-weight: 700;
+  gap: var(--s-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
 }
 
 .field input {
+  min-height: 44px;
   padding: var(--s-2) var(--s-3);
   border: 1px solid var(--line);
   border-radius: var(--r-ctl);
@@ -91,7 +94,9 @@
 }
 
 .primary:disabled {
-  opacity: 0.45;
+  border-color: var(--line);
+  background: var(--plate);
+  color: var(--faint);
   cursor: not-allowed;
 }
 
@@ -179,13 +184,24 @@
 
 .links {
   display: flex;
-  gap: var(--s-4);
+  flex-wrap: wrap;
+  gap: var(--s-2);
   margin-top: var(--s-5);
   font-size: var(--fs-sm);
 }
 
 .links a {
+  padding: var(--s-2) var(--s-4);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-token);
   color: var(--gold-hi);
+  text-decoration: none;
+}
+
+.links a:hover,
+.links a:focus-visible {
+  border-color: var(--gold);
+  background: rgb(214 182 110 / 0.1);
 }
 
 .listHeading {

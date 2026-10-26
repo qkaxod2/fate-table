@@ -3,9 +3,8 @@
   border: 1px solid var(--gold);
   border-radius: var(--r-token);
   color: var(--gold-hi);
-  font-family: var(--f-num);
-  font-size: var(--fs-xs);
-  letter-spacing: 2px;
+  font: var(--label-font);
+  letter-spacing: var(--label-track);
 }
 
 .empty,
@@ -54,9 +53,8 @@
   justify-content: space-between;
   margin-bottom: var(--s-2);
   color: var(--gold);
-  font-family: var(--f-num);
-  font-size: var(--fs-xs);
-  letter-spacing: 3px;
+  font: var(--label-font);
+  letter-spacing: var(--label-track);
 }
 
 .close {
@@ -410,7 +408,8 @@ main.shell {
 
 /* 헤더 버튼 */
 .topBtn {
-  padding: 4px var(--s-3);
+  height: 34px;
+  padding: 0 var(--s-3);
   border: 1px solid var(--line);
   border-radius: var(--r-token);
   background: var(--panel);
@@ -443,7 +442,8 @@ main.shell {
 }
 
 .seg button {
-  padding: 2px var(--s-3);
+  height: 28px;
+  padding: 0 var(--s-3);
   border: 0;
   border-radius: var(--r-token);
   background: transparent;

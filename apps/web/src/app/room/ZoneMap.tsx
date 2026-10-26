@@ -335,7 +335,7 @@ export function ZoneMap({ state, run, isGm, canControl, pending, auto = 'full' }
             aria-pressed={tool === 'link'}
             onClick={() => setTool(tool === 'link' ? 'move' : 'link')}
           >
-            {tool === 'link' ? '이을 구역을 누르세요' : '길 잇기 · 끊기'}
+            {tool === 'link' ? '이을 구역을 눌러 주세요' : '길 잇기 · 끊기'}
           </button>
           <form
             onSubmit={(e) => {

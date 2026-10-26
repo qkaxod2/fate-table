@@ -635,7 +635,7 @@ export function RoomTable({
       <header className={tryStyles.top}>
         <div>
           <div className={tryStyles.kicker}>
-            {state.session ? `SESSION ${String(state.session.number).padStart(2, '0')}` : 'ROOM'} ·{' '}
+            {state.session ? `세션 ${state.session.number}` : '방'} ·{' '}
             {name}
           </div>
           <h1 className={tryStyles.sceneName} key={state.scene?.id ?? 'none'}>
@@ -683,7 +683,7 @@ export function RoomTable({
               setSfxOn(!sfxOn);
             }}
           >
-            {sfxOn ? '♪ 소리' : '♪ 꺼짐'}
+            {sfxOn ? '♪ 켜짐' : '♪ 꺼짐'}
           </button>
           <button
             type="button"
@@ -1134,7 +1134,7 @@ export function RoomTable({
 
         <div className={`${tryStyles.right} ${styles.right}`}>
           <div className={styles.rightScroll}>
-            <div className={tryStyles.aspectsHead}>ASPECTS ON STAGE</div>
+            <div className={tryStyles.aspectsHead}>무대 위 특성</div>
             <div className={tryStyles.aspects}>
               {[...sceneAspects, ...hiddenAspects].map((a) => (
                 <div key={a.id} className={styles.stageAspect} data-hidden={a.hidden || undefined}>
@@ -1276,7 +1276,7 @@ export function RoomTable({
         {!isGm && !said && <div aria-hidden />}
         {(isGm || said) && (
           <div className={tryStyles.dialogue}>
-            <div className={tryStyles.speaker}>G M</div>
+            <div className={tryStyles.speaker}>GM</div>
             {said && (
               <p className={tryStyles.say}>
                 <Typewriter text={said} />

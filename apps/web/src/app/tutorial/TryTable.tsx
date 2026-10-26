@@ -533,7 +533,7 @@ function Table({
         ];
         const used = parts.map((x, k) => (k < parts.length - 1 ? josa(x, '과/와') : x)).join(' ');
         const scars = plan.consequences.map((slot) => `"${NAMES[slot]}"`).join(', ');
-        return `${josa(`피해 ${pending.shifts}`, '이/가')} 들어갔어요. ${josa(who, '은/는')} ${josa(used, '으로/로')} 버텨요.${scars ? ` 상처 ${scars}는 ${term('aspect')}으로 남아요.` : ''}`;
+        return `${josa(`피해 ${pending.shifts}`, '이/가')} 들어갔어요. ${josa(who, '은/는')} ${josa(used, '으로/로')} 버텨요.${scars ? ` 상처 ${josa(scars, '은/는')} ${term('aspect')}으로 남아요.` : ''}`;
       }
       return null;
     },
@@ -618,7 +618,7 @@ function Table({
         step: 4,
         title: `${term('boost')}가 뭐예요?`,
         body: `순간적으로 생긴 작은 기회예요. ${term('aspect')}처럼 ${term('invoke')}해서 +2를 받지만, 한 번 쓰면 사라지고 ${term('fatePoint')}도 들지 않아요.`,
-        example: '예: "흔들리는 발판", "연기 틈의 빈틈". 다음 굴림이 아쉬울 때 공짜 +2로 써 봐요.',
+        example: '예: "흔들리는 발판", "연기 사이로 난 틈". 다음 굴림이 아쉬울 때 공짜 +2로 써 봐요.',
         label: '다음',
       });
     if (a === 'create_advantage' && (o === 'success' || o === 'style'))
@@ -668,7 +668,7 @@ function Table({
           `모은 ${josa(term('fatePoint'), '으로/로')} 나중에 ${josa(term('aspect'), '을/를')} ${term('invoke')}해 +2를 받아요. 꼬였다가 멋지게 뒤집는 흐름이죠.`,
         ],
         example: '처음이라면 받아들이는 걸 추천해요.',
-        label: '강요 받아 보기',
+        label: '강요받아 보기',
         then: offerCompel,
       });
     return out;
@@ -892,7 +892,7 @@ function Table({
             total,
             chapter: '시작하기',
             title: `이 사람이 나, ${josa(pick.name, '이에요/예요')}`,
-            body: `캐릭터는 숫자보다 짧은 문구로 설명돼요. ${pick.name}의 ${term('high')}은 "${pick.create.highConcept}", ${term('trouble')}은 "${pick.create.trouble}"이에요. 이렇게 캐릭터나 장면을 설명하는 문구를 ${term('aspect')}이라고 불러요.`,
+            body: `캐릭터는 숫자보다 짧은 문구로 설명돼요. ${pick.name}의 ${term('high')}은 "${pick.create.highConcept}", ${term('trouble')}은 ${josa(`"${pick.create.trouble}"`, '이에요/예요')}. 이렇게 캐릭터나 장면을 설명하는 문구를 ${term('aspect')}이라고 불러요.`,
             example: `${term('trouble')}은 일을 꼬이게 만들지만, 그 대신 ${josa(term('fatePoint'), '을/를')} 받을 기회가 돼요.`,
             next: next('다음'),
           },
@@ -1031,7 +1031,7 @@ function Table({
           title: copy.title,
           body: copy.body,
           example: `${josa(boss.name, '이/가')} 다락에서 뛰어내려 ${pick.name}에게 도끼를 휘둘러요!`,
-          next: { label: '막을 준비 됐어요', onClick: bossAttacks },
+          next: { label: '막을 준비가 됐어요', onClick: bossAttacks },
         },
       };
 
@@ -1097,7 +1097,7 @@ function Table({
               ? `${boss.name}의 주사위는 이미 굴러갔지만 가려져 있어요. 내가 굴리면 둘 다 공개돼요.`
               : lesson === 'attack'
                 ? `${boss.name}도 ${term('defend')}로 맞서 굴려요. 더 높은 쪽이 이겨요.`
-                : `난이도는 ${formatRating(SCENE.overcomeDifficulty)}예요. 이보다 높으면 성공, 같으면 동점이에요.`,
+                : `난이도는 ${josa(formatRating(SCENE.overcomeDifficulty), '이에요/예요')}. 이보다 높으면 성공, 같으면 동점이에요.`,
           keys: ['Space'],
         },
       };
@@ -1139,7 +1139,7 @@ function Table({
           title: OUTCOME_COPY.defend[o],
           body:
             o === 'success' || o === 'style'
-              ? `${boss.name}의 도끼를 막아냈어요. 막아 내면 피해를 하나도 받지 않아요.`
+              ? `${boss.name}의 도끼를 막아냈어요. 막아내면 피해를 하나도 받지 않아요.`
               : `막지 못했어요. 진 차이만큼 피해를 받아요. 피해는 먼저 ${term('stress')} 칸으로 버티고, 크면 ${term('consequence')}이 남아요. 끝까지 버티지 못하면 탈락이에요.`,
           example: '"결과 확정"을 누르면 이야기에 반영돼요.',
         },
@@ -1279,7 +1279,7 @@ function Table({
     >
       <header className={styles.top}>
         <div>
-          <div className={styles.kicker}>TUTORIAL · 첫 장면</div>
+          <div className={styles.kicker}>튜토리얼 · 첫 장면</div>
           <h1 className={styles.sceneName}>{state.scene?.name}</h1>
         </div>
         <div className={styles.topRight}>
@@ -1556,7 +1556,7 @@ function Table({
                   <p className={styles.promptHelp}>
                     {prompt.kind === 'aspect'
                       ? '장면에 새로 생긴 사실을 짧은 문구로 적어요. 예: "연기에 가려진 뒷문"'
-                      : '그 순간의 기회를 짧게 적어요. 예: "흔들리는 발판", "연기 틈의 빈틈"'}
+                      : '그 순간의 기회를 짧게 적어요. 예: "흔들리는 발판", "연기 사이로 난 틈"'}
                   </p>
                   <input
                     autoFocus
@@ -1584,7 +1584,7 @@ function Table({
         </div>
 
         <div className={styles.right}>
-          <div className={styles.aspectsHead}>ASPECTS ON STAGE</div>
+          <div className={styles.aspectsHead}>무대 위 특성</div>
           <div className={styles.aspects} data-tour="aspects">
             {sceneAspects.map((a: Aspect) => (
               <AspectCard
@@ -1602,7 +1602,7 @@ function Table({
 
       <footer className={styles.bottom}>
         <div className={styles.dialogue} data-tour="dialogue">
-          <div className={styles.speaker}>G M</div>
+          <div className={styles.speaker}>GM</div>
           <p className={styles.say}>
             <Typewriter
               text={
