@@ -9,13 +9,20 @@
   animation: tray-in var(--dur-enter) var(--ease-out) 100ms backwards;
 }
 
+/* 카드 줄 머리표: 종이 쪽지에 먹 글자 (그림 위에 반투명 판을 깔지 않는다) */
 .head {
   align-self: flex-start;
-  padding: 4px 12px;
-  border-radius: var(--r-token);
-  background: rgb(13 11 9 / 0.75);
-  color: var(--stage-ink);
+  padding: 3px 12px 3px 10px;
+  border-left: 3px solid var(--seal);
+  border-radius: 3px;
+  background: var(--card);
+  color: var(--ink-2);
   font: 600 13px var(--f-ui);
+  box-shadow: 0 6px 14px -8px rgb(0 0 0 / 0.7);
+}
+
+.head b {
+  color: var(--ink-1);
 }
 
 .cards {
