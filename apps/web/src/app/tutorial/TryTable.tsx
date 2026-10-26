@@ -983,7 +983,7 @@ function Table({
             body: `공격을 막지 못하면 진 차이만큼 피해가 들어와요. 피해를 받았다고 바로 쓰러지지는 않아요. 아래 두 가지로 버텨요.`,
             points: [
               `${term('stress')}(1·2·3번 칸): 숨이 차거나 살짝 긁힌 정도예요. 받은 피해와 같거나 더 큰 번호의 빈 칸 하나를 채우면 그 피해를 통째로 막아요. 장면이 끝나면 다시 비워져요.`,
-              `${term('consequence')}(${term('mild')} 2 · ${term('moderate')} 4 · ${term('severe')} 6): 진짜 부상이에요. 적힌 숫자만큼 피해를 막아 주는 대신, "삐끗한 발목"처럼 부상이 ${term('aspect')}으로 남아요. 상대는 그 부상을 공짜로 한 번 이용할 수 있어요.`,
+              `${term('consequence')}(${term('mild')} 2 · ${term('moderate')} 4 · ${term('severe')} 6): 진짜로 다친 거예요. 적힌 숫자만큼 피해를 막아 주는 대신, "삐끗한 발목"처럼 다친 곳이 ${term('aspect')}으로 남아요. 상대는 그 ${josa(term('consequence'), '을/를')} 공짜로 한 번 이용할 수 있어요.`,
               `둘 다 써도 못 막으면 탈락이에요. 그 전에 스스로 ${term('concede')}하면 어떻게 물러날지 내가 정하고, ${josa(term('fatePoint'), '을/를')} 받아요.`,
             ],
             example: `무대 오른쪽 위 ${BOSS.name}의 이름표를 봐요. ${term('stress')} 1·2번 칸과 ${term('moderate')}·${term('severe')}가 이미 차 있어서, 한두 번만 제대로 맞히면 쓰러져요.`,
