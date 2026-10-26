@@ -31,8 +31,11 @@ import { AspectCard } from '@/components/aspect/AspectCard';
 import { CompelOffer } from '@/components/compel/CompelOffer';
 import { StoryLog } from '@/components/log/StoryLog';
 import { FoePlate } from '@/components/book/FoePlate';
+import { Dock } from '@/components/book/Dock';
 import { MySheet } from '@/components/book/MySheet';
+import { revealRoll, RollSheet } from '@/components/book/RollSheet';
 import { ActionBar, type CoachFocus } from '@/components/roll/ActionBar';
+import { CheckCard, sumLine } from '@/components/roll/CheckCard';
 import { DICE_MODES, DiceTray, saveDiceMode, type DiceMode } from '@/components/roll/DiceTray';
 import { InvokeTray, type InvokeChoice } from '@/components/roll/InvokeTray';
 import { OutcomeBanner } from '@/components/roll/OutcomeBanner';
@@ -42,9 +45,9 @@ import { Spotlight } from '@/components/tutorial/Spotlight';
 import { BOSS, SAMPLE_CHARACTERS, SCENE, type SampleCharacter } from '@/content/oneshot';
 import { playSfx, setSfxEnabled, sfxEnabled, sfxForEvent, sfxForOutcome } from '@/fx/sfx';
 import { asset } from '@/lib/asset';
-import { Presence, reducedMotion, revealOnNarrow } from '@/lib/motion';
+import { Presence, reducedMotion } from '@/lib/motion';
 import { Typewriter } from '@/components/ui/Typewriter';
-import { describe, ERROR_COPY, OUTCOME_COPY } from '@/lib/copy';
+import { describe, ERROR_COPY, JUDGE, OUTCOME_COPY } from '@/lib/copy';
 import { josa } from '@/lib/josa';
 import { LocalRoom } from '@/state/localRoom';
 import book from './book.module.css';
@@ -282,7 +285,7 @@ function Table({
   const [settled, setSettled] = useState(false);
   // 좁은 화면: 결과가 나오면 패널이 다시 보이게 (안내 카드가 위에 생겨도)
   useEffect(() => {
-    if (settled) revealOnNarrow(document.querySelector('[data-roll-panel]'));
+    if (settled) revealRoll(document.querySelector('[data-roll-panel]'));
   }, [settled]);
   const [selectedAspect, setSelectedAspect] = useState<string | null>(null);
   const [prompt, setPrompt] = useState<Prompt>(null);
@@ -1296,6 +1299,8 @@ function Table({
     image: asset(s.image),
   }));
   const previewing = !!action && !!approach && (!roll || defending);
+  // 좁은 화면: 굴림이 끝나기 전까지 판정 카드와 발동 카드를 바텀 시트로 띄운다 (내가 막을 차례는 행동 띠를 쓴다)
+  const sheetActive = !!roll && !final && !defending;
   const stuntPlus = action && approach ? stuntBonuses(me, action, approach).length * 2 : 0;
   const invokable = Object.values(state.aspects).filter(
     (a) => !a.hidden && (a.ownerType !== 'character' || a.ownerId === meId || a.freeInvokes > 0),
@@ -1336,7 +1341,12 @@ function Table({
         </header>
 
         <div className={book.foePlate} data-tour="foe">
-          <FoePlate character={boss} image={asset(SCENE.bossImage)} note={BOSS.highConcept} />
+          <FoePlate
+            character={boss}
+            image={asset(SCENE.bossImage)}
+            note={BOSS.highConcept}
+            compact={!!roll}
+          />
         </div>
 
         <div className={book.coachSlot}>
@@ -1363,166 +1373,163 @@ function Table({
           </Presence>
         </div>
 
-        <div className={book.center}>
-          {previewing && (
-            <RollPreview
-              name={me.name}
-              action={action!}
-              approach={approach!}
-              rating={me.approaches[approach!]}
-              stunt={stuntPlus}
-              difficulty={action === 'attack' || defending ? null : SCENE.overcomeDifficulty}
-              opponent={boss.name}
-              canInvoke={invokable > 0}
-              disabled={
-                (busy && !defending) ||
-                !!compel ||
-                !!prompt ||
-                (guided && !!tour?.guide && tour.guide.focus !== 'roll')
-              }
-              focus={coach?.focus === 'roll' && showCoach}
-              onRoll={onRoll}
-            />
-          )}
-          {roll && (
-            <div
-              className={`${styles.rollPanel} ${book.check}`}
-              ref={revealOnNarrow}
-              data-roll-panel
-            >
-              <div className={styles.sides}>
-                <div className={styles.side} data-fx="roll-dice">
-                  <div className={styles.sideHead}>
-                    {activeChar?.name} · {term(roll.action)} · {term(roll.active.approach)}{' '}
-                    {roll.active.rating >= 0 ? '+' : ''}
-                    {roll.active.rating}
-                  </div>
-                  <DiceTray
-                    dice={roll.active.dice}
-                    rollKey={`${roll.id}:${roll.active.animSeed}`}
-                    sealed={roll.status === 'awaiting_defense'}
-                    mode={diceMode}
-                    onSettled={() => setSettled(true)}
-                  />
-                  {roll.active.dice && settled && result && (
-                    <div className={styles.total} key={result.total} data-fx="roll-total">
-                      {result.total >= 0 ? '+' : ''}
-                      {result.total} <small>{formatRating(result.total).split(' ')[0]}</small>
-                      {roll.active.modifiers.length > 0 && (
-                        <small className={styles.mods}>
-                          주사위 {sumDice(roll.active.dice)} · {term('approach')}{' '}
-                          {roll.active.rating} ·{' '}
-                          {roll.active.modifiers.map((m) => `+${m.value}`).join(' ')}
-                        </small>
-                      )}
-                    </div>
-                  )}
-                  {roll.status === 'awaiting_defense' && (
-                    <div className={styles.waiting}>다 굴렸어요. 상대를 기다리는 중이에요</div>
-                  )}
-                </div>
-                {roll.targetId ? (
-                  <>
-                    <div className={styles.vs}>VS</div>
-                    <div className={styles.side}>
-                      <div className={styles.sideHead}>
-                        {targetChar?.name} · {term('defend')}
-                        {roll.defense && (
-                          <>
-                            {' '}
-                            · {term(roll.defense.approach)} {roll.defense.rating >= 0 ? '+' : ''}
-                            {roll.defense.rating}
-                          </>
-                        )}
-                      </div>
-                      <DiceTray
-                        dice={roll.defense?.dice ?? null}
-                        rollKey={`${roll.id}:d:${roll.defense?.animSeed ?? 'x'}`}
-                        sealed={!roll.defense}
-                        tone="op"
-                        mode={diceMode}
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <div className={styles.difficulty}>
-                    난이도 {formatRating(roll.difficulty ?? 0)}
-                  </div>
-                )}
-              </div>
-
-              {settled && myOutcome && result && (
-                <OutcomeBanner
-                  action={mySide === 'defense' ? 'defend' : roll.action}
-                  outcome={final && mySide === 'active' ? roll.result!.outcome : myOutcome}
-                  total={myTotal}
-                  provisional={!final}
+        <RollSheet
+          active={sheetActive}
+          resetKey={roll?.id ?? ''}
+          summary={
+            settled && myOutcome ? (
+              <>
+                <b>{JUDGE[myOutcome].latin}</b> · {term(roll!.action)} 판정 · {sign(myTotal)}
+              </>
+            ) : (
+              '주사위를 굴리는 중…'
+            )
+          }
+        >
+          <div className={book.center}>
+            {previewing && (
+              <div className={book.previewDock}>
+                <RollPreview
+                  name={me.name}
+                  action={action!}
+                  approach={approach!}
+                  rating={me.approaches[approach!]}
+                  stunt={stuntPlus}
+                  difficulty={action === 'attack' || defending ? null : SCENE.overcomeDifficulty}
+                  opponent={boss.name}
+                  canInvoke={invokable > 0}
+                  disabled={
+                    (busy && !defending) ||
+                    !!compel ||
+                    !!prompt ||
+                    (guided && !!tour?.guide && tour.guide.focus !== 'roll')
+                  }
+                  focus={coach?.focus === 'roll' && showCoach}
+                  onRoll={onRoll}
                 />
-              )}
-
-              {settled && roll.status === 'open' && !myRoll && (
-                <button
-                  type="button"
-                  className={styles.defenseOk}
-                  data-tour="finalize"
-                  disabled={guided && !!tour?.lockFinalize}
-                  onClick={onDefenseFinalize}
-                >
-                  결과 확정
-                </button>
-              )}
-
-              {settled && roll.status === 'open' && myRoll && (
-                <>
-                  {unusedStunt && (
-                    <button
-                      type="button"
-                      className={styles.stunt}
-                      onClick={() =>
-                        run(ME, {
-                          type: 'stunt.apply',
-                          payload: { rollId: roll.id, side: 'active', stuntId: unusedStunt.id },
-                        })
+              </div>
+            )}
+            {roll && (
+              <CheckCard
+                panelRef={revealRoll}
+                kind={`${term(roll.action)} 판정`}
+                me={{
+                  label: (
+                    <>
+                      {activeChar?.name} · {term(roll.active.approach)} {sign(roll.active.rating)}
+                    </>
+                  ),
+                  dice: (
+                    <DiceTray
+                      dice={roll.active.dice}
+                      rollKey={`${roll.id}:${roll.active.animSeed}`}
+                      sealed={roll.status === 'awaiting_defense'}
+                      mode={diceMode}
+                      onSettled={() => setSettled(true)}
+                    />
+                  ),
+                  total: roll.active.dice && settled && result ? sideTotal(roll.active) : null,
+                  sum: roll.active.dice && settled ? sumLine(roll.active) : null,
+                }}
+                opp={
+                  roll.targetId
+                    ? {
+                        label: (
+                          <>
+                            {targetChar?.name} · {term('defend')}
+                            {roll.defense &&
+                              ` · ${term(roll.defense.approach)} ${sign(roll.defense.rating)}`}
+                          </>
+                        ),
+                        dice: (
+                          <DiceTray
+                            dice={roll.defense?.dice ?? null}
+                            rollKey={`${roll.id}:d:${roll.defense?.animSeed ?? 'x'}`}
+                            sealed={!roll.defense}
+                            tone="op"
+                            mode={diceMode}
+                          />
+                        ),
+                        total: roll.defense?.dice && settled ? sideTotal(roll.defense) : null,
+                        sum: roll.defense?.dice && settled ? sumLine(roll.defense) : null,
                       }
-                    >
-                      {term('stunt')} 적용: {unusedStunt.text}
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-        </div>
+                    : { difficulty: roll.difficulty ?? 0 }
+                }
+                verdict={
+                  settled &&
+                  myOutcome &&
+                  result && (
+                    <OutcomeBanner
+                      action={mySide === 'defense' ? 'defend' : roll.action}
+                      outcome={final && mySide === 'active' ? roll.result!.outcome : myOutcome}
+                      total={myTotal}
+                      provisional={!final}
+                    />
+                  )
+                }
+              >
+                {roll.status === 'awaiting_defense' && (
+                  <p className={styles.waiting}>다 굴렸어요. 상대를 기다리는 중이에요</p>
+                )}
+                {settled && roll.status === 'open' && !myRoll && (
+                  <button
+                    type="button"
+                    className={styles.defenseOk}
+                    data-tour="finalize"
+                    disabled={guided && !!tour?.lockFinalize}
+                    onClick={onDefenseFinalize}
+                  >
+                    결과 확정
+                  </button>
+                )}
+                {settled && roll.status === 'open' && myRoll && unusedStunt && (
+                  <button
+                    type="button"
+                    className={styles.stunt}
+                    onClick={() =>
+                      run(ME, {
+                        type: 'stunt.apply',
+                        payload: { rollId: roll.id, side: 'active', stuntId: unusedStunt.id },
+                      })
+                    }
+                  >
+                    {term('stunt')} 적용: {unusedStunt.text}
+                  </button>
+                )}
+              </CheckCard>
+            )}
+          </div>
 
-        <div className={book.table} data-tour="aspects">
-          {!(roll && settled && roll.status === 'open' && myRoll) &&
-            sceneAspects.map((a: Aspect) => (
-              <AspectCard
-                key={a.id}
-                aspect={a}
-                {...(a.ownerType === 'character'
-                  ? { owner: state.characters[a.ownerId]?.name ?? '' }
-                  : {})}
-              />
-            ))}
-          {roll && settled && roll.status === 'open' && myRoll && (
-            <div className={book.tray}>
-              <InvokeTray
-                choices={choices}
-                fatePoints={me.fatePoints}
-                selectedId={selectedAspect}
-                onSelect={setSelectedAspect}
-                onInvoke={onInvoke}
-                onFinalize={onFinalize}
-                lockFinalize={guided && !!tour?.lockFinalize}
-              />
-            </div>
-          )}
-        </div>
+          <div className={book.table} data-tour="aspects">
+            {!(roll && settled && roll.status === 'open' && myRoll) &&
+              sceneAspects.map((a: Aspect) => (
+                <AspectCard
+                  key={a.id}
+                  aspect={a}
+                  {...(a.ownerType === 'character'
+                    ? { owner: state.characters[a.ownerId]?.name ?? '' }
+                    : {})}
+                />
+              ))}
+            {roll && settled && roll.status === 'open' && myRoll && (
+              <div className={book.tray}>
+                <InvokeTray
+                  choices={choices}
+                  fatePoints={me.fatePoints}
+                  selectedId={selectedAspect}
+                  onSelect={setSelectedAspect}
+                  onInvoke={onInvoke}
+                  onFinalize={onFinalize}
+                  lockFinalize={guided && !!tour?.lockFinalize}
+                />
+              </div>
+            )}
+          </div>
+        </RollSheet>
 
         <Presence show={!!compel}>
           {compel && (
-            <div className={styles.overlay}>
+            <div className={styles.overlay} data-overlay="">
               <CompelOffer
                 aspect={state.aspects[compel.aspectId]!}
                 text={compel.text}
@@ -1549,7 +1556,7 @@ function Table({
 
         <Presence show={!!prompt}>
           {prompt && (
-            <div className={styles.overlay}>
+            <div className={styles.overlay} data-overlay="">
               <form
                 className={styles.prompt}
                 onSubmit={(e) => {
@@ -1597,6 +1604,9 @@ function Table({
                 </p>
                 <input
                   autoFocus
+                  aria-label={
+                    prompt.kind === 'aspect' ? `새 ${term('aspect')} 이름` : `${term('boost')} 이름`
+                  }
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
                   maxLength={40}
@@ -1664,6 +1674,8 @@ function Table({
           <StoryLog lines={lines} variant="book" />
         </div>
         {error && <p className={book.error}>{error}</p>}
+      </section>
+      <Dock>
         <ActionBar
           character={me}
           action={action}
@@ -1677,7 +1689,7 @@ function Table({
           onApproach={setApproach}
           onRoll={onRoll}
         />
-      </section>
+      </Dock>
       {guided && tour && <Spotlight open={[...tour.open, '[data-coach]']} ring={tour.ring} />}
     </main>
   );

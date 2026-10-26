@@ -8,10 +8,10 @@ import {
   type RoomEvent,
   type RoomState,
 } from '@fate/rules-engine';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { AspectCard } from '@/components/aspect/AspectCard';
+import { isDialogOpen, Leaf } from '@/components/book/Leaf';
 import { FatePointToken } from '@/components/fate/FatePointToken';
-import { CloseGuardScope, useCloseGuard } from '@/components/ui/closeGuard';
 import { useClosing } from '@/lib/motion';
 import styles from './GmConsole.module.css';
 
@@ -34,7 +34,11 @@ const TOOLS: ReadonlyArray<readonly [GmTool, string, string]> = [
   ['session', '세션', '세션을 열고 닫아요. 열면 운명점이 다시 채워져요'],
 ];
 
-/** 화면 위쪽 GM 버튼 줄. 자주 쓰는 일은 한 번에, 나머지는 큰 창으로 */
+/**
+ * GM 서랍 (design-system.md 3절 GmDrawer). 책 머리에 한 줄만 차지한다:
+ * [GM 도구 ▾] 지금 장면 · GM 풀 · 되돌리기. 도구는 서랍을 열어 책의 목차처럼 고른다.
+ * 그래서 기록과 목차형 행동이 늘 한 화면에 남는다.
+ */
 export function GmBar({
   state,
   run,
@@ -50,65 +54,134 @@ export function GmBar({
   onOpen: (o: GmOpen) => void;
   onArt: () => void;
 }) {
+  const [open, setOpen] = useState(false);
+  const wrap = useRef<HTMLDivElement>(null);
+  const toggle = useRef<HTMLButtonElement>(null);
+  const drawerId = useId();
+  const shut = (refocus = true) => {
+    setOpen(false);
+    if (refocus) toggle.current?.focus({ preventScroll: true });
+  };
+
+  // 서랍: 바깥을 누르거나 Esc면 닫힌다. 열리면 첫 도구에 초점
+  useEffect(() => {
+    if (!open) return;
+    wrap.current
+      ?.querySelector<HTMLElement>('[data-drawer] button')
+      ?.focus({ preventScroll: true });
+    const onDown = (e: PointerEvent) => {
+      if (!wrap.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || isDialogOpen()) return;
+      e.stopPropagation();
+      setOpen(false);
+      toggle.current?.focus({ preventScroll: true });
+    };
+    document.addEventListener('pointerdown', onDown);
+    window.addEventListener('keydown', onKey, true);
+    return () => {
+      document.removeEventListener('pointerdown', onDown);
+      window.removeEventListener('keydown', onKey, true);
+    };
+  }, [open]);
+
+  const pick = (fn: () => void) => {
+    shut(false);
+    fn();
+  };
+
   return (
-    <nav className={styles.bar} aria-label="GM 도구">
-      <span className={styles.badge}>GM</span>
-      {TOOLS.map(([tool, label, hint]) => (
+    <div className={styles.gm} ref={wrap}>
+      <nav className={styles.bar} aria-label="GM 도구">
         <button
-          key={tool}
+          ref={toggle}
           type="button"
-          className={styles.tool}
-          title={hint}
-          data-attention={(tool === 'scene' && !state.scene) || undefined}
-          onClick={() => onOpen({ tool })}
+          className={styles.drawerBtn}
+          aria-expanded={open}
+          aria-controls={drawerId}
+          data-attention={!state.scene || undefined}
+          onClick={() => (open ? shut() : setOpen(true))}
         >
-          {label}
+          <span className={styles.badge}>GM</span>
+          도구
+          <span aria-hidden className={styles.caret}>
+            {open ? '▴' : '▾'}
+          </span>
         </button>
-      ))}
-      <button
-        type="button"
-        className={styles.tool}
-        title="장면 배경 · 스탠딩과 표정 · 초상화를 그려요"
-        onClick={onArt}
-      >
-        그림
-      </button>
-      <span className={styles.spacer} />
-      <span className={styles.pool} title="GM 운명점 풀 (NPC가 써요)">
-        GM 풀 <FatePointToken count={state.gmPool} />
+        <span className={styles.now} title={state.scene?.name}>
+          {state.scene ? state.scene.name : '장면 없음'}
+          {state.conflict && ` · ${term('conflict')} 중`}
+        </span>
+        <span className={styles.pool} title="GM 운명점 풀 (NPC가 써요)">
+          <span className={styles.poolLabel}>풀</span>
+          <FatePointToken count={state.gmPool} />
+          <button
+            type="button"
+            aria-label="GM 풀 −1"
+            disabled={pending || state.gmPool === 0}
+            onClick={() =>
+              void run({ type: 'fate.adjust', payload: { target: 'gm_pool', delta: -1 } })
+            }
+          >
+            −
+          </button>
+          <button
+            type="button"
+            aria-label="GM 풀 +1"
+            disabled={pending}
+            onClick={() =>
+              void run({ type: 'fate.adjust', payload: { target: 'gm_pool', delta: 1 } })
+            }
+          >
+            +
+          </button>
+        </span>
         <button
           type="button"
-          aria-label="GM 풀 −1"
-          disabled={pending || state.gmPool === 0}
+          className={styles.undo}
+          disabled={pending || !lastUndoable}
+          title={lastUndoable ? `되돌리기: ${lastUndoable.text}` : '되돌릴 기록이 없어요'}
+          aria-label="마지막 기록 되돌리기"
           onClick={() =>
-            void run({ type: 'fate.adjust', payload: { target: 'gm_pool', delta: -1 } })
+            lastUndoable &&
+            void run({ type: 'event.undo', payload: { targetSeq: lastUndoable.seq } })
           }
         >
-          −
+          ↶<span className={styles.undoText}> 되돌리기</span>
         </button>
-        <button
-          type="button"
-          aria-label="GM 풀 +1"
-          disabled={pending}
-          onClick={() =>
-            void run({ type: 'fate.adjust', payload: { target: 'gm_pool', delta: 1 } })
-          }
-        >
-          +
-        </button>
-      </span>
-      <button
-        type="button"
-        className={styles.undo}
-        disabled={pending || !lastUndoable}
-        title={lastUndoable ? `되돌리기: ${lastUndoable.text}` : '되돌릴 기록이 없어요'}
-        onClick={() =>
-          lastUndoable && void run({ type: 'event.undo', payload: { targetSeq: lastUndoable.seq } })
-        }
-      >
-        ↶ 되돌리기
-      </button>
-    </nav>
+      </nav>
+      {open && (
+        <div id={drawerId} className={styles.drawer} data-drawer="">
+          <ol className={styles.index}>
+            {TOOLS.map(([tool, label, hint], i) => (
+              <li key={tool}>
+                <button
+                  type="button"
+                  data-attention={(tool === 'scene' && !state.scene) || undefined}
+                  onClick={() => pick(() => onOpen({ tool }))}
+                >
+                  <span className={styles.n} aria-hidden>
+                    {i + 1}
+                  </span>
+                  <b>{label}</b>
+                  <small>{hint}</small>
+                </button>
+              </li>
+            ))}
+            <li>
+              <button type="button" onClick={() => pick(onArt)}>
+                <span className={styles.n} aria-hidden>
+                  {TOOLS.length + 1}
+                </span>
+                <b>그림</b>
+                <small>장면 배경 · 스탠딩과 표정 · 초상화를 그려요</small>
+              </button>
+            </li>
+          </ol>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -243,7 +316,7 @@ export function NarrationInput({
       <textarea
         rows={2}
         value={text}
-        placeholder="여기에 장면을 묘사하면 모두의 책에 적혀요 (Enter 보내기 · Shift+Enter 줄바꿈)"
+        placeholder="장면을 묘사하면 모두의 책에 적혀요 (Enter 보내기)"
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
@@ -261,6 +334,7 @@ export function NarrationInput({
 
 export function Modal({
   title,
+  kicker = 'GM 도구',
   onClose,
   children,
   wide,
@@ -268,6 +342,7 @@ export function Modal({
   dirty,
 }: {
   title: string;
+  kicker?: string;
   onClose: () => void;
   children: ReactNode;
   wide?: boolean;
@@ -276,28 +351,18 @@ export function Modal({
   /** 적은 것 말고도 닫히면 잃는 게 있을 때 */
   dirty?: boolean;
 }) {
-  const own = useClosing(onClose);
-  const [closing, close] = closer ?? own;
-  const guard = useCloseGuard(close, dirty);
   return (
-    <div className={styles.backdrop} data-closing={closing || undefined} {...guard.backdrop}>
-      <section
-        className={styles.modal}
-        data-wide={wide || undefined}
-        role="dialog"
-        aria-label={title}
-        {...guard.panel}
-      >
-        <header className={styles.modalHead}>
-          <h2>{title}</h2>
-          <button type="button" className={styles.close} onClick={close} aria-label="닫기">
-            ×
-          </button>
-        </header>
-        <CloseGuardScope value={guard.scope}>{children}</CloseGuardScope>
-      </section>
-      {guard.nudge}
-    </div>
+    <Leaf
+      title={title}
+      kicker={kicker}
+      label={title}
+      onClose={onClose}
+      size={wide ? 'lg' : 'md'}
+      {...(closer ? { closer } : {})}
+      {...(dirty !== undefined ? { dirty } : {})}
+    >
+      {children}
+    </Leaf>
   );
 }
 

@@ -9,8 +9,8 @@ import {
   outcomeFor,
   previewInvokes,
   resolveRoll,
+  sideTotal,
   stuntBonuses,
-  sumDice,
   type Action,
   type Approach,
   type Aspect,
@@ -30,7 +30,10 @@ import { AspectCard } from '@/components/aspect/AspectCard';
 import { CompelOffer } from '@/components/compel/CompelOffer';
 import { StoryLog } from '@/components/log/StoryLog';
 import { FoePlate } from '@/components/book/FoePlate';
+import { Dock } from '@/components/book/Dock';
+import { isDialogOpen } from '@/components/book/Leaf';
 import { MySheet } from '@/components/book/MySheet';
+import { revealRoll, RollSheet } from '@/components/book/RollSheet';
 import { ActionBar } from '@/components/roll/ActionBar';
 import {
   DICE_MODES,
@@ -42,6 +45,7 @@ import {
 } from '@/components/roll/DiceTray';
 import { InvokeTray, type InvokeChoice } from '@/components/roll/InvokeTray';
 import { OutcomeBanner } from '@/components/roll/OutcomeBanner';
+import { CheckCard, sumLine } from '@/components/roll/CheckCard';
 import { RollPreview } from '@/components/roll/RollPreview';
 import { SceneFade } from '@/components/scene/SceneFade';
 import { OUTCOME_FACES, pickFace, StageCast } from '@/components/scene/StageCast';
@@ -49,7 +53,7 @@ import { toast, Toaster } from '@/components/ui/Toast';
 import { playSfx, setSfxEnabled, sfxEnabled, sfxForEvent, sfxForOutcome } from '@/fx/sfx';
 import { ApiError } from '@/lib/api';
 import { asset } from '@/lib/asset';
-import { Presence, revealOnNarrow } from '@/lib/motion';
+import { Presence } from '@/lib/motion';
 import { describe, ERROR_COPY, JUDGE } from '@/lib/copy';
 import { josa } from '@/lib/josa';
 import type { RemoteRoom } from '@/state/remoteRoom';
@@ -101,6 +105,8 @@ const DONE_COPY: Partial<Record<Command['type'], string>> = {
   'gm.note': '메모를 남겼어요',
   'media.attach': '그림을 바꿨어요',
 };
+
+const signed = (n: number) => `${n >= 0 ? '+' : ''}${n}`;
 
 const isTyping = (t: EventTarget | null) =>
   t instanceof HTMLInputElement ||
@@ -220,7 +226,7 @@ export function RoomTable({
   const settled = !!roll && settledKey === rollKey;
   // 좁은 화면: 결과가 나오면 패널이 다시 보이게
   useEffect(() => {
-    if (settled) revealOnNarrow(document.querySelector('[data-roll-panel]'));
+    if (settled) revealRoll(document.querySelector('[data-roll-panel]'));
   }, [settled]);
   const activeChar = roll ? state.characters[roll.active.characterId] : undefined;
   // GM은 NPC 쪽만 대신 고른다. PC는 그 플레이어가 고르고, GM 화면에는 기다림 표시만 뜬다
@@ -245,6 +251,7 @@ export function RoomTable({
   // 굴리기를 누른 순간부터 서버 결과가 올 때까지 주사위가 굴러간다
   const [rolling, setRolling] = useState<{
     name: string;
+    action: Action;
     head: string;
     target?: string;
     difficulty?: number;
@@ -267,7 +274,8 @@ export function RoomTable({
     rollSound();
     setRolling({
       name: me.name,
-      head: `${me.name} · ${term(action)} · ${term(approach)} ${me.approaches[approach] >= 0 ? '+' : ''}${me.approaches[approach]}`,
+      action,
+      head: `${me.name} · ${term(approach)} ${signed(me.approaches[approach])}`,
       ...(needsTarget ? { target: state.characters[targetId]?.name ?? '' } : { difficulty }),
     });
     const evs = await run({
@@ -517,6 +525,8 @@ export function RoomTable({
   const [narrationEcho, setNarrationEcho] = useState<string | null>(null);
   const party = Object.values(state.characters).sort((a, b) => Number(a.isNpc) - Number(b.isNpc));
   const [chat, setChat] = useState('');
+  // GM은 대사와 말하기를 한 입력 자리에서 바꿔 쓴다 (책이 빽빽해지지 않게)
+  const [composeMode, setComposeMode] = useState<'narrate' | 'chat'>('narrate');
   const [sending, setSending] = useState<Array<{ id: number; text: string }>>([]);
   const sendIds = useRef(0);
   const myNick = state.members[room.userId]?.nickname;
@@ -630,6 +640,8 @@ export function RoomTable({
   const trayOpen =
     !!roll && settled && roll.status === 'open' && (iRoll || iAdjustDefense) && !overlayOpen;
   const previewing = !!me && !!action && !!approach && !roll && !rolling;
+  // 좁은 화면: 굴림이 끝나기 전까지 판정 카드와 발동 카드를 바텀 시트로 띄운다
+  const sheetActive = !!rolling || (!!roll && !isFolded && roll.status !== 'final');
 
   return (
     <main className={`${book.shell} ${styles.callable}`} data-call={myCall ?? undefined}>
@@ -680,111 +692,121 @@ export function RoomTable({
 
         {foe && (
           <div className={book.foePlate}>
-            <FoePlate character={foe} {...(foe.portraitUrl ? { image: foe.portraitUrl } : {})} />
+            <FoePlate
+              character={foe}
+              {...(foe.portraitUrl ? { image: foe.portraitUrl } : {})}
+              compact={showRoll || !!rolling}
+            />
           </div>
         )}
 
-        <div className={`${book.center} ${styles.center}`}>
-          {!state.scene && <SceneStarter state={state} run={run} pending={pending} isGm={isGm} />}
-          <div className={styles.topStack}>
-            <Trackers
-              state={state}
-              run={run}
-              isGm={isGm}
-              canControl={canControl}
-              pending={pending}
-            />
-            <ZoneMap
-              state={state}
-              run={run}
-              isGm={isGm}
-              canControl={canControl}
-              pending={pending}
-              auto={
-                rolling
-                  ? 'hidden'
-                  : !roll || isFolded
-                    ? 'full'
-                    : roll.status === 'final'
-                      ? 'compact'
-                      : 'hidden'
-              }
-            />
-          </div>
-
-          {waitingOn && (
-            <div className={styles.waitChip}>
-              <span className={styles.dots} aria-hidden />
-              {waitingOn}
-              {isGm && roll && (
-                <button type="button" onClick={() => setGmTakeOver(roll.id)}>
-                  대신 고르기
-                </button>
-              )}
+        <RollSheet
+          active={sheetActive}
+          resetKey={rollKey || 'pending'}
+          summary={
+            settled && outcome && result && roll ? (
+              <>
+                <b>{JUDGE[outcome].latin}</b> · {activeChar?.name} {term(roll.action)} ·{' '}
+                {signed(result.total)}
+              </>
+            ) : (
+              (waitingOn ?? '주사위를 굴리는 중…')
+            )
+          }
+        >
+          <div className={`${book.center} ${styles.center}`}>
+            {!state.scene && <SceneStarter state={state} run={run} pending={pending} isGm={isGm} />}
+            <div className={styles.topStack} data-top-stack="">
+              <Trackers
+                state={state}
+                run={run}
+                isGm={isGm}
+                canControl={canControl}
+                pending={pending}
+              />
+              <ZoneMap
+                state={state}
+                run={run}
+                isGm={isGm}
+                canControl={canControl}
+                pending={pending}
+                auto={
+                  rolling
+                    ? 'hidden'
+                    : !roll || isFolded
+                      ? 'full'
+                      : roll.status === 'final'
+                        ? 'compact'
+                        : 'hidden'
+                }
+              />
             </div>
-          )}
 
-          {rolling && (
-            <div
-              className={`${tryStyles.rollPanel} ${book.check}`}
-              data-pending
-              ref={revealOnNarrow}
-            >
-              <div className={tryStyles.sides}>
-                <div className={tryStyles.side}>
-                  <div className={tryStyles.sideHead}>{rolling.head}</div>
-                  <PendingDice mode={diceMode} />
-                </div>
-                {rolling.target !== undefined ? (
-                  <>
-                    <div className={tryStyles.vs}>VS</div>
-                    <div className={tryStyles.side}>
-                      <div className={tryStyles.sideHead}>
-                        {rolling.target} · {term('defend')}
-                      </div>
-                      <DiceTray dice={null} rollKey="pending" sealed tone="op" mode={diceMode} />
-                    </div>
-                  </>
-                ) : (
-                  <div className={tryStyles.difficulty}>
-                    난이도 {formatRating(rolling.difficulty ?? 0)}
-                  </div>
+            {waitingOn && (
+              <div className={styles.waitChip}>
+                <span className={styles.dots} aria-hidden />
+                {waitingOn}
+                {isGm && roll && (
+                  <button type="button" onClick={() => setGmTakeOver(roll.id)}>
+                    대신 고르기
+                  </button>
                 )}
               </div>
-            </div>
-          )}
+            )}
 
-          {roll && !rolling && isFolded && outcome && result && (
-            <button
-              type="button"
-              className={styles.foldedRoll}
-              data-tone={JUDGE[outcome].tone}
-              onClick={() => setFolded('')}
-              title="굴림 결과 펼치기"
-            >
-              <b>{JUDGE[outcome].latin}</b>
-              {activeChar?.name} · {term(roll.action)} · {term(roll.active.approach)} ·{' '}
-              {result.total >= 0 ? '+' : ''}
-              {result.total}
-              <span>다시 보기 ▴</span>
-            </button>
-          )}
+            {rolling && (
+              <CheckCard
+                pending
+                panelRef={revealRoll}
+                kind={`${term(rolling.action)} 판정`}
+                me={{ label: rolling.head, dice: <PendingDice mode={diceMode} /> }}
+                opp={
+                  rolling.target !== undefined
+                    ? {
+                        label: `${rolling.target} · ${term('defend')}`,
+                        dice: (
+                          <DiceTray
+                            dice={null}
+                            rollKey="pending"
+                            sealed
+                            tone="op"
+                            mode={diceMode}
+                          />
+                        ),
+                      }
+                    : { difficulty: rolling.difficulty ?? 0 }
+                }
+              />
+            )}
 
-          {roll && !rolling && !isFolded && (
-            <div
-              className={`${tryStyles.rollPanel} ${book.check}`}
-              data-continued={quickKey === roll.id || undefined}
-              ref={quickKey === roll.id ? undefined : revealOnNarrow}
-              data-roll-panel
-            >
-              <div className={tryStyles.sides}>
-                <div className={tryStyles.side} data-fx="roll-dice">
-                  <div className={tryStyles.sideHead}>
-                    {activeChar?.name} · {term(roll.action)} · {term(roll.active.approach)}{' '}
-                    {roll.active.rating >= 0 ? '+' : ''}
-                    {roll.active.rating}
-                  </div>
-                  {rerolling ? (
+            {roll && !rolling && isFolded && outcome && result && (
+              <button
+                type="button"
+                className={styles.foldedRoll}
+                data-tone={JUDGE[outcome].tone}
+                onClick={() => setFolded('')}
+                title="굴림 결과 펼치기"
+              >
+                <b>{JUDGE[outcome].latin}</b>
+                <span className={styles.foldedText}>
+                  {activeChar?.name} · {term(roll.action)} · {term(roll.active.approach)}{' '}
+                  <em>
+                    {result.total >= 0 ? '+' : ''}
+                    {result.total}
+                  </em>
+                </span>
+                <span className={styles.foldedMore}>다시 보기 ▴</span>
+              </button>
+            )}
+
+            {roll && !rolling && !isFolded && (
+              <CheckCard
+                continued={quickKey === roll.id}
+                {...(quickKey === roll.id ? {} : { panelRef: revealRoll })}
+                kind={`${term(roll.action)} 판정`}
+                me={{
+                  label: `${activeChar?.name ?? ''} · ${term(roll.active.approach)} ${signed(roll.active.rating)}`,
+                  dice: rerolling ? (
                     <PendingDice mode={diceMode} />
                   ) : (
                     <DiceTray
@@ -795,306 +817,291 @@ export function RoomTable({
                       quick={quickKey === roll.id}
                       onSettled={() => setSettledKey(rollKey)}
                     />
-                  )}
-                  {roll.active.dice && settled && result && (
-                    <div className={tryStyles.total} key={result.total} data-fx="roll-total">
-                      {result.total >= 0 ? '+' : ''}
-                      {result.total} <small>{formatRating(result.total).split(' ')[0]}</small>
-                      {roll.active.modifiers.length > 0 && (
-                        <small className={tryStyles.mods}>
-                          주사위 {sumDice(roll.active.dice)} · {term('approach')}{' '}
-                          {roll.active.rating} ·{' '}
-                          {roll.active.modifiers.map((m) => `+${m.value}`).join(' ')}
-                        </small>
-                      )}
-                    </div>
-                  )}
-                  {roll.status === 'awaiting_defense' && (
-                    <div className={tryStyles.waiting}>다 굴렸어요. 상대를 기다리는 중이에요</div>
-                  )}
-                </div>
-                {roll.targetId ? (
-                  <>
-                    <div className={tryStyles.vs}>VS</div>
-                    <div className={tryStyles.side}>
-                      <div className={tryStyles.sideHead}>
-                        {state.characters[roll.targetId]?.name} · {term('defend')}
-                      </div>
-                      <DiceTray
-                        dice={roll.defense?.dice ?? null}
-                        rollKey={`${roll.id}:d:${roll.defense?.animSeed ?? 'x'}`}
-                        sealed={!roll.defense}
-                        tone="op"
-                        mode={diceMode}
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <div className={tryStyles.difficulty}>
-                    난이도 {formatRating(roll.difficulty ?? 0)}
+                  ),
+                  total: roll.active.dice && settled && result ? sideTotal(roll.active) : null,
+                  sum: settled ? sumLine(roll.active) : null,
+                }}
+                opp={
+                  roll.targetId
+                    ? {
+                        label: `${state.characters[roll.targetId]?.name ?? ''} · ${term('defend')}${roll.defense ? ` · ${term(roll.defense.approach)} ${signed(roll.defense.rating)}` : ''}`,
+                        dice: (
+                          <DiceTray
+                            dice={roll.defense?.dice ?? null}
+                            rollKey={`${roll.id}:d:${roll.defense?.animSeed ?? 'x'}`}
+                            sealed={!roll.defense}
+                            tone="op"
+                            mode={diceMode}
+                          />
+                        ),
+                        total: roll.defense?.dice && settled ? sideTotal(roll.defense) : null,
+                        sum: roll.defense && settled ? sumLine(roll.defense) : null,
+                      }
+                    : { difficulty: roll.difficulty ?? 0 }
+                }
+                verdict={
+                  settled &&
+                  outcome &&
+                  result && (
+                    <OutcomeBanner
+                      action={roll.action}
+                      outcome={outcome}
+                      total={result.total}
+                      provisional={roll.status !== 'final' && iRoll}
+                    />
+                  )
+                }
+              >
+                {roll.status === 'awaiting_defense' && (
+                  <p className={tryStyles.waiting}>다 굴렸어요. 상대를 기다리는 중이에요</p>
+                )}
+                {settled && roll.status === 'open' && iRoll && unusedStunt && (
+                  <button
+                    type="button"
+                    className={tryStyles.stunt}
+                    disabled={pending}
+                    onClick={() =>
+                      void run({
+                        type: 'stunt.apply',
+                        payload: { rollId: roll.id, side: 'active', stuntId: unusedStunt.id },
+                      })
+                    }
+                  >
+                    {term('stunt')} 적용: {unusedStunt.text}
+                  </button>
+                )}
+                {settled && iAdjustDefense && defenseStunt && (
+                  <button
+                    type="button"
+                    className={tryStyles.stunt}
+                    disabled={pending}
+                    onClick={() =>
+                      void run({
+                        type: 'stunt.apply',
+                        payload: { rollId: roll.id, side: 'defense', stuntId: defenseStunt.id },
+                      })
+                    }
+                  >
+                    {term('stunt')} 적용: {defenseStunt.text}
+                  </button>
+                )}
+                {settled && roll.status === 'open' && !iRoll && !iAdjustDefense && (
+                  <p className={tryStyles.waiting}>
+                    {josa(activeChar?.name ?? '', '이/가')} 결과를 정하는 중…
+                  </p>
+                )}
+              </CheckCard>
+            )}
+          </div>
+
+          <div className={book.table}>
+            {[...sceneAspects, ...hiddenAspects].map((a) => (
+              <div
+                key={a.id}
+                className={styles.stageAspect}
+                hidden={trayOpen}
+                data-hidden={a.hidden || undefined}
+              >
+                <AspectCard
+                  aspect={a}
+                  {...(a.ownerType === 'character'
+                    ? { owner: state.characters[a.ownerId]?.name ?? '' }
+                    : {})}
+                  {...(a.hidden ? { note: 'GM만 보여요' } : {})}
+                />
+                {isGm && (
+                  <div className={styles.aspectTools}>
+                    {a.hidden ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void run({ type: 'aspect.reveal', payload: { aspectId: a.id } })
+                        }
+                      >
+                        공개
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setGmOpen({ tool: 'compel', aspectId: a.id })}
+                      >
+                        {term('compel')}
+                      </button>
+                    )}
+                    {a.kind !== 'consequence' && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void run({ type: 'aspect.remove', payload: { aspectId: a.id } })
+                        }
+                      >
+                        지우기
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
+            ))}
+            {isGm && state.scene && !trayOpen && (
+              <button
+                type="button"
+                className={styles.addAspect}
+                onClick={() => setGmOpen({ tool: 'aspect' })}
+              >
+                + {term('aspect')} 붙이기
+              </button>
+            )}
+            {roll && settled && roll?.status === 'open' && iRoll && (
+              <div className={book.tray}>
+                {!overlayOpen && !palette && !help && (
+                  <InvokeTray
+                    choices={choices}
+                    fatePoints={activeChar?.isNpc ? state.gmPool : (activeChar?.fatePoints ?? 0)}
+                    selectedId={selectedAspect}
+                    onSelect={setSelectedAspect}
+                    onInvoke={(id, mode, paid) => void onInvoke('active', id, mode, paid)}
+                    onFinalize={() => void onFinalize()}
+                    {...(finalizeWait ? { waiting: finalizeWait } : {})}
+                  />
+                )}
+              </div>
+            )}
+            {roll && settled && iAdjustDefense && (
+              <div className={book.tray}>
+                {!overlayOpen && !palette && !help && (
+                  <InvokeTray
+                    choices={defenseChoices}
+                    fatePoints={defenseChar?.isNpc ? state.gmPool : (defenseChar?.fatePoints ?? 0)}
+                    selectedId={selectedAspect}
+                    onSelect={setSelectedAspect}
+                    onInvoke={(id, mode, paid) => void onInvoke('defense', id, mode, paid)}
+                    onFinalize={onDefenseDone}
+                    finalizeLabel="방어 조정 완료"
+                  />
+                )}
+              </div>
+            )}
+          </div>
+        </RollSheet>
 
-              {settled && outcome && result && (
-                <OutcomeBanner
-                  action={roll.action}
-                  outcome={outcome}
-                  total={result.total}
-                  provisional={roll.status !== 'final' && iRoll}
-                />
-              )}
-
-              {settled && roll.status === 'open' && iRoll && (
-                <>
-                  {unusedStunt && (
-                    <button
-                      type="button"
-                      className={tryStyles.stunt}
-                      disabled={pending}
-                      onClick={() =>
-                        void run({
-                          type: 'stunt.apply',
-                          payload: { rollId: roll.id, side: 'active', stuntId: unusedStunt.id },
-                        })
-                      }
-                    >
-                      {term('stunt')} 적용: {unusedStunt.text}
-                    </button>
-                  )}
-                </>
-              )}
-              {settled && iAdjustDefense && (
-                <>
-                  {defenseStunt && (
-                    <button
-                      type="button"
-                      className={tryStyles.stunt}
-                      disabled={pending}
-                      onClick={() =>
-                        void run({
-                          type: 'stunt.apply',
-                          payload: { rollId: roll.id, side: 'defense', stuntId: defenseStunt.id },
-                        })
-                      }
-                    >
-                      {term('stunt')} 적용: {defenseStunt.text}
-                    </button>
-                  )}
-                </>
-              )}
-              {settled && roll.status === 'open' && !iRoll && !iAdjustDefense && (
-                <p className={tryStyles.waiting}>
-                  {josa(activeChar?.name ?? '', '이/가')} 결과를 정하는 중…
+        <Presence show={!!(iDefend && defender && roll)}>
+          {iDefend && defender && roll && (
+            <div className={tryStyles.overlay} data-overlay="">
+              <div
+                className={tryStyles.prompt}
+                role="dialog"
+                aria-label={`${term('defend')} 고르기`}
+              >
+                <div className={tryStyles.promptHead}>
+                  {activeChar?.name}의 {term(roll.action)}! {josa(defender.name, '은/는')} 어떻게
+                  막을까요?
+                </div>
+                <p className={tryStyles.promptHelp}>
+                  {term('defend')}에 쓸 {term('approach')}을 골라요. 두 결과가 동시에 공개돼요.
+                  <br />
+                  <small>키보드 Q W E / A S D</small>
                 </p>
-              )}
-            </div>
-          )}
-
-          <Presence show={!!(iDefend && defender && roll)}>
-            {iDefend && defender && roll && (
-              <div className={tryStyles.overlay}>
-                <div className={tryStyles.prompt}>
-                  <div className={tryStyles.promptHead}>
-                    {activeChar?.name}의 {term(roll.action)}! {josa(defender.name, '은/는')} 어떻게
-                    막을까요?
-                  </div>
-                  <p className={tryStyles.promptHelp}>
-                    {term('defend')}에 쓸 {term('approach')}을 골라요. 두 결과가 동시에 공개돼요.
-                    <br />
-                    <small>키보드 Q W E / A S D</small>
-                  </p>
-                  <DefendGrid
-                    defender={defender}
-                    pending={pending}
-                    onPick={(a) => {
-                      rollSound();
-                      void run({ type: 'roll.defend', payload: { rollId: roll.id, approach: a } });
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-          </Presence>
-
-          <Presence show={!!(compel && state.aspects[compel.aspectId])}>
-            {compel && state.aspects[compel.aspectId] && (
-              <div className={tryStyles.overlay}>
-                <CompelOffer
-                  aspect={state.aspects[compel.aspectId] as Aspect}
-                  text={compel.text}
-                  targetId={compel.targetId}
-                  fatePoints={
-                    state.characters[compel.targetId]?.isNpc
-                      ? state.gmPool
-                      : (state.characters[compel.targetId]?.fatePoints ?? 0)
-                  }
-                  onAccept={() =>
-                    void run({
-                      type: 'compel.respond',
-                      payload: { compelId: compel.id, accept: true },
-                    })
-                  }
-                  onRefuse={() =>
-                    void run({
-                      type: 'compel.respond',
-                      payload: { compelId: compel.id, accept: false },
-                    })
-                  }
-                />
-              </div>
-            )}
-          </Presence>
-
-          <Presence show={!!(damage && !compel)}>
-            {damage && !compel && (
-              <div className={tryStyles.overlay}>
-                <DamagePrompt
-                  damage={damage}
-                  character={state.characters[damage.targetId]!}
-                  run={run}
+                <DefendGrid
+                  defender={defender}
                   pending={pending}
-                />
-              </div>
-            )}
-          </Presence>
-
-          <Presence show={!!prompt}>
-            {prompt && (
-              <div className={tryStyles.overlay}>
-                <form
-                  className={tryStyles.prompt}
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    submitPrompt();
+                  onPick={(a) => {
+                    rollSound();
+                    void run({ type: 'roll.defend', payload: { rollId: roll.id, approach: a } });
                   }}
-                >
-                  <div className={tryStyles.promptHead}>
-                    {prompt.kind === 'aspect'
-                      ? `새 ${term('aspect')} 이름 짓기 · ${term('freeInvoke')} ${prompt.freeInvokes}`
-                      : `${term('boost')} 이름 짓기`}
-                  </div>
-                  <p className={tryStyles.promptHelp}>
-                    {prompt.kind === 'aspect'
-                      ? '장면에 새로 생긴 사실을 짧은 문구로 적어요.'
-                      : '한 번 쓰고 사라지는 순간의 기회예요.'}
-                  </p>
-                  <input
-                    autoFocus
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Escape') setPrompt(null);
-                    }}
-                    maxLength={40}
-                    className={tryStyles.promptInput}
-                  />
-                  <div className={tryStyles.promptButtons}>
-                    <button
-                      type="button"
-                      onClick={() => setPrompt(null)}
-                      className={tryStyles.restart}
-                    >
-                      건너뛰기 <kbd aria-hidden>Esc</kbd>
-                    </button>
-                    <button type="submit" className={tryStyles.promptOk} disabled={!draft.trim()}>
-                      붙이기 <kbd aria-hidden>Enter</kbd>
-                    </button>
-                  </div>
-                </form>
+                />
               </div>
-            )}
-          </Presence>
-        </div>
+            </div>
+          )}
+        </Presence>
 
-        <div className={book.table}>
-          {[...sceneAspects, ...hiddenAspects].map((a) => (
-            <div
-              key={a.id}
-              className={styles.stageAspect}
-              hidden={trayOpen}
-              data-hidden={a.hidden || undefined}
-            >
-              <AspectCard
-                aspect={a}
-                {...(a.ownerType === 'character'
-                  ? { owner: state.characters[a.ownerId]?.name ?? '' }
-                  : {})}
-                {...(a.hidden ? { note: 'GM만 보여요' } : {})}
+        <Presence show={!!(compel && state.aspects[compel.aspectId])}>
+          {compel && state.aspects[compel.aspectId] && (
+            <div className={tryStyles.overlay} data-overlay="">
+              <CompelOffer
+                aspect={state.aspects[compel.aspectId] as Aspect}
+                text={compel.text}
+                targetId={compel.targetId}
+                fatePoints={
+                  state.characters[compel.targetId]?.isNpc
+                    ? state.gmPool
+                    : (state.characters[compel.targetId]?.fatePoints ?? 0)
+                }
+                onAccept={() =>
+                  void run({
+                    type: 'compel.respond',
+                    payload: { compelId: compel.id, accept: true },
+                  })
+                }
+                onRefuse={() =>
+                  void run({
+                    type: 'compel.respond',
+                    payload: { compelId: compel.id, accept: false },
+                  })
+                }
               />
-              {isGm && (
-                <div className={styles.aspectTools}>
-                  {a.hidden ? (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        void run({ type: 'aspect.reveal', payload: { aspectId: a.id } })
-                      }
-                    >
-                      공개
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setGmOpen({ tool: 'compel', aspectId: a.id })}
-                    >
-                      {term('compel')}
-                    </button>
-                  )}
-                  {a.kind !== 'consequence' && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        void run({ type: 'aspect.remove', payload: { aspectId: a.id } })
-                      }
-                    >
-                      지우기
-                    </button>
-                  )}
+            </div>
+          )}
+        </Presence>
+
+        <Presence show={!!(damage && !compel)}>
+          {damage && !compel && (
+            <div className={tryStyles.overlay} data-overlay="">
+              <DamagePrompt
+                damage={damage}
+                character={state.characters[damage.targetId]!}
+                run={run}
+                pending={pending}
+              />
+            </div>
+          )}
+        </Presence>
+
+        <Presence show={!!prompt}>
+          {prompt && (
+            <div className={tryStyles.overlay} data-overlay="">
+              <form
+                className={tryStyles.prompt}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  submitPrompt();
+                }}
+              >
+                <div className={tryStyles.promptHead}>
+                  {prompt.kind === 'aspect'
+                    ? `새 ${term('aspect')} 이름 짓기 · ${term('freeInvoke')} ${prompt.freeInvokes}`
+                    : `${term('boost')} 이름 짓기`}
                 </div>
-              )}
-            </div>
-          ))}
-          {isGm && state.scene && !trayOpen && (
-            <button
-              type="button"
-              className={styles.addAspect}
-              onClick={() => setGmOpen({ tool: 'aspect' })}
-            >
-              + {term('aspect')} 붙이기
-            </button>
-          )}
-          {roll && settled && roll?.status === 'open' && iRoll && (
-            <div className={book.tray}>
-              {!overlayOpen && !palette && !help && (
-                <InvokeTray
-                  choices={choices}
-                  fatePoints={activeChar?.isNpc ? state.gmPool : (activeChar?.fatePoints ?? 0)}
-                  selectedId={selectedAspect}
-                  onSelect={setSelectedAspect}
-                  onInvoke={(id, mode, paid) => void onInvoke('active', id, mode, paid)}
-                  onFinalize={() => void onFinalize()}
-                  {...(finalizeWait ? { waiting: finalizeWait } : {})}
+                <p className={tryStyles.promptHelp}>
+                  {prompt.kind === 'aspect'
+                    ? '장면에 새로 생긴 사실을 짧은 문구로 적어요.'
+                    : '한 번 쓰고 사라지는 순간의 기회예요.'}
+                </p>
+                <input
+                  autoFocus
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') setPrompt(null);
+                  }}
+                  maxLength={40}
+                  className={tryStyles.promptInput}
                 />
-              )}
+                <div className={tryStyles.promptButtons}>
+                  <button
+                    type="button"
+                    onClick={() => setPrompt(null)}
+                    className={tryStyles.restart}
+                  >
+                    건너뛰기 <kbd aria-hidden>Esc</kbd>
+                  </button>
+                  <button type="submit" className={tryStyles.promptOk} disabled={!draft.trim()}>
+                    붙이기 <kbd aria-hidden>Enter</kbd>
+                  </button>
+                </div>
+              </form>
             </div>
           )}
-          {roll && settled && iAdjustDefense && (
-            <div className={book.tray}>
-              {!overlayOpen && !palette && !help && (
-                <InvokeTray
-                  choices={defenseChoices}
-                  fatePoints={defenseChar?.isNpc ? state.gmPool : (defenseChar?.fatePoints ?? 0)}
-                  selectedId={selectedAspect}
-                  onSelect={setSelectedAspect}
-                  onInvoke={(id, mode, paid) => void onInvoke('defense', id, mode, paid)}
-                  onFinalize={onDefenseDone}
-                  finalizeLabel="방어 조정 완료"
-                />
-              )}
-            </div>
-          )}
-        </div>
+        </Presence>
       </section>
 
       <div className={book.deckle} aria-hidden />
@@ -1103,6 +1110,9 @@ export function RoomTable({
         <div className={`${book.running} ${styles.running}`}>
           <span className={styles.runTitle}>{name}</span>
           <span className={styles.runTools}>
+            {!isGm && (
+              <span className={styles.role}>{role === 'player' ? '플레이어' : '관전'}</span>
+            )}
             <button
               type="button"
               className={styles.topBtn}
@@ -1116,34 +1126,36 @@ export function RoomTable({
             >
               {copied ? '복사됨 ✓' : `초대 ${inviteCode}`}
             </button>
-            <div className={styles.seg} role="radiogroup" aria-label="주사위 연출">
+            <select
+              className={styles.diceSel}
+              aria-label="주사위 연출"
+              title="주사위 연출"
+              value={diceMode}
+              onChange={(e) => {
+                const m = e.target.value as DiceMode;
+                setDiceMode(m);
+                saveDiceMode(m);
+              }}
+            >
               {DICE_MODES.map(([v, label]) => (
-                <button
-                  key={v}
-                  type="button"
-                  role="radio"
-                  aria-checked={diceMode === v}
-                  title={`주사위 연출: ${label}`}
-                  onClick={() => {
-                    setDiceMode(v);
-                    saveDiceMode(v);
-                  }}
-                >
-                  {label}
-                </button>
+                <option key={v} value={v}>
+                  주사위 {label}
+                </option>
               ))}
-            </div>
+            </select>
             <button
               type="button"
               className={styles.topBtn}
               aria-pressed={sfxOn}
               title={sfxOn ? '효과음 끄기' : '효과음 켜기'}
+              aria-label="효과음"
+              data-sfx=""
               onClick={() => {
                 setSfxEnabled(!sfxOn);
                 setSfxOn(!sfxOn);
               }}
             >
-              {sfxOn ? '♪ 켜짐' : '♪ 꺼짐'}
+              <span aria-hidden>♪</span>
             </button>
             <button
               type="button"
@@ -1154,9 +1166,6 @@ export function RoomTable({
             >
               <kbd>Ctrl K</kbd>
             </button>
-            <span className={styles.role}>
-              {isGm ? 'GM' : role === 'player' ? '플레이어' : '관전'}
-            </span>
             <button
               type="button"
               className={styles.topBtn}
@@ -1167,26 +1176,15 @@ export function RoomTable({
             </button>
           </span>
         </div>
-        {exitOpen && (
-          <ExitRoomDialog
-            roomId={room.roomId}
-            roomName={name}
-            isGm={isGm}
-            onCancel={() => setExitOpen(false)}
-            onDone={() => router.replace('/rooms/')}
-          />
-        )}
         {isGm && (
-          <div className={styles.gmSlot}>
-            <GmBar
-              state={state}
-              run={run}
-              pending={pending}
-              lastUndoable={lastUndoable}
-              onOpen={setGmOpen}
-              onArt={() => setArtOpen({ tab: state.scene ? 'scene' : 'standing' })}
-            />
-          </div>
+          <GmBar
+            state={state}
+            run={run}
+            pending={pending}
+            lastUndoable={lastUndoable}
+            onOpen={setGmOpen}
+            onArt={() => setArtOpen({ tab: state.scene ? 'scene' : 'standing' })}
+          />
         )}
         <MySheet
           character={me ?? undefined}
@@ -1208,12 +1206,9 @@ export function RoomTable({
               ? `${josa(n, '으로/로')} 움직이기`
               : `${n} 시트 보기`;
           }}
+          {...(me ? { onOpenSheet: () => setSheetId(me.id) } : {})}
+          compact={isGm}
         />
-        {me && (
-          <button type="button" className={styles.mySheetBtn} onClick={() => setSheetId(me.id)}>
-            내 시트 보기
-          </button>
-        )}
         {party.length === 0 && <p className={styles.empty}>아직 테이블에 캐릭터가 없어요.</p>}
         {role === 'player' && (
           <BringCharacter
@@ -1238,38 +1233,64 @@ export function RoomTable({
               : {})}
           />
         </div>
-        {isGm && (
-          <div className={styles.narrate}>
-            <NarrationInput run={run} onEcho={setNarrationEcho} />
+        {role !== 'spectator' && (
+          <div className={styles.composer}>
+            {isGm && (
+              <div className={styles.composeTabs} role="tablist" aria-label="쓸 곳">
+                {(
+                  [
+                    ['narrate', 'GM 대사'],
+                    ['chat', '말하기'],
+                  ] as const
+                ).map(([m, label]) => (
+                  <button
+                    key={m}
+                    type="button"
+                    role="tab"
+                    aria-selected={composeMode === m}
+                    onClick={() => setComposeMode(m)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+            {isGm && composeMode === 'narrate' ? (
+              <div className={styles.narrate}>
+                <NarrationInput run={run} onEcho={setNarrationEcho} />
+              </div>
+            ) : (
+              <form
+                className={styles.chat}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const text = chat.trim();
+                  if (!text) return;
+                  setChat('');
+                  void sendChat(text);
+                }}
+              >
+                <input
+                  value={chat}
+                  onChange={(e) => setChat(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') e.currentTarget.blur();
+                  }}
+                  maxLength={500}
+                  placeholder="말하기… (Enter)"
+                  aria-label="채팅"
+                />
+                <button type="submit" disabled={!chat.trim()}>
+                  보내기
+                </button>
+              </form>
+            )}
           </div>
         )}
-        {role !== 'spectator' && (
-          <form
-            className={styles.chat}
-            onSubmit={(e) => {
-              e.preventDefault();
-              const text = chat.trim();
-              if (!text) return;
-              setChat('');
-              void sendChat(text);
-            }}
-          >
-            <input
-              value={chat}
-              onChange={(e) => setChat(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') e.currentTarget.blur();
-              }}
-              maxLength={500}
-              placeholder="말하기… (Enter)"
-              aria-label="채팅"
-            />
-            <button type="submit" disabled={!chat.trim()}>
-              보내기
-            </button>
-          </form>
-        )}
-        {me && (
+      </section>
+
+      {me && (
+        <Dock>
           <div className={styles.actionWrap}>
             {controllable.length > 1 && !busyRoll && (
               <div className={styles.chipRow} role="radiogroup" aria-label="움직일 캐릭터">
@@ -1380,8 +1401,8 @@ export function RoomTable({
               onRoll={() => void onRoll()}
             />
           </div>
-        )}
-      </section>
+        </Dock>
+      )}
 
       {previewing && (
         <div className={styles.previewSlot}>
@@ -1449,6 +1470,15 @@ export function RoomTable({
         />
       )}
 
+      {exitOpen && (
+        <ExitRoomDialog
+          roomId={room.roomId}
+          roomName={name}
+          isGm={isGm}
+          onCancel={() => setExitOpen(false)}
+          onDone={() => router.replace('/rooms/')}
+        />
+      )}
       {palette && <CommandPalette build={paletteEntries} onClose={() => setPalette(false)} />}
       {help && <ShortcutHelp isGm={isGm} onClose={() => setHelp(false)} />}
     </main>
@@ -1466,9 +1496,10 @@ function DefendGrid({
   onPick: (a: Approach) => void;
 }) {
   const keys = 'qweasd';
+  const best = Math.max(...APPROACHES.map((a) => defender.approaches[a]));
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (pending || isTyping(e.target) || e.ctrlKey || e.metaKey) return;
+      if (pending || isTyping(e.target) || e.ctrlKey || e.metaKey || isDialogOpen()) return;
       const i = keys.indexOf(e.key.toLowerCase());
       if (i >= 0) onPick(APPROACHES[i]!);
     };
@@ -1476,18 +1507,23 @@ function DefendGrid({
     return () => window.removeEventListener('keydown', onKey);
   }, [pending, onPick]);
   return (
-    <div className={styles.defendGrid}>
+    <div
+      className={styles.defendGrid}
+      role="group"
+      aria-label={`${term('defend')}에 쓸 ${term('approach')}`}
+    >
       {APPROACHES.map((a, i) => (
         <button
           key={a}
           type="button"
           className={styles.defendBtn}
           disabled={pending}
+          data-best={defender.approaches[a] === best || undefined}
           onClick={() => onPick(a)}
         >
-          <kbd aria-hidden>{keys[i]!.toUpperCase()}</kbd> {term(a)}{' '}
-          {defender.approaches[a] >= 0 ? '+' : ''}
-          {defender.approaches[a]}
+          <kbd aria-hidden>{keys[i]!.toUpperCase()}</kbd>
+          <b>{signed(defender.approaches[a])}</b>
+          <span>{term(a)}</span>
         </button>
       ))}
     </div>

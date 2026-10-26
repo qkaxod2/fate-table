@@ -1,0 +1,117 @@
+/* 넓은 화면: 상자 없이 안쪽(무대 가운데·테이블)이 무대에 그대로 놓인다 */
+.zone {
+  display: contents;
+}
+
+.grip {
+  display: none;
+}
+
+/*
+ * 좁은 화면 바텀 시트: 굴림이 끝나기 전까지 판정 카드와 발동 카드를 화면 아래에 띄운다.
+ * 위로는 무대(맞선 두 사람·상대 이름표)가 보이고, 행동 띠는 이 시트가 대신한다.
+ */
+@media (max-width: 1100px) {
+  .zone[data-sheet] {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-3);
+    max-height: min(64dvh, 620px);
+    padding: 0 12px calc(14px + env(safe-area-inset-bottom));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-radius: 14px 14px 0 0;
+    background: var(--paper-grain), var(--paper-2);
+    box-shadow:
+      0 -1px 0 var(--paper-edge),
+      0 -18px 40px -16px rgb(20 12 4 / 0.8);
+    scrollbar-width: thin;
+    animation: sheet-in var(--dur-enter) var(--ease-out) backwards;
+  }
+
+  .zone[data-sheet='min'] {
+    gap: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .zone[data-sheet='min'] > :not(.grip) {
+    display: none;
+  }
+
+  .zone[data-sheet] > .grip {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s-2);
+    margin: 0 -12px;
+    padding: 14px 16px 8px;
+    background: var(--paper-2);
+  }
+
+  /* 손잡이 */
+  .grip::before {
+    content: '';
+    position: absolute;
+    top: 5px;
+    left: 50%;
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--paper-edge);
+    translate: -50% 0;
+  }
+
+  .summary {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--ink-2);
+    font: 600 13px var(--f-ui);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .summary b {
+    color: var(--ink-1);
+    font: 800 15px var(--f-fig);
+    letter-spacing: 0.04em;
+  }
+
+  .toggle {
+    flex: none;
+    min-height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--paper-edge);
+    border-radius: var(--r-token);
+    background: var(--card);
+    color: var(--ink-1);
+    font: 600 13px var(--f-ui);
+    cursor: pointer;
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    translate: 0 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zone[data-sheet] {
+    animation-name: fade;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}

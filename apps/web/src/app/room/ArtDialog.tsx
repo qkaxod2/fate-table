@@ -72,7 +72,7 @@ export function ArtDialog({
     : [];
 
   return (
-    <Modal title="그림" onClose={onClose} wide>
+    <Modal title="그림" kicker={isGm ? 'GM 도구' : '내 캐릭터'} onClose={onClose} wide>
       <div className={styles.tabs} role="tablist">
         {tabs.map(([t, label]) => (
           <button

@@ -1,238 +1,372 @@
+/* ---------- GM 서랍: 책 머리의 한 줄 + 펼치는 목차 ---------- */
+.gm {
+  position: relative;
+  z-index: 8;
+  padding: var(--s-2) var(--s-5) 0 var(--s-6);
+}
+
 .bar {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: var(--s-2);
-  margin: 0 var(--s-5);
-  padding: var(--s-2) var(--s-3);
-  border: 1px solid var(--rule);
-  border-left: 3px solid var(--hi);
-  border-radius: var(--r-card);
-  background: var(--panel);
-  box-shadow: var(--shadow-panel);
-  backdrop-filter: blur(6px);
+  min-height: 40px;
+  padding: 4px 6px 4px 4px;
+  border: 1px solid var(--paper-edge);
+  border-left: 3px solid var(--seal);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--ink-1);
 }
 
-.badge {
-  padding: 2px var(--s-2);
-  border: 1px solid var(--hi);
+.drawerBtn {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px 0 4px;
+  border: 1px solid var(--paper-edge);
   border-radius: var(--r-token);
-  color: var(--hi);
-  font: var(--label-font);
-  letter-spacing: var(--label-track);
-}
-
-.tool {
-  padding: var(--s-1) var(--s-3);
-  border: 1px solid var(--line);
-  border-radius: var(--r-ctl);
-  background: var(--panel-s);
-  color: var(--fg);
-  font: inherit;
-  font-family: var(--f-story);
-  font-weight: 700;
+  background: var(--paper);
+  color: var(--ink-1);
+  font: 700 14px var(--f-ui);
   cursor: pointer;
 }
 
-.tool:hover {
-  border-color: var(--gold);
-  color: var(--gold-hi);
+.drawerBtn:hover,
+.drawerBtn[aria-expanded='true'] {
+  border-color: var(--seal);
 }
 
-.tool[data-attention] {
-  border-color: var(--gold);
-  background: var(--gold);
-  color: var(--ink);
+.drawerBtn[data-attention] {
+  border-color: var(--seal);
   animation: glow 1.6s ease-in-out infinite;
 }
 
 @keyframes glow {
   50% {
-    box-shadow: 0 0 14px rgb(168 50 28 / 0.7);
+    box-shadow: 0 0 0 4px rgb(200 72 44 / 0.25);
   }
 }
 
-.spacer {
+.badge {
+  padding: 1px 7px;
+  border-radius: var(--r-token);
+  background: var(--seal);
+  color: var(--seal-ink);
+  font: 700 12px/1.5 var(--f-ui);
+  letter-spacing: 0.04em;
+}
+
+.caret {
+  color: var(--ink-3);
+  font-size: 11px;
+}
+
+.now {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink-2);
+  font: 400 14px var(--f-book);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .pool {
-  display: flex;
+  --coin: 16px;
+  display: inline-flex;
+  flex: none;
   align-items: center;
-  gap: var(--s-1);
-  color: var(--muted);
-  font-size: var(--fs-sm);
+  gap: 4px;
+  color: var(--ink-2);
+  font: 600 13px var(--f-ui);
 }
 
 .pool button {
-  width: 24px;
-  height: 24px;
-  border: 1px solid var(--gold);
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--paper-edge);
   border-radius: 50%;
-  background: transparent;
-  color: var(--gold-hi);
+  background: var(--paper);
+  color: var(--ink-1);
+  font: 700 14px/1 var(--f-ui);
   cursor: pointer;
+}
+
+.pool button:not(:disabled):hover,
+.undo:not(:disabled):hover {
+  border-color: var(--seal);
+  color: var(--seal);
 }
 
 .undo {
-  padding: var(--s-1) var(--s-3);
-  border: 1px dashed var(--rule);
-  border-radius: var(--r-ctl);
+  flex: none;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px dashed var(--ink-3);
+  border-radius: var(--r-token);
   background: transparent;
-  color: var(--fg);
-  font: inherit;
+  color: var(--ink-1);
+  font: 600 13px var(--f-ui);
   cursor: pointer;
 }
 
-button:disabled {
-  opacity: 0.4;
+.gm button:disabled {
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
-/* ---------- 창 ---------- */
-.backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
+/* 펼친 서랍: 책 위에 놓인 목차 카드 */
+.drawer {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: var(--s-5);
+  left: var(--s-6);
+  padding: var(--s-2);
+  border-radius: 8px;
+  background: var(--paper-grain), var(--card);
+  box-shadow:
+    0 0 0 1px var(--paper-edge),
+    0 22px 44px -16px rgb(40 25 10 / 0.6);
+  animation: drawer-in var(--dur-enter) var(--ease-out) backwards;
+}
+
+@keyframes drawer-in {
+  from {
+    opacity: 0;
+    translate: 0 -6px;
+  }
+}
+
+.index {
   display: grid;
-  place-items: center;
-  padding: var(--s-4);
-  background: rgb(6 7 14 / 0.7);
-  backdrop-filter: blur(3px);
-  animation: backdrop-in var(--dur-enter) var(--ease-out) backwards;
-}
-
-.modal {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-3);
-  width: min(100%, 560px);
-  max-height: calc(100dvh - 32px);
-  padding: var(--s-4);
-  overflow-y: auto;
-  border: 1px solid var(--gold);
-  border-radius: var(--r-card);
-  background: var(--panel-s);
-  box-shadow: 0 20px 60px rgb(0 0 0 / 0.6);
-  animation: window-in var(--dur-enter) var(--ease-out) 30ms backwards;
-}
-
-.modal[data-wide] {
-  width: min(100%, 760px);
-}
-
-.modalHead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.modalHead h2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px var(--s-2);
   margin: 0;
-  font-family: var(--f-story);
+  padding: 0;
+  list-style: none;
 }
 
-.close {
+.index button {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 0 6px;
+  width: 100%;
+  padding: 8px 10px;
   border: 0;
+  border-radius: 6px;
   background: none;
-  color: var(--muted);
-  font-size: 28px;
-  line-height: 1;
+  color: var(--ink-1);
+  font: inherit;
+  text-align: left;
   cursor: pointer;
 }
 
+.index button:hover,
+.index button:focus-visible {
+  background: var(--paper-2);
+}
+
+.index button[data-attention] {
+  box-shadow: inset 3px 0 0 var(--seal);
+}
+
+.index .n {
+  grid-row: span 2;
+  color: var(--ink-3);
+  font: 500 15px/1.5 var(--f-fig);
+}
+
+.index b {
+  color: var(--seal);
+  font: 700 15px/1.5 var(--f-book);
+}
+
+.index small {
+  color: var(--ink-2);
+  font: 400 13px/1.4 var(--f-ui);
+}
+
+/* 좁은 화면: 서랍은 화면 아래에서 올라오는 목차 시트 (행동 띠를 덮는다) */
+@media (max-width: 1100px) {
+  .drawer {
+    position: fixed;
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    max-height: 72dvh;
+    overflow-y: auto;
+    padding: var(--s-3) var(--s-3) calc(var(--s-3) + env(safe-area-inset-bottom));
+    border-radius: 14px 14px 0 0;
+    box-shadow:
+      0 -1px 0 var(--paper-edge),
+      0 -18px 40px -16px rgb(20 12 4 / 0.8);
+    animation-name: drawer-up;
+  }
+}
+
+@keyframes drawer-up {
+  from {
+    opacity: 0;
+    translate: 0 30px;
+  }
+}
+
+@media (max-width: 760px) {
+  .gm {
+    padding-inline: var(--s-4);
+  }
+  .index {
+    grid-template-columns: 1fr;
+  }
+  .undoText,
+  .now {
+    display: none;
+  }
+}
+
+/* ---------- 창 안쪽 (책의 한 장 위) ---------- */
 .sub {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
   margin: var(--s-2) 0 0;
-  color: var(--gold);
-  font-family: var(--f-story);
-  font-size: var(--fs-md, 16px);
+  color: var(--ink-1);
+  font: 700 16px var(--f-book);
+}
+
+.sub::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--paper-edge);
 }
 
 .help {
   margin: 0;
-  color: var(--muted);
-  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  font: 400 14px/1.6 var(--f-book);
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: var(--s-2);
+  gap: var(--s-3);
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: var(--s-1);
-  color: var(--muted);
-  font-size: var(--fs-sm);
+  gap: 6px;
+  color: var(--ink-2);
+  font: 600 13px var(--f-ui);
 }
 
 .field small {
-  color: var(--muted);
-  opacity: 0.8;
+  color: var(--ink-3);
+  font-weight: 400;
 }
 
 .form input,
-.form textarea,
-.narrate textarea {
-  padding: var(--s-2);
-  border: 1px solid var(--line);
-  border-radius: var(--r-ctl);
-  background: var(--plate);
-  color: var(--fg);
-  font: inherit;
+.form textarea {
+  padding: 9px 12px;
+  border: 1px solid var(--paper-edge);
+  border-bottom: 1.5px solid var(--ink-3);
+  border-radius: 6px 6px 2px 2px;
+  background: var(--paper);
+  color: var(--ink-1);
+  font: 400 16px/1.5 var(--f-book);
+}
+
+.form input:focus-visible,
+.form textarea:focus-visible {
+  border-bottom-color: var(--seal);
+  outline: 2px solid color-mix(in srgb, var(--seal) 35%, transparent);
+  outline-offset: 0;
 }
 
 .chips {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--s-1);
+  gap: 6px;
 }
 
 .chips button {
-  padding: var(--s-1) var(--s-3);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--plate);
-  color: var(--fg);
-  font: inherit;
-  font-size: var(--fs-sm);
+  min-height: 34px;
+  padding: 4px 14px;
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--r-token);
+  background: var(--card);
+  color: var(--ink-1);
+  font: 600 14px var(--f-ui);
   cursor: pointer;
 }
 
+.chips button:hover {
+  border-color: var(--ink-3);
+}
+
 .chips button[aria-pressed='true'] {
-  border-color: var(--gold);
-  background: var(--gold);
-  color: var(--ink);
-  font-weight: 700;
+  border-color: var(--seal);
+  background: #f7e9e2;
+  color: var(--seal);
+}
+
+.chips button[aria-pressed='true']::before {
+  content: '✓ ';
 }
 
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: var(--s-2);
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--s-3);
+  padding-top: 4px;
 }
 
 .primary {
-  padding: var(--s-2) var(--s-4);
-  border: 1px solid var(--gold);
-  border-radius: var(--r-ctl);
-  background: var(--gold);
-  color: var(--ink);
-  font: inherit;
-  font-weight: 700;
+  align-self: flex-end;
+  min-height: 42px;
+  padding: 0 var(--s-5);
+  border: 0;
+  border-radius: var(--r-token);
+  background: var(--seal);
+  color: var(--seal-ink);
+  font: 700 15px var(--f-ui);
   cursor: pointer;
 }
 
+.primary:not(:disabled):hover {
+  background: var(--seal-hi);
+}
+
+.primary:disabled {
+  background: var(--paper-2);
+  color: var(--ink-3);
+  cursor: not-allowed;
+}
+
 .ghost {
-  padding: var(--s-1) var(--s-3);
-  border: 1px dashed var(--rule);
-  border-radius: var(--r-ctl);
+  min-height: 34px;
+  padding: 0 var(--s-3);
+  border: 1px solid var(--ink-3);
+  border-radius: var(--r-token);
   background: transparent;
-  color: var(--fg);
-  font: inherit;
+  color: var(--ink-1);
+  font: 600 14px var(--f-ui);
   cursor: pointer;
+}
+
+.ghost:not(:disabled):hover {
+  border-color: var(--seal);
+  color: var(--seal);
+}
+
+.ghost:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .current {
@@ -240,104 +374,96 @@ button:disabled {
   align-items: center;
   justify-content: space-between;
   gap: var(--s-2);
-  padding: var(--s-2) var(--s-3);
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
+  padding: 10px 14px;
+  border-left: 3px solid var(--seal);
+  border-radius: 4px;
+  background: var(--paper);
+  font: 400 15px var(--f-book);
 }
 
 .notes {
   display: flex;
   flex-direction: column;
-  gap: var(--s-1);
+  gap: var(--s-2);
   margin: 0;
   padding: 0;
   list-style: none;
-  color: var(--muted);
-  font-size: var(--fs-sm);
+  color: var(--ink-1);
+  font: 20px/1.4 var(--f-hand);
 }
 
 .notes li {
-  padding-left: var(--s-2);
-  border-left: 2px solid var(--hi);
+  padding: 4px 0 4px var(--s-3);
+  border-left: 2px solid var(--rule-red);
+  background: repeating-linear-gradient(
+    transparent 0 27px,
+    color-mix(in srgb, var(--rule-blue) 60%, transparent) 27px 28px
+  );
   white-space: pre-wrap;
 }
 
-/* ---------- 장면 열기 카드 ---------- */
+/* ---------- 장면 열기 카드 (무대 가운데, 장면이 없을 때) ---------- */
 .starter {
   position: relative;
   z-index: 2;
   display: flex;
   flex-direction: column;
-  gap: var(--s-2);
+  gap: var(--s-3);
   width: min(100%, 520px);
   margin: var(--s-4) auto auto;
-  padding: var(--s-4);
-  border: 1px solid var(--gold);
-  border-radius: var(--r-card);
-  background: var(--panel);
-  backdrop-filter: blur(6px);
+  padding: 22px 26px 24px;
+  border-radius: 6px;
+  background: var(--paper-grain), var(--card);
+  color: var(--ink-1);
+  box-shadow: 0 30px 60px -18px rgb(0 0 0 / 0.85);
+  rotate: -0.4deg;
 }
 
 .starter h2 {
   margin: 0;
-  font-family: var(--f-story);
+  font: 800 24px/1.3 var(--f-head);
 }
 
 .starter p {
   margin: 0;
-  color: var(--muted);
+  color: var(--ink-2);
+  font: 400 15px/1.6 var(--f-book);
 }
 
 /* ---------- 대사 입력 ---------- */
 .narrate {
   display: flex;
   gap: var(--s-2);
-  margin-top: var(--s-2);
+  align-items: flex-end;
 }
 
 .narrate textarea {
   flex: 1;
+  min-width: 0;
   resize: vertical;
-  font-family: var(--f-story);
 }
 
 .narrate button {
-  align-self: flex-end;
-  padding: var(--s-2) var(--s-3);
-  border: 1px solid var(--hi);
-  border-radius: var(--r-ctl);
-  background: var(--hi);
-  color: var(--ink);
-  font: inherit;
-  font-weight: 700;
+  flex: none;
+  min-height: 38px;
+  padding: 0 var(--s-4);
+  border: 0;
+  border-radius: var(--r-token);
+  background: var(--seal);
+  color: var(--seal-ink);
+  font: 700 14px var(--f-ui);
   cursor: pointer;
 }
 
-@media (max-width: 700px) {
-  .bar {
-    margin: 0 var(--s-3);
-  }
-  .spacer {
-    display: none;
-  }
-}
-
-/* 창은 뒤가 흐려진 다음 살짝 떠오르며 열린다 */
-@keyframes backdrop-in {
-  from {
-    opacity: 0;
-  }
-}
-
-@keyframes window-in {
-  from {
-    opacity: 0;
-    transform: translateY(12px) scale(0.97);
-  }
+.narrate button:disabled {
+  background: var(--paper-2);
+  color: var(--ink-3);
+  cursor: not-allowed;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .modal {
-    animation-name: backdrop-in;
+  .drawer,
+  .drawerBtn[data-attention] {
+    animation: none;
   }
 }

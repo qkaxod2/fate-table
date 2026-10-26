@@ -1,408 +1,20 @@
-.role {
-  padding: 2px var(--s-3);
-  border: 1px solid var(--gold);
-  border-radius: var(--r-token);
-  color: var(--gold-hi);
-  font: var(--label-font);
-  letter-spacing: var(--label-track);
-}
-
-.empty,
-.muted {
-  color: var(--muted);
-  font-size: var(--fs-sm);
-}
-
-.acting {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-1);
-  margin-top: var(--s-3);
-  color: var(--muted);
-  font-size: var(--fs-sm);
-}
-
-.acting select,
-.form input,
-.form textarea,
-.form select,
-.rollOptions select,
-.inline select,
-.chat input {
-  padding: var(--s-2);
-  border: 1px solid var(--line);
-  border-radius: var(--r-ctl);
-  background: var(--plate);
-  color: var(--fg);
-  font: inherit;
-  font-size: var(--fs-sm);
-}
-
-.panel,
-.gm {
-  margin-top: var(--s-3);
-  padding: var(--s-3);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-card);
-  background: var(--panel);
-}
-
-.panelHead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--s-2);
-  color: var(--gold);
-  font: var(--label-font);
-  letter-spacing: var(--label-track);
-}
-
-.close {
-  border: 0;
-  background: none;
-  color: var(--muted);
-  font-size: var(--fs-lg);
-  cursor: pointer;
-}
-
-.gm details {
-  border-top: 1px solid var(--line);
-  padding: var(--s-2) 0;
-}
-
-.gm summary {
-  font-family: var(--f-story);
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-  margin-top: var(--s-2);
-}
-
-.chat button {
-  padding: var(--s-1) var(--s-3);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-ctl);
-  background: transparent;
-  color: var(--gold-hi);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.form button,
-.fateList button {
-  padding: var(--s-1) var(--s-3);
-  border: 1px solid var(--gold);
-  border-radius: var(--r-ctl);
-  background: var(--gold);
-  color: var(--ink);
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.form button:disabled,
-.chat button:disabled,
-.fateList button:disabled,
-.ghost:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.ghost {
-  display: block;
-  width: 100%;
-  margin-top: var(--s-2);
-  padding: var(--s-2) var(--s-3);
-  border: 1px dashed var(--rule);
-  border-radius: var(--r-ctl);
-  background: transparent;
-  color: var(--fg);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.check,
-.inline {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  color: var(--muted);
-  font-size: var(--fs-sm);
-}
-
-.fateList {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-1);
-  margin: var(--s-2) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.fateList li {
-  display: grid;
-  grid-template-columns: 1fr auto auto auto;
-  align-items: center;
-  gap: var(--s-2);
-}
-
-.drafts {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-  margin: 0 0 var(--s-2);
-  padding: 0;
-  list-style: none;
-}
-
-.draft {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  width: 100%;
-  padding: var(--s-2);
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-  background: var(--panel-s);
-  color: var(--fg);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.draft:not(:disabled):hover {
-  border-color: var(--gold);
-}
-
-.draft:disabled {
-  cursor: default;
-  opacity: 0.55;
-}
-
-.draft[aria-busy] {
-  opacity: 1;
-  border-color: var(--gold);
-}
-
-.draft img {
-  width: 40px;
-  height: 40px;
-  border-radius: 4px;
-  object-fit: cover;
-  object-position: top;
-}
-
-.draft span {
-  display: flex;
-  flex-direction: column;
-}
-
-.draft small {
-  color: var(--muted);
-}
-
-.link {
-  color: var(--gold-hi);
-  font-size: var(--fs-sm);
-}
-
-.defendGrid,
-.plans {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--s-2);
-  margin: var(--s-3) 0;
-}
-
-.defendBtn,
-.plan {
-  padding: var(--s-2);
-  border: 1px solid var(--line);
-  border-radius: var(--r-ctl);
-  background: var(--panel-s);
-  color: var(--fg);
-  font: inherit;
-  font-family: var(--f-story);
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.defendBtn:hover,
-.plan[aria-pressed='true'] {
-  border-color: var(--gold);
-  background: var(--gold);
-  color: var(--ink);
-}
-
-.chat {
-  display: flex;
-  gap: var(--s-2);
-  margin-top: var(--s-2);
-}
-
-.chat input {
-  flex: 1;
-  min-width: 0;
-}
-
-.actionWrap {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-}
-
-.rollOptions {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.rollOptions label {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  color: var(--muted);
-  font-size: var(--fs-sm);
-}
-
-.notes {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-1);
-  margin: var(--s-2) 0 0;
-  padding: 0;
-  list-style: none;
-  color: var(--muted);
-  font-size: var(--fs-sm);
-}
-
-.notes li {
-  padding-left: var(--s-2);
-  border-left: 2px solid var(--hi);
-  white-space: pre-wrap;
-}
-
-.topStack {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--s-2);
-  width: 100%;
-  margin-bottom: auto;
-  padding-bottom: var(--s-3);
-}
-
 /*
- * 한 화면 테이블: 헤더·GM 줄·행동 바는 늘 보이고, 가운데 무대와 양옆 열만 안에서 스크롤된다.
- * 좁은 화면(1100px 이하)에서는 예전처럼 페이지 전체가 스크롤된다.
+ * 방 화면: 튜토리얼과 같은 "무대와 책" (tutorial/book.module.css) 위에 방에서만 쓰는 것들.
+ * 종이(--card/--paper) · 먹(--ink-*) · 주홍(--seal: 누를 것·고른 것) · 놋쇠(--brass: 운명점) 네 가지만 쓴다.
  */
-main.shell {
-  display: flex;
-  flex-direction: column;
-  height: 100dvh;
-  min-height: 0;
-  overflow: hidden;
-}
 
-.shell .body {
-  flex: 1;
-  min-height: 0;
-  padding-block: var(--s-3);
-}
+/* ===================== 무대 ===================== */
 
-.shell .scroll {
-  min-height: 0;
-  max-height: 100%;
-  overflow-y: auto;
-  scrollbar-width: thin;
-}
-
-.shell .center {
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: thin;
-}
-
-/* 무대 열이 이미 화면 높이에 맞춰져 있으니, 굴림 패널은 그 높이를 다 쓰고 넘칠 때만 안에서 스크롤한다 */
-.shell .center > [data-roll-panel] {
-  max-height: none;
-}
-
-.shell .right {
-  max-height: none;
-  min-height: 0;
-  min-width: 0;
-}
-
-.shell .rightScroll {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-3);
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: thin;
-}
-
-.shell .bottom {
-  padding-top: var(--s-5);
-}
-
-@media (max-width: 1100px) {
-  main.shell {
-    height: auto;
-    min-height: 100dvh;
-    overflow: visible;
-  }
-  .shell .center,
-  .shell .scroll,
-  .shell .rightScroll {
-    overflow: visible;
-    max-height: none;
-  }
-  .shell .center {
-    min-height: 420px;
-  }
-}
-
-/* 새 장면 이름과 새 대사는 부드럽게 들어온다 */
-.shell h1,
-.shell [data-fresh] {
-  animation: enter 420ms var(--ease);
-}
-
-@keyframes enter {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-    filter: blur(3px);
-  }
-}
-
-/* 서버를 기다리며 굴러가는 굴림 패널 */
-.shell [data-pending] {
-  animation: enter 180ms var(--ease);
-}
-
-/* 나에게 묻는 일이 생기면 화면 테두리가 한 번 빛난다 */
-.shell[data-call]::after {
+/* 내 차례·방어 요청이 오면 화면 테두리가 주홍으로 한 번 빛난다 */
+.callable[data-call]::after {
   content: '';
   position: fixed;
   inset: 0;
   z-index: 30;
   pointer-events: none;
   box-shadow:
-    inset 0 0 0 2px var(--hi),
-    inset 0 0 60px rgb(168 50 28 / 0.35);
+    inset 0 0 0 3px var(--seal),
+    inset 0 0 70px rgb(200 72 44 / 0.4);
   animation: call 1.6s var(--ease) forwards;
 }
 
@@ -416,342 +28,17 @@ main.shell {
   }
 }
 
-/* 헤더 버튼 */
-.topBtn {
-  height: 34px;
-  padding: 0 var(--s-3);
-  border: 1px solid var(--line);
-  border-radius: var(--r-token);
-  background: var(--panel);
-  color: var(--fg);
-  font: inherit;
-  font-size: var(--fs-sm);
-  cursor: pointer;
-  transition: var(--hover), var(--press);
+/* 새 장면 이름은 부드럽게 들어온다 */
+.stage h1 {
+  animation: enter 420ms var(--ease);
 }
 
-.topBtn:hover {
-  border-color: var(--gold);
-}
-
-.topBtn[aria-pressed='false'] {
-  color: var(--muted);
-}
-
-.topBtn kbd {
-  font-size: 11px;
-  color: var(--gold-hi);
-}
-
-.seg {
-  display: inline-flex;
-  padding: 2px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-token);
-  background: var(--panel);
-}
-
-.seg button {
-  height: 28px;
-  padding: 0 var(--s-3);
-  border: 0;
-  border-radius: var(--r-token);
-  background: transparent;
-  color: var(--muted);
-  font: inherit;
-  font-size: var(--fs-sm);
-  cursor: pointer;
-  transition: var(--hover), var(--press);
-}
-
-.seg button[aria-checked='true'] {
-  background: var(--gold);
-  color: var(--ink);
-  font-weight: 700;
-}
-
-/* 상대가 고르는 동안 */
-.waitChip {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  margin-bottom: var(--s-2);
-  padding: 4px var(--s-3);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-token);
-  background: var(--panel);
-  font-size: var(--fs-sm);
-}
-
-.waitChip button {
-  padding: 1px var(--s-2);
-  border: 1px solid var(--line);
-  border-radius: var(--r-token);
-  background: transparent;
-  color: var(--muted);
-  font: inherit;
-  font-size: var(--fs-xs);
-  cursor: pointer;
-}
-
-.dots {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--gold);
-  animation: dot 1s ease-in-out infinite;
-}
-
-@keyframes dot {
-  50% {
-    opacity: 0.25;
-    transform: scale(0.7);
-  }
-}
-
-/* 확정 뒤 한 줄로 접힌 굴림 */
-.foldedRoll {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-3);
-  padding: var(--s-2) var(--s-4);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-token);
-  background: var(--panel);
-  color: var(--fg);
-  font: inherit;
-  font-size: var(--fs-sm);
-  cursor: pointer;
-  animation: fold-in 260ms var(--ease);
-}
-
-.foldedRoll b {
-  font-family: var(--f-pop);
-  font-size: var(--fs-lg);
-  letter-spacing: 1px;
-}
-
-.foldedRoll[data-tone='perfect'] b {
-  color: var(--perfect);
-}
-.foldedRoll[data-tone='great'] b {
-  color: var(--great);
-}
-.foldedRoll[data-tone='good'] b {
-  color: var(--good);
-}
-.foldedRoll[data-tone='miss'] b {
-  color: var(--miss);
-}
-
-.foldedRoll span {
-  color: var(--muted);
-  font-size: var(--fs-xs);
-}
-
-@keyframes fold-in {
+@keyframes enter {
   from {
     opacity: 0;
-    transform: translateY(8px) scaleY(0.9);
+    transform: translateY(6px);
+    filter: blur(3px);
   }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .shell[data-call]::after,
-  .shell h1,
-  .shell [data-fresh],
-  .foldedRoll,
-  .dots {
-    animation: none;
-  }
-  .shell[data-call]::after {
-    opacity: 0;
-  }
-}
-
-.stageAspect {
-  position: relative;
-}
-
-.stageAspect[data-hidden] {
-  opacity: 0.6;
-}
-
-.aspectTools {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  display: flex;
-  gap: 4px;
-  opacity: 0;
-  transition: opacity var(--dur-hover) var(--ease-out);
-}
-
-.stageAspect:hover .aspectTools,
-.stageAspect:focus-within .aspectTools {
-  opacity: 1;
-}
-
-@media (hover: none) {
-  .aspectTools {
-    opacity: 1;
-  }
-}
-
-.aspectTools button {
-  padding: 1px var(--s-2);
-  border: 1px solid var(--ink-3);
-  border-radius: var(--r-ctl);
-  background: var(--card);
-  color: var(--ink-1);
-  font: inherit;
-  font-size: var(--fs-xs);
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.aspectTools button:hover {
-  background: var(--gold);
-}
-
-.chipRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--s-1);
-}
-
-.chipLabel {
-  margin-right: var(--s-1);
-  color: var(--muted);
-  font-size: var(--fs-sm);
-}
-
-.who,
-.level {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-1);
-  padding: 2px var(--s-3) 2px 2px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--panel-s);
-  color: var(--fg);
-  font: inherit;
-  font-size: var(--fs-sm);
-  cursor: pointer;
-}
-
-.level {
-  padding: var(--s-1) var(--s-2);
-}
-
-.level small {
-  color: var(--muted);
-}
-
-.who img,
-.who span {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  object-fit: cover;
-  object-position: top;
-}
-
-.who span {
-  display: grid;
-  place-items: center;
-  background: var(--plate);
-  color: var(--gold-hi);
-  font-weight: 700;
-}
-
-.face {
-  padding: 2px var(--s-3);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--panel-s);
-  color: var(--fg);
-  font: inherit;
-  font-size: var(--fs-sm);
-  cursor: pointer;
-}
-
-.face[aria-checked='true'] {
-  border-color: var(--gold);
-  background: rgb(168 50 28 / 0.16);
-  color: var(--gold-hi);
-}
-
-.who[data-turn] {
-  box-shadow: 0 0 0 2px var(--hi);
-}
-
-.who[data-npc] {
-  border-color: var(--dice-edge-op);
-}
-
-.who[aria-checked='true'],
-.who[aria-pressed='true'],
-.level[aria-pressed='true'] {
-  border-color: var(--gold);
-  background: var(--gold);
-  color: var(--ink);
-  font-weight: 700;
-}
-
-.level[aria-pressed='true'] small {
-  color: var(--ink);
-}
-
-.who:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* 캐릭터 데려오기처럼 그 자리에서 펼쳐지는 판: 위에서 살짝 내려오며 열린다 */
-.panel {
-  animation: panel-open var(--dur-enter) var(--ease-out) backwards;
-}
-
-@keyframes panel-open {
-  from {
-    opacity: 0;
-    translate: 0 -6px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .panel {
-    animation-name: panel-fade;
-  }
-}
-
-@keyframes panel-fade {
-  from {
-    opacity: 0;
-  }
-}
-
-/* ===================== 무대와 책 (design-system.md 20절) ===================== */
-
-/* 내 차례·방어 요청이 오면 화면 테두리가 주홍으로 한 번 빛난다 */
-.callable[data-call]::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 30;
-  pointer-events: none;
-  box-shadow:
-    inset 0 0 0 3px var(--seal),
-    inset 0 0 70px rgb(200 72 44 / 0.4);
-  animation: call 1.6s var(--ease) forwards;
 }
 
 /* 스탠딩: 무대 높이를 크게 쓴다 */
@@ -779,9 +66,131 @@ main.shell {
   scrollbar-width: thin;
 }
 
-.stage .center > [data-roll-panel],
-.stage .center > [data-pending] {
-  max-height: none;
+.topStack {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  margin-bottom: auto;
+  padding-bottom: var(--s-3);
+}
+
+/* 판정 중에는 지도·트래커가 비켜 서서 판정 카드가 가운데를 쓴다 */
+.stage .center:has(> [data-roll-panel], > [data-pending]) .topStack {
+  margin-bottom: 0;
+}
+
+/* 상대가 고르는 동안: 종이 쪽지 */
+.waitChip {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 6px 14px;
+  border-radius: var(--r-token);
+  background: var(--card);
+  color: var(--ink-1);
+  font: 600 14px var(--f-ui);
+  box-shadow: 0 10px 22px -12px rgb(0 0 0 / 0.8);
+}
+
+.waitChip button {
+  min-height: 28px;
+  padding: 0 var(--s-3);
+  border: 1px solid var(--seal);
+  border-radius: var(--r-token);
+  background: transparent;
+  color: var(--seal);
+  font: 600 13px var(--f-ui);
+  cursor: pointer;
+}
+
+.dots {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--seal);
+  animation: dot 1s ease-in-out infinite;
+}
+
+@keyframes dot {
+  50% {
+    opacity: 0.25;
+    transform: scale(0.7);
+  }
+}
+
+/* 확정 뒤 한 줄로 접힌 굴림: 종이 쪽지 위에 판정 띠 조각 하나 */
+.foldedRoll {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
+  max-width: 100%;
+  padding: 6px 16px 6px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--ink-1);
+  font: 500 14px var(--f-ui);
+  box-shadow: 0 14px 28px -14px rgb(0 0 0 / 0.85);
+  cursor: pointer;
+  animation: fold-in 260ms var(--ease);
+}
+
+.foldedRoll b {
+  --c: var(--ink-2);
+  flex: none;
+  padding: 2px 10px;
+  border-block: 1.5px solid color-mix(in srgb, var(--c) 55%, var(--ink-1));
+  background: color-mix(in srgb, var(--c) 14%, var(--card));
+  color: color-mix(in srgb, var(--c) 45%, var(--ink-1));
+  font: 800 16px/1.4 var(--f-fig);
+  letter-spacing: 0.06em;
+}
+
+.foldedRoll[data-tone='perfect'] b {
+  --c: var(--perfect);
+}
+.foldedRoll[data-tone='great'] b {
+  --c: var(--great);
+}
+.foldedRoll[data-tone='good'] b {
+  --c: var(--good);
+}
+.foldedRoll[data-tone='miss'] b {
+  --c: var(--miss);
+}
+
+.foldedText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.foldedText em {
+  font: 800 16px var(--f-fig);
+  font-style: normal;
+}
+
+.foldedMore {
+  flex: none;
+  color: var(--seal);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+@keyframes fold-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scaleY(0.9);
+  }
 }
 
 /* 판정 예고 카드: 무대 위에 뜬다 (책 밖, 무대 영역 가운데) */
@@ -803,178 +212,311 @@ main.shell {
 }
 
 /* 테이블 위 특성 카드 + GM 도구 */
-.stage .stageAspect {
+.stageAspect {
   position: relative;
 }
 
-.stage .stageAspect[data-hidden] > :first-child {
-  opacity: 0.7;
+.stageAspect[data-hidden] > :first-child {
+  opacity: 0.72;
   outline: 2px dashed var(--ink-3);
   outline-offset: -6px;
 }
 
-.stage .aspectTools {
-  top: auto;
-  bottom: 6px;
+.aspectTools {
+  position: absolute;
   right: 8px;
+  bottom: 6px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity var(--dur-hover) var(--ease-out);
 }
 
-.stage .aspectTools button {
-  border-color: var(--paper-edge);
+.stageAspect:hover .aspectTools,
+.stageAspect:focus-within .aspectTools {
+  opacity: 1;
+}
+
+/* 터치 화면: 도구는 늘 보이고, 카드 글자를 가리지 않게 카드 아래에 붙는다 */
+@media (hover: none) {
+  .aspectTools {
+    position: static;
+    justify-content: flex-end;
+    padding-top: 4px;
+    opacity: 1;
+  }
+}
+
+.aspectTools button {
+  min-height: 26px;
+  padding: 0 var(--s-2);
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--r-ctl);
   background: var(--card);
-  color: var(--ink-2);
-  font-family: var(--f-ui);
+  color: var(--ink-1);
+  font: 700 13px var(--f-ui);
+  cursor: pointer;
 }
 
-.stage .aspectTools button:hover {
+.aspectTools button:hover {
   border-color: var(--seal);
   color: var(--seal);
 }
 
+/* GM: 테이블 끝의 빈 인덱스 카드 자리 */
 .addAspect {
   flex: 0 0 auto;
   align-self: center;
-  padding: var(--s-3) var(--s-4);
-  border: 2px dashed rgb(244 236 220 / 0.6);
+  padding: var(--s-4) var(--s-4);
+  border: 2px dashed var(--paper-edge);
   border-radius: 6px;
-  background: rgb(13 11 9 / 0.5);
-  color: var(--stage-ink);
-  font: 600 14px var(--f-ui);
+  background: color-mix(in srgb, var(--card) 88%, transparent);
+  color: var(--ink-1);
+  font: 700 14px var(--f-ui);
+  rotate: 1deg;
   cursor: pointer;
 }
 
 .addAspect:hover {
-  border-color: var(--stage-ink);
+  border-color: var(--seal);
+  color: var(--seal);
 }
 
-/* ---------- 책 ---------- */
-.running {
+/* 방어 접근법 고르기 (오버레이 안의 2×3 카드) */
+.defendGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s-2);
+}
+
+.defendBtn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: 64px;
+  padding: 8px 12px;
+  border: 1.5px solid var(--paper-edge);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink-1);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.defendBtn b {
+  font: 800 26px/1 var(--f-fig);
+}
+
+.defendBtn span {
+  font: 700 15px var(--f-book);
+}
+
+.defendBtn kbd {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  color: var(--ink-3);
+  font-size: 12px;
+}
+
+.defendBtn:not(:disabled):hover,
+.defendBtn:focus-visible {
+  border-color: var(--seal);
+  background: #f7e9e2;
+}
+
+.defendBtn:not(:disabled):hover b,
+.defendBtn:not(:disabled):hover span {
+  color: var(--seal);
+}
+
+.defendBtn[data-best]::after {
+  content: '최고';
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  padding: 0 6px;
+  border-radius: var(--r-token);
+  background: var(--ink-1);
+  color: var(--paper);
+  font: 600 11px/1.6 var(--f-ui);
+}
+
+.defendBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 피해 받아내기: 고를 수 있는 조합 */
+.plans {
+  display: flex;
   flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.plan {
+  min-height: 40px;
+  padding: 6px 14px;
+  border: 1.5px solid var(--paper-edge);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink-1);
+  font: 700 15px var(--f-book);
+  cursor: pointer;
+}
+
+.plan:hover {
+  border-color: var(--ink-3);
+}
+
+.plan[aria-pressed='true'] {
+  border-color: var(--seal);
+  background: #f7e9e2;
+  color: var(--seal);
+}
+
+.plan[aria-pressed='true']::before {
+  content: '✓ ';
+}
+
+/* ===================== 책 ===================== */
+
+.running {
+  flex-wrap: nowrap;
+  letter-spacing: 0.04em;
 }
 
 .runTitle {
-  overflow: hidden;
+  /* 방 이름은 무대 장 제목에도 있으니, 책이 좁으면 도구에 자리를 내준다 */
+  display: none;
   min-width: 0;
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .runTools {
   display: flex;
-  flex-wrap: wrap;
+  flex: none;
+  margin-left: auto;
   gap: 6px;
   align-items: center;
   letter-spacing: 0;
 }
 
-.book .topBtn {
-  height: 28px;
-  padding: 0 10px;
-  border-color: var(--paper-edge);
-  background: var(--card);
-  color: var(--ink-2);
-  font: 600 12px var(--f-ui);
-}
-
-.book .topBtn:hover {
-  border-color: var(--ink-3);
-}
-
-.book .topBtn[aria-pressed='false'] {
-  color: var(--ink-3);
-}
-
-.book .topBtn kbd {
-  color: var(--seal);
-}
-
-.book .seg {
-  padding: 2px;
-  border-color: var(--paper-edge);
-  background: var(--card);
-}
-
-.book .seg button {
-  height: 24px;
+.role {
+  flex: none;
   padding: 0 8px;
-  color: var(--ink-3);
-  font: 600 12px var(--f-ui);
-}
-
-.book .seg button[aria-checked='true'] {
-  background: var(--ink-1);
-  color: var(--paper);
-}
-
-.book .role {
-  border-color: var(--seal);
+  border: 1px solid var(--seal);
+  border-radius: var(--r-token);
   color: var(--seal);
-  font-family: var(--f-ui);
-  letter-spacing: 0.04em;
+  font: 600 12px/1.6 var(--f-ui);
+  letter-spacing: 0.02em;
 }
 
-/* GM 도구 줄: 책 머리글 아래 */
-.gmSlot {
-  padding: var(--s-2) var(--s-5) 0 var(--s-6);
-}
-
-.gmSlot > * {
-  margin: 0;
-  padding: var(--s-2) var(--s-3);
+.topBtn,
+.diceSel {
+  height: 30px;
+  padding: 0 10px;
   border: 1px solid var(--paper-edge);
-  border-left: 3px solid var(--seal);
-  border-radius: 8px;
+  border-radius: var(--r-token);
   background: var(--card);
-  backdrop-filter: none;
-  box-shadow: none;
   color: var(--ink-1);
-}
-
-.gmSlot button {
-  border-color: var(--paper-edge);
-  background: var(--paper);
-  color: var(--ink-1);
-  font-family: var(--f-ui);
-}
-
-.gmSlot button:hover {
-  border-color: var(--seal);
-  color: var(--seal);
-}
-
-.gmSlot span,
-.gmSlot small {
-  color: var(--ink-2);
-}
-
-.mySheetBtn {
-  align-self: flex-start;
-  margin: calc(var(--s-2) * -1) 0 var(--s-2) var(--s-6);
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--seal);
-  font: 600 12px var(--f-ui);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  font: 600 13px var(--f-ui);
+  white-space: nowrap;
   cursor: pointer;
 }
 
-.book .empty {
-  margin: var(--s-3) var(--s-6);
-  color: var(--ink-3);
-  font-family: var(--f-book);
+.topBtn:hover,
+.diceSel:hover {
+  border-color: var(--ink-3);
 }
 
-/* GM 대사 입력 */
-.narrate {
+.topBtn[aria-pressed='false'] {
+  color: var(--ink-2);
+}
+
+.topBtn kbd {
+  color: var(--seal);
+  font-size: 12px;
+}
+
+.diceSel {
+  padding-right: 4px;
+}
+
+/* 효과음: 꺼지면 음표에 사선이 그어진다 (색만으로 가르지 않는다) */
+.topBtn[data-sfx] {
+  position: relative;
+  width: 30px;
+  padding: 0;
+  font-size: 15px;
+}
+
+.topBtn[data-sfx][aria-pressed='false']::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 7px;
+  right: 7px;
+  height: 1.5px;
+  background: currentColor;
+  rotate: -40deg;
+}
+
+@media (min-width: 1500px) {
+  .runTitle {
+    display: block;
+  }
+}
+
+.empty {
+  margin: var(--s-3) var(--s-6);
+  color: var(--ink-2);
+  font: 400 15px var(--f-book);
+}
+
+/* 기록은 남은 높이를 받아 그 안에서 스크롤한다. 머리글·기록지·입력·행동은 늘 보인다 */
+.book > div:has(> section[aria-label='이야기 기록']) {
+  flex: 1 1 140px;
+  min-height: 120px;
+}
+
+/* 입력 자리: 플레이어는 말하기, GM은 [GM 대사 | 말하기] 탭으로 한 자리를 바꿔 쓴다 */
+.composer {
+  flex: none;
   padding: var(--s-2) var(--s-5) var(--s-2) var(--s-6);
   border-top: 1px solid var(--paper-edge);
 }
 
-.narrate textarea,
-.narrate input {
+.composeTabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 6px;
+}
+
+.composeTabs button {
+  padding: 2px 10px 3px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--ink-2);
+  font: 600 13px var(--f-ui);
+  cursor: pointer;
+}
+
+.composeTabs button[aria-selected='true'] {
+  border-bottom-color: var(--seal);
+  color: var(--ink-1);
+}
+
+.narrate textarea {
   width: 100%;
+  height: 46px;
+  min-height: 46px;
+  max-height: 140px;
   padding: var(--s-2) var(--s-3);
   border: 1px solid var(--paper-edge);
   border-radius: 8px;
@@ -983,117 +525,271 @@ main.shell {
   font: 400 15px/1.6 var(--f-book);
 }
 
-/* 채팅: 책 아래 한 줄 */
-.book .chat {
+.narrate form {
+  margin: 0;
+}
+
+.chat {
   display: flex;
   gap: var(--s-2);
-  margin: 0;
-  padding: var(--s-2) var(--s-5) var(--s-2) var(--s-6);
-  border-top: 1px dashed var(--paper-edge);
+  align-items: center;
 }
 
-.book .chat input {
+.chat input {
   flex: 1;
+  min-width: 0;
+  min-height: 38px;
+  padding: 4px 2px;
   border: 0;
   border-bottom: 1px solid var(--ink-3);
-  border-radius: 0;
   background: transparent;
   color: var(--ink-1);
-  font: 400 15px var(--f-book);
+  font: 400 16px var(--f-book);
 }
 
-.book .chat input::placeholder {
+.chat input:focus-visible {
+  border-bottom-color: var(--seal);
+  outline: none;
+  box-shadow: 0 1px 0 var(--seal);
+}
+
+.chat button {
+  min-height: 34px;
+  padding: 0 var(--s-3);
+  border: 1px solid var(--seal);
+  border-radius: var(--r-token);
+  background: transparent;
+  color: var(--seal);
+  font: 700 14px var(--f-ui);
+  cursor: pointer;
+}
+
+.chat button:disabled {
+  border-color: var(--paper-edge);
   color: var(--ink-3);
+  cursor: not-allowed;
 }
 
-.book .chat button {
+/* 캐릭터 데려오기 (BringCharacter): 종이 위 점선 버튼과 종이 판 */
+.ghost {
+  display: block;
+  margin: var(--s-2) var(--s-5) var(--s-2) var(--s-6);
+  padding: var(--s-2) var(--s-3);
+  border: 1px dashed var(--ink-3);
+  border-radius: var(--r-ctl);
+  background: transparent;
+  color: var(--ink-1);
+  font: 600 14px var(--f-ui);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ghost:hover {
   border-color: var(--seal);
   color: var(--seal);
 }
 
-/* 누구로? / 누구를? / 난이도 / 표정 줄 */
-.book .actionWrap {
-  gap: 0;
+.ghost:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
-.book .chipRow {
-  padding: var(--s-2) var(--s-5) 0 var(--s-6);
-  background: var(--paper-2);
-}
-
-.book .chipLabel {
-  color: var(--ink-2);
-  font-family: var(--f-ui);
-}
-
-.book .who,
-.book .level,
-.book .face {
-  border-color: var(--paper-edge);
+.panel {
+  margin: var(--s-2) var(--s-5) var(--s-2) var(--s-6);
+  padding: var(--s-3);
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--r-card);
   background: var(--card);
   color: var(--ink-1);
+  animation: panel-open var(--dur-enter) var(--ease-out) backwards;
 }
 
-.book .who[aria-checked='true'],
-.book .who[aria-pressed='true'],
-.book .level[aria-pressed='true'],
-.book .face[aria-checked='true'] {
+@keyframes panel-open {
+  from {
+    opacity: 0;
+    translate: 0 -6px;
+  }
+}
+
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--s-2);
+  color: var(--ink-2);
+  font: 600 13px var(--f-ui);
+}
+
+.close {
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  font-size: var(--fs-lg);
+  cursor: pointer;
+}
+
+.muted {
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+}
+
+.drafts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin: 0 0 var(--s-2);
+  padding: 0;
+  list-style: none;
+}
+
+.draft {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  padding: var(--s-2);
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--r-card);
+  background: var(--paper);
+  color: var(--ink-1);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.draft:not(:disabled):hover,
+.draft[aria-busy] {
+  border-color: var(--seal);
+}
+
+.draft:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.draft[aria-busy] {
+  opacity: 1;
+}
+
+.draft img {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  object-fit: cover;
+  object-position: top;
+}
+
+.draft span {
+  display: flex;
+  flex-direction: column;
+}
+
+.draft small {
+  color: var(--ink-2);
+}
+
+.link {
+  color: var(--seal);
+  font-size: var(--fs-sm);
+}
+
+/* ===================== 행동 자리 (Dock 안) ===================== */
+.actionWrap {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 누구로? / 누구를? / 난이도 / 표정: 목차 위에 붙는 한 줄씩 */
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: var(--s-2) var(--s-5) 0 var(--s-6);
+}
+
+.chipLabel {
+  margin-right: 2px;
+  color: var(--ink-2);
+  font: 600 13px var(--f-ui);
+}
+
+.who,
+.level,
+.face {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 2px 12px 2px 2px;
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--r-token);
+  background: var(--card);
+  color: var(--ink-1);
+  font: 600 14px var(--f-ui);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.level,
+.face {
+  padding: 2px 10px;
+}
+
+.level small {
+  color: var(--ink-2);
+  font-weight: 400;
+}
+
+.who img,
+.who > span {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: top;
+}
+
+.who > span {
+  display: grid;
+  place-items: center;
+  background: var(--paper-2);
+  color: var(--ink-1);
+  font: 800 13px var(--f-head);
+}
+
+/* NPC는 점선 테두리로 (색만으로 가르지 않는다) */
+.who[data-npc] {
+  border-style: dashed;
+  border-color: var(--ink-3);
+}
+
+.who[data-turn] {
+  box-shadow: 0 0 0 2px var(--seal);
+}
+
+.who[aria-checked='true'],
+.who[aria-pressed='true'],
+.level[aria-pressed='true'],
+.face[aria-checked='true'] {
+  border-style: solid;
   border-color: var(--seal);
   background: #f7e9e2;
   color: var(--seal);
 }
 
-.book .level small {
-  color: var(--ink-3);
-}
-
-@media (max-width: 1100px) {
-  .previewSlot {
-    position: fixed;
-    right: 0;
-    bottom: 0;
-    top: auto;
-    padding: 0 0 70px;
-    background: linear-gradient(0deg, rgb(13 11 9 / 0.7), transparent);
-  }
-  .stage .center {
-    padding-top: 96px;
-  }
-}
-
-/* 캐릭터 데려오기: 책 위에서는 종이 위 점선 버튼과 종이 패널 */
-.book .ghost {
-  width: auto;
-  margin: var(--s-2) var(--s-5) var(--s-2) var(--s-6);
-  border-color: var(--ink-3);
-  color: var(--ink-2);
-  font-family: var(--f-ui);
-}
-
-.book .ghost:hover {
-  border-color: var(--seal);
+.level[aria-pressed='true'] small {
   color: var(--seal);
 }
 
-.book .panel {
-  margin: var(--s-2) var(--s-5) var(--s-2) var(--s-6);
-  border-color: var(--paper-edge);
-  background: var(--card);
-  color: var(--ink-1);
+.who:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-.book .panelHead {
-  color: var(--ink-2);
-}
-
-.book .draft {
-  border-color: var(--paper-edge);
-  background: var(--paper);
-  color: var(--ink-1);
-}
-
-/* 상대 이름표가 오른쪽 위에 있으면 트래커·지도는 그 왼쪽으로 비켜 쌓인다 */
+/* ===================== 넓은 화면 ===================== */
 @media (min-width: 1101px) {
+  /* 상대 이름표가 오른쪽 위에 있으면 트래커·지도는 그 왼쪽으로 비켜 쌓인다 */
   .stage .center {
     bottom: 236px;
     padding-right: 370px;
@@ -1102,33 +798,103 @@ main.shell {
   .stage .center > [data-pending] {
     margin-right: -346px;
   }
+  /* 책은 머리글·기록지·기록·입력이 한 화면에 들어가고, 넘치면 책만 스크롤한다 */
+  .book {
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
 }
 
-/* 책이 빽빽해지면(GM) 책 전체가 스크롤되고, 기록은 최소 높이를 지킨다 */
-.book {
-  overflow-y: auto;
-  scrollbar-width: thin;
+/* 낮은 화면: 행동 줄을 촘촘하게 */
+@media (min-width: 1101px) and (max-height: 820px) {
+  .chipRow {
+    padding-top: 6px;
+  }
+  .composer {
+    padding-block: 6px;
+  }
 }
 
-.book > div:has(> section[aria-label='이야기 기록']) {
-  flex: 1 0 220px;
+/* ===================== 좁은 화면 ===================== */
+@media (max-width: 1100px) {
+  .previewSlot {
+    position: fixed;
+    top: auto;
+    right: 0;
+    bottom: calc(var(--dock-h, 0px) + 50px);
+    padding: 0 16px;
+  }
+  .stage .center {
+    padding-top: 150px;
+  }
+  /* 바텀 시트 안에서는 지도·트래커를 접어 두고 판정만 보인다 */
+  :global([data-sheet]) [data-top-stack] {
+    display: none;
+  }
+  /* 행동 띠 안의 칩 줄은 한 줄로 두고 옆으로 민다 */
+  .chipRow {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 8px 12px 0;
+    scrollbar-width: none;
+  }
+  .runTitle {
+    display: block;
+  }
+  .running {
+    flex-wrap: wrap;
+  }
+  .runTools {
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    min-width: 0;
+  }
 }
 
-.gmSlot button {
-  padding: 3px 10px;
-  font-size: 13px;
+@media (max-width: 760px) {
+  .composer,
+  .ghost,
+  .panel {
+    margin-inline: 0;
+    padding-inline: var(--s-4);
+  }
+  .ghost {
+    margin-inline: var(--s-4);
+  }
+  .defendGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .sfxText {
+    display: none;
+  }
 }
 
-.narrate button {
-  border: 1px solid var(--seal);
-  border-radius: var(--r-token);
-  background: var(--seal);
-  color: var(--seal-ink);
-  font: 700 13px var(--f-ui);
+@media (prefers-reduced-motion: reduce) {
+  .callable[data-call]::after,
+  .stage h1,
+  .foldedRoll,
+  .dots,
+  .panel {
+    animation: none;
+  }
+  .callable[data-call]::after {
+    opacity: 0;
+  }
 }
 
-.narrate button:disabled {
-  border-color: var(--paper-edge);
-  background: transparent;
-  color: var(--ink-3);
+/* 바텀 시트 안의 무대 가운데: 시트가 스크롤하므로 안에서는 줄이지도 스크롤하지도 않는다 */
+@media (max-width: 1100px) {
+  .stage :global([data-sheet]) > .center {
+    flex: none;
+    padding: 0;
+    overflow: visible;
+  }
+}
+
+/* GM 서랍이 열리면 책이 행동 띠 위로 올라와 서랍 시트가 띠를 덮는다 */
+@media (max-width: 1100px) {
+  .book:has([data-drawer]) {
+    z-index: 32;
+  }
 }

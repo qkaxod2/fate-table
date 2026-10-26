@@ -33,7 +33,13 @@
   z-index: 0;
   background:
     radial-gradient(ellipse 80% 70% at 45% 55%, transparent 40%, rgb(13 11 9 / 0.7)),
-    linear-gradient(180deg, rgb(13 11 9 / 0.4), transparent 25%, transparent 62%, rgb(13 11 9 / 0.88));
+    linear-gradient(
+      180deg,
+      rgb(13 11 9 / 0.4),
+      transparent 25%,
+      transparent 62%,
+      rgb(13 11 9 / 0.88)
+    );
   pointer-events: none;
 }
 
@@ -142,80 +148,9 @@
   padding-right: 5cqw;
 }
 
-/* 굴린 뒤의 판정 카드: 종이 위에 주사위·결과 */
-.center .check {
-  width: min(420px, 100%);
-  max-height: 100%;
-  border: 0;
-  border-radius: 6px;
-  background: var(--card);
-  color: var(--ink-1);
-  box-shadow: 0 30px 60px -18px rgb(0 0 0 / 0.85);
-  backdrop-filter: none;
-  rotate: 0.6deg;
-}
-
-.center .check [class*='sideHead'] {
-  color: var(--seal);
-  font-weight: 700;
-}
-
-.center .check [class*='total'] {
-  color: var(--ink-1);
-  font-family: var(--f-fig);
-}
-
-.center .check [class*='total'] small,
-.center .check [class*='mods'] {
-  color: var(--ink-2);
-}
-
-.center .check [class*='vs'] {
-  color: var(--ink-3);
-  font-family: var(--f-fig);
-  font-style: italic;
-}
-
-.center .check [class*='difficulty'] {
-  border-color: var(--ink-3);
-  border-radius: 6px;
-  color: var(--ink-1);
-}
-
-.center .check [class*='waiting'] {
-  background: var(--ink-1);
-  color: var(--paper);
-}
-
-/* 판정 띠: 종이 위에서는 판정 색을 먹에 섞어 진하게 찍는다 */
-.center .check [role='status'] {
-  margin-top: var(--s-2);
-  background: color-mix(in srgb, var(--c) 16%, transparent);
-  border-block: 1.5px solid color-mix(in srgb, var(--c) 60%, var(--ink-1));
-}
-
-.center .check [role='status'] > div:nth-last-child(2) {
-  color: var(--ink-1);
-}
-
-.center .check [role='status'] [aria-hidden]:not([class*='sparks']) {
-  background: none;
-  color: color-mix(in srgb, var(--c) 65%, var(--ink-1));
-  -webkit-text-fill-color: currentColor;
-  filter: none;
-}
-
-.center .check [role='status'] p {
-  color: var(--ink-2);
-}
-
-.center .check [role='status'] span {
-  background: color-mix(in srgb, var(--c) 60%, var(--ink-1));
-}
-
-.center .check [class*='defenseOk'],
-.center .check [class*='stunt'] {
-  margin-bottom: var(--s-3);
+/* 판정 예고 카드 자리: 넓은 화면에서는 무대 가운데 그대로, 좁은 화면에서는 행동 띠 바로 위에 뜬다 */
+.previewDock {
+  display: contents;
 }
 
 /* 테이블: 무대 아래 특성 카드 줄 */
@@ -282,6 +217,8 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  /* 맨 아래 행동 띠(Dock)만큼 비워 둔다 */
+  padding-bottom: var(--dock-h, 0px);
   background: var(--paper-grain), var(--paper);
   color: var(--ink-1);
   box-shadow: inset 18px 0 30px -18px rgb(90 60 20 / 0.35);
@@ -361,6 +298,50 @@
   .stage {
     height: max(560px, 72dvh);
     flex: none;
+    /*
+     * 바텀 시트·행동 띠 위 예고 카드·오버레이가 화면(뷰포트)에 붙도록 컨테이너 격리를 푼다.
+     * 무대는 책보다 위, 행동 띠보다 아래에 놓이고, 시트나 오버레이가 뜨면 그 위로 올라온다.
+     */
+    container-type: normal;
+    z-index: 7;
+  }
+  .stage:has([data-sheet]) {
+    z-index: 35;
+  }
+  .stage:has([data-overlay]) {
+    z-index: 45;
+  }
+  :global([data-sheet]) > .center {
+    position: static;
+    display: flex;
+    justify-content: center;
+    padding: 0;
+  }
+  :global([data-sheet]) > .table {
+    position: static;
+    display: block;
+    padding: 0;
+    overflow: visible;
+  }
+  .previewDock {
+    position: fixed;
+    right: 0;
+    bottom: calc(var(--dock-h, 0px) + 50px);
+    left: 0;
+    display: flex;
+    justify-content: center;
+    padding-inline: 16px;
+    pointer-events: none;
+  }
+  .previewDock > * {
+    pointer-events: auto;
+  }
+  .stage:has([data-dock]) .center {
+    padding-left: 12px;
+  }
+  /* 행동 띠 위에 뜬 예고 카드가 테이블 위 특성 카드에 가리지 않게 */
+  .stage:has(.previewDock) .center {
+    z-index: 6;
   }
   .deckle {
     display: none;
@@ -412,11 +393,12 @@
     max-height: 300px;
     overflow-y: auto;
   }
-  .stage[data-roll] .foePlate {
-    display: none;
-  }
   .center {
-    padding: 88px 12px 12px;
+    padding: 112px 12px 12px;
+  }
+  .stage[data-roll] .center {
+    justify-items: center;
+    padding-right: 12px;
   }
   .running {
     flex-wrap: wrap;
