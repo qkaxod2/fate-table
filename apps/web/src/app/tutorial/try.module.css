@@ -1,44 +1,72 @@
-/* ---------- 캐릭터 고르기 ---------- */
+/* ---------- 캐릭터 고르기: 책의 "등장인물" 쪽 ---------- */
 .picker {
   min-height: 100dvh;
-  padding: var(--s-6) var(--s-4);
-  background:
-    radial-gradient(ellipse at 50% 0%, rgb(168 50 28 / 0.14), transparent 60%), var(--night);
+  padding: clamp(32px, 6vh, 64px) 16px 48px;
+  background: var(--paper-grain), var(--paper);
+  color: var(--ink-1);
+}
+
+.pickHead {
+  max-width: 720px;
+  margin: 0 auto 32px;
   text-align: center;
 }
 
+.pickKicker {
+  margin: 0 0 6px;
+  color: var(--seal);
+  font: 600 var(--fs-sm) / 1.4 var(--f-ui);
+  letter-spacing: var(--label-track);
+}
+
+/* 쪽 제목 아래 가는 두 줄 (책의 장 표제) */
 .pickTitle {
-  margin: 0 0 var(--s-2);
-  font-family: var(--f-story);
-  font-size: clamp(26px, 5vw, 40px);
+  margin: 0;
+  padding-bottom: 14px;
+  border-bottom: 3px double var(--ink-3);
+  font: 800 clamp(28px, 4.6vw, 44px) / 1.2 var(--f-head);
+  word-break: keep-all;
 }
 
 .pickLead {
-  margin: 0 auto var(--s-6);
-  max-width: 520px;
-  color: var(--muted);
+  margin: 14px 0 0;
+  color: var(--ink-2);
+  font: 400 var(--fs-md) / 1.65 var(--f-book);
+  word-break: keep-all;
 }
 
 .pickGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 260px));
+  grid-template-columns: repeat(3, minmax(0, 300px));
   justify-content: center;
-  gap: var(--s-4);
+  gap: 28px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.pickCard {
+.pickItem {
   display: flex;
+}
+
+/* 한 사람 = 초상 사진을 테이프로 붙인 소개 카드 */
+.pickCard {
+  position: relative;
+  display: flex;
+  flex: 1;
   flex-direction: column;
-  align-items: center;
-  gap: var(--s-1);
-  padding: 0 var(--s-3) var(--s-4);
-  overflow: hidden;
-  border: 1px solid var(--rule);
-  border-radius: var(--r-card);
-  background: linear-gradient(180deg, transparent 40%, var(--panel-s));
-  color: var(--fg);
+  padding: 12px 12px 16px;
+  border: 1px solid var(--paper-edge);
+  border-radius: 4px;
+  background: var(--paper-grain), var(--card);
+  color: var(--ink-1);
   font: inherit;
+  text-align: left;
   cursor: pointer;
+  box-shadow:
+    0 1px 0 var(--paper-edge),
+    0 14px 28px -18px rgb(40 25 10 / 0.6);
+  rotate: -0.6deg;
   transition:
     transform var(--dur-enter) var(--ease-out),
     box-shadow var(--dur-enter) var(--ease-out),
@@ -46,36 +74,176 @@
     var(--press);
 }
 
+.pickItem:nth-child(2) .pickCard {
+  rotate: 0.5deg;
+}
+
+.pickItem:nth-child(3) .pickCard {
+  rotate: -0.3deg;
+}
+
 .pickCard:hover,
 .pickCard:focus-visible {
   transform: translateY(-6px);
-  border-color: var(--gold);
+  border-color: var(--ink-3);
   box-shadow:
-    0 14px 36px rgb(0 0 0 / 0.45),
-    0 0 24px rgb(168 50 28 / 0.18);
+    0 1px 0 var(--paper-edge),
+    0 24px 36px -18px rgb(40 25 10 / 0.65);
+}
+
+/* 초상: 액자 안의 그림, 위에 테이프 한 조각 */
+.pickPhoto {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border: 1px solid var(--paper-edge);
+  background: linear-gradient(180deg, var(--paper-2), var(--paper));
+}
+
+.pickPhoto::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  z-index: 1;
+  width: 72px;
+  height: 18px;
+  background: rgb(226 205 160 / 0.75);
+  box-shadow: 0 1px 2px rgb(40 25 10 / 0.15);
+  translate: -50% 0;
+  rotate: -2deg;
 }
 
 .pickImg {
+  display: block;
   width: 100%;
-  aspect-ratio: 416 / 420;
+  aspect-ratio: 5 / 4;
   object-fit: cover;
-  object-position: top;
+  object-position: center 8%;
+}
+
+/* 등장 순서 번호 (책 여백의 작은 숫자) */
+.pickNo {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding: 4px 8px 2px 10px;
+  border-top-left-radius: 6px;
+  background: var(--card);
+  color: var(--ink-2);
+  font: 800 20px / 1 var(--f-fig);
+}
+
+.pickInfo {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 12px 4px 0;
 }
 
 .pickName {
-  font-family: var(--f-story);
-  font-weight: 700;
-  font-size: var(--fs-xl);
-}
-
-.pickHigh {
-  color: var(--gold-hi);
-  font-size: var(--fs-sm);
+  font: 800 26px / 1.2 var(--f-head);
 }
 
 .pickBlurb {
-  color: var(--muted);
-  font-size: var(--fs-sm);
+  margin-top: 2px;
+  color: var(--ink-2);
+  font: 400 var(--fs-sm) / 1.5 var(--f-book);
+}
+
+/* 핵심 컨셉·약점: 파란 가로줄 위 손글씨 (특성 카드 문법) */
+.pickIndex {
+  display: grid;
+  margin: 12px 0 0;
+  padding: 6px 10px 4px;
+  border-top: 2px solid var(--rule-red);
+  background: var(--plate);
+}
+
+.pickLabel {
+  color: var(--seal);
+  font: 600 12px / 1.4 var(--f-ui);
+  letter-spacing: var(--label-track);
+}
+
+.pickLabel[data-trouble] {
+  margin-top: 4px;
+  color: var(--ink-2);
+}
+
+.pickHand {
+  color: var(--pen);
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--rule-blue);
+  font: 400 23px / 1.15 var(--f-hand);
+  word-break: keep-all;
+}
+
+.pickStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 12px;
+  color: var(--ink-2);
+  font: 500 var(--fs-sm) / 1.4 var(--f-ui);
+}
+
+.pickStats b {
+  color: var(--ink-1);
+  font: 800 var(--fs-lg) / 1 var(--f-fig);
+}
+
+.pickGo {
+  margin-top: auto;
+  padding-top: 14px;
+  color: var(--seal);
+  font: 600 var(--fs-sm) / 1.4 var(--f-ui);
+}
+
+.pickCard:hover .pickGo,
+.pickCard:focus-visible .pickGo {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* 좁은 화면: 사진은 왼쪽, 소개는 오른쪽으로 눕혀 세 사람이 한 화면에 가깝게 들어오게 */
+@media (max-width: 860px) {
+  .pickGrid {
+    grid-template-columns: minmax(0, 520px);
+    gap: 16px;
+  }
+  .pickCard {
+    flex-direction: row;
+    gap: 12px;
+    padding: 10px;
+  }
+  .pickPhoto {
+    flex: 0 0 34%;
+    align-self: stretch;
+  }
+  .pickImg {
+    height: 100%;
+    aspect-ratio: auto;
+    object-position: center 6%;
+  }
+  .pickInfo {
+    padding: 2px 0 0;
+  }
+  .pickName {
+    font-size: 22px;
+  }
+  .pickHand {
+    font-size: 21px;
+  }
+  .pickIndex {
+    margin-top: 8px;
+  }
+  .pickStats {
+    margin-top: 8px;
+  }
+  .pickGo {
+    padding-top: 8px;
+  }
 }
 
 /* ---------- 무대 ---------- */
@@ -633,26 +801,25 @@
 
 /* ---------- 들어오는 순서 ---------- */
 /* 고르기 화면: 카드가 하나씩 올라온다 */
-.pickCard {
+.pickItem {
   animation: rise var(--dur-scene) var(--ease-out) backwards;
 }
-.pickCard:nth-child(2) {
+.pickItem:nth-child(2) {
   animation-delay: calc(var(--stagger) * 2);
 }
-.pickCard:nth-child(3) {
+.pickItem:nth-child(3) {
   animation-delay: calc(var(--stagger) * 4);
 }
 
-/* 고르면: 고른 카드가 금빛으로 앞으로 나서고, 나머지와 제목은 물러난다 */
+/* 고르면: 고른 카드에 주홍 봉인이 찍히며 앞으로 나서고, 나머지와 제목은 물러난다 */
 .picker[data-chosen] .pickCard,
-.picker[data-chosen] .pickTitle,
-.picker[data-chosen] .pickLead {
+.picker[data-chosen] .pickHead {
   transition:
     opacity 360ms var(--ease-in),
     scale 360ms var(--ease-in),
     filter 360ms var(--ease-in);
   opacity: 0;
-  scale: 0.94;
+  scale: 0.96;
   filter: blur(2px);
   pointer-events: none;
 }
@@ -661,15 +828,44 @@
   transition:
     transform 420ms var(--ease-spring),
     scale 420ms var(--ease-spring),
+    rotate 420ms var(--ease-spring),
     box-shadow 420ms var(--ease-out);
   opacity: 1;
-  scale: 1.06;
+  scale: 1.04;
+  rotate: 0deg;
   filter: none;
   transform: translateY(-10px);
-  border-color: var(--gold-hi);
+  border-color: var(--seal);
   box-shadow:
-    0 18px 44px rgb(0 0 0 / 0.5),
-    0 0 40px rgb(200 72 44 / 0.45);
+    0 1px 0 var(--paper-edge),
+    0 28px 44px -18px rgb(40 25 10 / 0.7);
+}
+
+.pickCard[data-chosen]::after {
+  content: '선택';
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border: 2px solid var(--seal-ink);
+  border-radius: 50%;
+  background: var(--seal);
+  box-shadow: 0 0 0 2px var(--seal);
+  color: var(--seal-ink);
+  font: 800 16px / 1 var(--f-head);
+  rotate: -12deg;
+  animation: stamp 360ms var(--ease-spring) backwards;
+}
+
+@keyframes stamp {
+  from {
+    opacity: 0;
+    scale: 1.8;
+  }
 }
 
 /* 무대: 배경이 밝아지고, 스탠딩이 들어선 뒤 패널들이 차례로 자리 잡는다 */
@@ -780,7 +976,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pickCard,
+  .pickItem,
+  .pickCard[data-chosen]::after,
   .standee,
   .bossStandee,
   .bossStandee[data-hit],

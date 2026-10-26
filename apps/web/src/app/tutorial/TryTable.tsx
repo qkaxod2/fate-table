@@ -233,26 +233,57 @@ function Picker({ onPick }: { onPick: (s: SampleCharacter) => void }) {
   };
   return (
     <main className={styles.picker} data-chosen={chosen ? '' : undefined}>
-      <h1 className={styles.pickTitle}>누구로 플레이할까요?</h1>
-      <p className={styles.pickLead}>
-        샘플 캐릭터를 골라 5분 안에 첫 굴림까지 가 봐요. 규칙은 몰라도 괜찮아요.
-      </p>
-      <div className={styles.pickGrid}>
-        {SAMPLE_CHARACTERS.map((s) => (
-          <button
-            key={s.key}
-            type="button"
-            className={styles.pickCard}
-            data-chosen={chosen === s.key || undefined}
-            onClick={() => choose(s)}
-          >
-            <img src={asset(s.image)} alt="" className={styles.pickImg} />
-            <span className={styles.pickName}>{s.name}</span>
-            <span className={styles.pickHigh}>{s.create.highConcept}</span>
-            <span className={styles.pickBlurb}>{s.blurb}</span>
-          </button>
-        ))}
-      </div>
+      <header className={styles.pickHead}>
+        <p className={styles.pickKicker}>튜토리얼 · 첫 장면 「{SCENE.name}」</p>
+        <h1 className={styles.pickTitle}>누구로 플레이할까요?</h1>
+        <p className={styles.pickLead}>
+          한 명을 골라 5분 안에 첫 굴림까지 가 봐요. 규칙은 몰라도 괜찮아요.
+        </p>
+      </header>
+      <ol className={styles.pickGrid} aria-label="등장인물">
+        {SAMPLE_CHARACTERS.map((s, i) => {
+          // 가장 높은 접근법 둘: 이 캐릭터가 무엇을 잘하는지 한눈에
+          const top = (Object.entries(s.create.approaches) as [Approach, number][])
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 2);
+          return (
+            <li key={s.key} className={styles.pickItem}>
+              <button
+                type="button"
+                className={styles.pickCard}
+                data-chosen={chosen === s.key || undefined}
+                aria-label={`${josa(s.name, '으로/로')} 시작하기. ${s.blurb}. ${term('high')}: ${s.create.highConcept}. ${term('trouble')}: ${s.create.trouble}`}
+                onClick={() => choose(s)}
+              >
+                <span className={styles.pickPhoto} aria-hidden>
+                  <img src={asset(s.image)} alt="" className={styles.pickImg} />
+                  <span className={styles.pickNo}>{i + 1}</span>
+                </span>
+                <span className={styles.pickInfo} aria-hidden>
+                  <span className={styles.pickName}>{s.name}</span>
+                  <span className={styles.pickBlurb}>{s.blurb}</span>
+                  <span className={styles.pickIndex}>
+                    <span className={styles.pickLabel}>{term('high')}</span>
+                    <span className={styles.pickHand}>{s.create.highConcept}</span>
+                    <span className={styles.pickLabel} data-trouble>
+                      {term('trouble')}
+                    </span>
+                    <span className={styles.pickHand}>{s.create.trouble}</span>
+                  </span>
+                  <span className={styles.pickStats}>
+                    {top.map(([a, v]) => (
+                      <span key={a}>
+                        <b>{sign(v)}</b> {term(a)}
+                      </span>
+                    ))}
+                  </span>
+                  <span className={styles.pickGo}>{josa(s.name, '으로/로')} 시작 →</span>
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
     </main>
   );
 }
