@@ -35,7 +35,7 @@ export const OUTCOME_COPY: Record<Action, Record<Outcome, string>> = {
   },
   defend: {
     fail: '막지 못했어요. 상대의 행동이 통해요',
-    tie: '비겼어요. 상대는 동점일 때의 결과를 얻어요',
+    tie: '비겼어요. 상대 행동은 동점 결과로 처리돼요',
     success: '막아냈어요',
     style: '막아내고 부스트를 얻어요',
   },
@@ -63,7 +63,7 @@ export function describe(e: RoomEvent, state: RoomState): LogLine | null {
     case 'roll.opposition_requested':
       return line(
         'roll',
-        `${josa(name(state, e.payload.attackerId), '이/가')} ${name(state, e.payload.defenderId)}에게 ${term(e.payload.action)}! 상대가 응하기를 기다려요`,
+        `${josa(name(state, e.payload.attackerId), '이/가')} ${name(state, e.payload.defenderId)}에게 ${term(e.payload.action)}! 상대의 대응을 기다려요`,
       );
     case 'roll.resolved':
       return line(

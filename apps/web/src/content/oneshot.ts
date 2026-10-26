@@ -53,7 +53,7 @@ export const SAMPLE_CHARACTERS: SampleCharacter[] = [
       stunts: [
         {
           id: 'brew',
-          text: '즉석 조합: 지략으로 이점을 창출할 때 +2',
+          text: '즉석 조합: 지략으로 이점을 만들 때 +2',
           kind: 'bonus',
           bonus: { approach: 'clever', action: 'create_advantage', value: 2 },
         },
@@ -106,6 +106,6 @@ export const SCENE = {
     { text: '무너지는 대들보', hidden: false },
   ],
   opening:
-    '문이 부서지자 매캐한 연기와 함께 도적들이 곡물 더미 뒤에서 튀어나온다. 다락 위, 도적 두목이 도끼를 어깨에 걸치고 웃는다. 앞서 동료들과 싸우다 갈비뼈가 부러지고 어깨가 깊게 베였지만, 아직 도끼는 놓지 않았다.',
+    '문이 부서지자 매캐한 연기와 함께 도적들이 곡물 더미 뒤에서 튀어나온다. 다락 위, 도적 두목이 도끼를 어깨에 걸치고 웃는다. 앞서 동료들과 싸우다 갈비뼈가 부러지고 어깨가 깊게 베였지만, 두목은 아직 도끼를 놓지 않았다.',
   overcomeDifficulty: 2,
 };

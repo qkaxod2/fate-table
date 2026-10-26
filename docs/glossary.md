@@ -28,12 +28,12 @@
 | Fate Dice (4dF) | **페이트 주사위** | +, −, 빈 면이 있는 주사위 4개 |
 | The Ladder | **등급표** | 결과 수치를 말로 표현한 표 |
 | Overcome | **극복** | 장애물을 넘음 |
-| Create an Advantage | **이점 창출** | 새 특성을 만들거나 찾아냄 |
+| Create an Advantage | **이점 만들기** | 새 특성을 만들거나 찾아냄 |
 | Attack | **공격** | 피해를 줌 |
 | Defend | **방어** | 공격·방해를 막음 |
 | Fail / Tie / Succeed / Succeed with Style | **실패 / 동점 / 성공 / 대성공** | 대성공은 3 이상 차이 |
 | Invoke | **발동** | 운명점 1로 +2 또는 다시 굴림 |
-| Free Invoke | **무료 발동** | 운명점 없이 쓰는 발동권 |
+| Free Invoke | **무료 발동** | 운명점 없이 한 번 쓰는 발동 |
 | Compel | **강요** | 약점 등으로 일이 꼬이는 대신 운명점을 받음 |
 | Boost | **부스트** | 한 번 쓰면 사라지는 임시 특성 |
 | Situation Aspect | **장면 특성** | 장면이나 구역에 붙은 특성 |
@@ -46,7 +46,7 @@
 | Contest | **경합** (먼저 3번 이기는 겨루기) |
 | Challenge | **도전** (여러 번의 극복으로 푸는 상황) |
 | Exchange | **라운드** |
-| Concede | **양보** |
+| Concede | **항복** |
 | Taken Out | **탈락** |
 | Zone | **구역** |
 

@@ -107,7 +107,7 @@ export function InvokeTray({
   return (
     <div className={styles.tray}>
       <div className={styles.head}>
-        INVOKE · {term('aspect')} {term('invoke')} · +2를 받거나 다시 굴려요
+        {term('aspect')} {term('invoke')} · +2를 받거나 다시 굴려요
       </div>
       <div className={styles.cards} data-tour="invoke-cards">
         {choices.map((c, i) => (
