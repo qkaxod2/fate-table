@@ -2,9 +2,9 @@
   --body: var(--dice-body);
   --edge: var(--dice-edge);
   --pip: var(--dice-pip);
-  --size: 42px;
+  --size: var(--die, 42px);
   display: inline-flex;
-  gap: var(--s-3);
+  gap: calc(var(--size) * 0.28);
   padding-top: var(--s-2);
 }
 
@@ -33,17 +33,20 @@
   inset: 0;
   display: grid;
   place-items: center;
-  border: 1.5px solid var(--edge);
-  border-radius: 9px;
+  border: 2px solid var(--edge);
+  border-radius: 8px;
+  /* 상아(또는 먹) 면에 모서리 쪽이 살짝 짙어지는 정도만. 광택·금빛은 쓰지 않는다 */
   background:
-    radial-gradient(circle at 30% 25%, rgb(255 255 255 / 0.14), transparent 60%), var(--body);
+    radial-gradient(
+      circle at 50% 45%,
+      var(--body) 55%,
+      color-mix(in srgb, var(--body) 86%, var(--edge))
+    ),
+    var(--body);
   color: var(--pip);
-  font-family: var(--f-pop);
-  font-size: 27px;
-  font-weight: 800;
-  line-height: 1;
+  font: 800 calc(var(--size) * 0.64) / 1 var(--f-fig);
   backface-visibility: hidden;
-  box-shadow: inset 0 -3px 0 rgb(0 0 0 / 0.35);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--body) 70%, var(--edge));
 }
 
 .face[data-side='front'] {
@@ -72,23 +75,19 @@
   bottom: -8px;
   height: 6px;
   border-radius: 50%;
-  background: rgb(0 0 0 / 0.45);
+  background: rgb(60 40 20 / 0.32);
   filter: blur(3px);
   z-index: -1;
 }
 
-/* 멈춘 자리에 금빛이 번진다 (design-system.md 17절 "착지 시 금빛 번짐") */
+/* 멈춘 자리에 먹빛이 살짝 번진다 (종이 위라 금빛 대신 먹) */
 .scene::after {
   content: '';
   position: absolute;
   inset: -40%;
   z-index: -1;
   border-radius: 50%;
-  background: radial-gradient(
-    closest-side,
-    color-mix(in srgb, var(--edge) 55%, transparent),
-    transparent
-  );
+  background: radial-gradient(closest-side, rgb(60 40 20 / 0.28), transparent);
   opacity: 0;
   pointer-events: none;
 }

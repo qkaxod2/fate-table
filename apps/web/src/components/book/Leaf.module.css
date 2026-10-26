@@ -1,0 +1,174 @@
+/*
+ * 책의 한 장: 무대 위에 펼친 종이 한 장. 왼쪽에 제본 그늘이 지고, 머리글은 함렛 제목 + 겹줄.
+ * 뒤는 따뜻한 먹빛으로만 가라앉힌다(남색·보라 빛 번짐 없이).
+ */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: var(--s-4);
+  background: rgb(26 18 10 / 0.6);
+  backdrop-filter: blur(2px);
+  animation: backdrop-in var(--dur-enter) var(--ease-out) backwards;
+}
+
+.backdrop[data-top] {
+  align-items: start;
+  padding-top: 12vh;
+}
+
+.leaf {
+  --pad: 28px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 580px);
+  max-height: calc(100dvh - 32px);
+  border-radius: 3px 8px 8px 3px;
+  background: var(--paper-grain), var(--card);
+  color: var(--ink-1);
+  box-shadow:
+    inset 16px 0 22px -18px rgb(90 60 20 / 0.45),
+    0 1px 0 var(--paper-edge),
+    0 30px 70px -24px rgb(20 12 4 / 0.85);
+  outline: none;
+  animation: leaf-in var(--dur-enter) var(--ease-out) 30ms backwards;
+}
+
+.leaf[data-size='sm'] {
+  width: min(100%, 460px);
+}
+
+.leaf[data-size='lg'] {
+  width: min(100%, 820px);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  padding: 22px var(--pad) 14px;
+  border-bottom: 3px double var(--paper-edge);
+}
+
+.titles {
+  flex: 1;
+  min-width: 0;
+}
+
+.kicker {
+  margin: 0 0 2px;
+  color: var(--seal);
+  font: 600 13px var(--f-ui);
+  letter-spacing: 0.08em;
+}
+
+.title {
+  margin: 0;
+  font: 800 24px/1.25 var(--f-head);
+}
+
+.close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin: -4px -8px 0 0;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink-2);
+  font: 400 26px/1 var(--f-ui);
+  cursor: pointer;
+}
+
+.close:hover {
+  border-color: var(--paper-edge);
+  color: var(--seal);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  min-height: 0;
+  padding: 18px var(--pad) 22px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+/* 머리글 없는 창(명령 창)은 안쪽이 끝까지 차오른다 */
+.leaf > .body:first-child {
+  padding: 0;
+}
+
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--s-2);
+  padding: 12px var(--pad) 18px;
+  border-top: 1px solid var(--paper-edge);
+}
+
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes leaf-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+}
+
+/* 좁은 화면: 아래에서 올라오는 시트 */
+@media (max-width: 760px) {
+  .backdrop,
+  .backdrop[data-top] {
+    align-items: end;
+    padding: 0;
+  }
+  .leaf,
+  .leaf[data-size] {
+    --pad: 18px;
+    width: 100%;
+    max-height: 92dvh;
+    border-radius: 14px 14px 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    animation-name: sheet-in;
+  }
+  .leaf::before {
+    content: '';
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--paper-edge);
+    translate: -50% 0;
+  }
+  .title {
+    font-size: 21px;
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .leaf,
+  .leaf[data-size] {
+    animation-name: backdrop-in;
+  }
+}

@@ -15,8 +15,8 @@ export default function MyGalleryPage() {
         </Link>
         <h1 className={styles.title}>내 그림</h1>
         <p className={styles.lead}>
-          그린 초상화 · 스탠딩 · 배경은 이 브라우저에 저절로 담겨요. 다른 방에서 그림 창을 열면 다시
-          고를 수 있고, PNG 파일로 받아 둘 수도 있어요.
+          방에서 그린 초상화 · 스탠딩 · 배경은 이 브라우저에 저절로 담겨요. 다른 방에서 그림 창을
+          열면 다시 고를 수 있고, PNG 파일로 받아 둘 수도 있어요.
         </p>
         <ClientOnly>
           <MyGallery />

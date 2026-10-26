@@ -129,7 +129,8 @@ export function revealOnNarrow(el: Element | null): void {
   // 같은 순간 사라지거나 나타나는 것(안내 카드 등)이 자리를 잡은 뒤에 위치를 잰다
   window.setTimeout(() => {
     if (!el.isConnected) return;
-    const coach = document.querySelector<HTMLElement>('[data-coach]');
+    // 위에 붙는 안내 카드만 비킨다. 아래에서 올라오는 시트(data-sheet)는 위를 가리지 않는다
+    const coach = document.querySelector<HTMLElement>('[data-coach]:not([data-sheet])');
     const top = el.getBoundingClientRect().top + window.scrollY - (coach?.offsetHeight ?? 0) - 20;
     window.scrollTo({ top, behavior: reducedMotion() ? 'auto' : 'smooth' });
   }, EXIT_MS + 40);

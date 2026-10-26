@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { tap } from '@/fx/sfx';
 import { flyBadge } from '@/lib/motion';
 import { AspectCard } from '../aspect/AspectCard';
+import { isDialogOpen } from '../book/Leaf';
 import { FatePointToken } from '../fate/FatePointToken';
 import styles from './InvokeTray.module.css';
 
@@ -84,6 +85,7 @@ export function InvokeTray({
       const t = e.target;
       if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (isDialogOpen()) return;
       const n = Number(e.key);
       if (n >= 1 && n <= 9 && choices[n - 1]) {
         e.preventDefault();
@@ -105,7 +107,7 @@ export function InvokeTray({
   }, [choices, selected, paidWith, firing, onSelect, onInvoke, onFinalize, waiting, lockFinalize]);
 
   return (
-    <div className={styles.tray}>
+    <div className={styles.tray} data-roll-tray="">
       <div className={styles.head}>
         {term('aspect')} {term('invoke')} · 카드를 집어 +2를 받거나 다시 굴려요
       </div>

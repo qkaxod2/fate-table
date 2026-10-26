@@ -17,10 +17,9 @@ import {
 import { useState } from 'react';
 import { AspectCard } from '@/components/aspect/AspectCard';
 import { FatePointToken } from '@/components/fate/FatePointToken';
-import { useCloseGuard } from '@/components/ui/closeGuard';
+import { Leaf } from '@/components/book/Leaf';
 import styles from './CharacterSheet.module.css';
 import { josa } from '@/lib/josa';
-import { useClosing } from '@/lib/motion';
 
 interface Props {
   character: Character;
@@ -52,12 +51,13 @@ export function CharacterSheet({
   onClose,
   onArt,
 }: Props) {
-  const [closing, close] = useClosing(onClose);
   const aspects = Object.values(state.aspects).filter(
     (a) => a.ownerType === 'character' && a.ownerId === c.id && (!a.hidden || isGm),
   );
   const owner = c.ownerId ? state.members[c.ownerId]?.nickname : undefined;
   const canEdit = isGm || mine;
+  const highConcept = aspects.find((a) => a.kind === 'high')?.text;
+  const best = Math.max(...APPROACHES.map((a) => c.approaches[a]));
 
   const [growing, setGrowing] = useState(false);
   const [draft, setDraft] = useState<Record<Approach, number>>(c.approaches);
@@ -72,42 +72,54 @@ export function CharacterSheet({
     APPROACHES.some((a) => draft[a] !== c.approaches[a]) ||
     JSON.stringify(stunts) !== JSON.stringify(c.stunts);
 
-  const guard = useCloseGuard(close, changed || !!stuntText.trim() || editAspect !== null);
+  const dirty = changed || !!stuntText.trim() || editAspect !== null;
 
   return (
-    <div className={styles.backdrop} data-closing={closing || undefined} {...guard.backdrop}>
-      <article
-        className={styles.sheet}
-        role="dialog"
-        aria-label={`${c.name} 시트`}
-        {...guard.panel}
-      >
-        <header className={styles.head}>
-          {(c.portraitUrl || c.standing?.neutral) && (
-            <img className={styles.portrait} src={c.portraitUrl ?? c.standing!.neutral} alt="" />
+    <Leaf
+      label={`${c.name} 시트`}
+      kicker={c.isNpc ? 'NPC 시트' : '캐릭터 시트'}
+      title={c.name}
+      onClose={onClose}
+      dirty={dirty}
+      aside={
+        canEdit && (
+          <button
+            type="button"
+            className={styles.art}
+            onClick={onArt}
+            title="스탠딩 · 표정 · 초상화 그리기"
+          >
+            그림
+          </button>
+        )
+      }
+    >
+      <div className={styles.head}>
+        {(c.portraitUrl || c.standing?.neutral) && (
+          <img className={styles.portrait} src={c.portraitUrl ?? c.standing!.neutral} alt="" />
+        )}
+        <dl className={styles.meta}>
+          <div>
+            <dt>{c.isNpc ? '진행' : '플레이어'}</dt>
+            <dd>
+              {c.isNpc ? 'GM' : (owner ?? '—')}
+              {c.takenOut && <span className={styles.out}> · {term('takenOut')}</span>}
+            </dd>
+          </div>
+          {highConcept && (
+            <div>
+              <dt>{term('high')}</dt>
+              <dd className={styles.concept}>{highConcept}</dd>
+            </div>
           )}
-          <div className={styles.title}>
-            <h2>
-              {c.name}
-              {canEdit && (
-                <button
-                  type="button"
-                  className={styles.art}
-                  onClick={onArt}
-                  title="스탠딩 · 표정 · 초상화 그리기"
-                >
-                  그림
-                </button>
-              )}
-            </h2>
-            <p>
-              {c.isNpc ? 'NPC' : `플레이어 ${owner ?? ''}`}
-              {c.takenOut && ` · ${term('takenOut')}`}
-            </p>
-            {!c.isNpc && (
-              <p className={styles.fate}>
-                {term('fatePoint')} <FatePointToken count={c.fatePoints} /> · {term('refresh')}{' '}
-                {c.refresh}
+          {!c.isNpc && (
+            <div>
+              <dt>{term('fatePoint')}</dt>
+              <dd className={styles.fate}>
+                <FatePointToken count={c.fatePoints} />
+                <small>
+                  {term('refresh')} {c.refresh}
+                </small>
                 {isGm && (
                   <span className={styles.fateBtns}>
                     {[-1, 1].map((d) => (
@@ -125,35 +137,33 @@ export function CharacterSheet({
                     ))}
                   </span>
                 )}
-              </p>
-            )}
-          </div>
-          <button type="button" className={styles.close} onClick={close} aria-label="닫기">
-            ×
-          </button>
-        </header>
+              </dd>
+            </div>
+          )}
+        </dl>
+      </div>
 
-        {c.milestone && (
-          <div className={styles.milestone}>
-            <strong>
-              {MILESTONE_LABEL[c.milestone]} {term('milestone')}에 도달했어요!
-            </strong>
-            <p>{MILESTONE_HELP[c.milestone]}</p>
-            {mine && !growing && (
-              <button type="button" onClick={() => setGrowing(true)}>
-                성장하기
-              </button>
-            )}
-          </div>
-        )}
+      {c.milestone && (
+        <div className={styles.milestone}>
+          <strong>
+            {MILESTONE_LABEL[c.milestone]} {term('milestone')}에 도달했어요!
+          </strong>
+          <p>{MILESTONE_HELP[c.milestone]}</p>
+          {mine && !growing && (
+            <button type="button" onClick={() => setGrowing(true)}>
+              성장하기
+            </button>
+          )}
+        </div>
+      )}
 
-        <section>
-          <h3>{term('aspect')}</h3>
-          <div className={styles.aspects}>
-            {aspects.map((a) =>
-              editAspect === a.id ? (
+      <section>
+        <h3>{term('aspect')}</h3>
+        <ul className={styles.aspects}>
+          {aspects.map((a) =>
+            editAspect === a.id ? (
+              <li key={a.id}>
                 <form
-                  key={a.id}
                   className={styles.inlineForm}
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -167,288 +177,305 @@ export function CharacterSheet({
                 >
                   <input
                     autoFocus
+                    aria-label={`${term('aspect')} 문구`}
                     value={aspectText}
                     maxLength={80}
                     onChange={(e) => setAspectText(e.target.value)}
                   />
-                  <button type="submit" disabled={pending}>
-                    고치기
-                  </button>
-                </form>
-              ) : (
-                <div key={a.id} className={styles.aspectRow}>
-                  <AspectCard aspect={a} size="sm" />
-                  {canEdit && a.kind !== 'consequence' && (
+                  <span className={styles.row}>
                     <button
                       type="button"
-                      className={styles.mini}
-                      onClick={() => {
-                        setEditAspect(a.id);
-                        setAspectText(a.text);
-                      }}
+                      className={styles.ghost}
+                      onClick={() => setEditAspect(null)}
                     >
+                      취소
+                    </button>
+                    <button type="submit" className={styles.primary} disabled={pending}>
                       고치기
                     </button>
-                  )}
-                  {(isGm || (mine && a.kind === 'boost')) && a.kind !== 'consequence' && (
-                    <button
-                      type="button"
-                      className={styles.mini}
-                      disabled={pending}
-                      onClick={() =>
-                        void run({ type: 'aspect.remove', payload: { aspectId: a.id } })
-                      }
-                    >
-                      지우기
-                    </button>
-                  )}
-                </div>
-              ),
-            )}
-          </div>
-        </section>
-
-        <section>
-          <h3>{term('approach')}</h3>
-          <ul className={styles.approaches}>
-            {APPROACHES.map((a) => (
-              <li key={a}>
-                <span>{term(a)}</span>
-                {growing ? (
-                  <span className={styles.stepper}>
-                    <button
-                      type="button"
-                      onClick={() => setDraft({ ...draft, [a]: Math.max(0, draft[a] - 1) })}
-                    >
-                      −
-                    </button>
-                    <b>{draft[a]}</b>
-                    <button
-                      type="button"
-                      onClick={() => setDraft({ ...draft, [a]: Math.min(5, draft[a] + 1) })}
-                    >
-                      +
-                    </button>
                   </span>
-                ) : (
-                  <b title={formatRating(c.approaches[a])}>
-                    {c.approaches[a] >= 0 ? '+' : ''}
-                    {c.approaches[a]}
-                  </b>
+                </form>
+              </li>
+            ) : (
+              <li key={a.id} className={styles.aspectItem}>
+                <AspectCard aspect={a} size="sm" />
+                {(canEdit || isGm) && a.kind !== 'consequence' && (
+                  <span className={styles.cardTools}>
+                    {canEdit && (
+                      <button
+                        type="button"
+                        aria-label={`"${a.text}" 고치기`}
+                        title="고치기"
+                        onClick={() => {
+                          setEditAspect(a.id);
+                          setAspectText(a.text);
+                        }}
+                      >
+                        고치기
+                      </button>
+                    )}
+                    {(isGm || (mine && a.kind === 'boost')) && (
+                      <button
+                        type="button"
+                        aria-label={`"${a.text}" 지우기`}
+                        title="지우기"
+                        disabled={pending}
+                        onClick={() =>
+                          void run({ type: 'aspect.remove', payload: { aspectId: a.id } })
+                        }
+                      >
+                        지우기
+                      </button>
+                    )}
+                  </span>
                 )}
               </li>
-            ))}
-          </ul>
-        </section>
+            ),
+          )}
+        </ul>
+      </section>
 
-        <section>
-          <h3>{term('stunt')}</h3>
-          {(growing ? stunts : c.stunts).length === 0 && <p className={styles.muted}>없음</p>}
-          <ul className={styles.stunts}>
-            {(growing ? stunts : c.stunts).map((s) => (
-              <li key={s.id} data-used={s.usedThisSession || undefined}>
-                <span>
-                  {s.text}
-                  {s.bonus && (
-                    <small>
-                      {' '}
-                      ({term(s.bonus.approach)} · {term(s.bonus.action)} +2)
-                    </small>
-                  )}
-                  {s.kind === 'once_per_session' && <small> · 세션당 1회</small>}
-                </span>
-                {growing && (
+      <section>
+        <h3>{term('approach')}</h3>
+        <ul className={styles.approaches}>
+          {APPROACHES.map((a) => (
+            <li key={a} data-best={c.approaches[a] === best || undefined}>
+              <span>{term(a)}</span>
+              {growing ? (
+                <span className={styles.stepper}>
                   <button
                     type="button"
-                    className={styles.mini}
-                    onClick={() => setStunts(stunts.filter((x) => x.id !== s.id))}
+                    onClick={() => setDraft({ ...draft, [a]: Math.max(0, draft[a] - 1) })}
                   >
-                    빼기
+                    −
                   </button>
+                  <b>{draft[a]}</b>
+                  <button
+                    type="button"
+                    onClick={() => setDraft({ ...draft, [a]: Math.min(5, draft[a] + 1) })}
+                  >
+                    +
+                  </button>
+                </span>
+              ) : (
+                <b title={formatRating(c.approaches[a])}>
+                  {c.approaches[a] >= 0 ? '+' : ''}
+                  {c.approaches[a]}
+                  <small>{formatRating(c.approaches[a]).split(' ')[0]}</small>
+                </b>
+              )}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section>
+        <h3>{term('stunt')}</h3>
+        {(growing ? stunts : c.stunts).length === 0 && <p className={styles.muted}>없음</p>}
+        <ul className={styles.stunts}>
+          {(growing ? stunts : c.stunts).map((s) => (
+            <li key={s.id} data-used={s.usedThisSession || undefined}>
+              <span>
+                {s.text}
+                {s.bonus && (
+                  <small>
+                    {' '}
+                    ({term(s.bonus.approach)} · {term(s.bonus.action)} +2)
+                  </small>
                 )}
-              </li>
-            ))}
-          </ul>
-          {growing && (
-            <form
-              className={styles.stuntForm}
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!stuntText.trim()) return;
-                setStunts([
-                  ...stunts,
-                  {
-                    id: crypto.randomUUID().slice(0, 8),
-                    text: stuntText.trim(),
-                    kind: 'bonus',
-                    bonus: { approach: stuntApproach, action: stuntAction, value: 2 },
-                  },
-                ]);
-                setStuntText('');
+                {s.kind === 'once_per_session' && <small> · 세션당 1회</small>}
+              </span>
+              {growing && (
+                <button
+                  type="button"
+                  className={styles.mini}
+                  onClick={() => setStunts(stunts.filter((x) => x.id !== s.id))}
+                >
+                  빼기
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+        {growing && (
+          <form
+            className={styles.stuntForm}
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!stuntText.trim()) return;
+              setStunts([
+                ...stunts,
+                {
+                  id: crypto.randomUUID().slice(0, 8),
+                  text: stuntText.trim(),
+                  kind: 'bonus',
+                  bonus: { approach: stuntApproach, action: stuntAction, value: 2 },
+                },
+              ]);
+              setStuntText('');
+            }}
+          >
+            <input
+              placeholder="새 특기 (예: 칼날 같은 혀)"
+              value={stuntText}
+              maxLength={80}
+              onChange={(e) => setStuntText(e.target.value)}
+            />
+            <select
+              value={stuntApproach}
+              onChange={(e) => setStuntApproach(e.target.value as Approach)}
+            >
+              {APPROACHES.map((a) => (
+                <option key={a} value={a}>
+                  {term(a)}
+                </option>
+              ))}
+            </select>
+            <select value={stuntAction} onChange={(e) => setStuntAction(e.target.value as Action)}>
+              {ACTIONS.map((a) => (
+                <option key={a} value={a}>
+                  {term(a)}
+                </option>
+              ))}
+            </select>
+            <button type="submit">추가</button>
+          </form>
+        )}
+        {growing && (
+          <div className={styles.row}>
+            <button
+              type="button"
+              className={styles.ghost}
+              onClick={() => {
+                setGrowing(false);
+                setDraft(c.approaches);
+                setStunts(c.stunts);
               }}
             >
-              <input
-                placeholder="새 특기 (예: 칼날 같은 혀)"
-                value={stuntText}
-                maxLength={80}
-                onChange={(e) => setStuntText(e.target.value)}
-              />
-              <select
-                value={stuntApproach}
-                onChange={(e) => setStuntApproach(e.target.value as Approach)}
-              >
-                {APPROACHES.map((a) => (
-                  <option key={a} value={a}>
-                    {term(a)}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={stuntAction}
-                onChange={(e) => setStuntAction(e.target.value as Action)}
-              >
-                {ACTIONS.map((a) => (
-                  <option key={a} value={a}>
-                    {term(a)}
-                  </option>
-                ))}
-              </select>
-              <button type="submit">추가</button>
-            </form>
-          )}
-          {growing && (
-            <div className={styles.row}>
-              <button
-                type="button"
-                className={styles.ghost}
-                onClick={() => {
-                  setGrowing(false);
-                  setDraft(c.approaches);
-                  setStunts(c.stunts);
-                }}
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                className={styles.primary}
-                disabled={pending || !changed}
-                onClick={() => {
-                  void run({
-                    type: 'character.update',
-                    payload: { id: c.id, patch: { approaches: draft, stunts } },
-                  }).then((evs) => {
-                    if (evs.length) setGrowing(false);
-                  });
-                }}
-              >
-                성장 확정
-              </button>
-            </div>
-          )}
-        </section>
-
-        <section>
-          <h3>
-            {term('stress')} · {term('consequence')}
-          </h3>
-          <div className={styles.stress}>
-            {c.stress.map((used, i) => (
-              <span key={i} data-used={used || undefined}>
-                {i + 1}
-              </span>
-            ))}
+              취소
+            </button>
+            <button
+              type="button"
+              className={styles.primary}
+              disabled={pending || !changed}
+              onClick={() => {
+                void run({
+                  type: 'character.update',
+                  payload: { id: c.id, patch: { approaches: draft, stunts } },
+                }).then((evs) => {
+                  if (evs.length) setGrowing(false);
+                });
+              }}
+            >
+              성장 확정
+            </button>
           </div>
-          <ul className={styles.cons}>
-            {CONSEQUENCE_SLOTS.map((slot) => {
-              const cur = c.consequences[slot];
-              const asp = cur ? state.aspects[cur.aspectId] : undefined;
-              return (
-                <li key={slot} data-filled={!!cur || undefined}>
-                  <span className={styles.slot}>
-                    {term(slot)} <small>−{slot === 'mild' ? 2 : slot === 'moderate' ? 4 : 6}</small>
-                  </span>
-                  <span className={styles.consText}>
-                    {asp?.text ?? (cur ? '후유증' : '비어 있음')}
-                    {cur?.recovering && <small> · 회복 중</small>}
-                  </span>
-                  {cur && !cur.recovering && canEdit && (
-                    <button
-                      type="button"
-                      className={styles.mini}
-                      disabled={pending}
-                      onClick={() =>
-                        void run({
-                          type: 'consequence.startRecovery',
-                          payload: { characterId: c.id, slot },
-                        })
-                      }
-                    >
-                      회복 시작
-                    </button>
-                  )}
-                  {cur && isGm && (
-                    <button
-                      type="button"
-                      className={styles.mini}
-                      disabled={pending}
-                      onClick={() =>
-                        void run({
-                          type: 'consequence.clear',
-                          payload: { characterId: c.id, slot },
-                        })
-                      }
-                    >
-                      지우기
-                    </button>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </section>
+        )}
+      </section>
 
-        {(canEdit || isGm) && (
-          <footer className={styles.footer}>
-            {canEdit && state.conflict && !c.takenOut && (
-              <button
-                type="button"
-                className={styles.ghost}
-                disabled={pending}
-                title="지기로 하고 장면에서 빠져요. 운명점을 받아요."
-                onClick={() => {
-                  if (window.confirm(`${josa(c.name, '이/가')} ${term('concede')}할까요?`))
-                    void run({ type: 'character.concede', payload: { characterId: c.id } });
-                }}
-              >
-                {term('concede')}하기
-              </button>
-            )}
-            {isGm && !c.isNpc && (
-              <span className={styles.row}>
-                {term('milestone')} 주기
-                {(['minor', 'significant', 'major'] as const).map((size) => (
+      <section>
+        <h3>
+          {term('stress')} · {term('consequence')}
+        </h3>
+        <div className={styles.stress} aria-label={term('stress')}>
+          {c.stress.map((used, i) => (
+            <span
+              key={i}
+              data-used={used || undefined}
+              aria-label={`${i + 1}번 칸 ${used ? '참' : '비어 있음'}`}
+            >
+              {i + 1}
+            </span>
+          ))}
+        </div>
+        <ul className={styles.cons}>
+          {CONSEQUENCE_SLOTS.map((slot) => {
+            const cur = c.consequences[slot];
+            const asp = cur ? state.aspects[cur.aspectId] : undefined;
+            return (
+              <li key={slot} data-filled={!!cur || undefined}>
+                <span className={styles.slot}>
+                  {term(slot)} <small>−{slot === 'mild' ? 2 : slot === 'moderate' ? 4 : 6}</small>
+                </span>
+                <span className={styles.consText}>
+                  {asp?.text ?? (cur ? '후유증' : '비어 있음')}
+                  {cur?.recovering && <small> · 회복 중</small>}
+                </span>
+                {cur && !cur.recovering && canEdit && (
                   <button
-                    key={size}
                     type="button"
                     className={styles.mini}
                     disabled={pending}
                     onClick={() =>
                       void run({
-                        type: 'milestone.grant',
-                        payload: { characterIds: [c.id], size },
+                        type: 'consequence.startRecovery',
+                        payload: { characterId: c.id, slot },
                       })
                     }
                   >
-                    {MILESTONE_LABEL[size]}
+                    회복 시작
                   </button>
-                ))}
-              </span>
-            )}
-          </footer>
-        )}
-      </article>
-      {guard.nudge}
-    </div>
+                )}
+                {cur && isGm && (
+                  <button
+                    type="button"
+                    className={styles.mini}
+                    disabled={pending}
+                    onClick={() =>
+                      void run({
+                        type: 'consequence.clear',
+                        payload: { characterId: c.id, slot },
+                      })
+                    }
+                  >
+                    지우기
+                  </button>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
+      {(canEdit || isGm) && (
+        <footer className={styles.footer}>
+          {canEdit && state.conflict && !c.takenOut && (
+            <button
+              type="button"
+              className={styles.ghost}
+              disabled={pending}
+              title="지기로 하고 장면에서 빠져요. 운명점을 받아요."
+              onClick={() => {
+                if (window.confirm(`${josa(c.name, '이/가')} ${term('concede')}할까요?`))
+                  void run({ type: 'character.concede', payload: { characterId: c.id } });
+              }}
+            >
+              {term('concede')}하기
+            </button>
+          )}
+          {isGm && !c.isNpc && (
+            <span className={styles.row}>
+              {term('milestone')} 주기
+              {(['minor', 'significant', 'major'] as const).map((size) => (
+                <button
+                  key={size}
+                  type="button"
+                  className={styles.mini}
+                  disabled={pending}
+                  onClick={() =>
+                    void run({
+                      type: 'milestone.grant',
+                      payload: { characterIds: [c.id], size },
+                    })
+                  }
+                >
+                  {MILESTONE_LABEL[size]}
+                </button>
+              ))}
+            </span>
+          )}
+        </footer>
+      )}
+    </Leaf>
   );
 }

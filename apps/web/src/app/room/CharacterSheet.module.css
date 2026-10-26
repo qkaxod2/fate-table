@@ -1,176 +1,301 @@
-.backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  display: grid;
-  place-items: center;
-  padding: var(--s-4);
-  background: rgb(6 7 14 / 0.7);
-  backdrop-filter: blur(3px);
-  animation: backdrop-in var(--dur-enter) var(--ease-out) backwards;
-}
-
-.sheet {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-3);
-  width: min(100%, 560px);
-  max-height: calc(100dvh - 32px);
-  padding: var(--s-4);
-  overflow-y: auto;
-  border: 1px solid var(--gold);
-  border-radius: var(--r-card);
-  background: var(--panel-s);
-  box-shadow: 0 20px 60px rgb(0 0 0 / 0.6);
-  animation: window-in var(--dur-enter) var(--ease-out) 30ms backwards;
-}
-
+/*
+ * 캐릭터 시트 = 책의 한 장 (components/book/Leaf). 초상 사진이 꽂힌 머리 → 특성 인덱스 카드 →
+ * 접근법 → 특기 → 스트레스 칸·후유증 줄 순서로 위에서 아래로 읽는다.
+ */
 .head {
-  display: flex;
-  gap: var(--s-3);
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--s-4);
+  align-items: start;
 }
 
 .portrait {
-  width: 88px;
-  height: 120px;
-  border: 1px solid var(--gold);
+  width: 96px;
+  height: 124px;
+  padding: 4px;
+  border: 1px solid var(--paper-edge);
+  background: var(--card);
   object-fit: cover;
   object-position: top;
+  rotate: -1.5deg;
+  box-shadow: 0 8px 14px -8px rgb(0 0 0 / 0.55);
 }
 
-.title {
-  flex: 1;
-}
-
-.title h2 {
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   margin: 0;
-  font-family: var(--f-story);
 }
 
-.title p {
-  margin: 2px 0 0;
-  color: var(--muted);
-  font-size: var(--fs-sm);
+.meta div {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: var(--s-2);
+  align-items: baseline;
+}
+
+.meta dt {
+  color: var(--ink-2);
+  font: 600 13px var(--f-ui);
+}
+
+.meta dd {
+  margin: 0;
+  color: var(--ink-1);
+  font: 400 15px/1.5 var(--f-book);
+}
+
+.concept {
+  font-weight: 700 !important;
+}
+
+.out {
+  color: var(--seal);
 }
 
 .fate {
+  --coin: 20px;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--s-1);
+  gap: var(--s-2);
 }
 
-.close {
-  border: 0;
-  background: none;
-  color: var(--muted);
-  font-size: 28px;
-  line-height: 1;
+.fate small {
+  color: var(--ink-2);
+  font: 500 13px var(--f-ui);
+}
+
+.fateBtns {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.fateBtns button,
+.stepper button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--paper-edge);
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--ink-1);
+  font: 700 15px/1 var(--f-ui);
   cursor: pointer;
 }
 
-.sheet h3 {
-  margin: 0 0 var(--s-2);
-  color: var(--gold);
-  font: var(--label-font);
-  letter-spacing: var(--label-track);
+.fateBtns button:not(:disabled):hover,
+.stepper button:hover {
+  border-color: var(--seal);
+  color: var(--seal);
 }
 
-.muted {
-  margin: 0;
-  color: var(--muted);
-  font-size: var(--fs-sm);
+.art {
+  flex: none;
+  height: 32px;
+  margin-top: 2px;
+  padding: 0 12px;
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--r-token);
+  background: var(--paper);
+  color: var(--ink-1);
+  font: 600 13px var(--f-ui);
+  cursor: pointer;
+}
+
+.art:hover {
+  border-color: var(--seal);
+  color: var(--seal);
+}
+
+/* 섹션 머리: 작은 머리말 + 끝까지 가는 가는 줄 */
+.head ~ section > h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin: 0 0 var(--s-2);
+  color: var(--ink-2);
+  font: 600 13px var(--f-ui);
+  letter-spacing: 0.04em;
+}
+
+.head ~ section > h3::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--paper-edge);
 }
 
 .milestone {
-  padding: var(--s-2) var(--s-3);
-  border: 1px solid var(--hi);
-  border-radius: var(--r-card);
-  background: rgb(168 50 28 / 0.08);
+  padding: 12px 16px;
+  border-left: 3px solid var(--seal);
+  border-radius: 4px;
+  background: #f7e9e2;
+}
+
+.milestone strong {
+  font: 700 16px var(--f-book);
 }
 
 .milestone p {
   margin: var(--s-1) 0 var(--s-2);
-  color: var(--muted);
-  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  font: 400 14px/1.6 var(--f-book);
 }
 
+.muted {
+  margin: 0;
+  color: var(--ink-2);
+  font: 400 14px var(--f-book);
+}
+
+/* ---------- 버튼 ---------- */
 .milestone button,
 .primary,
-.inlineForm button,
 .stuntForm button {
-  padding: var(--s-1) var(--s-3);
-  border: 1px solid var(--gold);
-  border-radius: var(--r-ctl);
-  background: var(--gold);
-  color: var(--ink);
-  font: inherit;
-  font-weight: 700;
+  min-height: 36px;
+  padding: 0 var(--s-4);
+  border: 0;
+  border-radius: var(--r-token);
+  background: var(--seal);
+  color: var(--seal-ink);
+  font: 700 14px var(--f-ui);
   cursor: pointer;
 }
 
 .ghost,
 .mini {
-  padding: 2px var(--s-2);
-  border: 1px dashed var(--rule);
-  border-radius: var(--r-ctl);
+  min-height: 32px;
+  padding: 0 var(--s-3);
+  border: 1px solid var(--ink-3);
+  border-radius: var(--r-token);
   background: transparent;
-  color: var(--fg);
-  font: inherit;
-  font-size: var(--fs-sm);
+  color: var(--ink-1);
+  font: 600 13px var(--f-ui);
   cursor: pointer;
 }
 
-.ghost {
-  padding: var(--s-1) var(--s-3);
+.ghost:not(:disabled):hover,
+.mini:not(:disabled):hover {
+  border-color: var(--seal);
+  color: var(--seal);
 }
 
-button:disabled {
-  opacity: 0.4;
+.ghost {
+  min-height: 36px;
+}
+
+.ghost:disabled,
+.mini:disabled,
+.primary:disabled,
+.milestone button:disabled,
+.fateBtns button:disabled,
+.cardTools button:disabled {
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
+/* ---------- 특성: 인덱스 카드 두 줄. 고치기·지우기는 카드 귀퉁이에 붙는다 ---------- */
 .aspects {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-3);
+  margin: 0;
+  padding: 4px 0 0;
+  list-style: none;
+}
+
+.aspectItem {
+  position: relative;
+  display: grid;
+}
+
+.aspectItem:nth-child(odd) {
+  rotate: -0.6deg;
+}
+
+.aspectItem:nth-child(even) {
+  rotate: 0.5deg;
+}
+
+.cardTools {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity var(--dur-hover) var(--ease-out);
+}
+
+.aspectItem:hover .cardTools,
+.aspectItem:focus-within .cardTools {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .cardTools {
+    opacity: 1;
+  }
+}
+
+.cardTools button {
+  min-height: 26px;
+  padding: 0 8px;
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--r-token);
+  background: var(--card);
+  color: var(--ink-1);
+  font: 600 12px var(--f-ui);
+  box-shadow: 0 2px 6px -3px rgb(0 0 0 / 0.4);
+  cursor: pointer;
+}
+
+.cardTools button:not(:disabled):hover {
+  border-color: var(--seal);
+  color: var(--seal);
+}
+
+/* 고치는 중: 같은 자리에 빈 인덱스 카드가 펼쳐진다 */
+.inlineForm {
   display: flex;
   flex-direction: column;
-  gap: var(--s-1);
-}
-
-.aspectRow {
-  display: flex;
-  align-items: center;
   gap: var(--s-2);
+  padding: 10px 12px;
+  border-radius: 4px;
+  background:
+    linear-gradient(var(--rule-red), var(--rule-red)) 0 30px / 100% 1px no-repeat,
+    var(--card);
+  box-shadow:
+    0 0 0 1.5px var(--seal),
+    0 8px 16px -10px rgb(0 0 0 / 0.5);
 }
 
-.aspectRow > :first-child {
-  flex: 1;
+.inlineForm input {
+  width: 100%;
+  padding: 18px 2px 2px;
+  border: 0;
+  border-bottom: 1px solid var(--rule-blue);
+  background: transparent;
+  color: var(--pen);
+  font: 26px/1.2 var(--f-hand);
 }
 
-.inlineForm,
-.stuntForm {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-1);
+.inlineForm input:focus-visible {
+  outline: none;
+  border-bottom-color: var(--seal);
 }
 
-.inlineForm input,
-.stuntForm input,
-.stuntForm select {
-  flex: 1;
-  min-width: 100px;
-  padding: var(--s-1) var(--s-2);
-  border: 1px solid var(--line);
-  border-radius: var(--r-ctl);
-  background: var(--plate);
-  color: var(--fg);
-  font: inherit;
-  font-size: var(--fs-sm);
+.inlineForm .row {
+  justify-content: flex-end;
 }
 
+/* ---------- 접근법 ---------- */
 .approaches {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--s-1);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s-2);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -178,39 +303,51 @@ button:disabled {
 
 .approaches li {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--s-1) var(--s-2);
-  border: 1px solid var(--line);
-  border-radius: var(--r-ctl);
-  background: var(--plate);
+  flex-direction: column-reverse;
+  align-items: flex-start;
+  padding: 8px 12px;
+  border: 1px solid var(--paper-edge);
+  border-radius: 8px;
+  background: var(--paper);
+}
+
+.approaches li > span:first-child {
+  font: 700 15px var(--f-book);
+}
+
+.approaches li[data-best] {
+  border-color: var(--ink-3);
 }
 
 .approaches b {
-  color: var(--gold-hi);
-  font-family: var(--f-num);
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--ink-1);
+  font: 800 26px/1.1 var(--f-fig);
+}
+
+.approaches b small {
+  color: var(--ink-2);
+  font: 500 13px var(--f-ui);
 }
 
 .stepper {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
-.stepper button {
-  width: 22px;
-  height: 22px;
-  border: 1px solid var(--gold);
-  border-radius: 50%;
-  background: transparent;
-  color: var(--gold-hi);
-  cursor: pointer;
+.stepper b {
+  min-width: 1.4em;
+  text-align: center;
 }
 
+/* ---------- 특기 ---------- */
 .stunts {
   display: flex;
   flex-direction: column;
-  gap: var(--s-1);
+  gap: var(--s-2);
   margin: 0 0 var(--s-2);
   padding: 0;
   list-style: none;
@@ -221,11 +358,37 @@ button:disabled {
   align-items: center;
   justify-content: space-between;
   gap: var(--s-2);
-  font-size: var(--fs-sm);
+  padding-left: var(--s-3);
+  border-left: 2px solid var(--ink-3);
+  font: 400 15px/1.55 var(--f-book);
 }
 
 .stunts li[data-used] {
-  opacity: 0.5;
+  opacity: 0.55;
+}
+
+.stunts small {
+  color: var(--ink-2);
+  font: 500 13px var(--f-ui);
+}
+
+.stuntForm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.stuntForm input,
+.stuntForm select {
+  flex: 1;
+  min-width: 110px;
+  min-height: 36px;
+  padding: 4px 10px;
+  border: 1px solid var(--paper-edge);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink-1);
+  font: 400 15px var(--f-book);
 }
 
 /* 열려 있는 동안 상태가 바뀌면(스트레스가 차거나 후유증이 생기면) 툭 바뀌지 않고 번지듯 바뀐다 */
@@ -239,35 +402,42 @@ button:disabled {
     color 320ms var(--ease-out);
 }
 
-.stunts small {
-  color: var(--muted);
-}
-
+/* ---------- 스트레스: 빈 칸은 점선, 찬 칸은 주홍 면 + ✕ ---------- */
 .stress {
   display: flex;
-  gap: var(--s-1);
-  margin-bottom: var(--s-2);
+  gap: 8px;
+  margin-bottom: var(--s-3);
 }
 
 .stress span {
+  position: relative;
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
-  border: 1.5px solid var(--fg);
-  font-family: var(--f-num);
+  width: 34px;
+  height: 34px;
+  border: 2px dashed var(--ink-3);
+  border-radius: 4px;
+  color: var(--ink-1);
+  font: 800 16px var(--f-fig);
 }
 
 .stress span[data-used] {
-  border-color: var(--danger);
-  background: var(--danger);
-  color: var(--ink);
+  border: 2px solid var(--seal);
+  background: var(--seal);
+  color: transparent;
 }
 
+.stress span[data-used]::after {
+  content: '✕';
+  position: absolute;
+  color: var(--seal-ink);
+  font: 700 15px var(--f-ui);
+}
+
+/* ---------- 후유증: 괘선 위에 손글씨로 적힌다 ---------- */
 .cons {
   display: flex;
   flex-direction: column;
-  gap: var(--s-1);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -275,29 +445,43 @@ button:disabled {
 
 .cons li {
   display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  padding: var(--s-1) var(--s-2);
-  border: 1px solid var(--line);
-  border-radius: var(--r-ctl);
-  font-size: var(--fs-sm);
-}
-
-.cons li[data-filled] {
-  border-color: var(--k-consequence);
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-2) var(--s-3);
+  padding: 6px 0;
+  border-bottom: 1px solid var(--rule-blue);
 }
 
 .slot {
-  width: 64px;
-  color: var(--muted);
+  flex: none;
+  width: 70px;
+  color: var(--ink-2);
+  font: 600 13px var(--f-ui);
+}
+
+.slot small {
+  color: var(--ink-3);
 }
 
 .consText {
   flex: 1;
+  min-width: 120px;
+  color: var(--ink-3);
+  font: 400 14px var(--f-book);
+}
+
+.cons li[data-filled] .slot {
+  color: var(--seal);
+}
+
+.cons li[data-filled] .consText {
+  color: var(--pen);
+  font: 22px/1.2 var(--f-hand);
 }
 
 .consText small {
-  color: var(--good);
+  color: var(--ink-2);
+  font: 500 13px var(--f-ui);
 }
 
 .footer,
@@ -310,58 +494,25 @@ button:disabled {
 
 .footer {
   justify-content: space-between;
-  padding-top: var(--s-2);
-  border-top: 1px solid var(--line);
-  color: var(--muted);
-  font-size: var(--fs-sm);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--paper-edge);
+  color: var(--ink-2);
+  font: 600 13px var(--f-ui);
 }
 
-.fateBtns {
-  display: inline-flex;
-  gap: 4px;
-  margin-left: var(--s-2);
-}
-
-.fateBtns button {
-  width: 24px;
-  height: 24px;
-  border: 1px solid var(--gold);
-  border-radius: 50%;
-  background: transparent;
-  color: var(--gold-hi);
-  cursor: pointer;
-}
-
-.art {
-  margin-left: var(--s-2);
-  padding: 1px var(--s-2);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--plate);
-  color: var(--gold-hi);
-  font: inherit;
-  font-family: var(--f-ui);
-  font-size: var(--fs-xs);
-  vertical-align: middle;
-  cursor: pointer;
-}
-
-/* 창은 뒤가 흐려진 다음 살짝 떠오르며 열린다 */
-@keyframes backdrop-in {
-  from {
-    opacity: 0;
+@media (max-width: 560px) {
+  .aspects {
+    grid-template-columns: 1fr;
   }
-}
-
-@keyframes window-in {
-  from {
-    opacity: 0;
-    transform: translateY(12px) scale(0.97);
+  .approaches {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .sheet {
-    animation-name: backdrop-in;
+  .portrait {
+    width: 76px;
+    height: 98px;
+  }
+  .meta div {
+    grid-template-columns: 1fr;
+    gap: 0;
   }
 }

@@ -24,6 +24,8 @@ export function MySheet({
   companions = [],
   onPick,
   pickHint,
+  onOpenSheet,
+  compact,
 }: {
   /** 없으면(GM·관전) 동료 줄만 보인다 */
   character?: Character | undefined;
@@ -34,6 +36,10 @@ export function MySheet({
   /** 동료를 누르면 (시트 열기, 움직일 캐릭터로 고르기) */
   onPick?: (id: string) => void;
   pickHint?: (id: string) => string;
+  /** 내 캐릭터 시트 전체(특성·접근법·특기)를 펼친다 */
+  onOpenSheet?: () => void;
+  /** 한 줄 기록 (GM: 움직이는 NPC는 무대 이름표에도 나오니 짧게) */
+  compact?: boolean;
 }) {
   if (!c)
     return (
@@ -51,11 +57,19 @@ export function MySheet({
       className={styles.sheet}
       aria-label={`${c.name} 기록지`}
       data-out={c.takenOut || undefined}
+      data-compact={compact || undefined}
     >
       <div className={styles.me}>
         {image && <img className={styles.portrait} src={image} alt="" />}
         <div className={styles.body}>
-          <h2 className={styles.name}>{c.name}</h2>
+          <h2 className={styles.name}>
+            {c.name}
+            {onOpenSheet && (
+              <button type="button" className={styles.open} onClick={onOpenSheet}>
+                시트 펼치기
+              </button>
+            )}
+          </h2>
           {(high || trouble) && (
             <p className={styles.concept}>
               {high}
@@ -68,12 +82,15 @@ export function MySheet({
             </p>
           )}
           <div className={styles.stats}>
-            <div className={styles.stat}>
-              <span className={styles.label}>{term('fatePoint')}</span>
-              <span data-fx-fp={c.id} className={styles.coins}>
-                <FatePointToken count={c.fatePoints} />
-              </span>
-            </div>
+            {/* NPC는 운명점 대신 GM 풀을 쓴다 (GM 서랍 줄에 보인다) */}
+            {!c.isNpc && (
+              <div className={styles.stat}>
+                <span className={styles.label}>{term('fatePoint')}</span>
+                <span data-fx-fp={c.id} className={styles.coins}>
+                  <FatePointToken count={c.fatePoints} />
+                </span>
+              </div>
+            )}
             <div className={styles.stat}>
               <span className={styles.label}>{term('stress')}</span>
               <span className={styles.boxes}>

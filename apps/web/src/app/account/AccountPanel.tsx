@@ -79,9 +79,21 @@ export function AccountPanel() {
             )}
           </div>
         )}
-        {account === undefined && <p className={styles.lead}>계정을 확인하는 중…</p>}
+        {account === undefined && (
+          <p className={styles.lead} role="status">
+            계정을 확인하는 중이에요…
+          </p>
+        )}
         {account === null && (
-          <p className={styles.lead}>서버가 연결된 배포 사이트에서만 계정을 쓸 수 있어요.</p>
+          <>
+            <p className={styles.lead}>로그인하면 내 방과 캐릭터를 다른 기기에서도 이어서 써요.</p>
+            <p className={styles.note}>
+              <strong>지금은 계정을 쓸 수 없어요</strong>
+              서버가 연결된 배포 사이트에서만 로그인할 수 있어요.{' '}
+              <Link href="/tutorial/">튜토리얼</Link>과 <Link href="/create/">캐릭터 만들기</Link>는
+              로그인 없이도 돼요.
+            </p>
+          </>
         )}
         {account && account.kind !== 'member' && (
           <SignInForms account={account} options={options} onNotice={setNotice} />
@@ -139,7 +151,7 @@ function SignInForms({
   return (
     <>
       <p className={styles.lead}>
-        로그인하면 내가 들어간 방과 만든 캐릭터가 다른 기기에서도 그대로 보여요.
+        로그인하면 내가 들어간 방과 만든 캐릭터를 다른 기기에서도 그대로 이어서 써요.
         {account.kind === 'anonymous' && ' 지금 이 브라우저에서 쓰던 기록도 계정으로 옮겨져요.'}
       </p>
       <div className={own.tabs} role="tablist">

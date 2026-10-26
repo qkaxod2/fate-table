@@ -1,0 +1,39 @@
+/*
+ * 행동 자리 (목차형 행동 · 누구로/난이도 칩).
+ * 넓은 화면: 책 열 맨 아래에 붙어 있어서, 책 본문(기록)이 길어지거나 GM 도구가 늘어도 늘 보인다.
+ * 책은 --dock-h만큼 아래를 비워 둔다.
+ */
+.dock {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 6;
+  width: var(--book-w);
+  /* 접근법 고르기 창이 띠 위로 펼쳐지므로 넘침을 자르지 않는다 */
+  background: var(--paper-grain), var(--paper);
+  box-shadow:
+    0 -1px 0 var(--paper-edge),
+    0 -14px 22px -18px rgb(40 25 10 / 0.5);
+}
+
+/*
+ * 좁은 화면: 화면 아래에 붙은 띠. 책을 끝까지 내리지 않아도 바로 고르고 굴릴 수 있다.
+ * 판정 시트가 떠 있는 동안(굴림이 끝나기 전)에는 시트가 이 자리를 쓴다.
+ */
+@media (max-width: 1100px) {
+  .dock {
+    position: fixed;
+    /* 튜토리얼 안내가 아래 시트로 떠 있으면 그 위에 붙는다 */
+    bottom: var(--coach-sheet, 0px);
+    left: 0;
+    z-index: 30;
+    width: auto;
+    padding-bottom: env(safe-area-inset-bottom);
+    box-shadow:
+      0 -1px 0 var(--paper-edge),
+      0 -12px 28px -14px rgb(40 25 10 / 0.6);
+  }
+  :global(body:has([data-sheet]:not([data-coach]))) .dock {
+    display: none;
+  }
+}

@@ -22,7 +22,19 @@ const PAD = 8;
 function boxOf(el: Element, pad = PAD): Box | null {
   const r = el.getBoundingClientRect();
   if (r.width === 0 && r.height === 0) return null;
-  return { x: r.left - pad, y: r.top - pad, w: r.width + pad * 2, h: r.height + pad * 2 };
+  // 카드 밖으로 걸쳐 나온 버튼(굴리기 봉인 등)도 구멍 안에 들어오게 넓힌다
+  let [l, t, rt, b] = [r.left, r.top, r.right, r.bottom];
+  for (const btn of el.querySelectorAll('button')) {
+    const q = btn.getBoundingClientRect();
+    if (q.width === 0 && q.height === 0) continue;
+    [l, t, rt, b] = [
+      Math.min(l, q.left),
+      Math.min(t, q.top),
+      Math.max(rt, q.right),
+      Math.max(b, q.bottom),
+    ];
+  }
+  return { x: l - pad, y: t - pad, w: rt - l + pad * 2, h: b - t + pad * 2 };
 }
 
 const same = (a: Box[], b: Box[]) =>
@@ -88,6 +100,8 @@ export function Spotlight({ open, ring }: Props) {
     const tick = () => {
       const h = open
         .flatMap((sel) => [...document.querySelectorAll(sel)])
+        // 안내 말풍선은 어둠보다 위에 떠 있어서 따로 뚫을 필요가 없다 (뚫으면 둘레에 밝은 테가 생긴다)
+        .filter((el) => !el.hasAttribute('data-coach'))
         .map((el) => boxOf(el))
         .filter((b): b is Box => b !== null);
       const r = ring
@@ -98,19 +112,22 @@ export function Spotlight({ open, ring }: Props) {
       const d = dimPath(h, window.innerWidth, window.innerHeight);
       if (d !== lastPath) setPath((lastPath = d));
       if (!lastRing || !same(r, lastRing)) setTarget((lastRing = r));
-      // 좁은 화면에서는 안내 카드가 위에 붙어 있으니, 스크롤로 무언가를 보여 줄 때 그 밑으로 숨지 않게
-      const coach = document.querySelector('[data-coach][data-pinned]');
-      const pad =
-        coach && window.matchMedia('(max-width: 1100px)').matches
-          ? `${Math.round(coach.getBoundingClientRect().bottom + 12)}px`
-          : '';
-      if (root.style.scrollPaddingTop !== pad) root.style.scrollPaddingTop = pad;
+      // 좁은 화면에서는 안내가 아래 시트로 떠 있으니, 스크롤로 무언가를 보여 줄 때 그 밑으로 숨지 않게
+      const sheet = document.querySelector('[data-coach][data-sheet]');
+      const coachH = sheet ? Math.round(window.innerHeight - sheet.getBoundingClientRect().top) : 0;
+      const pad = sheet ? `${coachH + 12}px` : '';
+      if (root.style.scrollPaddingBottom !== pad) root.style.scrollPaddingBottom = pad;
+      // 판정 시트(RollSheet)는 이 값만큼 안내 시트 위로 올라앉는다
+      const lift = sheet ? `${coachH}px` : '';
+      if (root.style.getPropertyValue('--coach-sheet') !== lift)
+        root.style.setProperty('--coach-sheet', lift);
       raf = requestAnimationFrame(tick);
     };
     tick();
     return () => {
       cancelAnimationFrame(raf);
-      root.style.scrollPaddingTop = '';
+      root.style.scrollPaddingBottom = '';
+      root.style.removeProperty('--coach-sheet');
     };
     // open은 매번 새 배열이라 내용(key)으로 비교한다
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -120,11 +137,11 @@ export function Spotlight({ open, ring }: Props) {
   useEffect(() => {
     if (!ring) return;
     const t = window.setTimeout(() => {
-      // 좁은 화면에서는 안내 카드가 위에 붙어 있으니 대상은 화면 아래쪽에 오게 한다
-      const narrow = window.matchMedia('(max-width: 1100px)').matches;
+      // 휴대폰에서는 안내 시트가 아래를 덮으니, 대상은 시트 위 남은 화면의 가운데로 온다
+      const sheet = window.matchMedia('(max-width: 760px)').matches;
       document
         .querySelector(ring)
-        ?.scrollIntoView({ block: narrow ? 'end' : 'nearest', behavior: 'smooth' });
+        ?.scrollIntoView({ block: sheet ? 'center' : 'nearest', behavior: 'smooth' });
     }, 120);
     return () => window.clearTimeout(t);
   }, [ring]);

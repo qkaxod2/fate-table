@@ -2,7 +2,8 @@
   position: fixed;
   top: var(--s-4);
   left: 50%;
-  z-index: 50;
+  /* 창(60)과 시트·오버레이 위에서도 알림이 보이게 */
+  z-index: 90;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -34,23 +35,26 @@
 }
 
 .toast[data-tone='success'] {
-  border-color: var(--good);
+  border-color: var(--ink-3);
+  box-shadow:
+    inset 3px 0 0 var(--seal),
+    0 8px 28px rgb(0 0 0 / 0.45);
 }
 
 .toast button {
   padding: 2px var(--s-3);
-  border: 1px solid var(--gold);
+  border: 1px solid var(--seal);
   border-radius: var(--r-token);
   background: transparent;
-  color: var(--gold-hi);
+  color: var(--seal);
   font: inherit;
   font-weight: 700;
   cursor: pointer;
 }
 
 .toast button:hover {
-  background: var(--gold);
-  color: var(--ink);
+  background: var(--seal);
+  color: var(--seal-ink);
 }
 
 @keyframes toast-in {

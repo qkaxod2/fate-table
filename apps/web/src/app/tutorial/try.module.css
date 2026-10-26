@@ -1,44 +1,72 @@
-/* ---------- 캐릭터 고르기 ---------- */
+/* ---------- 캐릭터 고르기: 책의 "등장인물" 쪽 ---------- */
 .picker {
   min-height: 100dvh;
-  padding: var(--s-6) var(--s-4);
-  background:
-    radial-gradient(ellipse at 50% 0%, rgb(168 50 28 / 0.14), transparent 60%), var(--night);
+  padding: clamp(32px, 6vh, 64px) 16px 48px;
+  background: var(--paper-grain), var(--paper);
+  color: var(--ink-1);
+}
+
+.pickHead {
+  max-width: 720px;
+  margin: 0 auto 32px;
   text-align: center;
 }
 
+.pickKicker {
+  margin: 0 0 6px;
+  color: var(--seal);
+  font: 600 var(--fs-sm) / 1.4 var(--f-ui);
+  letter-spacing: var(--label-track);
+}
+
+/* 쪽 제목 아래 가는 두 줄 (책의 장 표제) */
 .pickTitle {
-  margin: 0 0 var(--s-2);
-  font-family: var(--f-story);
-  font-size: clamp(26px, 5vw, 40px);
+  margin: 0;
+  padding-bottom: 14px;
+  border-bottom: 3px double var(--ink-3);
+  font: 800 clamp(28px, 4.6vw, 44px) / 1.2 var(--f-head);
+  word-break: keep-all;
 }
 
 .pickLead {
-  margin: 0 auto var(--s-6);
-  max-width: 520px;
-  color: var(--muted);
+  margin: 14px 0 0;
+  color: var(--ink-2);
+  font: 400 var(--fs-md) / 1.65 var(--f-book);
+  word-break: keep-all;
 }
 
 .pickGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 260px));
+  grid-template-columns: repeat(3, minmax(0, 300px));
   justify-content: center;
-  gap: var(--s-4);
+  gap: 28px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.pickCard {
+.pickItem {
   display: flex;
+}
+
+/* 한 사람 = 초상 사진을 테이프로 붙인 소개 카드 */
+.pickCard {
+  position: relative;
+  display: flex;
+  flex: 1;
   flex-direction: column;
-  align-items: center;
-  gap: var(--s-1);
-  padding: 0 var(--s-3) var(--s-4);
-  overflow: hidden;
-  border: 1px solid var(--rule);
-  border-radius: var(--r-card);
-  background: linear-gradient(180deg, transparent 40%, var(--panel-s));
-  color: var(--fg);
+  padding: 12px 12px 16px;
+  border: 1px solid var(--paper-edge);
+  border-radius: 4px;
+  background: var(--paper-grain), var(--card);
+  color: var(--ink-1);
   font: inherit;
+  text-align: left;
   cursor: pointer;
+  box-shadow:
+    0 1px 0 var(--paper-edge),
+    0 14px 28px -18px rgb(40 25 10 / 0.6);
+  rotate: -0.6deg;
   transition:
     transform var(--dur-enter) var(--ease-out),
     box-shadow var(--dur-enter) var(--ease-out),
@@ -46,36 +74,176 @@
     var(--press);
 }
 
+.pickItem:nth-child(2) .pickCard {
+  rotate: 0.5deg;
+}
+
+.pickItem:nth-child(3) .pickCard {
+  rotate: -0.3deg;
+}
+
 .pickCard:hover,
 .pickCard:focus-visible {
   transform: translateY(-6px);
-  border-color: var(--gold);
+  border-color: var(--ink-3);
   box-shadow:
-    0 14px 36px rgb(0 0 0 / 0.45),
-    0 0 24px rgb(168 50 28 / 0.18);
+    0 1px 0 var(--paper-edge),
+    0 24px 36px -18px rgb(40 25 10 / 0.65);
+}
+
+/* 초상: 액자 안의 그림, 위에 테이프 한 조각 */
+.pickPhoto {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border: 1px solid var(--paper-edge);
+  background: linear-gradient(180deg, var(--paper-2), var(--paper));
+}
+
+.pickPhoto::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  z-index: 1;
+  width: 72px;
+  height: 18px;
+  background: rgb(226 205 160 / 0.75);
+  box-shadow: 0 1px 2px rgb(40 25 10 / 0.15);
+  translate: -50% 0;
+  rotate: -2deg;
 }
 
 .pickImg {
+  display: block;
   width: 100%;
-  aspect-ratio: 416 / 420;
+  aspect-ratio: 5 / 4;
   object-fit: cover;
-  object-position: top;
+  object-position: center 8%;
+}
+
+/* 등장 순서 번호 (책 여백의 작은 숫자) */
+.pickNo {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding: 4px 8px 2px 10px;
+  border-top-left-radius: 6px;
+  background: var(--card);
+  color: var(--ink-2);
+  font: 800 20px / 1 var(--f-fig);
+}
+
+.pickInfo {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 12px 4px 0;
 }
 
 .pickName {
-  font-family: var(--f-story);
-  font-weight: 700;
-  font-size: var(--fs-xl);
-}
-
-.pickHigh {
-  color: var(--gold-hi);
-  font-size: var(--fs-sm);
+  font: 800 26px / 1.2 var(--f-head);
 }
 
 .pickBlurb {
-  color: var(--muted);
-  font-size: var(--fs-sm);
+  margin-top: 2px;
+  color: var(--ink-2);
+  font: 400 var(--fs-sm) / 1.5 var(--f-book);
+}
+
+/* 핵심 컨셉·약점: 파란 가로줄 위 손글씨 (특성 카드 문법) */
+.pickIndex {
+  display: grid;
+  margin: 12px 0 0;
+  padding: 6px 10px 4px;
+  border-top: 2px solid var(--rule-red);
+  background: var(--plate);
+}
+
+.pickLabel {
+  color: var(--seal);
+  font: 600 12px / 1.4 var(--f-ui);
+  letter-spacing: var(--label-track);
+}
+
+.pickLabel[data-trouble] {
+  margin-top: 4px;
+  color: var(--ink-2);
+}
+
+.pickHand {
+  color: var(--pen);
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--rule-blue);
+  font: 400 23px / 1.15 var(--f-hand);
+  word-break: keep-all;
+}
+
+.pickStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 12px;
+  color: var(--ink-2);
+  font: 500 var(--fs-sm) / 1.4 var(--f-ui);
+}
+
+.pickStats b {
+  color: var(--ink-1);
+  font: 800 var(--fs-lg) / 1 var(--f-fig);
+}
+
+.pickGo {
+  margin-top: auto;
+  padding-top: 14px;
+  color: var(--seal);
+  font: 600 var(--fs-sm) / 1.4 var(--f-ui);
+}
+
+.pickCard:hover .pickGo,
+.pickCard:focus-visible .pickGo {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* 좁은 화면: 사진은 왼쪽, 소개는 오른쪽으로 눕혀 세 사람이 한 화면에 가깝게 들어오게 */
+@media (max-width: 860px) {
+  .pickGrid {
+    grid-template-columns: minmax(0, 520px);
+    gap: 16px;
+  }
+  .pickCard {
+    flex-direction: row;
+    gap: 12px;
+    padding: 10px;
+  }
+  .pickPhoto {
+    flex: 0 0 34%;
+    align-self: stretch;
+  }
+  .pickImg {
+    height: 100%;
+    aspect-ratio: auto;
+    object-position: center 6%;
+  }
+  .pickInfo {
+    padding: 2px 0 0;
+  }
+  .pickName {
+    font-size: 22px;
+  }
+  .pickHand {
+    font-size: 21px;
+  }
+  .pickIndex {
+    margin-top: 8px;
+  }
+  .pickStats {
+    margin-top: 8px;
+  }
+  .pickGo {
+    padding-top: 8px;
+  }
 }
 
 /* ---------- 무대 ---------- */
@@ -203,139 +371,55 @@
   transform: scaleX(-1);
 }
 
-.rollPanel {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-  /* 발동 카드가 한 줄에 더 많이 들어가도록 무대 폭을 넉넉히 쓴다 */
-  width: min(100%, 960px);
-  max-height: calc(100dvh - 300px);
-  overflow-y: auto;
-  border: 1px solid var(--rule);
-  border-radius: var(--r-panel);
-  background: var(--surface-2);
-  box-shadow: var(--sh-float);
-  transform-origin: 50% 100%;
-}
-
-/* 굴림 패널은 무대 아래에서 떠오른다. 기다리던 패널을 이어받을 때는 다시 뜨지 않는다 */
-.rollPanel:not([data-continued]) {
-  animation: panel-in var(--dur-enter) var(--ease-out) backwards;
-}
-
-@keyframes panel-in {
-  from {
-    opacity: 0;
-    transform: translateY(14px) scale(0.98);
-  }
-}
-
-.sides {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: var(--s-4);
-  padding: var(--s-3) var(--s-3) 0;
-}
-
-.side {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-}
-
-.sideHead {
-  font: var(--label-font);
-  letter-spacing: var(--label-track);
-  color: var(--gold);
-}
-
-.total {
-  font-family: var(--f-pop);
-  font-weight: 800;
-  font-size: 32px;
-  line-height: 1;
-  transform-origin: 0 100%;
-  animation: total-in 420ms var(--ease-spring) backwards;
-}
-
-@keyframes total-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px) scale(0.7);
-  }
-}
-
-.total small {
-  font-family: var(--f-story);
-  font-size: var(--fs-md);
-  font-weight: 500;
-  color: var(--muted);
-}
-
-.mods {
-  display: block;
-  margin-top: 4px;
-  font-family: var(--f-num) !important;
-  font-size: var(--fs-xs) !important;
-}
-
+/* 판정 기록 카드(CheckCard) 아래 줄: 기다림 · 특기 적용 · 방어 확정 */
 .waiting {
-  align-self: flex-start;
-  padding: 2px var(--s-2);
-  border-radius: var(--r-token);
-  background: var(--gold);
-  color: var(--ink);
-  font-size: var(--fs-xs);
-}
-
-.vs {
-  font-family: var(--f-deco);
-  font-size: 32px;
-  color: var(--gold);
-}
-
-.difficulty {
-  padding: var(--s-2) var(--s-3);
-  border: 1px dashed var(--rule);
-  border-radius: var(--r-ctl);
-  font-family: var(--f-story);
+  margin: 0;
+  color: var(--ink-2);
+  font: 500 14px/1.5 var(--f-book);
 }
 
 .stunt {
-  align-self: center;
-  padding: 4px var(--s-3);
-  border: 1px solid var(--good);
+  padding: 6px var(--s-4);
+  border: 1.5px solid var(--seal);
   border-radius: var(--r-token);
-  background: rgb(94 209 186 / 0.15);
-  color: var(--good-hi);
-  font: inherit;
-  font-size: var(--fs-sm);
+  background: transparent;
+  color: var(--seal);
+  font: 700 14px var(--f-ui);
   cursor: pointer;
+}
+
+.stunt:not(:disabled):hover {
+  background: #f7e9e2;
+}
+
+.stunt:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .defenseOk {
-  align-self: center;
   padding: var(--s-2) var(--s-5);
-  border: 1px solid var(--gold-hi);
-  border-radius: var(--r-ctl);
-  background: linear-gradient(180deg, var(--gold-hi), var(--gold));
-  color: var(--ink);
-  font: inherit;
-  font-weight: 700;
+  border: 1.5px solid var(--ink-1);
+  border-radius: var(--r-token);
+  background: var(--ink-1);
+  color: var(--paper);
+  font: 700 15px var(--f-ui);
   cursor: pointer;
 }
 
+/*
+ * 테이블 위 오버레이 (강요 카드 · 이름 짓기 · 피해 받아내기 · 방어 접근법).
+ * 무대를 따뜻한 먹빛으로 가라앉히고, 가운데에 종이 카드 한 장을 내민다. 좁은 화면에서는 아래에서 올라오는 시트.
+ */
 .overlay {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 9;
   display: grid;
   place-items: center;
-  background: rgb(12 14 26 / 0.55);
+  padding: var(--s-4);
+  overflow-y: auto;
+  background: rgb(26 18 10 / 0.58);
   animation: fade var(--dur-enter) var(--ease-out) backwards;
 }
 
@@ -356,39 +440,74 @@
   }
 }
 
+/* 이름 짓기 · 피해 · 방어: 겹테두리 종이 카드 (판정 카드와 같은 집) */
 .prompt {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--s-2);
-  width: min(100%, 420px);
-  padding: var(--s-4);
-  border: 1px solid var(--gold);
-  border-radius: var(--r-card);
-  background: var(--panel);
-  box-shadow: var(--shadow-panel);
+  gap: var(--s-3);
+  width: min(100%, 460px);
+  padding: 24px 26px 22px;
+  border-radius: 6px;
+  background: var(--paper-grain), var(--card);
+  color: var(--ink-1);
+  box-shadow: 0 34px 70px -22px rgb(0 0 0 / 0.9);
+  outline: none;
+}
+
+.prompt::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border: 1px solid var(--ink-3);
+  border-radius: 3px;
+  outline: 1px solid var(--paper-edge);
+  outline-offset: 3px;
+  pointer-events: none;
 }
 
 .promptHead {
-  font-family: var(--f-story);
-  font-weight: 700;
-  font-size: var(--fs-lg);
+  font: 800 21px/1.35 var(--f-head);
 }
 
 .promptHelp {
   margin: 0;
-  color: var(--muted);
-  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  font: 400 15px/1.6 var(--f-book);
 }
 
+.promptHelp small {
+  color: var(--ink-2);
+  font: 500 13px var(--f-ui);
+}
+
+/* 새 특성 이름: 빈 인덱스 카드에 펜으로 적는다 (빨간 머리줄 + 파란 괘선) */
 .promptInput {
-  padding: var(--s-2) var(--s-3);
-  border: 1px solid var(--gold);
-  border-radius: var(--r-ctl);
-  background: var(--card);
-  color: var(--ink-1);
-  font-family: var(--f-story);
-  font-weight: 700;
-  font-size: var(--fs-lg);
+  width: 100%;
+  min-height: 64px;
+  padding: 22px 14px 6px;
+  border: 0;
+  border-radius: 3px;
+  background:
+    linear-gradient(var(--rule-red), var(--rule-red)) 0 16px / 100% 1.5px no-repeat,
+    repeating-linear-gradient(transparent 0 35px, var(--rule-blue) 35px 36px) 0 16px / 100% 100%
+      no-repeat,
+    #fffdf8;
+  color: var(--pen);
+  font: 30px/1.2 var(--f-hand);
+  box-shadow:
+    0 0 0 1px var(--paper-edge),
+    0 8px 16px -10px rgb(0 0 0 / 0.45);
+  rotate: -0.5deg;
+}
+
+.promptInput::placeholder {
+  color: color-mix(in srgb, var(--pen) 45%, transparent);
+}
+
+.promptInput:focus-visible {
+  outline: 2px solid var(--seal);
+  outline-offset: 2px;
 }
 
 .promptButtons {
@@ -397,19 +516,46 @@
   gap: var(--s-2);
 }
 
+.promptButtons .restart {
+  height: 40px;
+  border-color: var(--ink-3);
+  background: transparent;
+  color: var(--ink-1);
+  font: 600 15px var(--f-ui);
+}
+
 .promptOk {
-  padding: var(--s-2) var(--s-4);
-  border: 1px solid var(--gold-hi);
-  border-radius: var(--r-ctl);
-  background: var(--gold);
-  color: var(--ink);
-  font: inherit;
-  font-weight: 600;
+  min-height: 40px;
+  padding: 0 var(--s-5);
+  border: 0;
+  border-radius: var(--r-token);
+  background: var(--seal);
+  color: var(--seal-ink);
+  font: 700 15px var(--f-ui);
   cursor: pointer;
 }
 
+.promptOk:not(:disabled):hover {
+  background: var(--seal-hi);
+}
+
 .promptOk:disabled {
-  opacity: 0.5;
+  background: var(--paper-2);
+  color: var(--ink-3);
+  cursor: not-allowed;
+}
+
+.promptButtons kbd {
+  margin-left: 4px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .promptButtons kbd,
+  .promptHelp small {
+    display: none;
+  }
 }
 
 .right {
@@ -566,9 +712,6 @@
     overflow-x: hidden;
     scrollbar-width: thin;
   }
-  .center > .rollPanel {
-    max-height: 100%;
-  }
   .right {
     max-height: none;
   }
@@ -599,12 +742,6 @@
   .topRight {
     flex-wrap: wrap;
   }
-  /* 한 줄로 쌓이는 화면에서는 굴림 패널이 길어져도 안에서 스크롤하지 않는다 */
-  .rollPanel {
-    max-height: none;
-    overflow: visible;
-    scroll-margin-top: var(--s-3);
-  }
   /* 패널이 커질 때 위로 밀려 올라가지 않게 위에서부터 쌓는다 */
   .center {
     justify-content: flex-start;
@@ -633,26 +770,25 @@
 
 /* ---------- 들어오는 순서 ---------- */
 /* 고르기 화면: 카드가 하나씩 올라온다 */
-.pickCard {
+.pickItem {
   animation: rise var(--dur-scene) var(--ease-out) backwards;
 }
-.pickCard:nth-child(2) {
+.pickItem:nth-child(2) {
   animation-delay: calc(var(--stagger) * 2);
 }
-.pickCard:nth-child(3) {
+.pickItem:nth-child(3) {
   animation-delay: calc(var(--stagger) * 4);
 }
 
-/* 고르면: 고른 카드가 금빛으로 앞으로 나서고, 나머지와 제목은 물러난다 */
+/* 고르면: 고른 카드에 주홍 봉인이 찍히며 앞으로 나서고, 나머지와 제목은 물러난다 */
 .picker[data-chosen] .pickCard,
-.picker[data-chosen] .pickTitle,
-.picker[data-chosen] .pickLead {
+.picker[data-chosen] .pickHead {
   transition:
     opacity 360ms var(--ease-in),
     scale 360ms var(--ease-in),
     filter 360ms var(--ease-in);
   opacity: 0;
-  scale: 0.94;
+  scale: 0.96;
   filter: blur(2px);
   pointer-events: none;
 }
@@ -661,15 +797,44 @@
   transition:
     transform 420ms var(--ease-spring),
     scale 420ms var(--ease-spring),
+    rotate 420ms var(--ease-spring),
     box-shadow 420ms var(--ease-out);
   opacity: 1;
-  scale: 1.06;
+  scale: 1.04;
+  rotate: 0deg;
   filter: none;
   transform: translateY(-10px);
-  border-color: var(--gold-hi);
+  border-color: var(--seal);
   box-shadow:
-    0 18px 44px rgb(0 0 0 / 0.5),
-    0 0 40px rgb(200 72 44 / 0.45);
+    0 1px 0 var(--paper-edge),
+    0 28px 44px -18px rgb(40 25 10 / 0.7);
+}
+
+.pickCard[data-chosen]::after {
+  content: '선택';
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border: 2px solid var(--seal-ink);
+  border-radius: 50%;
+  background: var(--seal);
+  box-shadow: 0 0 0 2px var(--seal);
+  color: var(--seal-ink);
+  font: 800 16px / 1 var(--f-head);
+  rotate: -12deg;
+  animation: stamp 360ms var(--ease-spring) backwards;
+}
+
+@keyframes stamp {
+  from {
+    opacity: 0;
+    scale: 1.8;
+  }
 }
 
 /* 무대: 배경이 밝아지고, 스탠딩이 들어선 뒤 패널들이 차례로 자리 잡는다 */
@@ -780,7 +945,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pickCard,
+  .pickItem,
+  .pickCard[data-chosen]::after,
   .standee,
   .bossStandee,
   .bossStandee[data-hit],
@@ -789,8 +955,6 @@
   .left,
   .right,
   .bottom,
-  .rollPanel:not([data-continued]),
-  .total,
   :where(.overlay > *) {
     animation-name: fade;
   }
@@ -806,14 +970,39 @@
 }
 
 .promptExplain {
-  margin: 0 0 var(--s-2);
+  margin: 0;
   padding: var(--s-2) var(--s-3) var(--s-2) calc(var(--s-3) + 1em);
-  border-left: 3px solid var(--gold);
-  background: rgb(168 50 28 / 0.12);
-  font-size: var(--fs-sm);
-  line-height: 1.6;
+  border-left: 3px solid var(--seal);
+  background: var(--paper);
+  color: var(--ink-1);
+  font: 400 14px/1.6 var(--f-book);
 }
 
 .promptExplain li + li {
   margin-top: 4px;
+}
+
+/* 좁은 화면: 오버레이는 화면 전체를 덮고, 카드는 아래에서 올라오는 시트가 된다 */
+@media (max-width: 1100px) {
+  .overlay {
+    position: fixed;
+    z-index: 50;
+    align-items: end;
+    padding: 0;
+  }
+  .overlay > * {
+    width: 100%;
+    max-width: 640px;
+    max-height: 88dvh;
+    margin: 0 auto;
+    overflow-y: auto;
+    border-radius: 14px 14px 0 0;
+    rotate: none;
+  }
+  .prompt {
+    padding: 22px 18px calc(18px + env(safe-area-inset-bottom));
+  }
+  .prompt::before {
+    display: none;
+  }
 }

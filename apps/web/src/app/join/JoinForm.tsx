@@ -31,7 +31,9 @@ export function JoinForm() {
       rememberRoom({ id: r.roomId, name: code.trim().toUpperCase(), role: r.role });
       router.push(roomHref(r.roomId));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : '들어가지 못했어요.');
+      setError(
+        err instanceof ApiError ? err.message : '들어가지 못했어요. 잠시 뒤에 다시 해 주세요.',
+      );
       setBusy(false);
     }
   }
@@ -44,6 +46,13 @@ export function JoinForm() {
         </Link>
         <h1 className={styles.title}>방 참가</h1>
         <p className={styles.lead}>GM에게 받은 초대 코드와 이 방에서 쓸 닉네임을 적어 주세요.</p>
+        {!online && (
+          <p className={styles.note}>
+            <strong>지금은 방에 들어갈 수 없어요</strong>
+            서버가 연결된 배포 사이트에서만 참가할 수 있어요. 여기서는{' '}
+            <Link href="/tutorial/">튜토리얼</Link>을 바로 해 볼 수 있어요.
+          </p>
+        )}
         <form className={styles.form} onSubmit={submit}>
           <label className={styles.field}>
             초대 코드
@@ -52,6 +61,10 @@ export function JoinForm() {
               value={code}
               onChange={(e) => setCode(e.target.value)}
               maxLength={8}
+              placeholder="8자리 코드"
+              autoComplete="off"
+              autoCapitalize="characters"
+              spellCheck={false}
               required
             />
           </label>
@@ -61,10 +74,15 @@ export function JoinForm() {
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
               maxLength={30}
+              placeholder="방에서 불릴 이름"
               required
             />
           </label>
-          {error && <p className={styles.error}>{error}</p>}
+          {error && (
+            <p className={styles.error} role="alert">
+              {error}
+            </p>
+          )}
           <button
             aria-busy={busy || undefined}
             type="submit"
