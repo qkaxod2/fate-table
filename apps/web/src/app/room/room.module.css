@@ -83,8 +83,18 @@
   margin-top: var(--s-2);
 }
 
+.chat button {
+  padding: var(--s-1) var(--s-3);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-ctl);
+  background: transparent;
+  color: var(--gold-hi);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .form button,
-.chat button,
 .fateList button {
   padding: var(--s-1) var(--s-3);
   border: 1px solid var(--gold);

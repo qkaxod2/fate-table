@@ -3,8 +3,7 @@
   flex-direction: column;
   gap: var(--s-3);
   padding: var(--s-3);
-  border-top: 1px solid var(--rule);
-  background: var(--panel);
+  background: var(--surface-2);
   /* 판정 띠가 먼저 뜨고, 그다음 "뒤집을 수 있어요" 카드가 따라 올라온다 */
   animation: tray-in var(--dur-enter) var(--ease-out) 100ms backwards;
 }
@@ -66,8 +65,8 @@
     z-index: 1;
     margin: 0 calc(var(--s-3) * -1) calc(var(--s-3) * -1);
     padding: var(--s-2) var(--s-3) var(--s-3);
-    border-top: 1px solid var(--line);
-    background: var(--panel-s);
+    border-top: 1px solid var(--edge);
+    background: var(--surface-2);
   }
 }
 
@@ -102,15 +101,20 @@
 }
 
 .ghost {
-  border: 1px solid var(--gold);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-ctl);
   background: transparent;
   color: var(--gold-hi);
 }
 
 .primary {
+  padding-inline: var(--s-5);
   border: 1px solid var(--gold-hi);
-  background: var(--gold);
+  border-radius: var(--r-ctl);
+  background: linear-gradient(180deg, var(--gold-hi), var(--gold));
   color: var(--ink);
+  font-weight: 700;
+  box-shadow: 0 6px 20px -8px rgb(214 182 110 / 0.7);
 }
 
 .ghost small {

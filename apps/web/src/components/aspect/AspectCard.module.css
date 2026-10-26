@@ -74,7 +74,7 @@ button.card:not(:disabled):hover::after {
 .card[data-highlight] {
   border-width: 2px;
   box-shadow:
-    0 0 0 3px rgb(242 123 173 / 0.35),
+    0 0 0 3px rgb(240 220 160 / 0.4),
     0 8px 22px -10px rgb(0 0 0 / 0.8);
   animation: invite 2.2s var(--ease-in-out) 700ms infinite;
 }
@@ -83,8 +83,8 @@ button.card:not(:disabled):hover::after {
 @keyframes invite {
   50% {
     box-shadow:
-      0 0 0 4px rgb(242 123 173 / 0.5),
-      0 0 22px rgb(242 123 173 / 0.45),
+      0 0 0 4px rgb(240 220 160 / 0.6),
+      0 0 22px rgb(240 220 160 / 0.45),
       0 8px 22px -10px rgb(0 0 0 / 0.8);
   }
 }
@@ -112,7 +112,7 @@ button.card:not(:disabled):hover::after {
 }
 
 .free {
-  color: var(--perfect);
+  color: #b07d12;
   letter-spacing: 2px;
 }
 
