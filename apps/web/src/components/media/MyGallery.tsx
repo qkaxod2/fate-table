@@ -33,11 +33,11 @@ export function MyGallery({ kinds, onPick, pickLabel = '고르기', compact }: P
 
   async function download(img: ShownImage) {
     if (!(await downloadImage(img)))
-      toast({ text: '그림을 받아 오지 못했어요.', tone: 'error', key: 'gallery' });
+      toast({ text: '그림을 내려받지 못했어요. 다시 해 주세요.', tone: 'error', key: 'gallery' });
   }
 
   async function remove(img: ShownImage) {
-    if (!confirm('이 그림을 보관함에서 지울까요? 방에 붙인 그림은 그대로 남아요.')) return;
+    if (!confirm('이 그림을 내 그림에서 지울까요? 방에 붙인 그림은 그대로 남아요.')) return;
     await deleteImage(img.id);
   }
 
@@ -45,7 +45,14 @@ export function MyGallery({ kinds, onPick, pickLabel = '고르기', compact }: P
   if (!images.length)
     return (
       <p className={styles.empty}>
-        {kinds ? '아직 담아 둔 그림이 없어요.' : '그림을 그리면 여기에 저절로 담겨요.'}
+        {kinds ? (
+          '아직 담아 둔 그림이 없어요.'
+        ) : (
+          <>
+            <strong>아직 그린 그림이 없어요</strong>
+            방에서 초상화나 배경을 그리면 여기에 저절로 담겨요.
+          </>
+        )}
       </p>
     );
 

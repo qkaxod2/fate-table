@@ -13,19 +13,18 @@
   perspective: 400px;
 }
 
+/* 종이 위에 먹으로 찍은 페이트 주사위 (남색 칠 대신 종이·먹) */
 .die {
   display: grid;
   place-items: center;
   width: 26px;
   height: 26px;
-  border: 1.5px solid var(--dice-edge);
-  border-radius: 6px;
-  background: var(--dice-body);
-  color: var(--dice-pip);
-  font-family: var(--f-pop);
-  font-size: 18px;
-  font-weight: 800;
-  line-height: 1;
+  border: 1.5px solid var(--ink-1);
+  border-radius: 5px;
+  background: var(--card);
+  color: var(--ink-1);
+  box-shadow: 0 2px 0 var(--paper-edge);
+  font: 800 18px / 1 var(--f-fig);
   animation: die-flip 1.6s var(--ease-in-out) infinite;
 }
 .die:nth-child(2) {
@@ -53,9 +52,8 @@
 }
 
 .label {
-  color: var(--muted);
-  font-size: var(--fs-sm);
-  letter-spacing: 0.5px;
+  color: var(--ink-2);
+  font: 500 var(--fs-sm) / 1.5 var(--f-ui);
 }
 
 .rows {
@@ -65,13 +63,14 @@
   animation: appear var(--dur-enter) var(--ease-out) 120ms backwards;
 }
 
+/* 차례 줄 모양 뼈대 */
 .row {
-  height: 52px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
+  height: 48px;
+  border-bottom: 1px solid var(--paper-edge);
+  border-radius: 2px;
   background:
-    linear-gradient(100deg, transparent 30%, rgb(255 255 255 / 0.06) 50%, transparent 70%),
-    var(--panel-s);
+    linear-gradient(100deg, transparent 30%, rgb(255 253 248 / 0.9) 50%, transparent 70%),
+    var(--paper-2);
   background-size: 220% 100%;
   animation: sweep 1.4s var(--ease-in-out) infinite;
 }

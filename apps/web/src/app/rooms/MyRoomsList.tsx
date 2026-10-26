@@ -67,8 +67,9 @@ export function MyRoomsList({
   const rows = limit ? load.rows.slice(0, limit) : load.rows;
   if (rows.length === 0)
     return hideWhenEmpty ? null : (
-      <p className={styles.muted}>
-        아직 들어간 방이 없어요. 방을 만들거나 초대 코드로 참가하면 여기에 남아요.
+      <p className={styles.note}>
+        <strong>아직 들어간 방이 없어요</strong>방을 만들거나 초대 코드로 들어가면 여기에 차례로
+        남아요. 처음이라면 <Link href="/tutorial/">튜토리얼</Link>부터 해 봐요.
       </p>
     );
 
@@ -80,7 +81,8 @@ export function MyRoomsList({
           <li key={r.id} className={styles.roomRow}>
             <Link href={roomHref(r.id)} className={styles.roomItem}>
               <span className={styles.roomName}>{r.name}</span>
-              <span className={styles.roomMeta}>
+              <span className={styles.leader} aria-hidden />
+              <span className={styles.roomMeta} data-role={r.role}>
                 {ROLE_LABEL[r.role] ?? r.role}
                 {r.nickname ? ` · ${r.nickname}` : ''}
               </span>
@@ -125,11 +127,13 @@ export function MyRoomsList({
         />
       )}
       {limit !== undefined && load.rows.length > limit && (
-        <Link href="/rooms/" className={styles.back}>
+        <Link href="/rooms/" className={styles.more}>
           전체 {load.rows.length}개 보기 →
         </Link>
       )}
-      {!load.fromServer && <p className={styles.muted}>이 브라우저에 남은 기록이에요.</p>}
+      {!load.fromServer && (
+        <p className={styles.muted}>이 브라우저에만 남은 기록이에요. 지워도 방은 그대로예요.</p>
+      )}
     </>
   );
 }

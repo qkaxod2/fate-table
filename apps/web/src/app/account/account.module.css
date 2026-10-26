@@ -1,68 +1,93 @@
+/* 계정 화면: 로비 종이 한 쪽 위에 얹는 탭·알림 (lobby.module.css와 같은 문법) */
+
+/* 로그인 / 계정 만들기: 책갈피처럼 고른 쪽만 주홍 밑줄 */
 .tabs {
   display: flex;
   margin-bottom: var(--s-4);
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--paper-edge);
 }
 
 .tab {
   flex: 1;
   padding: var(--s-2) var(--s-3);
   border: 0;
-  border-bottom: 2px solid transparent;
+  border-bottom: 3px solid transparent;
   background: none;
-  color: var(--muted);
-  font: inherit;
-  font-family: var(--f-story);
-  font-weight: 700;
+  color: var(--ink-3);
+  font: 600 var(--fs-md) / 1.4 var(--f-head);
   cursor: pointer;
 }
 
+.tab:hover {
+  color: var(--ink-1);
+}
+
 .tab[aria-selected='true'] {
-  border-bottom-color: var(--gold);
-  color: var(--fg);
+  border-bottom-color: var(--seal);
+  color: var(--ink-1);
 }
 
 .or {
-  margin: var(--s-4) 0 var(--s-2);
-  color: var(--muted);
-  font-size: var(--fs-sm);
-  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin: var(--s-4) 0 var(--s-3);
+  color: var(--ink-3);
+  font: 500 var(--fs-sm) / 1.4 var(--f-ui);
 }
 
+.or::before,
+.or::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--paper-edge);
+}
+
+/* 두 번째 버튼: 먹 테두리 */
 .google,
 .secondary {
   width: 100%;
-  padding: var(--s-3);
-  border: 1px solid var(--line);
-  border-radius: var(--r-ctl);
+  padding: 11px var(--s-3);
+  border: 1px solid var(--ink-3);
+  border-radius: 999px;
   background: var(--plate);
-  color: var(--fg);
-  font: inherit;
-  font-weight: 600;
+  color: var(--ink-1);
+  font: 600 var(--fs-md) / 1.3 var(--f-ui);
   cursor: pointer;
 }
 
 .google:hover,
 .secondary:not(:disabled):hover {
-  border-color: var(--gold);
+  border-color: var(--seal);
+  color: var(--seal);
 }
 
 .secondary:disabled {
-  opacity: 0.45;
+  border-color: var(--line);
+  color: var(--faint);
   cursor: not-allowed;
 }
 
+/* 알림: 여백에 적은 메모. 오류는 빨간 줄, 잘 된 건 먹 줄 + ✓ */
 .notice,
 .ok {
   margin-bottom: var(--s-4);
-  padding: var(--s-3);
-  border: 1px solid var(--danger);
-  border-radius: var(--r-ctl);
-  font-size: var(--fs-sm);
+  padding: 10px 12px;
+  border-left: 3px solid var(--danger);
+  background: rgb(179 38 30 / 0.07);
+  color: var(--ink-1);
+  font: 400 var(--fs-sm) / 1.6 var(--f-ui);
 }
 
 .ok {
-  border-color: var(--good);
+  border-left-color: var(--ink-2);
+  background: var(--paper);
+}
+
+.ok p:first-child::before {
+  content: '✓ ';
+  color: var(--seal);
+  font-weight: 700;
 }
 
 .notice p,
@@ -76,7 +101,8 @@
 }
 
 .email {
-  color: var(--fg);
+  color: var(--ink-1);
+  font-family: var(--f-ui);
   word-break: break-all;
 }
 
@@ -89,8 +115,13 @@
   padding: 0;
   border: 0;
   background: none;
-  color: var(--muted);
-  font: inherit;
+  color: var(--ink-3);
+  font: 500 var(--fs-sm) / 1.4 var(--f-ui);
   text-decoration: underline;
+  text-underline-offset: 3px;
   cursor: pointer;
+}
+
+.signOut:hover {
+  color: var(--danger);
 }
