@@ -30,11 +30,7 @@ Deno.serve(async (req) => {
       .eq('room_id', roomId)
       .eq('role', 'gm');
     if ((count ?? 0) <= 1)
-      return fail(
-        409,
-        'LAST_GM',
-        'GM은 방을 나갈 수 없어요. 방을 닫으려면 방 터트리기를 써 주세요.',
-      );
+      return fail(409, 'LAST_GM', 'GM은 방을 나갈 수 없어요. 방을 닫으려면 방 지우기를 써 주세요.');
   }
 
   // 아직 참가자일 때 퇴장을 기록해야 다른 사람 화면에 실시간으로 닿는다

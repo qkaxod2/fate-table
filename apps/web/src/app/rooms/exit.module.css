@@ -1,4 +1,4 @@
-/* 방 나가기 · 터트리기: 책의 한 장(components/book/Leaf) 위의 확인 */
+/* 방 나가기 · 방 지우기: 책의 한 장(components/book/Leaf) 위의 확인 */
 .box {
   display: flex;
   flex-direction: column;
