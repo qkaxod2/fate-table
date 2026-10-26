@@ -1,18 +1,17 @@
 import { term } from '@fate/glossary';
-import { formatRating } from '@fate/rules-engine';
 import Link from 'next/link';
 import { AccountChip } from '@/components/account/AccountChip';
 import { ClientOnly } from '@/components/ui/ClientOnly';
+import { asset } from '@/lib/asset';
 import { MyRoomsList } from './rooms/MyRoomsList';
 import styles from './page.module.css';
 
-const RUNGS = [8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2];
-
-const PATHS = [
+/** 속표지의 차례: 튜토리얼 다음에 갈 수 있는 곳 */
+const CONTENTS = [
   {
     href: '/create/',
     title: '캐릭터 만들기',
-    desc: '컨셉과 약점을 한 줄씩 적으면 나만의 캐릭터가 생겨요.',
+    desc: '컨셉과 약점을 한 줄씩 적으면 내 캐릭터가 생겨요.',
   },
   {
     href: '/rooms/new/',
@@ -26,64 +25,109 @@ const PATHS = [
   },
 ];
 
+const NUMERALS = ['i', 'ii', 'iii'];
+
+/** 표지 아래에 핀으로 꽂아 둔 규칙 카드 세 장: 이 게임에서 알아야 할 것 전부 */
+const RULE_CARDS = [
+  { label: term('aspect'), text: '캐릭터와 장면을 한 줄로', note: '"사방에 번지는 불길"' },
+  { label: term('fatePoint'), text: '내면 +2, 곤란을 받으면 +1', note: '◆ ◆ ◆' },
+  { label: term('fateDice'), text: '넷을 굴려 접근법에 더해요', note: '＋ ○ － ＋' },
+];
+
 export default function Landing() {
   return (
-    <main className={styles.main}>
+    <main className={styles.desk}>
       <ClientOnly>
         <AccountChip />
       </ClientOnly>
-      <section className={styles.hero}>
-        <p className={styles.kicker}>기동형 페이트 온라인 테이블</p>
-        <h1 className={styles.title}>운명점을 주고받는 테이블</h1>
-        <p className={styles.lead}>
-          {term('aspect')}과 {term('fatePoint')}이 중심이 되는 TRPG 테이블이에요. 규칙을 몰라도
-          튜토리얼 한 판이면 바로 함께할 수 있어요.
-        </p>
-        <div className={styles.start}>
-          <Link href="/tutorial/" className={styles.primary}>
-            튜토리얼로 시작하기
-          </Link>
-          <span className={styles.startNote}>5분이면 충분해요</span>
-        </div>
-
-        <ul className={styles.paths}>
-          {PATHS.map((p) => (
-            <li key={p.href}>
-              <Link href={p.href} className={styles.path}>
-                <strong>{p.title}</strong>
-                <span>{p.desc}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-        <p className={styles.more}>
-          <Link href="/rooms/">내 방 목록</Link>
-          <Link href="/gallery/">내 그림</Link>
-        </p>
-
-        <div className={styles.myRooms}>
-          <ClientOnly>
-            <MyRoomsList limit={5} heading="최근에 들어간 방" hideWhenEmpty />
-          </ClientOnly>
-        </div>
-
-        <figure className={styles.ladderBox}>
-          <figcaption className={styles.ladderHead}>
-            {term('ladder')}
-            <span>주사위 결과는 이 단계 이름으로 불러요</span>
-          </figcaption>
-          <ul className={styles.ladder} aria-label={term('ladder')}>
-            {RUNGS.map((n) => (
-              <li key={n} className={styles.rung} data-sign={n > 0 ? '+' : n < 0 ? '-' : '0'}>
-                {formatRating(n)}
+      <div className={styles.spread}>
+        {/* 왼쪽: 표지. 튜토리얼 첫 장면 그림 위에 제목 딱지를 붙였다 */}
+        <div className={styles.cover} aria-hidden>
+          <img className={styles.coverArt} src={asset('/try/bg.jpg')} alt="" />
+          <img
+            className={`${styles.coverHero} ${styles.h1}`}
+            src={asset('/try/scout.webp')}
+            alt=""
+          />
+          <img
+            className={`${styles.coverHero} ${styles.h2}`}
+            src={asset('/try/alch.webp')}
+            alt=""
+          />
+          <img
+            className={`${styles.coverHero} ${styles.h3}`}
+            src={asset('/try/knight.webp')}
+            alt=""
+          />
+          <p className={styles.coverLabel}>
+            <span>튜토리얼 · 첫 장면</span>
+            불타는 곡물 창고
+          </p>
+          <ul className={styles.ruleCards}>
+            {RULE_CARDS.map((c) => (
+              <li key={c.label}>
+                <span className={styles.ruleLabel}>{c.label}</span>
+                <span className={styles.ruleText}>{c.text}</span>
+                <span className={styles.ruleNote}>{c.note}</span>
               </li>
             ))}
           </ul>
-        </figure>
-        <p className={styles.credit}>
-          Fate Accelerated Edition(Evil Hat Productions, CC BY 3.0)을 바탕으로 만들었어요.
-        </p>
-      </section>
+        </div>
+
+        {/* 오른쪽: 속표지. 첫째로 할 일은 튜토리얼 하나 */}
+        <section className={styles.titlePage}>
+          <p className={styles.kicker}>기동형 페이트 온라인 TRPG</p>
+          <h1 className={styles.title}>운명점 테이블</h1>
+          <p className={styles.lead}>
+            {term('aspect')} 한 줄과 {term('fatePoint')} 몇 개로 친구들과 이야기를 굴려요. 규칙을
+            몰라도 튜토리얼 한 판이면 바로 같이 놀 수 있어요.
+          </p>
+
+          <div className={styles.start}>
+            <Link href="/tutorial/" className={styles.primary}>
+              튜토리얼로 시작하기
+            </Link>
+            <span className={styles.startNote}>5분이면 충분해요 · 가입 필요 없어요</span>
+          </div>
+
+          <nav className={styles.contents} aria-label="차례">
+            <h2 className={styles.contentsHead}>차례</h2>
+            <ol>
+              {CONTENTS.map((c, i) => (
+                <li key={c.href}>
+                  <Link href={c.href} className={styles.entry}>
+                    <span className={styles.num} aria-hidden>
+                      {NUMERALS[i]}
+                    </span>
+                    <span className={styles.entryText}>
+                      <strong>{c.title}</strong>
+                      <span>{c.desc}</span>
+                    </span>
+                    <span className={styles.leader} aria-hidden />
+                    <span className={styles.go} aria-hidden>
+                      →
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+            <p className={styles.more}>
+              <Link href="/rooms/">내 방 목록</Link>
+              <Link href="/gallery/">내 그림</Link>
+            </p>
+          </nav>
+
+          <div className={styles.recent}>
+            <ClientOnly>
+              <MyRoomsList limit={5} heading="이어서 하기" hideWhenEmpty />
+            </ClientOnly>
+          </div>
+
+          <p className={styles.colophon}>
+            Fate Accelerated Edition(Evil Hat Productions, CC BY 3.0)을 바탕으로 만들었어요.
+          </p>
+        </section>
+      </div>
     </main>
   );
 }
