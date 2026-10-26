@@ -4,7 +4,7 @@ import { term } from '@fate/glossary';
 import type { Aspect, InvokeMode, InvokePreview, PaidWith } from '@fate/rules-engine';
 import { useEffect, useRef, useState } from 'react';
 import { tap } from '@/fx/sfx';
-import { flyBadge } from '@/lib/motion';
+import { flyBadge, reducedMotion } from '@/lib/motion';
 import { AspectCard } from '../aspect/AspectCard';
 import { isDialogOpen } from '../book/Leaf';
 import { FatePointToken } from '../fate/FatePointToken';
@@ -53,6 +53,14 @@ export function InvokeTray({
   const cost = paidWith === 'free_invoke' ? term('freeInvoke') : `${term('fatePoint')} 1`;
   const fp = useRef<HTMLSpanElement>(null);
   const [firing, setFiring] = useState<string | null>(null);
+  const foot = useRef<HTMLDivElement>(null);
+
+  // 휴대폰 판정 시트 안에서 카드를 고르면, 아래에 생기는 +2 · 다시 굴리기 버튼이 보이게 시트를 내린다
+  useEffect(() => {
+    const el = foot.current;
+    if (!selectedId || !el?.closest('[data-sheet]')) return;
+    el.scrollIntoView({ block: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' });
+  }, [selectedId]);
 
   /**
    * 발동하는 순간: 운명점 토큰이 카드로 날아가 꽂히고, 카드가 들리며 +2가 합계로 날아간다
@@ -140,7 +148,7 @@ export function InvokeTray({
           </div>
         ))}
       </div>
-      <div className={styles.foot}>
+      <div className={styles.foot} ref={foot}>
         <span className={styles.fp} data-tour="fate">
           내 {term('fatePoint')}{' '}
           <span ref={fp}>
