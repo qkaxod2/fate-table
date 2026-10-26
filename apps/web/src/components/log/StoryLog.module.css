@@ -1,16 +1,20 @@
 .log {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
-  min-height: 0;
+  min-height: 160px;
   overflow-y: auto;
   padding: var(--s-3);
-  background: var(--panel);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-panel);
+  background: var(--surface-1);
+  backdrop-filter: var(--blur);
+  scrollbar-width: thin;
 }
 
 .head {
-  font-family: var(--f-num);
-  font-size: 11px;
-  letter-spacing: 3px;
+  font: var(--label-font);
+  letter-spacing: var(--label-track);
   color: var(--gold);
   margin-bottom: var(--s-2);
 }
@@ -32,9 +36,9 @@
 
 .line {
   padding: var(--s-1) var(--s-2);
-  border-left: 2px solid var(--line);
+  border-left: 2px solid var(--line-hi);
   font-size: var(--fs-sm);
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .line[data-kind='fate'] {
@@ -43,13 +47,12 @@
 }
 
 .line[data-kind='gm'] {
-  border-left-width: 4px;
-  border-color: var(--hi);
+  border-color: var(--gold);
   font-family: var(--f-story);
 }
 
 .line[data-kind='roll'] {
-  border-color: var(--great);
+  border-color: var(--rule);
 }
 
 .line {
@@ -63,7 +66,7 @@
 }
 
 .line[data-kind='chat'] {
-  border-color: var(--muted);
+  border-color: transparent;
 }
 
 .line[data-undone] > span {
@@ -98,24 +101,28 @@
 }
 
 .tabs {
+  position: sticky;
+  top: calc(var(--s-3) * -1);
+  z-index: 1;
   display: flex;
   gap: var(--s-1);
-  margin-bottom: var(--s-2);
-  border-bottom: 1px solid var(--line);
+  margin: calc(var(--s-3) * -1) calc(var(--s-3) * -1) var(--s-2);
+  padding: var(--s-2) var(--s-3) 0;
+  border-bottom: 1px solid var(--edge);
+  background: var(--surface-2);
 }
 
 .tab {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: var(--s-1) var(--s-2);
+  padding: var(--s-1) var(--s-2) var(--s-2);
   border: 0;
   border-bottom: 2px solid transparent;
   background: none;
   color: var(--muted);
-  font-family: var(--f-num);
-  font-size: 11px;
-  letter-spacing: 3px;
+  font: var(--label-font);
+  letter-spacing: var(--label-track);
   cursor: pointer;
 }
 
@@ -156,7 +163,7 @@
 
 .list > li[data-kind='fate']:last-child,
 .list > li[data-kind='scene']:last-child {
-  --flash: rgb(214 182 110 / 0.18);
+  --flash: rgb(168 50 28 / 0.18);
 }
 
 .list > li[data-kind='gm']:last-child {
@@ -221,5 +228,154 @@
   .line[data-sending],
   .badge {
     animation: none;
+  }
+}
+
+/* ---------- 책 본문 (design-system.md 20절) ---------- */
+.margin {
+  display: none;
+}
+
+.log[data-variant='book'] {
+  min-height: 0;
+  padding: var(--s-3) var(--s-5) var(--s-3) calc(var(--s-6) + 22px);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  backdrop-filter: none;
+  color: var(--ink-1);
+  scrollbar-color: var(--paper-edge) transparent;
+}
+
+.log[data-variant='book'] .tabs {
+  margin: calc(var(--s-3) * -1) calc(var(--s-5) * -1) var(--s-3) calc((var(--s-6) + 22px) * -1);
+  padding: var(--s-2) var(--s-5) 0 calc(var(--s-6) + 22px);
+  border-bottom: 1px solid var(--paper-edge);
+  background: var(--paper);
+}
+
+.log[data-variant='book'] .tab {
+  color: var(--ink-3);
+  font: 600 13px var(--f-ui);
+  letter-spacing: 0.08em;
+}
+
+.log[data-variant='book'] .tab[aria-selected='true'] {
+  border-bottom-color: var(--seal);
+  color: var(--seal);
+}
+
+.log[data-variant='book'] .badge {
+  background: var(--seal);
+  color: var(--seal-ink);
+}
+
+.log[data-variant='book'] .empty {
+  color: var(--ink-3);
+  font-family: var(--f-book);
+}
+
+.log[data-variant='book'] .list {
+  gap: var(--s-3);
+}
+
+.log[data-variant='book'] .line {
+  position: relative;
+  padding: 0;
+  border: 0;
+  color: var(--ink-1);
+  font: 400 17px/1.9 var(--f-book);
+}
+
+.log[data-variant='book'] .line > span {
+  position: relative;
+}
+
+/* 여백의 화자 이름 */
+.log[data-variant='book'] .margin {
+  display: block;
+  position: absolute;
+  left: -64px;
+  top: 5px;
+  width: 54px;
+  overflow: hidden;
+  color: var(--seal);
+  font: 600 12px/1.3 var(--f-ui);
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.log[data-variant='book'] .said {
+  font-weight: 700;
+}
+
+/* 장면 첫 문단: 주홍 머리글자 */
+.log[data-variant='book'] .line[data-open] > span::first-letter {
+  float: left;
+  margin: 6px 8px 0 0;
+  color: var(--seal);
+  font: 800 54px/0.9 var(--f-head);
+}
+
+.log[data-variant='book'] .line[data-open] .margin {
+  display: none;
+}
+
+/* 장면 시작: 가운데 작은 활자 구분선 */
+.log[data-variant='book'] .line[data-kind='scene'] {
+  justify-content: center;
+  margin-top: var(--s-2);
+  color: var(--ink-3);
+  font: 600 13px/1.6 var(--f-ui);
+  letter-spacing: 0.12em;
+  text-align: center;
+}
+
+.log[data-variant='book'] .line[data-kind='scene'] > span::before,
+.log[data-variant='book'] .line[data-kind='scene'] > span::after {
+  content: ' — ';
+}
+
+/* 굴림·운명점 기록: 펜으로 적은 여백 메모 */
+.log[data-variant='book'] .line[data-kind='roll'],
+.log[data-variant='book'] .line[data-kind='fate'],
+.log[data-variant='book'] .line[data-kind='system'] {
+  padding-left: var(--s-3);
+  border-left: 2px solid rgb(47 79 128 / 0.35);
+  color: var(--pen);
+  font: 400 22px/1.15 var(--f-hand);
+}
+
+.log[data-variant='book'] .line[data-kind='fate'] {
+  border-left-color: var(--brass);
+  color: #7a5a22;
+}
+
+.log[data-variant='book'] .line[data-undone] > span {
+  color: var(--ink-3);
+}
+
+.log[data-variant='book'] .undo {
+  color: var(--ink-3);
+}
+
+/* 새 줄이 물드는 색도 종이 위에 맞춘다 */
+.log[data-variant='book'] .list > li:last-child:not([data-sending]) {
+  --flash: rgb(168 50 28 / 0.08);
+}
+
+@media (max-width: 760px) {
+  .log[data-variant='book'] {
+    padding-left: var(--s-4);
+  }
+  .log[data-variant='book'] .tabs {
+    margin-left: calc(var(--s-4) * -1);
+    padding-left: var(--s-4);
+  }
+  .log[data-variant='book'] .margin {
+    position: static;
+    display: inline;
+    margin-right: var(--s-2);
   }
 }

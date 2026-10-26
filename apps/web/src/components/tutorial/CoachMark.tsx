@@ -4,7 +4,7 @@ import styles from './CoachMark.module.css';
 export interface Coach {
   step: number;
   total: number;
-  /** STEP 앞에 붙는 장 이름 (예: "1장 · 극복") */
+  /** 단계 번호 앞에 붙는 장 이름 (예: "1장 · 극복") */
   chapter?: string;
   title: string;
   body: string;
@@ -15,7 +15,7 @@ export interface Coach {
   /** 설명만 하는 단계: 읽고 이 버튼을 눌러 넘어간다 */
   next?: { label: string; onClick: () => void };
   keys?: string[];
-  /** 다 끝냈을 때: STEP 대신 CLEAR를 보이고 점들이 차례로 반짝인다 */
+  /** 다 끝냈을 때: 단계 번호 대신 '완료'를 보이고 점들이 차례로 반짝인다 */
   clear?: boolean;
   /** 다음으로 갈 곳 (예: 캐릭터 만들기) */
   links?: { href: string; label: string }[];
@@ -53,7 +53,7 @@ export function CoachMark({
       <div className={styles.head}>
         {coach.chapter && <span className={styles.chapter}>{coach.chapter}</span>}
         <span className={styles.step}>
-          {coach.clear ? 'CLEAR' : `STEP ${coach.step} / ${coach.total}`}
+          {coach.clear ? '완료' : `${coach.step} / ${coach.total}`}
         </span>
         <ol className={styles.dots} aria-hidden>
           {Array.from({ length: coach.total }, (_, i) => (

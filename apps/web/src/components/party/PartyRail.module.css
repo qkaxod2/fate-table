@@ -3,14 +3,15 @@
   flex-direction: column;
   gap: var(--s-2);
   padding: var(--s-3);
-  border-top: 2px solid var(--gold);
-  background: var(--panel);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-panel);
+  background: var(--surface-1);
+  backdrop-filter: var(--blur);
 }
 
 .head {
-  font-family: var(--f-num);
-  font-size: 11px;
-  letter-spacing: 3px;
+  font: var(--label-font);
+  letter-spacing: var(--label-track);
   color: var(--gold);
 }
 
@@ -18,7 +19,7 @@
   display: flex;
   gap: var(--s-3);
   align-items: center;
-  padding: var(--s-1) 0;
+  padding: var(--s-2) 0;
   border-bottom: 1px solid var(--line);
 }
 
@@ -35,11 +36,12 @@
 }
 
 .avatar {
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   object-fit: cover;
   object-position: top;
   border: 1px solid var(--gold);
+  border-radius: 8px;
   background: var(--panel-s);
 }
 
@@ -51,9 +53,8 @@
 }
 
 .name {
-  font-family: var(--f-story);
   font-weight: 700;
-  font-size: var(--fs-lg);
+  font-size: var(--fs-md);
 }
 
 .status {
@@ -80,7 +81,8 @@
   place-items: center;
   width: 14px;
   height: 14px;
-  border: 1.5px solid var(--fg);
+  border: 1.5px solid var(--muted);
+  border-radius: 3px;
   font-size: 9px;
   color: transparent;
 }
@@ -164,7 +166,7 @@
   margin: 0 calc(-1 * var(--s-2));
   padding-left: var(--s-2);
   padding-right: var(--s-2);
-  background: rgb(214 182 110 / 0.12);
+  background: rgb(168 50 28 / 0.12);
   box-shadow: inset 3px 0 0 var(--gold);
 }
 
@@ -208,11 +210,11 @@
 
 @keyframes turn-band {
   from {
-    background-color: rgb(214 182 110 / 0);
+    background-color: rgb(168 50 28 / 0);
     box-shadow: inset 0 0 0 var(--gold);
   }
   40% {
-    background-color: rgb(214 182 110 / 0.22);
+    background-color: rgb(168 50 28 / 0.22);
   }
 }
 
@@ -223,10 +225,10 @@
 @keyframes turn-face {
   from {
     scale: 0.88;
-    box-shadow: 0 0 0 0 rgb(240 220 160 / 0.8);
+    box-shadow: 0 0 0 0 rgb(200 72 44 / 0.8);
   }
   50% {
-    box-shadow: 0 0 0 5px rgb(240 220 160 / 0.25);
+    box-shadow: 0 0 0 5px rgb(200 72 44 / 0.25);
   }
 }
 

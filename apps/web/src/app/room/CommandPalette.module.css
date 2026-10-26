@@ -55,7 +55,7 @@
 }
 
 .item[data-active] {
-  background: rgb(214 182 110 / 0.14);
+  background: rgb(168 50 28 / 0.14);
   box-shadow: inset 3px 0 0 var(--gold);
 }
 

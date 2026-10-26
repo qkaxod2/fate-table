@@ -134,7 +134,7 @@ export function roomCommands({
     {
       words: ['대사', '묘사', 'say'],
       label: 'GM 대사 보내기',
-      hint: '모두의 대사 창에 크게 떠요',
+      hint: '모두의 책 본문에 적혀요',
       arg: '대사',
       gmOnly: true,
       act: (text) => text && run({ type: 'narration.post', payload: { text } }),
@@ -339,7 +339,7 @@ export function ShortcutHelp({ isGm, onClose }: { isGm: boolean; onClose: () => 
   const guard = useCloseGuard(close);
   const rows: Array<[string[], string]> = [
     [['Ctrl', 'K'], '명령 창 열기 (/ 도 돼요)'],
-    [['1', '–', '4'], '행동 고르기 (극복 · 이점 창출 · 공격 · 방어)'],
+    [['1', '–', '4'], '행동 고르기 (극복 · 이점 만들기 · 공격 · 방어)'],
     [['Q', 'W', 'E', 'A', 'S', 'D'], `${term('approach')} 고르기`],
     [['Space'], '굴리기'],
     [['1', '–', '9'], `굴린 뒤: 발동할 ${term('aspect')} 고르기`],

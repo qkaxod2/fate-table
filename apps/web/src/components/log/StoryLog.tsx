@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { LogLine } from '@/lib/copy';
 import { reducedMotion } from '@/lib/motion';
+import { Typewriter } from '../ui/Typewriter';
 import styles from './StoryLog.module.css';
 
 interface Props {
@@ -13,12 +14,23 @@ interface Props {
   onUndo?: (seq: number) => void;
   /** 보냈지만 서버가 아직 받지 않은 채팅 (흐리게 먼저 보인다) */
   sending?: ReadonlyArray<{ id: number; text: string }>;
+  /**
+   * book: 책 본문처럼 조판한다. GM 대사는 문단(장면 첫 문단은 머리글자), 말은 여백에 화자,
+   * 굴림·운명점 기록은 펜으로 적은 여백 메모. 마지막 GM 대사는 한 자씩 적힌다.
+   */
+  variant?: 'panel' | 'book';
+}
+
+/** "하윤: 대사" → 화자와 대사 */
+function splitSpeaker(text: string): [string | null, string] {
+  const m = /^([^:：]{1,16})[:：]\s*(.+)$/s.exec(text);
+  return m ? [m[1]!, m[2]!] : [null, text];
 }
 
 type Tab = 'story' | 'system';
 
 /** 이야기(굴림·대사·채팅)와 시스템(입장·생성·되돌리기 같은 알림)을 탭으로 나눈다 */
-export function StoryLog({ lines, undone, onUndo, sending = [] }: Props) {
+export function StoryLog({ lines, undone, onUndo, sending = [], variant = 'panel' }: Props) {
   const [tab, setTab] = useState<Tab>('story');
   const [seen, setSeen] = useState<Record<Tab, number>>({ story: 0, system: 0 });
   const live = lines.filter((l) => !undone?.has(l.seq));
@@ -49,7 +61,13 @@ export function StoryLog({ lines, undone, onUndo, sending = [] }: Props) {
   };
 
   return (
-    <section ref={box} className={styles.log} aria-label="이야기 기록" aria-live="polite">
+    <section
+      ref={box}
+      className={styles.log}
+      data-variant={variant}
+      aria-label="이야기 기록"
+      aria-live="polite"
+    >
       <div className={styles.tabs} role="tablist">
         {(['story', 'system'] as const).map((t) => (
           <button
@@ -60,7 +78,7 @@ export function StoryLog({ lines, undone, onUndo, sending = [] }: Props) {
             className={styles.tab}
             onClick={() => open(t)}
           >
-            {t === 'story' ? 'STORY' : 'SYSTEM'}
+            {t === 'story' ? '이야기' : '알림'}
             {t === other && unread > 0 && (
               <span key={unread} className={styles.badge}>
                 {unread}
@@ -75,9 +93,20 @@ export function StoryLog({ lines, undone, onUndo, sending = [] }: Props) {
         </p>
       )}
       <ol className={styles.list}>
-        {shown.map((l) => (
-          <li key={l.seq} className={styles.line} data-kind={l.kind}>
-            <span>{l.text}</span>
+        {shown.map((l, i) => (
+          <li
+            key={l.seq}
+            className={styles.line}
+            data-kind={l.kind}
+            data-open={
+              (variant === 'book' && l.kind === 'gm' && shown[i - 1]?.kind === 'scene') || undefined
+            }
+          >
+            {variant === 'book' ? (
+              <BookLine line={l} typing={l.kind === 'gm' && i === shown.length - 1} />
+            ) : (
+              <span>{l.text}</span>
+            )}
             {onUndo && l.undoable !== false && (
               <button
                 type="button"
@@ -100,6 +129,26 @@ export function StoryLog({ lines, undone, onUndo, sending = [] }: Props) {
       </ol>
     </section>
   );
+}
+
+function BookLine({ line, typing }: { line: LogLine; typing: boolean }) {
+  if (line.kind === 'gm')
+    return (
+      <span>
+        <span className={styles.margin}>GM</span>
+        {typing ? <Typewriter text={line.text} /> : line.text}
+      </span>
+    );
+  if (line.kind === 'chat') {
+    const [who, said] = splitSpeaker(line.text);
+    return (
+      <span>
+        {who && <span className={styles.margin}>{who}</span>}
+        <span className={styles.said}>{said}</span>
+      </span>
+    );
+  }
+  return <span>{line.text}</span>;
 }
 
 /** 스스로 스크롤되는 가장 가까운 칸. 문서 자체는 고르지 않는다 */

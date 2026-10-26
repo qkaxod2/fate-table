@@ -5,15 +5,15 @@
   max-width: 420px;
   padding: var(--s-4);
   border: 1px solid var(--hi);
+  border-radius: var(--r-card);
   background: var(--panel);
   box-shadow: 0 0 40px -10px var(--hi);
   animation: in var(--dur-enter) var(--ease-spring) backwards;
 }
 
 .head {
-  font-family: var(--f-num);
-  font-size: 11px;
-  letter-spacing: 2px;
+  font: var(--label-font);
+  letter-spacing: var(--label-track);
   color: var(--hi);
 }
 
@@ -67,17 +67,17 @@
 
 .accept:not(:disabled):hover {
   filter: brightness(1.08);
-  box-shadow: 0 0 18px rgb(240 220 160 / 0.5);
+  box-shadow: 0 0 18px rgb(200 72 44 / 0.5);
 }
 
 @keyframes beckon {
   0%,
   70%,
   100% {
-    box-shadow: 0 0 0 0 rgb(240 220 160 / 0);
+    box-shadow: 0 0 0 0 rgb(200 72 44 / 0);
   }
   35% {
-    box-shadow: 0 0 0 4px rgb(240 220 160 / 0.25);
+    box-shadow: 0 0 0 4px rgb(200 72 44 / 0.25);
   }
 }
 

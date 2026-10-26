@@ -1,0 +1,144 @@
+.plate {
+  width: 320px;
+  padding: 14px 18px 16px;
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--ink-1);
+  rotate: 0.8deg;
+  box-shadow:
+    0 2px 0 var(--paper-edge),
+    0 14px 28px -10px rgb(0 0 0 / 0.75);
+  transition: opacity var(--dur-scene) var(--ease-out);
+}
+
+.plate[data-out] {
+  opacity: 0.6;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.head img {
+  width: 46px;
+  height: 46px;
+  border: 2px solid var(--ink-1);
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: top;
+  transform: scaleX(-1);
+}
+
+.head b {
+  display: block;
+  font: 800 22px/1.15 var(--f-head);
+}
+
+.head small {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink-2);
+  font: 400 13px var(--f-book);
+}
+
+.label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--ink-2);
+  font: 600 13px var(--f-ui);
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.row:last-child {
+  margin-bottom: 0;
+}
+
+.slot {
+  flex: 1;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 2px dashed var(--ink-3);
+  border-radius: 4px;
+  color: var(--ink-2);
+  font: 700 14px var(--f-ui);
+}
+
+.sq {
+  flex: 0 0 34px;
+}
+
+.slot[data-used] {
+  border: 2px solid var(--seal);
+  background: var(--seal);
+  color: var(--seal-ink);
+}
+
+.slot[data-used]::before {
+  content: '✕';
+  font-size: 13px;
+}
+
+/* 피해가 들어가 칸이 찰 때 도장처럼 찍힌다 */
+.slot[data-used] {
+  animation: stamp 420ms var(--ease-spring) backwards;
+}
+
+@keyframes stamp {
+  from {
+    scale: 1.6;
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slot[data-used] {
+    animation: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .plate {
+    width: 196px;
+    padding: 8px 10px 10px;
+  }
+  .slot {
+    white-space: nowrap;
+  }
+  .label,
+  .head small {
+    display: none;
+  }
+  .row {
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+  .head {
+    margin-bottom: 8px;
+  }
+  .head img {
+    width: 36px;
+    height: 36px;
+  }
+  .head b {
+    font-size: 18px;
+  }
+  .slot {
+    height: 24px;
+    gap: 2px;
+    font-size: 10px;
+  }
+  .sq {
+    flex-basis: 24px;
+  }
+}

@@ -7,17 +7,19 @@
   padding: var(--s-2) var(--s-3);
   border: 1px solid var(--rule);
   border-left: 3px solid var(--hi);
+  border-radius: var(--r-card);
   background: var(--panel);
+  box-shadow: var(--shadow-panel);
   backdrop-filter: blur(6px);
 }
 
 .badge {
   padding: 2px var(--s-2);
   border: 1px solid var(--hi);
+  border-radius: var(--r-token);
   color: var(--hi);
-  font-family: var(--f-num);
-  font-size: var(--fs-xs);
-  letter-spacing: 3px;
+  font: var(--label-font);
+  letter-spacing: var(--label-track);
 }
 
 .tool {
@@ -46,7 +48,7 @@
 
 @keyframes glow {
   50% {
-    box-shadow: 0 0 14px rgb(214 182 110 / 0.7);
+    box-shadow: 0 0 14px rgb(168 50 28 / 0.7);
   }
 }
 

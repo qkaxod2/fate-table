@@ -2,7 +2,7 @@
 
 import { term, tip } from '@fate/glossary';
 import { APPROACHES, type Action, type Approach, type Character } from '@fate/rules-engine';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import styles from './ActionBar.module.css';
 
 const ACTIONS: Action[] = ['overcome', 'create_advantage', 'attack', 'defend'];
@@ -33,10 +33,14 @@ interface Props {
    * action이 있으면 행동 버튼 중에서도 그것만 열어 둔다.
    */
   guide?: { focus: CoachFocus | null; action?: Action };
+  /** 굴리기 버튼을 따로(판정 예고 카드의 봉인) 둘 때 */
+  hideRoll?: boolean;
   onAction: (a: Action) => void;
   onApproach: (a: Approach) => void;
   onRoll: () => void;
 }
+
+const NUMERALS = ['i', 'ii', 'iii', 'iv'];
 
 export function ActionBar({
   character,
@@ -47,10 +51,26 @@ export function ActionBar({
   canDefend = false,
   focus,
   guide,
+  hideRoll = false,
   onAction,
   onApproach,
   onRoll,
 }: Props) {
+  // 접근법 고르기: 행동을 고르면 저절로 펼쳐지고, 하나를 고르면 접힌다
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [openedFor, setOpenedFor] = useState<Action | null>(null);
+  if (action !== openedFor) {
+    setOpenedFor(action);
+    setPickerOpen(!!action && !approach);
+  }
+  const showPicker = !!action && (pickerOpen || (!!guide && guide.focus === 'approach'));
+  const best = Math.max(...APPROACHES.map((ap) => character.approaches[ap]));
+  const stuntFor = (ap: Approach) =>
+    character.stunts.some((st) => st.bonus?.action === action && st.bonus.approach === ap);
+  const pick = (ap: Approach) => {
+    onApproach(ap);
+    setPickerOpen(false);
+  };
   const allowAction = (a: Action) =>
     !guide || (guide.focus === 'action' && (!guide.action || guide.action === a));
   const allowApproach = !guide || guide.focus === 'approach';
@@ -68,7 +88,7 @@ export function ActionBar({
         return;
       }
       const ap = APPROACHES.find((x) => APPROACH_KEYS[x].toLowerCase() === e.key.toLowerCase());
-      if (ap && action && allowApproach) onApproach(ap);
+      if (ap && action && allowApproach) pick(ap);
       if (e.code === 'Space' && action && approach && allowRoll) {
         e.preventDefault();
         onRoll();
@@ -81,70 +101,125 @@ export function ActionBar({
   }, [disabled, action, approach, canDefend, guide, onAction, onApproach, onRoll]);
 
   return (
-    <div className={styles.bar} data-disabled={disabled || undefined} data-tour="actionbar">
-      <div
-        className={styles.actions}
+    <div className={styles.toc} data-disabled={disabled || undefined} data-tour="actionbar">
+      <h4 className={styles.head}>다음 한 수</h4>
+      <ol
+        className={styles.rows}
         data-tour="actions"
         role="radiogroup"
         aria-label="행동"
         data-focus={focus === 'action' || undefined}
       >
-        {ACTIONS.map((a, i) => (
+        {ACTIONS.map((a, i) => {
+          const on = action === a;
+          return (
+            <li key={a} className={styles.row} data-on={on || undefined}>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={on}
+                className={styles.action}
+                data-tour={`action-${a}`}
+                disabled={disabled || (a === 'defend' && !canDefend) || !allowAction(a)}
+                onClick={() => onAction(a)}
+              >
+                <span className={styles.n} aria-hidden>
+                  {NUMERALS[i]}
+                </span>
+                <span className={styles.k}>{term(a)}</span>
+                <span className={styles.desc}>
+                  {a === 'defend' && !canDefend ? '상대가 공격해 올 때' : tip(a)}
+                </span>
+                <span className={styles.dots} aria-hidden />
+                {!on && (
+                  <kbd className={styles.num} aria-hidden>
+                    {i + 1}
+                  </kbd>
+                )}
+              </button>
+              {on && (
+                <button
+                  type="button"
+                  className={styles.apBtn}
+                  aria-expanded={showPicker}
+                  aria-label={`${term('approach')} 고르기`}
+                  disabled={disabled || !allowApproach}
+                  data-empty={!approach || undefined}
+                  onClick={() => setPickerOpen((o) => !o)}
+                >
+                  {approach ? (
+                    <>
+                      {term(approach)}{' '}
+                      <b>
+                        {character.approaches[approach] >= 0 ? '+' : ''}
+                        {character.approaches[approach]}
+                      </b>
+                    </>
+                  ) : (
+                    `${term('approach')} 고르기`
+                  )}
+                </button>
+              )}
+              {on && showPicker && (
+                <div
+                  className={styles.picker}
+                  role="radiogroup"
+                  aria-label={term('approach')}
+                  data-tour="approaches"
+                  data-focus={focus === 'approach' || undefined}
+                >
+                  <p className={styles.pickHead}>어떻게? · {term('approach')}</p>
+                  <div className={styles.grid}>
+                    {APPROACHES.map((ap) => {
+                      const v = character.approaches[ap];
+                      return (
+                        <button
+                          key={ap}
+                          type="button"
+                          role="radio"
+                          aria-checked={approach === ap}
+                          className={styles.approach}
+                          disabled={disabled || !allowApproach}
+                          onClick={() => pick(ap)}
+                        >
+                          <span className={styles.tags}>
+                            {stuntFor(ap) && <em className={styles.stunt}>{term('stunt')} +2</em>}
+                            {v === best && <em>최고</em>}
+                            <kbd className={styles.key} aria-hidden>
+                              {APPROACH_KEYS[ap]}
+                            </kbd>
+                          </span>
+                          <b>
+                            {v >= 0 ? '+' : ''}
+                            {v}
+                          </b>
+                          <span className={styles.apName}>{term(ap)}</span>
+                          <span className={styles.apTip}>{tip(ap)}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+      {!hideRoll && (
+        <div className={styles.rollRow} data-tour="roll" data-focus={focus === 'roll' || undefined}>
           <button
-            key={a}
             type="button"
-            role="radio"
-            aria-checked={action === a}
-            className={styles.action}
-            data-tour={`action-${a}`}
-            disabled={disabled || (a === 'defend' && !canDefend) || !allowAction(a)}
-            onClick={() => onAction(a)}
-            title={tip(a)}
+            className={styles.seal}
+            disabled={!busy && (disabled || !action || !approach || !allowRoll)}
+            data-busy={busy || undefined}
+            aria-busy={busy || undefined}
+            onClick={() => !busy && onRoll()}
           >
-            <span className={styles.num}>0{i + 1}</span>
-            {term(a)}
+            {busy ? '굴리는 중' : '굴린다'}
+            <kbd className={styles.space}>Space</kbd>
           </button>
-        ))}
-      </div>
-      {action && (
-        <div
-          className={styles.approaches}
-          role="radiogroup"
-          aria-label={term('approach')}
-          data-tour="approaches"
-          data-focus={focus === 'approach' || undefined}
-        >
-          {APPROACHES.map((ap) => (
-            <button
-              key={ap}
-              type="button"
-              role="radio"
-              aria-checked={approach === ap}
-              className={styles.approach}
-              disabled={disabled || !allowApproach}
-              onClick={() => onApproach(ap)}
-              title={tip(ap)}
-            >
-              <span className={styles.key}>{APPROACH_KEYS[ap]}</span>
-              {term(ap)} {character.approaches[ap] >= 0 ? '+' : ''}
-              {character.approaches[ap]}
-            </button>
-          ))}
         </div>
       )}
-      <div className={styles.rollCol} data-tour="roll" data-focus={focus === 'roll' || undefined}>
-        <button
-          type="button"
-          className={styles.roll}
-          disabled={!busy && (disabled || !action || !approach || !allowRoll)}
-          data-busy={busy || undefined}
-          aria-busy={busy || undefined}
-          onClick={() => !busy && onRoll()}
-        >
-          {busy ? '굴리는 중' : '굴리기'}
-        </button>
-        <span className={styles.space}>SPACE</span>
-      </div>
     </div>
   );
 }

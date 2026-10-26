@@ -39,7 +39,7 @@ export function CompelOffer({ aspect, text, fatePoints, onAccept, onRefuse, targ
   };
   return (
     <div className={styles.offer} role="dialog" aria-label={term('compel')}>
-      <div className={styles.head}>COMPEL · GM의 {term('compel')}</div>
+      <div className={styles.head}>GM의 {term('compel')}</div>
       <div ref={card}>
         <AspectCard aspect={aspect} />
       </div>

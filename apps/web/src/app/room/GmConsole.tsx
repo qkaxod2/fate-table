@@ -243,7 +243,7 @@ export function NarrationInput({
       <textarea
         rows={2}
         value={text}
-        placeholder="여기에 장면을 묘사하면 모두의 대사 창에 떠요 (Enter 보내기 · Shift+Enter 줄바꿈)"
+        placeholder="여기에 장면을 묘사하면 모두의 책에 적혀요 (Enter 보내기 · Shift+Enter 줄바꿈)"
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {

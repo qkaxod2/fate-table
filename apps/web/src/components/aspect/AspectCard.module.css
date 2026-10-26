@@ -1,36 +1,64 @@
+/*
+ * 특성 = 테이블 위의 인덱스 카드 (design-system.md 20절).
+ * 파란 가로줄 + 빨간 머리줄, 손글씨 문구, 위에 테이프. 종류는 머리줄 위 작은 글자와 왼쪽 띠로 구분한다.
+ */
 .card {
-  --bar: var(--k-normal);
+  --bar: var(--ink-3);
+  --line-h: 34px;
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 2px;
   min-width: 0;
-  padding: var(--s-2) var(--s-3) var(--s-2) calc(var(--s-3) + 4px);
-  border: 1px solid var(--gold);
-  border-radius: var(--r-card);
+  padding: 10px 16px 12px;
+  border: 0;
+  border-radius: 3px;
   background:
-    linear-gradient(var(--bar), var(--bar)) left / 4px 100% no-repeat,
-    var(--paper);
-  color: var(--ink);
+    linear-gradient(var(--bar), var(--bar)) left top / 4px 100% no-repeat,
+    linear-gradient(var(--rule-red), var(--rule-red)) 0 30px / 100% 1.5px no-repeat,
+    repeating-linear-gradient(
+        180deg,
+        transparent 0 calc(var(--line-h) - 1px),
+        var(--rule-blue) calc(var(--line-h) - 1px) var(--line-h)
+      )
+      0 31px / 100% 100% no-repeat,
+    var(--card);
+  color: var(--pen);
   font: inherit;
   text-align: left;
-  box-shadow: 0 6px 18px -10px rgb(0 0 0 / 0.8);
+  box-shadow:
+    0 1px 0 var(--paper-edge),
+    0 10px 20px -10px rgb(0 0 0 / 0.75);
   transition:
     transform var(--dur-hover) var(--ease-out),
+    translate var(--dur-enter) var(--ease-out),
     box-shadow var(--dur-hover) var(--ease-out),
     var(--press);
+}
+
+/* 테이프 */
+.card::before {
+  content: '';
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  width: 62px;
+  height: 18px;
+  translate: -50% 0;
+  rotate: -3deg;
+  background: rgb(240 228 196 / 0.78);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
+  pointer-events: none;
 }
 
 button.card {
   cursor: pointer;
 }
 
-button.card {
-  position: relative;
-}
-
 button.card:not(:disabled):hover {
-  transform: perspective(600px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(-3px);
-  box-shadow: 0 12px 24px -12px rgb(0 0 0 / 0.85);
+  transform: perspective(600px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(-4px);
+  box-shadow:
+    0 1px 0 var(--paper-edge),
+    0 16px 28px -12px rgb(0 0 0 / 0.85);
 }
 
 /* 마우스를 따라오는 종이 광택 */
@@ -41,7 +69,7 @@ button.card::after {
   border-radius: inherit;
   background: radial-gradient(
     circle at var(--mx, 50%) var(--my, 0%),
-    rgb(255 255 255 / 0.55),
+    rgb(255 255 255 / 0.6),
     transparent 55%
   );
   opacity: 0;
@@ -50,42 +78,42 @@ button.card::after {
 }
 
 button.card:not(:disabled):hover::after {
-  opacity: 0.45;
+  opacity: 0.5;
 }
 
 .card[data-kind='high'] {
-  --bar: var(--k-high);
+  --bar: var(--seal);
 }
 .card[data-kind='trouble'] {
-  --bar: var(--k-trouble);
+  --bar: var(--ink-1);
 }
 .card[data-kind='situation'] {
-  --bar: var(--k-scene);
+  --bar: #4f7a5a;
 }
 .card[data-kind='consequence'] {
-  --bar: var(--k-consequence);
+  --bar: #8a3b2e;
+  color: #5a1f1a;
 }
 .card[data-kind='boost'] {
-  --bar: var(--k-boost);
-  border-style: dashed;
-  border-color: var(--k-boost);
+  --bar: var(--brass);
+  outline: 2px dashed var(--brass);
+  outline-offset: -5px;
 }
 
+/* 결과를 뒤집을 수 있는 카드: 주홍 테두리를 두르고 은은하게 숨 쉰다 */
 .card[data-highlight] {
-  border-width: 2px;
   box-shadow:
-    0 0 0 3px rgb(242 123 173 / 0.35),
-    0 8px 22px -10px rgb(0 0 0 / 0.8);
+    0 0 0 3px var(--seal),
+    0 14px 26px -10px rgb(0 0 0 / 0.85);
   animation: invite 2.2s var(--ease-in-out) 700ms infinite;
 }
 
-/* 결과를 뒤집을 수 있는 카드는 은은하게 숨 쉰다 */
 @keyframes invite {
   50% {
     box-shadow:
-      0 0 0 4px rgb(242 123 173 / 0.5),
-      0 0 22px rgb(242 123 173 / 0.45),
-      0 8px 22px -10px rgb(0 0 0 / 0.8);
+      0 0 0 4px var(--seal-hi),
+      0 0 22px rgb(200 72 44 / 0.45),
+      0 14px 26px -10px rgb(0 0 0 / 0.85);
   }
 }
 
@@ -99,7 +127,7 @@ button.card:not(:disabled):hover::after {
 }
 
 .card[data-disabled] {
-  opacity: 0.45;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -107,31 +135,51 @@ button.card:not(:disabled):hover::after {
   display: flex;
   gap: var(--s-2);
   align-items: center;
-  font-size: var(--fs-xs);
-  color: #6b5d45;
+  height: 20px;
+  color: var(--ink-3);
+  font: 600 12px/20px var(--f-ui);
+  letter-spacing: 0.04em;
 }
 
+.card[data-kind='high'] .label,
+.card[data-kind='consequence'] .label {
+  color: var(--seal);
+}
+
+/* 무료 발동 ●: 카드에 꽂힌 빨간 압정 (놋쇠 동전인 운명점과 헷갈리지 않게 색을 나눈다) */
 .free {
-  color: var(--perfect);
-  letter-spacing: 2px;
+  display: inline-flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.pin {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #f08a74, var(--seal) 60%, #5e170b);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.45);
 }
 
 .text {
-  font-family: var(--f-story);
-  font-weight: 700;
-  font-size: var(--fs-lg);
-  line-height: 1.35;
+  padding-top: 4px;
+  font-family: var(--f-hand);
+  font-size: clamp(26px, 2.2vw, 34px);
+  line-height: var(--line-h);
+  word-break: keep-all;
 }
 
 .note {
-  font-size: var(--fs-xs);
-  color: #7a5160;
+  margin-top: 4px;
+  color: var(--seal);
+  font: 600 12px/1.4 var(--f-ui);
 }
 
 .card[data-size='sm'] {
-  padding: 6px var(--s-2) 6px calc(var(--s-2) + 4px);
+  --line-h: 28px;
+  padding: 8px 12px 10px;
 }
 
 .card[data-size='sm'] .text {
-  font-size: var(--fs-md);
+  font-size: clamp(22px, 1.8vw, 28px);
 }

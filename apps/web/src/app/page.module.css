@@ -4,23 +4,161 @@
   place-items: center;
   padding: var(--s-6) var(--s-4);
   background:
-    radial-gradient(ellipse at 50% 0%, rgb(214 182 110 / 0.12), transparent 60%), var(--night);
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgb(168 50 28 / 0.16), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 50% 100%, rgb(111 188 235 / 0.06), transparent 70%),
+    var(--night);
 }
 
 .hero {
-  max-width: 720px;
+  width: min(760px, 100%);
   text-align: center;
 }
 
-.title {
-  font-family: var(--f-story);
-  font-size: clamp(28px, 6vw, 44px);
+.kicker {
   margin: 0 0 var(--s-3);
+  color: var(--gold);
+  font: var(--label-font);
+  letter-spacing: var(--label-track);
+}
+
+.title {
+  margin: 0 0 var(--s-4);
+  font-family: var(--f-story);
+  font-size: clamp(30px, 6vw, 48px);
+  font-weight: 700;
+  line-height: 1.25;
+  text-wrap: balance;
 }
 
 .lead {
+  max-width: 34em;
+  margin: 0 auto var(--s-6);
   color: var(--muted);
+  font-size: var(--fs-lg);
+  line-height: 1.7;
+  text-wrap: pretty;
+}
+
+.start {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
   margin: 0 0 var(--s-6);
+}
+
+.primary {
+  display: inline-block;
+  padding: var(--s-3) var(--s-6);
+  border: 1px solid var(--gold-hi);
+  border-radius: var(--r-token);
+  background: linear-gradient(180deg, var(--gold-hi), var(--gold));
+  color: var(--ink);
+  font-family: var(--f-story);
+  font-weight: 700;
+  font-size: var(--fs-lg);
+  text-decoration: none;
+  box-shadow: 0 8px 28px -8px rgb(168 50 28 / 0.55);
+}
+
+.startNote {
+  color: var(--faint);
+  font-size: var(--fs-sm);
+}
+
+.paths {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s-3);
+  margin: 0 0 var(--s-3);
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.path {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  height: 100%;
+  padding: var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--panel);
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.path strong {
+  color: var(--gold-hi);
+  font-family: var(--f-story);
+  font-size: var(--fs-lg);
+}
+
+.path strong::after {
+  content: ' →';
+  color: var(--gold);
+  font-family: var(--f-ui);
+  font-weight: 400;
+}
+
+.path span {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+}
+
+.more {
+  display: flex;
+  justify-content: center;
+  gap: var(--s-4);
+  margin: 0 0 var(--s-6);
+  font-size: var(--fs-sm);
+}
+
+.more a {
+  color: var(--muted);
+  text-underline-offset: 3px;
+}
+
+.more a:hover {
+  color: var(--gold-hi);
+}
+
+.myRooms {
+  width: min(480px, 100%);
+  margin: 0 auto;
+  text-align: left;
+}
+
+.myRooms:has(> *) {
+  margin-bottom: var(--s-6);
+}
+
+.ladderBox {
+  margin: 0 0 var(--s-5);
+  padding: var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: rgb(255 255 255 / 0.02);
+}
+
+.ladderHead {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: baseline;
+  gap: var(--s-2);
+  margin-bottom: var(--s-3);
+  color: var(--gold);
+  font: var(--label-font);
+  letter-spacing: var(--label-track);
+}
+
+.ladderHead span {
+  color: var(--faint);
+  font-weight: 400;
+  letter-spacing: 0;
 }
 
 .ladder {
@@ -28,63 +166,38 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: var(--s-2);
-  margin: 0 0 var(--s-6);
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .rung {
+  padding: 2px var(--s-3);
+  border: 1px solid var(--line-hi);
+  border-radius: var(--r-token);
+  color: var(--muted);
   font-family: var(--f-num);
   font-size: var(--fs-sm);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-token);
-  padding: 2px var(--s-3);
+}
+
+.rung[data-sign='+'] {
+  border-color: var(--rule);
+  color: var(--fg);
 }
 
 .credit {
+  margin: 0;
+  color: var(--faint);
   font-size: var(--fs-xs);
-  color: var(--muted);
 }
 
-.ctas {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: var(--s-3);
-  margin: 0 0 var(--s-6);
-}
-
-.primary {
-  padding: var(--s-3) var(--s-6);
-  border: 1px solid var(--gold-hi);
-  background: linear-gradient(180deg, var(--gold-hi), var(--gold));
-  color: var(--ink);
-  font-family: var(--f-story);
-  font-weight: 700;
-  font-size: var(--fs-lg);
-  text-decoration: none;
-}
-
-.secondary {
-  padding: var(--s-3) var(--s-5);
-  border: 1px solid var(--gold);
-  color: var(--gold-hi);
-  font-family: var(--f-story);
-  font-weight: 700;
-  font-size: var(--fs-lg);
-  text-decoration: none;
-}
-
-.soon {
-  color: var(--muted);
-  font-size: var(--fs-sm);
-}
-
-.myRooms {
-  width: min(440px, 100%);
-  margin: 0 auto var(--s-6);
-  text-align: left;
+@media (max-width: 640px) {
+  .paths {
+    grid-template-columns: 1fr;
+  }
+  .lead {
+    font-size: var(--fs-md);
+  }
 }
 
 /* ---------- 움직임 ---------- */
@@ -93,18 +206,20 @@
   animation: rise var(--dur-scene) var(--ease-out) backwards;
 }
 .hero > :nth-child(2) {
-  animation-delay: 80ms;
+  animation-delay: 60ms;
 }
 .hero > :nth-child(3) {
-  animation-delay: 160ms;
+  animation-delay: 120ms;
 }
-.hero > :nth-child(n + 4) {
+.hero > :nth-child(4) {
+  animation-delay: 180ms;
+}
+.hero > :nth-child(n + 5) {
   animation-delay: 240ms;
 }
 
 .primary,
-.secondary {
-  display: inline-block;
+.path {
   transition:
     var(--hover),
     var(--press),
@@ -113,23 +228,24 @@
 }
 
 .primary:hover,
-.secondary:hover {
+.path:hover {
   transform: translateY(-2px);
 }
 
 .primary:hover {
   filter: brightness(1.06);
-  box-shadow: 0 8px 24px rgb(214 182 110 / 0.3);
+  box-shadow: 0 10px 32px -6px rgb(168 50 28 / 0.6);
 }
 
-.secondary:hover {
-  border-color: var(--gold-hi);
-  background: rgb(214 182 110 / 0.1);
+.path:hover,
+.path:focus-visible {
+  border-color: var(--rule);
+  background: rgb(168 50 28 / 0.07);
 }
 
 .primary:active,
-.secondary:active {
-  scale: 0.97;
+.path:active {
+  scale: 0.98;
   transition-duration: var(--dur-press);
 }
 
@@ -154,11 +270,11 @@
     animation-name: fade;
   }
   .primary:hover,
-  .secondary:hover {
+  .path:hover {
     transform: none;
   }
   .primary:active,
-  .secondary:active {
+  .path:active {
     scale: none;
   }
 }

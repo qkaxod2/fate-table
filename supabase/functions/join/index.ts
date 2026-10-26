@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
 
   const db = admin();
   const { data: room } = await db.from('rooms').select('id').eq('invite_code', code).maybeSingle();
-  if (!room) return fail(404, 'NOT_FOUND', '그런 초대 코드의 방이 없어요.');
+  if (!room) return fail(404, 'NOT_FOUND', '초대 코드에 맞는 방이 없어요. 코드를 다시 확인해 주세요.');
 
   const { data: existing } = await db
     .from('room_members')

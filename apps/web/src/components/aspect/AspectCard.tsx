@@ -67,8 +67,14 @@ export function AspectCard({
       <span className={styles.label}>
         {label}
         {aspect.freeInvokes > 0 && (
-          <span className={styles.free} title={term('freeInvoke')}>
-            {'●'.repeat(aspect.freeInvokes)}
+          <span
+            className={styles.free}
+            title={`${term('freeInvoke')} ${aspect.freeInvokes}`}
+            aria-label={`${term('freeInvoke')} ${aspect.freeInvokes}`}
+          >
+            {Array.from({ length: aspect.freeInvokes }, (_, i) => (
+              <i key={i} className={styles.pin} />
+            ))}
           </span>
         )}
       </span>

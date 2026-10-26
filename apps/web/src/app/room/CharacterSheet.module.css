@@ -72,9 +72,8 @@
 .sheet h3 {
   margin: 0 0 var(--s-2);
   color: var(--gold);
-  font-family: var(--f-num);
-  font-size: var(--fs-xs);
-  letter-spacing: 3px;
+  font: var(--label-font);
+  letter-spacing: var(--label-track);
 }
 
 .muted {
@@ -87,7 +86,7 @@
   padding: var(--s-2) var(--s-3);
   border: 1px solid var(--hi);
   border-radius: var(--r-card);
-  background: rgb(255 111 181 / 0.08);
+  background: rgb(168 50 28 / 0.08);
 }
 
 .milestone p {

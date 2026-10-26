@@ -25,7 +25,7 @@ export function PartyRail({
 }) {
   return (
     <aside className={styles.rail} aria-label="파티">
-      <div className={styles.head}>PARTY · FATE</div>
+      <div className={styles.head}>파티 · 운명점</div>
       {members.map(({ character: c, image, status, active }) => (
         <div
           key={c.id}

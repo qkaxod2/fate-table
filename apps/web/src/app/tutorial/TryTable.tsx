@@ -30,11 +30,13 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { AspectCard } from '@/components/aspect/AspectCard';
 import { CompelOffer } from '@/components/compel/CompelOffer';
 import { StoryLog } from '@/components/log/StoryLog';
-import { PartyRail } from '@/components/party/PartyRail';
+import { FoePlate } from '@/components/book/FoePlate';
+import { MySheet } from '@/components/book/MySheet';
 import { ActionBar, type CoachFocus } from '@/components/roll/ActionBar';
 import { DICE_MODES, DiceTray, saveDiceMode, type DiceMode } from '@/components/roll/DiceTray';
 import { InvokeTray, type InvokeChoice } from '@/components/roll/InvokeTray';
 import { OutcomeBanner } from '@/components/roll/OutcomeBanner';
+import { RollPreview } from '@/components/roll/RollPreview';
 import { CoachMark, type Coach } from '@/components/tutorial/CoachMark';
 import { Spotlight } from '@/components/tutorial/Spotlight';
 import { BOSS, SAMPLE_CHARACTERS, SCENE, type SampleCharacter } from '@/content/oneshot';
@@ -45,6 +47,7 @@ import { Typewriter } from '@/components/ui/Typewriter';
 import { describe, ERROR_COPY, OUTCOME_COPY } from '@/lib/copy';
 import { josa } from '@/lib/josa';
 import { LocalRoom } from '@/state/localRoom';
+import book from './book.module.css';
 import styles from './try.module.css';
 
 const ME: Actor = { userId: 'me', role: 'player' };
@@ -62,7 +65,7 @@ const COMPEL_TEXT: Record<string, string> = {
 };
 
 /**
- * 단계별 튜토리얼 순서: 소개 → 1 극복 → 2 이점 창출 → 3 공격 → 4 방어 → 자유 진행.
+ * 단계별 튜토리얼 순서: 소개 → 1 극복 → 2 이점 만들기 → 3 공격 → 4 방어 → 자유 진행.
  * 진행 중에는 지금 단계의 버튼만 열어 두고 나머지는 어둡게 덮어 막는다.
  */
 type Lesson = 'intro' | Action | 'free';
@@ -76,9 +79,9 @@ const LESSON_COPY: Record<Action, { title: string; body: string; example: string
     example: `지금은 불길이 앞을 막고 있어요. 빛나는 1번 "${term('overcome')}" 버튼을 눌러 불길을 뚫어 봐요.`,
   },
   create_advantage: {
-    title: `${term('create_advantage')}: 판을 내게 유리하게 만들어요`,
-    body: `바로 이기려 하지 않고 준비를 하는 행동이에요. 성공하면 장면에 새 ${term('aspect')}을 붙이고, 그걸 공짜로 쓸 수 있는 ${term('freeInvoke')}을 받아요. 예: 연기로 두목의 눈을 가리기, 바닥에 기름 뿌리기, 상대의 빈틈 찾아내기.`,
-    example: `2번 "${term('create_advantage')}" 버튼을 눌러 두목과 싸우기 전에 유리한 상황을 만들어 봐요.`,
+    title: `${term('create_advantage')}: 싸우기 전에 판을 깔아요`,
+    body: `바로 이기기보다 나에게 유리한 상황을 준비하는 행동이에요. 성공하면 장면에 새 ${term('aspect')}을 붙이고, 그 ${term('aspect')}을 공짜로 쓸 수 있는 ${term('freeInvoke')}도 받아요. 예: 연기로 두목의 눈을 가리기, 바닥에 기름 뿌리기, 상대의 빈틈 찾아내기.`,
+    example: `2번 "${term('create_advantage')}" 버튼을 눌러 두목과 싸우기 전에 판을 깔아 봐요.`,
   },
   attack: {
     title: `${term('attack')}: 상대에게 피해를 줘요`,
@@ -533,7 +536,7 @@ function Table({
         ];
         const used = parts.map((x, k) => (k < parts.length - 1 ? josa(x, '과/와') : x)).join(' ');
         const scars = plan.consequences.map((slot) => `"${NAMES[slot]}"`).join(', ');
-        return `${josa(`피해 ${pending.shifts}`, '이/가')} 들어갔어요. ${josa(who, '은/는')} ${josa(used, '으로/로')} 버텨요.${scars ? ` 상처 ${scars}는 ${term('aspect')}으로 남아요.` : ''}`;
+        return `${josa(`피해 ${pending.shifts}`, '이/가')} 들어갔어요. ${josa(who, '은/는')} ${josa(used, '으로/로')} 버텨요.${scars ? ` 상처 ${josa(scars, '은/는')} ${term('aspect')}으로 남아요.` : ''}`;
       }
       return null;
     },
@@ -604,7 +607,7 @@ function Table({
         title: `방금 결과: ${OUTCOME_COPY[a][o]}`,
         body: OUTCOME_DETAIL[a][o],
         points: OUTCOME_ORDER.filter((x) => x !== o).map((x) => OUTCOME_DETAIL[a][x]),
-        example: `다른 결과였다면 위처럼 됐을 거예요. ${josa(term(a), '은/는')} 결과마다 이렇게 달라요.`,
+        example: `결과가 달랐다면 위처럼 됐을 거예요. ${josa(term(a), '은/는')} 결과마다 이렇게 달라요.`,
         label: '알겠어요',
       },
     ];
@@ -618,7 +621,8 @@ function Table({
         step: 4,
         title: `${term('boost')}가 뭐예요?`,
         body: `순간적으로 생긴 작은 기회예요. ${term('aspect')}처럼 ${term('invoke')}해서 +2를 받지만, 한 번 쓰면 사라지고 ${term('fatePoint')}도 들지 않아요.`,
-        example: '예: "흔들리는 발판", "연기 틈의 빈틈". 다음 굴림이 아쉬울 때 공짜 +2로 써 봐요.',
+        example:
+          '예: "흔들리는 발판", "연기 사이로 난 틈". 다음 굴림이 아쉬울 때 공짜 +2로 써 봐요.',
         label: '다음',
       });
     if (a === 'create_advantage' && (o === 'success' || o === 'style'))
@@ -626,11 +630,11 @@ function Table({
         chapter,
         step: 4,
         title: `${term('freeInvoke')}은 공짜 +2예요`,
-        body: `방금 이름 지은 ${term('aspect')}이 오른쪽 장면 카드에 붙었어요. 거기 붙은 ${term('freeInvoke')}은 ${term('fatePoint')} 없이 그 ${term('aspect')}을 ${term('invoke')}할 수 있는 권리예요.`,
+        body: `방금 이름 지은 ${term('aspect')}이 무대 아래 장면 카드로 붙었어요. 카드의 ●가 ${term('freeInvoke')}이에요. ${josa(term('fatePoint'), '을/를')} 내지 않고 이 ${term('aspect')}을 ${term('invoke')}할 수 있어요.`,
         points: [
           `${term('freeInvoke')}은 이 ${term('aspect')}을 만든 나나 동료가 쓸 수 있어요.`,
           `다 써도 ${term('aspect')}은 장면에 남아요. 그 뒤로는 ${josa(term('fatePoint'), '을/를')} 내고 ${term('invoke')}하면 돼요.`,
-          '이게 이점 창출의 핵심이에요. 미리 준비해 두고, 결정적인 공격에서 공짜로 꺼내 써요.',
+          `이게 ${term('create_advantage')}의 핵심이에요. 미리 준비해 두고, 결정적인 공격에서 공짜로 꺼내 써요.`,
         ],
         open: ['[data-tour="aspects"]'],
         ring: '[data-tour="aspects"]',
@@ -646,13 +650,13 @@ function Table({
         points: [
           `${term('stress')}: 1번, 2번, 3번 칸이 있어요. 받은 피해와 같거나 더 큰 번호의 빈 칸 하나를 채우면 그 피해를 막아요. 장면이 끝나면 다시 비워져요.`,
           `${term('consequence')}: ${term('mild')}은 피해 2, ${term('moderate')}은 4, ${term('severe')}는 6까지 막아 줘요. 대신 상처가 ${term('aspect')}으로 남고, 때린 쪽은 그 상처에 ${term('freeInvoke')} 하나를 얻어요.`,
-          '칸과 후유증을 다 써도 못 막으면 탈락해요. 장면에서 빠지고, 어떻게 쓰러지는지는 이긴 쪽이 이야기해요.',
+          '칸과 후유증을 다 써도 못 막으면 탈락해요. 장면에서 빠지고, 어떻게 쓰러지는지는 이긴 쪽이 정해요.',
         ],
         open: ['[data-tour="party"]'],
         ring: '[data-tour="party"]',
         example:
           a === 'defend'
-            ? `왼쪽 파티 칸에서 내 ${term('stress')} 칸을 확인해 봐요.`
+            ? `책 위쪽 내 기록지에서 ${term('stress')} 칸과 ${term('consequence')} 줄을 확인해 봐요.`
             : `${josa(BOSS.name, '은/는')} 이미 ${term('moderate')}·${term('severe')}가 차 있어서, 남은 건 ${term('stress')} 3번 칸과 ${term('mild')}뿐이에요. 조금만 더!`,
         label: '다음',
       });
@@ -663,12 +667,12 @@ function Table({
         title: `GM이 ${josa(term('trouble'), '을/를')} 건드려요: ${term('compel')}`,
         body: `${josa(term('compel'), '은/는')} GM이 "네 ${term('trouble')} 때문에 일이 이렇게 꼬여"라고 제안하는 거예요. 서사형 TRPG에서는 캐릭터가 곤란해질수록 이야기가 재미있어져요.`,
         points: [
-          `받아들이면: 일이 꼬이는 대신 ${term('fatePoint')} 1개를 받아요. ${josa(term('fatePoint'), '을/를')} 모으는 주된 방법이에요.`,
+          `받아들이면: 일이 꼬이는 대신 ${term('fatePoint')} 1개를 받아요. ${josa(term('fatePoint'), '을/를')} 모으는 가장 기본적인 방법이에요.`,
           `거절하면: ${term('fatePoint')} 1개를 내고 꼬이는 걸 막아요.`,
           `모은 ${josa(term('fatePoint'), '으로/로')} 나중에 ${josa(term('aspect'), '을/를')} ${term('invoke')}해 +2를 받아요. 꼬였다가 멋지게 뒤집는 흐름이죠.`,
         ],
         example: '처음이라면 받아들이는 걸 추천해요.',
-        label: '강요 받아 보기',
+        label: '강요받아 보기',
         then: offerCompel,
       });
     return out;
@@ -702,8 +706,8 @@ function Table({
         ? `${term('fatePoint')} +1! 이야기가 꼬였어요`
         : `${term('fatePoint')} 1개를 내고 막았어요`,
       body: accepted
-        ? `왼쪽 파티 칸의 ◆가 하나 늘었어요. 이렇게 모은 ${josa(term('fatePoint'), '으로/로')} 굴림이 아쉬울 때 ${josa(term('aspect'), '을/를')} ${term('invoke')}해요. 곤란해진 대가로 나중에 멋지게 뒤집을 힘을 얻은 거예요.`
-        : `거절은 언제든 할 수 있지만 ${josa(term('fatePoint'), '이/가')} 들어요. 꼬이는 게 이야기에 재미있다면 받아들이는 편이 보통 더 이득이에요.`,
+        ? `내 기록지의 운명점 동전이 하나 늘었어요. 이렇게 모은 ${josa(term('fatePoint'), '으로/로')} 굴림이 아쉬울 때 ${josa(term('aspect'), '을/를')} ${term('invoke')}해요. 곤란해진 대가로 나중에 멋지게 뒤집을 힘을 얻은 거예요.`
+        : `거절은 언제든 할 수 있지만 ${josa(term('fatePoint'), '이/가')} 들어요. 이야기가 재미있어진다면 받아들이는 편이 대개 더 이득이에요.`,
       open: ['[data-tour="party"]'],
       ring: '[data-tour="party"]',
       example: `${josa(term('fatePoint'), '은/는')} ${josa(term('compel'), '을/를')} 받아들여서 얻고, ${term('invoke')}할 때 써요.`,
@@ -749,7 +753,6 @@ function Table({
       !a.hidden && (a.ownerType !== 'character' || a.kind === 'boost' || a.kind === 'consequence'),
   );
   const lines = events.map((e) => describe(e, state)).filter((l) => l !== null);
-  const narration = [...events].reverse().find((e) => e.type === 'narration.posted');
 
   const myOutcomeNow =
     roll?.status === 'open' && roll.active.dice && myRoll ? outcomeFor(roll, 'active') : null;
@@ -823,7 +826,7 @@ function Table({
           total: 4,
           clear: true,
           title: `${josa(boss.name, '을/를')} 쓰러뜨렸어요!`,
-          body: `행동을 고르고, 굴리고, ${term('aspect')}을 ${term('invoke')}해 판을 뒤집는 법을 다 익혔어요. 이제 내 캐릭터로 이어 가 볼까요?`,
+          body: `행동을 고르고, 굴리고, ${term('aspect')}을 ${term('invoke')}해 판을 뒤집는 법을 다 익혔어요. 이제 진짜 게임을 시작해 볼까요?`,
           links: [
             { href: '/create/', label: '캐릭터 만들기' },
             { href: '/rooms/new/', label: '친구들과 방 만들기' },
@@ -857,7 +860,7 @@ function Table({
 
     if (lesson === 'intro') {
       const next = (label: string) => ({ label, onClick: () => setIntroStep((n) => n + 1) });
-      const total = 8;
+      const total = 9;
       const steps: Tour[] = [
         {
           open: [],
@@ -878,7 +881,7 @@ function Table({
             step: 2,
             total,
             chapter: '시작하기',
-            title: '아래 대사창이 GM의 목소리예요',
+            title: '오른쪽 책의 본문이 GM의 목소리예요',
             body: '이야기는 언제나 GM의 묘사에서 시작해요. 지금은 불타는 곡물 창고에 도적들이 튀어나왔고, 다락 위에서는 도적 두목이 도끼를 들고 웃고 있어요. 두목은 앞서 동료들과 싸우다 이미 크게 다친 상태예요.',
             example: 'GM의 말을 읽고 "지금 무슨 상황이지?"를 먼저 떠올려요.',
             next: next('읽었어요'),
@@ -891,8 +894,8 @@ function Table({
             step: 3,
             total,
             chapter: '시작하기',
-            title: `이 사람이 나, ${josa(pick.name, '이에요/예요')}`,
-            body: `캐릭터는 숫자보다 짧은 문구로 설명돼요. ${pick.name}의 ${term('high')}은 "${pick.create.highConcept}", ${term('trouble')}은 "${pick.create.trouble}"이에요. 이렇게 캐릭터나 장면을 설명하는 문구를 ${term('aspect')}이라고 불러요.`,
+            title: `이게 내 캐릭터, ${josa(pick.name, '이에요/예요')}`,
+            body: `이 게임에서는 캐릭터를 숫자보다 짧은 문구로 표현해요. ${pick.name}의 ${term('high')}은 "${pick.create.highConcept}", ${term('trouble')}은 ${josa(`"${pick.create.trouble}"`, '이에요/예요')}. 이렇게 캐릭터나 장면을 설명하는 문구를 ${term('aspect')}이라고 불러요.`,
             example: `${term('trouble')}은 일을 꼬이게 만들지만, 그 대신 ${josa(term('fatePoint'), '을/를')} 받을 기회가 돼요.`,
             next: next('다음'),
           },
@@ -905,9 +908,9 @@ function Table({
             total,
             chapter: '시작하기',
             title: `${term('aspect')}은 이 이야기에서 "사실"이에요`,
-            body: `오른쪽 카드가 지금 장면의 ${term('aspect')}이에요. "사방에 번지는 불길"처럼 이 장면에서 정말로 그런 것들이죠. 굴림이 아쉬울 때 ${term('fatePoint')} 1개를 내고 ${term('aspect')}을 ${term('invoke')}하면, 그 사실을 근거로 +2를 받아요.`,
+            body: `무대 아래 카드가 지금 장면의 ${term('aspect')}이에요. "사방에 번지는 불길"처럼 지금 이 장면에서 실제로 벌어지고 있는 일이죠. 굴림이 아쉬울 때 ${term('fatePoint')} 1개를 내고 ${term('aspect')}을 ${term('invoke')}하면, 그 사실을 근거로 +2를 받아요.`,
             points: [
-              `캐릭터 ${term('aspect')}: 어떤 사람인지 보여 주는 ${term('high')}, 발목을 잡는 ${term('trouble')}, 그 밖의 특징들`,
+              `캐릭터 ${term('aspect')}: 어떤 사람인지 보여 주는 ${term('high')}, 발목을 잡는 ${term('trouble')}, 그 밖의 특징`,
               `장면 ${term('aspect')}: 지금 장소와 상황을 설명하는 사실이에요. 누구나 쓸 수 있어요`,
               `${term('aspect')}은 좋게도 나쁘게도 쓰여요. 불길은 나를 막기도, 적을 막기도 하죠`,
             ],
@@ -923,12 +926,12 @@ function Table({
             total,
             chapter: '시작하기',
             title: `${josa(term('fatePoint'), '은/는')} 딱 ${me.fatePoints}개뿐이에요`,
-            body: `왼쪽 파티 칸의 ◆ 하나가 ${term('fatePoint')} 1개예요. ${josa(term('aspect'), '을/를')} ${term('invoke')}할 때마다 1개씩 없어지고, 저절로 다시 생기지 않아요. 아무 때나 쓰면 금방 바닥나요.`,
+            body: `오른쪽 기록지의 동전 하나가 ${term('fatePoint')} 1개예요(설명에서는 ◆로 적어요). ${josa(term('aspect'), '을/를')} ${term('invoke')}할 때마다 1개씩 없어지고, 저절로 다시 생기지 않아요. 아무 때나 쓰면 금방 바닥나요.`,
             points: [
-              `쓰는 곳: ${term('invoke')}할 때마다 1개, ${josa(term('compel'), '을/를')} 거절할 때 1개`,
+              `쓸 때: ${term('invoke')}할 때마다 1개, ${josa(term('compel'), '을/를')} 거절할 때 1개`,
               `다 쓰고 나면 ${josa(term('fatePoint'), '으로/로')}는 더 ${term('invoke')}할 수 없어요. 그때는 ${term('freeInvoke')}만 쓸 수 있어요.`,
-              `늘리는 법: GM의 ${josa(term('compel'), '을/를')} 받아들여 일이 꼬이게 두면 1개, 상대가 내 ${josa(term('aspect'), '을/를')} 나에게 불리하게 쓰면 1개`,
-              `세션이 새로 시작되면 ${josa(pick.name, '은/는')} ${me.refresh}개까지 다시 채워져요. 이걸 ${term('refresh')}이라고 해요. 이미 그보다 많이 갖고 있다면 줄지 않고 그대로예요.`,
+              `얻는 법: GM의 ${josa(term('compel'), '을/를')} 받아들여 일이 꼬이게 두면 1개, 상대가 내 ${josa(term('aspect'), '을/를')} 나에게 불리하게 쓰면 1개`,
+              `세션이 새로 시작되면 ${pick.name}의 ${josa(term('fatePoint'), '은/는')} ${me.refresh}개까지 다시 채워져요. 이걸 ${term('refresh')}이라고 해요. 이미 그보다 많으면 줄지 않아요.`,
             ],
             example:
               '그래서 진짜 중요한 굴림에만 써요. 곤란을 받아들여 모으고, 결정적인 순간에 써서 뒤집는 게 기본 흐름이에요.',
@@ -942,13 +945,13 @@ function Table({
             step: 6,
             total,
             chapter: '시작하기',
-            title: `${josa(term('freeInvoke'), '이/가')} 뭐예요? 카드의 ● 표시`,
-            body: `${term('freeInvoke')}은 그 ${term('aspect')}을 ${term('fatePoint')} 없이 한 번 ${term('invoke')}할 수 있는 공짜 권리예요. ${term('aspect')} 카드에 붙은 ● 하나가 ${term('freeInvoke')} 1번이에요.`,
+            title: `카드의 ●는 ${josa(term('freeInvoke'), '이에요/예요')}`,
+            body: `${term('freeInvoke')}은 ${josa(term('fatePoint'), '을/를')} 내지 않고 그 ${term('aspect')}을 한 번 ${term('invoke')}하는 거예요. ${term('aspect')} 카드에 붙은 ● 하나가 ${term('freeInvoke')} 1회예요.`,
             points: [
               `쓰는 법: ${term('fatePoint')} ◆ 대신 카드의 ● 하나를 지우면, 똑같이 +2를 받거나 다시 굴릴 수 있어요.`,
               `●를 다 써도 ${term('aspect')}은 남아요. 그 뒤로는 ◆를 내야 ${term('invoke')}할 수 있어요.`,
-              `얻는 곳: ${term('create_advantage')}에 성공하면 ● 1개, 대성공하면 2개가 붙어요. 상대에게 ${josa(term('consequence'), '을/를')} 남겨도 1개를 얻어요. ${term('boost')}에는 처음부터 ●가 1개 붙어 있고, 쓰면 카드째 사라져요.`,
-              `오른쪽 ${BOSS.name}의 상처 카드에 ●가 보이죠? 앞서 동료들이 남긴 ${term('freeInvoke')}이라 내가 공짜로 쓸 수 있어요.`,
+              `얻는 법: ${term('create_advantage')}에 성공하면 ● 1개, 대성공하면 2개가 붙어요. 상대에게 ${josa(term('consequence'), '을/를')} 남겨도 1개를 얻어요. ${term('boost')}에는 처음부터 ●가 1개 붙어 있고, 쓰면 카드째 사라져요.`,
+              `무대 아래 ${BOSS.name}의 상처 카드에 꽂힌 핀(●)이 보이죠? 앞서 동료들이 남긴 ${term('freeInvoke')}이라 내가 공짜로 쓸 수 있어요.`,
             ],
             example: `${josa(term('fatePoint'), '은/는')} 개수가 정해져 있으니, ●가 있는 카드부터 쓰는 게 이득이에요.`,
             next: next('다음'),
@@ -961,11 +964,29 @@ function Table({
             total,
             chapter: '시작하기',
             title: `숫자에는 이름이 있어요: ${term('ladder')}`,
-            body: `모든 수치와 결과는 ${term('ladder')}의 이름으로도 불러요. "+3"보다 "양호"가 더 이야기 같죠.`,
+            body: `모든 수치와 결과에는 ${term('ladder')}의 이름이 붙어요. "+3"보다 "양호"가 더 이야기 같죠.`,
             points: [8, 6, 5, 4, 3, 2, 1, 0, -1, -2]
               .filter((n) => n <= 5)
               .map((n) => `${sign(n)} ${LADDER_LABELS[n]}`),
-            example: `${josa(pick.name, '은/는')} ${term(best[0])} 수치가 ${sign(best[1])} ${josa(LADDER_LABELS[best[1]] ?? '', '으로/로')} 가장 높아요. 보통 사람은 +0 평범, 전문가는 +3 양호 정도예요.`,
+            example: `${josa(pick.name, '은/는')} ${term(best[0])} 수치가 ${sign(best[1])} ${josa(LADDER_LABELS[best[1]] ?? '', '으로/로')} 가장 높아요. 일반인은 +0 평범, 전문가는 +3 양호 정도예요.`,
+            next: next('다음'),
+          },
+        },
+        {
+          open: ['[data-tour="party"]', '[data-tour="foe"]'],
+          ring: '[data-tour="party"]',
+          coach: {
+            step: 8,
+            total,
+            chapter: '시작하기',
+            title: `다치면 이렇게 버텨요: ${term('stress')}와 ${term('consequence')}`,
+            body: `공격을 막지 못하면 진 차이만큼 피해가 들어와요. 피해를 받았다고 바로 쓰러지지는 않아요. 아래 두 가지로 버텨요.`,
+            points: [
+              `${term('stress')}(1·2·3번 칸): 숨이 차거나 살짝 긁힌 정도예요. 받은 피해와 같거나 더 큰 번호의 빈 칸 하나를 채우면 그 피해를 통째로 막아요. 장면이 끝나면 다시 비워져요.`,
+              `${term('consequence')}(${term('mild')} 2 · ${term('moderate')} 4 · ${term('severe')} 6): 진짜로 다친 거예요. 적힌 숫자만큼 피해를 막아 주는 대신, "삐끗한 발목"처럼 다친 곳이 ${term('aspect')}으로 남아요. 상대는 그 ${josa(term('consequence'), '을/를')} 공짜로 한 번 이용할 수 있어요.`,
+              `둘 다 써도 못 막으면 탈락이에요. 그 전에 스스로 ${term('concede')}하면 어떻게 물러날지 내가 정하고, ${josa(term('fatePoint'), '을/를')} 받아요.`,
+            ],
+            example: `무대 오른쪽 위 ${BOSS.name}의 이름표를 봐요. ${term('stress')} 1·2번 칸과 ${term('moderate')}·${term('severe')}가 이미 차 있어서, 한두 번만 제대로 맞히면 쓰러져요.`,
             next: next('다음'),
           },
         },
@@ -973,12 +994,12 @@ function Table({
           open: ['[data-tour="actions"]'],
           ring: '[data-tour="actions"]',
           coach: {
-            step: 8,
+            step: 9,
             total,
             chapter: '시작하기',
             title: '할 수 있는 일은 딱 네 가지 행동이에요',
-            body: `무엇을 하든 아래 네 행동 중 하나로 표현해요. 1 ${term('overcome')}, 2 ${term('create_advantage')}, 3 ${term('attack')}, 4 ${term('defend')}. 지금부터 1번부터 차례로, 하나씩 직접 해 볼게요.`,
-            example: '각 장마다 지금 눌러야 할 곳만 밝게 빛나요. 거기만 따라 누르면 돼요.',
+            body: `무엇을 하든 오른쪽 아래 목차의 네 행동 중 하나로 표현해요. 1 ${term('overcome')}, 2 ${term('create_advantage')}, 3 ${term('attack')}, 4 ${term('defend')}. 이제 1번부터 하나씩 직접 해 볼게요.`,
+            example: '장마다 지금 눌러야 할 곳만 빛나요. 빛나는 곳만 따라 누르면 돼요.',
             next: { label: '1장 시작', onClick: () => setLesson('overcome') },
           },
         },
@@ -1008,7 +1029,7 @@ function Table({
           chapter: '자유 진행',
           title: '이제 마음대로 해 봐요!',
           body: `네 가지 행동을 모두 해 봤어요. 이제 정해진 순서는 없어요. ${josa(boss.name, '을/를')} 쓰러뜨리면 장면이 끝나요.`,
-          example: `2번 ${josa(term('create_advantage'), '으로/로')} 유리한 ${term('aspect')}을 만든 뒤 3번 ${josa(term('attack'), '을/를')} 하면 더 쉬워요. 버튼에 마우스를 올리면 설명이 나와요.`,
+          example: `2번 ${josa(term('create_advantage'), '으로/로')} 유리한 ${term('aspect')}을 붙인 뒤 3번 ${josa(term('attack'), '을/를')} 하면 더 쉬워요. 버튼에 마우스를 올리면 설명이 나와요.`,
         },
       };
     }
@@ -1031,7 +1052,7 @@ function Table({
           title: copy.title,
           body: copy.body,
           example: `${josa(boss.name, '이/가')} 다락에서 뛰어내려 ${pick.name}에게 도끼를 휘둘러요!`,
-          next: { label: '막을 준비 됐어요', onClick: bossAttacks },
+          next: { label: '막을 준비가 됐어요', onClick: bossAttacks },
         },
       };
 
@@ -1085,19 +1106,19 @@ function Table({
           step: 3,
           focus: 'roll',
           title: '주사위를 굴려요',
-          body: `${term('fateDice')} 4개를 굴려요. 내 결과는 주사위 합에 ${term('approach')} 수치를 더한 값이에요. 맞는 ${josa(term('stunt'), '이/가')} 있으면 +2가 더 붙어요.`,
+          body: `${term('fateDice')} 4개를 굴려요. 내 결과는 주사위 합에 ${term('approach')} 수치를 더한 값이에요. 상황에 맞는 ${josa(term('stunt'), '이/가')} 있으면 +2가 더 붙어요.`,
           points: [
-            '주사위 한 개에는 ＋, ○, － 면이 있고, 셋이 나올 확률은 똑같아요. ＋는 +1, ○는 0, －는 −1로 셈해요.',
-            '4개를 더하면 −4부터 +4까지. 대부분 −1~+1 근처라서, 결국 접근법 수치가 가장 중요해요.',
+            '주사위 한 개에는 ＋, ○, － 면이 있고, 셋이 나올 확률은 똑같아요. ＋는 +1, ○는 0, －는 −1로 쳐요.',
+            `4개를 더하면 −4에서 +4 사이인데, 대부분 −1~+1 근처에서 나와요. 그래서 ${term('approach')} 수치가 가장 중요해요.`,
             '튜토리얼에서는 결과 네 가지를 골고루 겪어 보도록 주사위 눈이 미리 정해져 있어요. 자유 진행부터는 진짜로 굴려요.',
-            `상대 수치보다 높으면 이기는데, 그 차이를 ${term('shifts')}라고 불러요. ${OUTCOME_RULE}`,
+            `내 결과와 상대 수치의 점수 차를 ${term('shifts')}라고 해요. ${OUTCOME_RULE}`,
           ],
           example:
             lesson === 'defend'
               ? `${boss.name}의 주사위는 이미 굴러갔지만 가려져 있어요. 내가 굴리면 둘 다 공개돼요.`
               : lesson === 'attack'
                 ? `${boss.name}도 ${term('defend')}로 맞서 굴려요. 더 높은 쪽이 이겨요.`
-                : `난이도는 ${formatRating(SCENE.overcomeDifficulty)}예요. 이보다 높으면 성공, 같으면 동점이에요.`,
+                : `난이도는 ${josa(formatRating(SCENE.overcomeDifficulty), '이에요/예요')}. 이보다 높으면 성공, 같으면 동점이에요.`,
           keys: ['Space'],
         },
       };
@@ -1110,7 +1131,7 @@ function Table({
           ...base,
           step: 3,
           title: '주사위가 구르는 중…',
-          body: '결과가 멈출 때까지 지켜봐요.',
+          body: '주사위가 멈출 때까지 지켜봐요.',
         },
       };
 
@@ -1139,7 +1160,7 @@ function Table({
           title: OUTCOME_COPY.defend[o],
           body:
             o === 'success' || o === 'style'
-              ? `${boss.name}의 도끼를 막아냈어요. 막아 내면 피해를 하나도 받지 않아요.`
+              ? `${boss.name}의 도끼를 막아냈어요. 막아내면 피해를 하나도 받지 않아요.`
               : `막지 못했어요. 진 차이만큼 피해를 받아요. 피해는 먼저 ${term('stress')} 칸으로 버티고, 크면 ${term('consequence')}이 남아요. 끝까지 버티지 못하면 탈락이에요.`,
           example: '"결과 확정"을 누르면 이야기에 반영돼요.',
         },
@@ -1157,7 +1178,7 @@ function Table({
           ...base,
           step: 4,
           title: `아쉬워요! ${term('aspect')}을 ${term('invoke')}해서 뒤집어요`,
-          body: `확정하기 전이라면 결과를 바꿀 수 있어요. 지금 상황에 어울리는 ${term('aspect')} 카드를 누르고 "+2"를 골라요. 값은 ${term('fatePoint')} ◆ 1개예요. 카드에 ●가 있다면 ${term('freeInvoke')}으로 공짜로 할 수도 있어요.`,
+          body: `확정하기 전이라면 결과를 바꿀 수 있어요. 지금 상황에 어울리는 ${term('aspect')} 카드를 누르고 "+2"를 골라요. 비용은 ${term('fatePoint')} ◆ 1개예요. 카드에 ●가 있으면 ${term('freeInvoke')}이라 공짜예요.`,
           points: [
             `+2: 합계에 2를 더해요. 실패가 동점이나 성공으로 바뀔 수 있어요.`,
             `다시 굴리기: 주사위 4개를 새로 굴려요. 더 나빠질 수도 있으니 주사위가 아주 나쁠 때 써요.`,
@@ -1270,72 +1291,55 @@ function Table({
   }, [outcomeKey]);
   const showBoss = roll?.targetId === bossId || action === 'attack' || boss.takenOut === true;
 
+  const companions = SAMPLE_CHARACTERS.filter((s) => s.name !== pick.name).map((s) => ({
+    character: state.characters[findId(state, s.name)]!,
+    image: asset(s.image),
+  }));
+  const previewing = !!action && !!approach && (!roll || defending);
+  const stuntPlus = action && approach ? stuntBonuses(me, action, approach).length * 2 : 0;
+  const invokable = Object.values(state.aspects).filter(
+    (a) => !a.hidden && (a.ownerType !== 'character' || a.ownerId === meId || a.freeInvokes > 0),
+  ).length;
+  const lastLine = lines.at(-1);
+  const heroSpeaks = lastLine?.kind === 'chat' && lastLine.text.startsWith(`${pick.name}:`);
+
   return (
-    <main
-      className={styles.stage}
-      style={{
-        backgroundImage: `linear-gradient(180deg, rgb(12 14 26 / .25), rgb(12 14 26 / .85)), url(${asset(SCENE.background)})`,
-      }}
-    >
-      <header className={styles.top}>
-        <div>
-          <div className={styles.kicker}>TUTORIAL · 첫 장면</div>
-          <h1 className={styles.sceneName}>{state.scene?.name}</h1>
-        </div>
-        <div className={styles.topRight}>
-          <label className={styles.mode}>
-            주사위 연출
-            <select
-              value={diceMode}
-              onChange={(e) => {
-                const m = e.target.value as DiceMode;
-                setDiceMode(m);
-                saveDiceMode(m);
-              }}
-            >
-              {DICE_MODES.map(([v, label]) => (
-                <option key={v} value={v}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button
-            type="button"
-            className={styles.restart}
-            aria-pressed={sfxOn}
-            onClick={() => {
-              setSfxEnabled(!sfxOn);
-              setSfxOn(!sfxOn);
-            }}
-          >
-            효과음 {sfxOn ? '켜짐' : '꺼짐'}
-          </button>
-          <button type="button" className={styles.restart} onClick={onRestart}>
-            처음부터
-          </button>
-        </div>
-      </header>
-
-      <div className={styles.body}>
-        <div className={styles.left} data-tour="party">
-          <PartyRail
-            members={[
-              ...SAMPLE_CHARACTERS.map((s) => {
-                const c = state.characters[findId(state, s.name)]!;
-                return {
-                  character: c,
-                  image: asset(s.image),
-                  active: c.id === meId,
-                  ...(c.id === meId ? {} : { status: '동료' }),
-                };
-              }),
-              { character: boss, image: asset(SCENE.bossImage), status: 'NPC' },
-            ]}
+    <main className={book.shell}>
+      <section
+        className={book.stage}
+        data-roll={!!roll || undefined}
+        style={{ backgroundImage: `url(${asset(SCENE.background)})` }}
+      >
+        <img
+          className={`${styles.standee} ${book.hero}`}
+          src={asset(pick.image)}
+          alt={pick.name}
+          data-focus={heroSpeaks || undefined}
+        />
+        {showBoss && (
+          <img
+            className={`${styles.bossStandee} ${book.foe}`}
+            src={asset(SCENE.bossImage)}
+            alt={boss.name}
+            data-out={boss.takenOut || undefined}
+            data-hit={
+              (final &&
+                roll?.action === 'attack' &&
+                (roll.result?.outcome === 'success' || roll.result?.outcome === 'style')) ||
+              undefined
+            }
           />
+        )}
+        <header className={book.chapter}>
+          <p>튜토리얼 · 첫 장면</p>
+          <h1 key={state.scene?.id ?? 'none'}>{state.scene?.name}</h1>
+        </header>
+
+        <div className={book.foePlate} data-tour="foe">
+          <FoePlate character={boss} image={asset(SCENE.bossImage)} note={BOSS.highConcept} />
         </div>
 
-        <div className={styles.center}>
+        <div className={book.coachSlot}>
           <Presence show={showCoach}>
             {coach && showCoach && (
               <CoachMark
@@ -1343,7 +1347,11 @@ function Table({
                 coach={coach}
                 hideLabel={guided ? '건너뛰고 자유롭게 하기' : '안내 숨기기'}
                 // 파티 칸을 가리키는 안내는 그 위를 덮지 않게 가운데 위에 둔다
-                dock={!!roll && !coach.clear && !tour?.open.includes('[data-tour="party"]')}
+                dock={
+                  (!!roll || previewing) &&
+                  !coach.clear &&
+                  !tour?.open.includes('[data-tour="party"]')
+                }
                 pinned={guided}
                 onHide={() => {
                   if (!guided) return setCoachHidden(true);
@@ -1353,24 +1361,35 @@ function Table({
               />
             )}
           </Presence>
-          <img className={styles.standee} src={asset(pick.image)} alt={pick.name} />
-          {showBoss && (
-            <img
-              className={styles.bossStandee}
-              src={asset(SCENE.bossImage)}
-              alt={boss.name}
-              data-out={boss.takenOut || undefined}
-              data-hit={
-                (final &&
-                  roll?.action === 'attack' &&
-                  (roll.result?.outcome === 'success' || roll.result?.outcome === 'style')) ||
-                undefined
+        </div>
+
+        <div className={book.center}>
+          {previewing && (
+            <RollPreview
+              name={me.name}
+              action={action!}
+              approach={approach!}
+              rating={me.approaches[approach!]}
+              stunt={stuntPlus}
+              difficulty={action === 'attack' || defending ? null : SCENE.overcomeDifficulty}
+              opponent={boss.name}
+              canInvoke={invokable > 0}
+              disabled={
+                (busy && !defending) ||
+                !!compel ||
+                !!prompt ||
+                (guided && !!tour?.guide && tour.guide.focus !== 'roll')
               }
+              focus={coach?.focus === 'roll' && showCoach}
+              onRoll={onRoll}
             />
           )}
-
           {roll && (
-            <div className={styles.rollPanel} ref={revealOnNarrow} data-roll-panel>
+            <div
+              className={`${styles.rollPanel} ${book.check}`}
+              ref={revealOnNarrow}
+              data-roll-panel
+            >
               <div className={styles.sides}>
                 <div className={styles.side} data-fx="roll-dice">
                   <div className={styles.sideHead}>
@@ -1469,124 +1488,15 @@ function Table({
                       {term('stunt')} 적용: {unusedStunt.text}
                     </button>
                   )}
-                  <InvokeTray
-                    choices={choices}
-                    fatePoints={me.fatePoints}
-                    selectedId={selectedAspect}
-                    onSelect={setSelectedAspect}
-                    onInvoke={onInvoke}
-                    onFinalize={onFinalize}
-                    lockFinalize={guided && !!tour?.lockFinalize}
-                  />
                 </>
               )}
             </div>
           )}
-
-          <Presence show={!!compel}>
-            {compel && (
-              <div className={styles.overlay}>
-                <CompelOffer
-                  aspect={state.aspects[compel.aspectId]!}
-                  text={compel.text}
-                  targetId={meId}
-                  fatePoints={me.fatePoints}
-                  onAccept={() => {
-                    run(ME, {
-                      type: 'compel.respond',
-                      payload: { compelId: compel.id, accept: true },
-                    });
-                    if (lesson !== 'free') setNotes(compelNotes(true));
-                  }}
-                  onRefuse={() => {
-                    run(ME, {
-                      type: 'compel.respond',
-                      payload: { compelId: compel.id, accept: false },
-                    });
-                    if (lesson !== 'free') setNotes(compelNotes(false));
-                  }}
-                />
-              </div>
-            )}
-          </Presence>
-
-          <Presence show={!!prompt}>
-            {prompt && (
-              <div className={styles.overlay}>
-                <form
-                  className={styles.prompt}
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    submitPrompt();
-                  }}
-                >
-                  <div className={styles.promptHead}>
-                    {prompt.kind === 'aspect'
-                      ? `새 ${term('aspect')} 이름 짓기 · ${term('freeInvoke')} ${prompt.freeInvokes}`
-                      : `${term('boost')} 이름 짓기`}
-                  </div>
-                  <ul className={styles.promptExplain}>
-                    {prompt.kind === 'aspect' ? (
-                      <>
-                        <li>
-                          방금 만든 유리한 상황이 장면의 새 {term('aspect')}이 돼요. 이야기에서
-                          &quot;사실&quot;이 되는 거예요.
-                        </li>
-                        <li>
-                          카드에 ● {prompt.freeInvokes}개가 붙어요. ● 하나가 {term('freeInvoke')} 한
-                          번이에요. {term('fatePoint')} ◆ 없이도 이 {term('aspect')}으로 +2를 받거나
-                          다시 굴릴 수 있어요.
-                        </li>
-                        <li>●를 다 써도 {term('aspect')}은 남아요. 그 뒤로는 ◆를 내야 써요.</li>
-                      </>
-                    ) : (
-                      <>
-                        <li>
-                          {term('boost')}는 굴림 덕분에 잠깐 생긴 작은 기회예요. 오래가는{' '}
-                          {term('aspect')}이 아니에요.
-                        </li>
-                        <li>
-                          ●가 하나 붙은 {term('aspect')}이라, {term('fatePoint')} 없이 딱 한 번 +2를
-                          받을 수 있어요. 쓰자마자 카드째 사라져요.
-                        </li>
-                        <li>바로 다음 굴림에서 쓰는 게 좋아요. 장면이 바뀌면 없어지거든요.</li>
-                      </>
-                    )}
-                  </ul>
-                  <p className={styles.promptHelp}>
-                    {prompt.kind === 'aspect'
-                      ? '장면에 새로 생긴 사실을 짧은 문구로 적어요. 예: "연기에 가려진 뒷문"'
-                      : '그 순간의 기회를 짧게 적어요. 예: "흔들리는 발판", "연기 틈의 빈틈"'}
-                  </p>
-                  <input
-                    autoFocus
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    maxLength={40}
-                    className={styles.promptInput}
-                  />
-                  <div className={styles.promptButtons}>
-                    <button
-                      type="button"
-                      onClick={() => setPrompt(null)}
-                      className={styles.restart}
-                    >
-                      건너뛰기
-                    </button>
-                    <button type="submit" className={styles.promptOk} disabled={!draft.trim()}>
-                      붙이기
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
-          </Presence>
         </div>
 
-        <div className={styles.right}>
-          <div className={styles.aspectsHead}>ASPECTS ON STAGE</div>
-          <div className={styles.aspects} data-tour="aspects">
-            {sceneAspects.map((a: Aspect) => (
+        <div className={book.table} data-tour="aspects">
+          {!(roll && settled && roll.status === 'open' && myRoll) &&
+            sceneAspects.map((a: Aspect) => (
               <AspectCard
                 key={a.id}
                 aspect={a}
@@ -1595,27 +1505,170 @@ function Table({
                   : {})}
               />
             ))}
-          </div>
-          <StoryLog lines={lines} />
+          {roll && settled && roll.status === 'open' && myRoll && (
+            <div className={book.tray}>
+              <InvokeTray
+                choices={choices}
+                fatePoints={me.fatePoints}
+                selectedId={selectedAspect}
+                onSelect={setSelectedAspect}
+                onInvoke={onInvoke}
+                onFinalize={onFinalize}
+                lockFinalize={guided && !!tour?.lockFinalize}
+              />
+            </div>
+          )}
         </div>
-      </div>
 
-      <footer className={styles.bottom}>
-        <div className={styles.dialogue} data-tour="dialogue">
-          <div className={styles.speaker}>G M</div>
-          <p className={styles.say}>
-            <Typewriter
-              text={
-                narration && narration.type === 'narration.posted' ? narration.payload.text : ''
-              }
-            />
-          </p>
-          {error && <p className={styles.error}>{error}</p>}
+        <Presence show={!!compel}>
+          {compel && (
+            <div className={styles.overlay}>
+              <CompelOffer
+                aspect={state.aspects[compel.aspectId]!}
+                text={compel.text}
+                targetId={meId}
+                fatePoints={me.fatePoints}
+                onAccept={() => {
+                  run(ME, {
+                    type: 'compel.respond',
+                    payload: { compelId: compel.id, accept: true },
+                  });
+                  if (lesson !== 'free') setNotes(compelNotes(true));
+                }}
+                onRefuse={() => {
+                  run(ME, {
+                    type: 'compel.respond',
+                    payload: { compelId: compel.id, accept: false },
+                  });
+                  if (lesson !== 'free') setNotes(compelNotes(false));
+                }}
+              />
+            </div>
+          )}
+        </Presence>
+
+        <Presence show={!!prompt}>
+          {prompt && (
+            <div className={styles.overlay}>
+              <form
+                className={styles.prompt}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  submitPrompt();
+                }}
+              >
+                <div className={styles.promptHead}>
+                  {prompt.kind === 'aspect'
+                    ? `새 ${term('aspect')} 이름 짓기 · ${term('freeInvoke')} ${prompt.freeInvokes}`
+                    : `${term('boost')} 이름 짓기`}
+                </div>
+                <ul className={styles.promptExplain}>
+                  {prompt.kind === 'aspect' ? (
+                    <>
+                      <li>
+                        방금 만든 유리한 상황이 장면의 새 {term('aspect')}이 돼요. 이야기에서
+                        &quot;사실&quot;이 되는 거예요.
+                      </li>
+                      <li>
+                        카드에 ● {prompt.freeInvokes}개가 붙어요. ● 하나가 {term('freeInvoke')} 한
+                        번이에요. {term('fatePoint')} ◆ 없이도 이 {term('aspect')}으로 +2를 받거나
+                        다시 굴릴 수 있어요.
+                      </li>
+                      <li>●를 다 써도 {term('aspect')}은 남아요. 그 뒤로는 ◆를 내야 써요.</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>
+                        {term('boost')}는 굴림 덕분에 잠깐 생긴 작은 기회예요. 오래가는{' '}
+                        {term('aspect')}이 아니에요.
+                      </li>
+                      <li>
+                        ●가 하나 붙은 {term('aspect')}이라, {term('fatePoint')} 없이 딱 한 번 +2를
+                        받을 수 있어요. 쓰자마자 카드째 사라져요.
+                      </li>
+                      <li>바로 다음 굴림에서 쓰는 게 좋아요. 장면이 바뀌면 없어지거든요.</li>
+                    </>
+                  )}
+                </ul>
+                <p className={styles.promptHelp}>
+                  {prompt.kind === 'aspect'
+                    ? '장면에 새로 생긴 사실을 짧은 문구로 적어요. 예: "연기에 가려진 뒷문"'
+                    : '그 순간의 기회를 짧게 적어요. 예: "흔들리는 발판", "연기 사이로 난 틈"'}
+                </p>
+                <input
+                  autoFocus
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  maxLength={40}
+                  className={styles.promptInput}
+                />
+                <div className={styles.promptButtons}>
+                  <button type="button" onClick={() => setPrompt(null)} className={styles.restart}>
+                    건너뛰기
+                  </button>
+                  <button type="submit" className={styles.promptOk} disabled={!draft.trim()}>
+                    붙이기
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+        </Presence>
+      </section>
+
+      <div className={book.deckle} aria-hidden />
+
+      <section className={book.book}>
+        <div className={book.running}>
+          <span>세션 1 · 튜토리얼</span>
+          <span className={book.tools}>
+            <select
+              aria-label="주사위 연출"
+              value={diceMode}
+              onChange={(e) => {
+                const m = e.target.value as DiceMode;
+                setDiceMode(m);
+                saveDiceMode(m);
+              }}
+            >
+              {DICE_MODES.map(([v, label]) => (
+                <option key={v} value={v}>
+                  주사위 {label}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              aria-pressed={sfxOn}
+              onClick={() => {
+                setSfxEnabled(!sfxOn);
+                setSfxOn(!sfxOn);
+              }}
+            >
+              효과음 {sfxOn ? '켜짐' : '꺼짐'}
+            </button>
+            <button type="button" onClick={onRestart}>
+              처음부터
+            </button>
+          </span>
         </div>
+        <div data-tour="party">
+          <MySheet
+            character={me}
+            aspects={state.aspects}
+            image={asset(pick.image)}
+            companions={companions}
+          />
+        </div>
+        <div className={book.text} data-tour="dialogue">
+          <StoryLog lines={lines} variant="book" />
+        </div>
+        {error && <p className={book.error}>{error}</p>}
         <ActionBar
           character={me}
           action={action}
           approach={approach}
+          hideRoll
           disabled={(busy && !defending) || !!compel || !!prompt || me.takenOut === true}
           canDefend={defending}
           {...(coach?.focus && showCoach && !guided ? { focus: coach.focus } : {})}
@@ -1624,7 +1677,7 @@ function Table({
           onApproach={setApproach}
           onRoll={onRoll}
         />
-      </footer>
+      </section>
       {guided && tour && <Spotlight open={[...tour.open, '[data-coach]']} ring={tour.ring} />}
     </main>
   );

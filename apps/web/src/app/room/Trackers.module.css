@@ -11,7 +11,9 @@
   padding: var(--s-2) var(--s-3);
   border: 1px solid var(--rule);
   border-left: 3px solid var(--gold);
+  border-radius: var(--r-card);
   background: var(--panel);
+  box-shadow: var(--shadow-panel);
   backdrop-filter: blur(6px);
 }
 
@@ -25,9 +27,8 @@
 
 .kicker {
   color: var(--gold);
-  font-family: var(--f-num);
-  font-size: var(--fs-xs);
-  letter-spacing: 2px;
+  font: var(--label-font);
+  letter-spacing: var(--label-track);
 }
 
 .actions {
@@ -131,7 +132,7 @@ button:disabled {
   background: var(--gold);
   color: var(--ink);
   font-weight: 700;
-  box-shadow: 0 0 12px rgb(214 182 110 / 0.6);
+  box-shadow: 0 0 12px rgb(168 50 28 / 0.6);
 }
 
 .turn[data-out] {
