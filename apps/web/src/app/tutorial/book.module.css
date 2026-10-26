@@ -374,6 +374,11 @@
   .stage .hero {
     left: -8%;
   }
+  .coachSlot {
+    right: 12px;
+    left: 12px;
+    width: auto;
+  }
   .table {
     overflow-x: auto;
     padding: 12px 4px 4px;
@@ -390,10 +395,22 @@
     top: 16px;
     left: 16px;
   }
+  .stage {
+    height: max(640px, 80dvh);
+  }
+  .chapter h1 {
+    font-size: 24px;
+  }
   .foePlate {
-    top: auto;
+    top: 16px;
     right: 12px;
-    bottom: 196px;
+  }
+  .coachSlot {
+    top: 132px;
+  }
+  .coachSlot [data-coach] {
+    max-height: 300px;
+    overflow-y: auto;
   }
   .stage[data-roll] .foePlate {
     display: none;

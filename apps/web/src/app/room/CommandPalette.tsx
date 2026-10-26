@@ -134,7 +134,7 @@ export function roomCommands({
     {
       words: ['대사', '묘사', 'say'],
       label: 'GM 대사 보내기',
-      hint: '모두의 대사 창에 크게 떠요',
+      hint: '모두의 책 본문에 적혀요',
       arg: '대사',
       gmOnly: true,
       act: (text) => text && run({ type: 'narration.post', payload: { text } }),

@@ -738,3 +738,397 @@ main.shell {
     opacity: 0;
   }
 }
+
+/* ===================== 무대와 책 (design-system.md 20절) ===================== */
+
+/* 내 차례·방어 요청이 오면 화면 테두리가 주홍으로 한 번 빛난다 */
+.callable[data-call]::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 0 3px var(--seal),
+    inset 0 0 70px rgb(200 72 44 / 0.4);
+  animation: call 1.6s var(--ease) forwards;
+}
+
+/* 스탠딩: 무대 높이를 크게 쓴다 */
+.cast {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.cast [data-side] {
+  height: min(92%, 980px);
+}
+
+/* 무대 가운데: 트래커·지도·판정 카드가 위에서부터 쌓이고, 넘치면 안에서 스크롤한다 */
+.stage .center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--s-3);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 120px 24px 16px;
+  scrollbar-width: thin;
+}
+
+.stage .center > [data-roll-panel],
+.stage .center > [data-pending] {
+  max-height: none;
+}
+
+/* 판정 예고 카드: 무대 위에 뜬다 (책 밖, 무대 영역 가운데) */
+.previewSlot {
+  position: absolute;
+  top: 0;
+  bottom: 220px;
+  left: 0;
+  right: var(--book-w);
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  padding-top: 90px;
+  pointer-events: none;
+}
+
+.previewSlot > * {
+  pointer-events: auto;
+}
+
+/* 테이블 위 특성 카드 + GM 도구 */
+.stage .stageAspect {
+  position: relative;
+}
+
+.stage .stageAspect[data-hidden] > :first-child {
+  opacity: 0.7;
+  outline: 2px dashed var(--ink-3);
+  outline-offset: -6px;
+}
+
+.stage .aspectTools {
+  top: auto;
+  bottom: 6px;
+  right: 8px;
+}
+
+.stage .aspectTools button {
+  border-color: var(--paper-edge);
+  background: var(--card);
+  color: var(--ink-2);
+  font-family: var(--f-ui);
+}
+
+.stage .aspectTools button:hover {
+  border-color: var(--seal);
+  color: var(--seal);
+}
+
+.addAspect {
+  flex: 0 0 auto;
+  align-self: center;
+  padding: var(--s-3) var(--s-4);
+  border: 2px dashed rgb(244 236 220 / 0.6);
+  border-radius: 6px;
+  background: rgb(13 11 9 / 0.5);
+  color: var(--stage-ink);
+  font: 600 14px var(--f-ui);
+  cursor: pointer;
+}
+
+.addAspect:hover {
+  border-color: var(--stage-ink);
+}
+
+/* ---------- 책 ---------- */
+.running {
+  flex-wrap: wrap;
+}
+
+.runTitle {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.runTools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  letter-spacing: 0;
+}
+
+.book .topBtn {
+  height: 28px;
+  padding: 0 10px;
+  border-color: var(--paper-edge);
+  background: var(--card);
+  color: var(--ink-2);
+  font: 600 12px var(--f-ui);
+}
+
+.book .topBtn:hover {
+  border-color: var(--ink-3);
+}
+
+.book .topBtn[aria-pressed='false'] {
+  color: var(--ink-3);
+}
+
+.book .topBtn kbd {
+  color: var(--seal);
+}
+
+.book .seg {
+  padding: 2px;
+  border-color: var(--paper-edge);
+  background: var(--card);
+}
+
+.book .seg button {
+  height: 24px;
+  padding: 0 8px;
+  color: var(--ink-3);
+  font: 600 12px var(--f-ui);
+}
+
+.book .seg button[aria-checked='true'] {
+  background: var(--ink-1);
+  color: var(--paper);
+}
+
+.book .role {
+  border-color: var(--seal);
+  color: var(--seal);
+  font-family: var(--f-ui);
+  letter-spacing: 0.04em;
+}
+
+/* GM 도구 줄: 책 머리글 아래 */
+.gmSlot {
+  padding: var(--s-2) var(--s-5) 0 var(--s-6);
+}
+
+.gmSlot > * {
+  margin: 0;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--paper-edge);
+  border-left: 3px solid var(--seal);
+  border-radius: 8px;
+  background: var(--card);
+  backdrop-filter: none;
+  box-shadow: none;
+  color: var(--ink-1);
+}
+
+.gmSlot button {
+  border-color: var(--paper-edge);
+  background: var(--paper);
+  color: var(--ink-1);
+  font-family: var(--f-ui);
+}
+
+.gmSlot button:hover {
+  border-color: var(--seal);
+  color: var(--seal);
+}
+
+.gmSlot span,
+.gmSlot small {
+  color: var(--ink-2);
+}
+
+.mySheetBtn {
+  align-self: flex-start;
+  margin: calc(var(--s-2) * -1) 0 var(--s-2) var(--s-6);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--seal);
+  font: 600 12px var(--f-ui);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.book .empty {
+  margin: var(--s-3) var(--s-6);
+  color: var(--ink-3);
+  font-family: var(--f-book);
+}
+
+/* GM 대사 입력 */
+.narrate {
+  padding: var(--s-2) var(--s-5) var(--s-2) var(--s-6);
+  border-top: 1px solid var(--paper-edge);
+}
+
+.narrate textarea,
+.narrate input {
+  width: 100%;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--paper-edge);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--ink-1);
+  font: 400 15px/1.6 var(--f-book);
+}
+
+/* 채팅: 책 아래 한 줄 */
+.book .chat {
+  display: flex;
+  gap: var(--s-2);
+  margin: 0;
+  padding: var(--s-2) var(--s-5) var(--s-2) var(--s-6);
+  border-top: 1px dashed var(--paper-edge);
+}
+
+.book .chat input {
+  flex: 1;
+  border: 0;
+  border-bottom: 1px solid var(--ink-3);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink-1);
+  font: 400 15px var(--f-book);
+}
+
+.book .chat input::placeholder {
+  color: var(--ink-3);
+}
+
+.book .chat button {
+  border-color: var(--seal);
+  color: var(--seal);
+}
+
+/* 누구로? / 누구를? / 난이도 / 표정 줄 */
+.book .actionWrap {
+  gap: 0;
+}
+
+.book .chipRow {
+  padding: var(--s-2) var(--s-5) 0 var(--s-6);
+  background: var(--paper-2);
+}
+
+.book .chipLabel {
+  color: var(--ink-2);
+  font-family: var(--f-ui);
+}
+
+.book .who,
+.book .level,
+.book .face {
+  border-color: var(--paper-edge);
+  background: var(--card);
+  color: var(--ink-1);
+}
+
+.book .who[aria-checked='true'],
+.book .who[aria-pressed='true'],
+.book .level[aria-pressed='true'],
+.book .face[aria-checked='true'] {
+  border-color: var(--seal);
+  background: #f7e9e2;
+  color: var(--seal);
+}
+
+.book .level small {
+  color: var(--ink-3);
+}
+
+@media (max-width: 1100px) {
+  .previewSlot {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    padding: 0 0 70px;
+    background: linear-gradient(0deg, rgb(13 11 9 / 0.7), transparent);
+  }
+  .stage .center {
+    padding-top: 96px;
+  }
+}
+
+/* 캐릭터 데려오기: 책 위에서는 종이 위 점선 버튼과 종이 패널 */
+.book .ghost {
+  width: auto;
+  margin: var(--s-2) var(--s-5) var(--s-2) var(--s-6);
+  border-color: var(--ink-3);
+  color: var(--ink-2);
+  font-family: var(--f-ui);
+}
+
+.book .ghost:hover {
+  border-color: var(--seal);
+  color: var(--seal);
+}
+
+.book .panel {
+  margin: var(--s-2) var(--s-5) var(--s-2) var(--s-6);
+  border-color: var(--paper-edge);
+  background: var(--card);
+  color: var(--ink-1);
+}
+
+.book .panelHead {
+  color: var(--ink-2);
+}
+
+.book .draft {
+  border-color: var(--paper-edge);
+  background: var(--paper);
+  color: var(--ink-1);
+}
+
+/* 상대 이름표가 오른쪽 위에 있으면 트래커·지도는 그 왼쪽으로 비켜 쌓인다 */
+@media (min-width: 1101px) {
+  .stage .center {
+    bottom: 236px;
+    padding-right: 370px;
+  }
+  .stage .center > [data-roll-panel],
+  .stage .center > [data-pending] {
+    margin-right: -346px;
+  }
+}
+
+/* 책이 빽빽해지면(GM) 책 전체가 스크롤되고, 기록은 최소 높이를 지킨다 */
+.book {
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.book > div:has(> section[aria-label='이야기 기록']) {
+  flex: 1 0 220px;
+}
+
+.gmSlot button {
+  padding: 3px 10px;
+  font-size: 13px;
+}
+
+.narrate button {
+  border: 1px solid var(--seal);
+  border-radius: var(--r-token);
+  background: var(--seal);
+  color: var(--seal-ink);
+  font: 700 13px var(--f-ui);
+}
+
+.narrate button:disabled {
+  border-color: var(--paper-edge);
+  background: transparent;
+  color: var(--ink-3);
+}

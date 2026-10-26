@@ -109,8 +109,19 @@
 
 @media (max-width: 760px) {
   .plate {
-    width: 260px;
-    padding: 10px 12px 12px;
+    width: 196px;
+    padding: 8px 10px 10px;
+  }
+  .slot {
+    white-space: nowrap;
+  }
+  .label,
+  .head small {
+    display: none;
+  }
+  .row {
+    gap: 4px;
+    margin-bottom: 6px;
   }
   .head {
     margin-bottom: 8px;
@@ -123,10 +134,11 @@
     font-size: 18px;
   }
   .slot {
-    height: 28px;
-    font-size: 12px;
+    height: 24px;
+    gap: 2px;
+    font-size: 10px;
   }
   .sq {
-    flex-basis: 28px;
+    flex-basis: 24px;
   }
 }
