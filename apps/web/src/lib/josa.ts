@@ -3,10 +3,7 @@ type Pair = '이/가' | '은/는' | '을/를' | '과/와' | '으로/로' | '이�
 
 function lastJong(word: string): number | null {
   // 따옴표·괄호로 감싼 말은 안쪽 마지막 글자로 판단한다 ("부러진 갈비뼈"는 → 뼈)
-  const ch = word
-    .trim()
-    .replace(/["'”’」』)\]]+$/u, '')
-    .at(-1);
+  const ch = word.trim().replace(/["'”’」』)\]]+$/u, '').at(-1);
   if (!ch) return null;
   const code = ch.charCodeAt(0);
   if (code >= 0xac00 && code <= 0xd7a3) return (code - 0xac00) % 28;

@@ -139,6 +139,7 @@
   pointer-events: auto;
 }
 
+
 /* 굴린 뒤: 판정 카드는 두 사람 사이 오른쪽으로 비켜 내 얼굴을 가리지 않는다 */
 .stage[data-roll] .center {
   justify-items: end;
