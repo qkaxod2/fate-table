@@ -176,3 +176,12 @@ Deno.test('a player still cannot chat as an NPC', async () => {
   });
   assertEquals(out.status, 409);
 });
+
+Deno.test('glitch and flip effects are GM only, bold and italic are for everyone', async () => {
+  const room = memoryRoom({ gm: 'gm', p1: 'player' });
+  const fx = { type: 'chat.post', payload: { text: '[글리치]지직[/글리치]' } };
+  assertEquals((await room.run('p1', 'cmd-1', fx)).status, 409);
+  assertEquals((await room.run('gm', 'cmd-2', fx)).status, 200);
+  const bold = { type: 'chat.post', payload: { text: '**좋아** *음*' } };
+  assertEquals((await room.run('p1', 'cmd-3', bold)).status, 200);
+});

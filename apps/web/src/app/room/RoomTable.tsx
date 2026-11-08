@@ -65,6 +65,7 @@ import { BringCharacter } from './BringCharacter';
 import { CharacterSheet } from './CharacterSheet';
 import { CommandPalette, roomCommands, ShortcutHelp } from './CommandPalette';
 import { DamagePrompt } from './DamagePrompt';
+import { FormatBar, formatShortcut } from '@/components/ui/FormatBar';
 import { GmBar, GmPanel, NarrationInput, SceneStarter, type GmOpen } from './GmConsole';
 import styles from './room.module.css';
 import { Trackers } from './Trackers';
@@ -527,12 +528,13 @@ export function RoomTable({
   const [chat, setChat] = useState('');
   // GM은 대사와 말하기를 한 입력 자리에서 바꿔 쓴다 (책이 빽빽해지지 않게)
   const [composeMode, setComposeMode] = useState<'narrate' | 'chat'>('narrate');
-  const [sending, setSending] = useState<Array<{ id: number; text: string }>>([]);
+  const [sending, setSending] = useState<Array<{ id: number; text: string; fx?: boolean }>>([]);
+  const chatField = useRef<HTMLInputElement>(null);
   const sendIds = useRef(0);
   const myNick = state.members[room.userId]?.nickname;
   const sendChat = async (text: string) => {
     const id = ++sendIds.current;
-    setSending((x) => [...x, { id, text: myNick ? `${myNick}: ${text}` : text }]);
+    setSending((x) => [...x, { id, text: myNick ? `${myNick}: ${text}` : text, fx: isGm }]);
     await run({ type: 'chat.post', payload: { text } });
     setSending((x) => x.filter((m) => m.id !== id));
   };
@@ -1237,7 +1239,9 @@ export function RoomTable({
             lines={lines}
             undone={undone}
             sending={
-              narrationEcho ? [...sending, { id: -1, text: `GM: ${narrationEcho}` }] : sending
+              narrationEcho
+                ? [...sending, { id: -1, text: `GM: ${narrationEcho}`, fx: true }]
+                : sending
             }
             {...(isGm
               ? {
@@ -1288,15 +1292,18 @@ export function RoomTable({
                 }}
               >
                 <input
+                  ref={chatField}
                   value={chat}
                   onChange={(e) => setChat(e.target.value)}
                   onKeyDown={(e) => {
+                    if (formatShortcut(e, chat, setChat)) return;
                     if (e.key === 'Escape') e.currentTarget.blur();
                   }}
                   maxLength={500}
                   placeholder="말하기… (Enter)"
                   aria-label="채팅"
                 />
+                <FormatBar field={chatField} value={chat} onChange={setChat} gm={isGm} />
                 <button type="submit" disabled={!chat.trim()}>
                   보내기
                 </button>

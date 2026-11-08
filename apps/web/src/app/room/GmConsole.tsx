@@ -12,6 +12,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { AspectCard } from '@/components/aspect/AspectCard';
 import { isDialogOpen, Leaf } from '@/components/book/Leaf';
 import { FatePointToken } from '@/components/fate/FatePointToken';
+import { FormatBar, formatShortcut } from '@/components/ui/FormatBar';
 import { useClosing } from '@/lib/motion';
 import styles from './GmConsole.module.css';
 
@@ -295,6 +296,7 @@ export function NarrationInput({
   onEcho?: (text: string | null) => void;
 }) {
   const [text, setText] = useState('');
+  const field = useRef<HTMLTextAreaElement>(null);
   const send = async () => {
     const t = text.trim();
     if (!t) return;
@@ -314,18 +316,21 @@ export function NarrationInput({
       }}
     >
       <textarea
+        ref={field}
         rows={2}
         value={text}
         placeholder="장면을 묘사해요… (Enter)"
         aria-label="GM 대사"
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => {
+          if (formatShortcut(e, text, setText)) return;
           if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
             e.preventDefault();
             void send();
           }
         }}
       />
+      <FormatBar field={field} value={text} onChange={setText} gm />
       <button type="submit" disabled={!text.trim()}>
         보내기
       </button>

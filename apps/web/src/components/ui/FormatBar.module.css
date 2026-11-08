@@ -1,0 +1,65 @@
+.bar {
+  display: flex;
+  flex: none;
+  gap: 2px;
+  align-items: center;
+}
+
+.bar > .btn {
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: var(--r-token);
+  background: transparent;
+  color: var(--ink-3);
+  font: 600 12px/1 var(--f-ui);
+  cursor: pointer;
+  transition:
+    color var(--dur-hover) var(--ease),
+    border-color var(--dur-hover) var(--ease),
+    background var(--dur-hover) var(--ease),
+    rotate var(--dur-enter) var(--ease-spring);
+}
+
+.bar > .btn:hover {
+  border-color: var(--paper-edge);
+  background: var(--card);
+  color: var(--ink-1);
+}
+
+.bar > .btn:active {
+  scale: 0.94;
+  transition-duration: var(--dur-press);
+}
+
+.bar > .btn[data-mark='bold'] {
+  font: 800 15px/1 var(--f-book);
+}
+
+.bar > .btn[data-mark='italic'] {
+  font: italic 600 15px/1 var(--f-book);
+}
+
+/* GM 연출 버튼은 붉은 인장색으로 GM 몫임을 보여 준다 */
+.bar > .btn[data-mark='glitch'],
+.bar > .btn[data-mark='flip'] {
+  color: var(--seal);
+}
+
+.bar > .btn[data-mark='glitch']:hover {
+  text-shadow:
+    -1px 0 var(--seal-hi),
+    1px 0 var(--great);
+}
+
+.bar > .btn[data-mark='flip']:hover {
+  rotate: 180deg;
+}
+
+@media (max-width: 560px) {
+  .bar > .btn {
+    min-width: 32px;
+    min-height: 32px;
+  }
+}

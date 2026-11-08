@@ -50,6 +50,8 @@ export interface LogLine {
   text: string;
   /** 되돌리기 버튼을 달지 않는 줄 */
   undoable?: false;
+  /** GM이 쓴 줄: 글리치·뒤집기 연출을 살린다 */
+  fx?: true;
 }
 
 /** 이벤트 하나를 로그 문장으로 바꾼다. 로그에 남길 필요 없는 이벤트는 null. */
@@ -125,10 +127,12 @@ export function describe(e: RoomEvent, state: RoomState): LogLine | null {
     case 'character.taken_out':
       return line('roll', `${name(state, e.payload.characterId)} ${term('takenOut')}!`);
     case 'narration.posted':
-      return line('gm', e.payload.text);
+      return { ...line('gm', e.payload.text), fx: true };
     case 'chat.posted': {
-      const who = e.payload.as ?? (e.actorId ? state.members[e.actorId]?.nickname : undefined);
-      return line('chat', who ? `${who}: ${e.payload.text}` : e.payload.text);
+      const member = e.actorId ? state.members[e.actorId] : undefined;
+      const who = e.payload.as ?? member?.nickname;
+      const l = line('chat', who ? `${who}: ${e.payload.text}` : e.payload.text);
+      return member?.role === 'gm' ? { ...l, fx: true } : l;
     }
     case 'room.member_joined':
       return {

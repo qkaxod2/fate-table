@@ -20685,6 +20685,69 @@ function parseCommand(input2) {
   return CommandSchema.parse(input2);
 }
 
+// packages/rules-engine/src/rich.ts
+var GM_MARKS = /* @__PURE__ */ new Set(["glitch", "flip"]);
+var RICH_TAGS = {
+  glitch: ["[\uAE00\uB9AC\uCE58]", "[/\uAE00\uB9AC\uCE58]"],
+  flip: ["[\uB4A4\uC9D1\uAE30]", "[/\uB4A4\uC9D1\uAE30]"]
+};
+var TOKEN = /\*\*|\*|\[\/?(?:글리치|뒤집기)\]/g;
+var TAG_MARK = { \uAE00\uB9AC\uCE58: "glitch", \uB4A4\uC9D1\uAE30: "flip" };
+function tokenize(src) {
+  const out = [];
+  let at = 0;
+  for (const m of src.matchAll(TOKEN)) {
+    if (m.index > at) out.push({ kind: "text", text: src.slice(at, m.index) });
+    const raw = m[0];
+    if (raw === "**") out.push({ kind: "mark", mark: "bold", role: "toggle", raw });
+    else if (raw === "*") out.push({ kind: "mark", mark: "italic", role: "toggle", raw });
+    else {
+      const close = raw[1] === "/";
+      const mark = TAG_MARK[raw.slice(close ? 2 : 1, -1)];
+      out.push({ kind: "mark", mark, role: close ? "close" : "open", raw });
+    }
+    at = m.index + raw.length;
+  }
+  if (at < src.length) out.push({ kind: "text", text: src.slice(at) });
+  return out;
+}
+function parseRich(src, opts = {}) {
+  const tokens = tokenize(src);
+  const paired = /* @__PURE__ */ new Set();
+  const openAt = {};
+  tokens.forEach((t, i) => {
+    if (t.kind !== "mark") return;
+    if (GM_MARKS.has(t.mark) && !opts.gm) return;
+    const o = openAt[t.mark];
+    if (t.role === "open") openAt[t.mark] = i;
+    else if (o !== void 0 && (t.role === "close" || t.role === "toggle")) {
+      paired.add(o).add(i);
+      delete openAt[t.mark];
+    } else if (t.role === "toggle") openAt[t.mark] = i;
+  });
+  const segs = [];
+  const on = {};
+  const push = (text2) => {
+    if (!text2) return;
+    const last = segs.at(-1);
+    if (last && sameStyle(last, on)) last.text += text2;
+    else segs.push({ text: text2, ...on });
+  };
+  tokens.forEach((t, i) => {
+    if (t.kind === "text") return push(t.text);
+    if (!paired.has(i)) return push(t.raw);
+    if (on[t.mark]) delete on[t.mark];
+    else on[t.mark] = true;
+  });
+  return segs;
+}
+function sameStyle(a, b) {
+  return !!a.bold === !!b.bold && !!a.italic === !!b.italic && !!a.glitch === !!b.glitch && !!a.flip === !!b.flip;
+}
+function hasGmMarks(src) {
+  return parseRich(src, { gm: true }).some((s) => s.glitch || s.flip);
+}
+
 // packages/rules-engine/src/engine.ts
 var CommandError = class extends Error {
   constructor(code, message = code) {
@@ -21263,6 +21326,8 @@ var resolvers = {
   },
   "chat.post": (_s, p, a) => {
     if (p.as && a.role !== "gm") throw new CommandError("FORBIDDEN_ROLE");
+    if (a.role !== "gm" && hasGmMarks(p.text))
+      throw new CommandError("FORBIDDEN_ROLE", "glitch/flip effects are GM only");
     return one(ev("chat.posted", a, p));
   },
   "gm.note": (_s, p, a) => one(ev("gm.note", a, p, "gm")),
@@ -21319,8 +21384,10 @@ export {
   CommandError,
   CommandSchema,
   FATE_DICE_DISTRIBUTION,
+  GM_MARKS,
   LADDER,
   MAX_STUNTS,
+  RICH_TAGS,
   absorbOptions,
   applyInvoke,
   blankCharacter,
@@ -21328,6 +21395,7 @@ export {
   chanceAtLeast,
   concedeReward,
   formatRating,
+  hasGmMarks,
   initialState,
   isValidAbsorb,
   ladderLabel,
@@ -21335,6 +21403,7 @@ export {
   outcomeFor,
   outcomeOf,
   parseCommand,
+  parseRich,
   previewInvokes,
   reduce,
   refreshFor,

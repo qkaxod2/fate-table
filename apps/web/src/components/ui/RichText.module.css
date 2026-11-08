@@ -1,0 +1,145 @@
+.bold {
+  font-weight: 700;
+}
+
+.italic {
+  font-style: italic;
+}
+
+/* 뒤집기: 종이를 휙 뒤집듯 한 번 돌아가서 거꾸로 멈춘다 */
+.flip {
+  display: inline-block;
+  rotate: 180deg;
+  animation: flip var(--dur-scene) var(--ease-spring) both;
+}
+
+@keyframes flip {
+  from {
+    rotate: 0deg;
+    opacity: 0.4;
+  }
+}
+
+/* 글리치: 글자가 어긋난 붉고 푸른 잔상으로 잠깐씩 찢어진다 */
+.glitch {
+  position: relative;
+  display: inline-block;
+  animation: jitter 2.4s steps(1, end) infinite;
+}
+
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  white-space: pre;
+}
+
+.glitch::before {
+  color: var(--seal-hi);
+  opacity: 0.85;
+  animation: tear-a 2.4s steps(1, end) infinite;
+}
+
+.glitch::after {
+  color: var(--great);
+  opacity: 0.85;
+  animation: tear-b 2.4s steps(1, end) infinite;
+}
+
+@keyframes jitter {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  8% {
+    translate: -1px 0;
+  }
+  10% {
+    translate: 1px 0;
+  }
+  52% {
+    translate: 0 1px;
+    skew: -8deg 0;
+  }
+  54% {
+    translate: 0 0;
+    skew: 0deg 0;
+  }
+}
+
+@keyframes tear-a {
+  0%,
+  100% {
+    clip-path: inset(0 0 100% 0);
+    translate: 0 0;
+  }
+  6% {
+    clip-path: inset(10% 0 55% 0);
+    translate: -3px 0;
+  }
+  12% {
+    clip-path: inset(60% 0 8% 0);
+    translate: 2px 0;
+  }
+  18% {
+    clip-path: inset(0 0 100% 0);
+  }
+  50% {
+    clip-path: inset(30% 0 40% 0);
+    translate: 4px 0;
+  }
+  56% {
+    clip-path: inset(0 0 100% 0);
+  }
+}
+
+@keyframes tear-b {
+  0%,
+  100% {
+    clip-path: inset(100% 0 0 0);
+    translate: 0 0;
+  }
+  8% {
+    clip-path: inset(45% 0 20% 0);
+    translate: 3px 0;
+  }
+  14% {
+    clip-path: inset(5% 0 70% 0);
+    translate: -2px 0;
+  }
+  20% {
+    clip-path: inset(100% 0 0 0);
+  }
+  52% {
+    clip-path: inset(70% 0 5% 0);
+    translate: -4px 0;
+  }
+  58% {
+    clip-path: inset(100% 0 0 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flip,
+  .glitch {
+    animation: none;
+  }
+
+  /* 움직이지 않아도 글리치인 걸 알 수 있게 잔상만 살짝 남긴다 */
+  .glitch::before,
+  .glitch::after {
+    animation: none;
+    clip-path: inset(35% 0 40% 0);
+  }
+
+  .glitch::before {
+    translate: -2px 0;
+  }
+
+  .glitch::after {
+    translate: 2px 0;
+    clip-path: inset(60% 0 15% 0);
+  }
+}

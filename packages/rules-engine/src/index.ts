@@ -9,5 +9,6 @@ export * from './conflict';
 export * from './events';
 export * from './reducer';
 export * from './commands';
+export * from './rich';
 export { resolve, validate, CommandError } from './engine';
 export type { CommandErrorCode, ResolveContext, ResolveResult, ValidationResult } from './engine';
