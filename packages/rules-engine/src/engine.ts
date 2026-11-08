@@ -7,6 +7,7 @@ import type { EventPayloads, EventType, NewEvent, RoomEvent, SealedSide } from '
 import { undoneSeqs } from './reducer';
 import { canInvoke } from './invoke';
 import { resolveRoll, rewardsFor } from './resolve';
+import { hasGmMarks } from './rich';
 import { APPROACHES } from './types';
 import type {
   Actor,
@@ -701,6 +702,8 @@ const resolvers: Resolvers = {
 
   'chat.post': (_s, p, a) => {
     if (p.as && a.role !== 'gm') throw new CommandError('FORBIDDEN_ROLE');
+    if (a.role !== 'gm' && hasGmMarks(p.text))
+      throw new CommandError('FORBIDDEN_ROLE', 'glitch/flip effects are GM only');
     return one(ev('chat.posted', a, p));
   },
   'gm.note': (_s, p, a) => one(ev('gm.note', a, p, 'gm')),

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { LogLine } from '@/lib/copy';
 import { reducedMotion } from '@/lib/motion';
+import { RichText } from '../ui/RichText';
 import { Typewriter } from '../ui/Typewriter';
 import styles from './StoryLog.module.css';
 
@@ -13,7 +14,7 @@ interface Props {
   /** GM 전용: 줄마다 되돌리기 버튼 */
   onUndo?: (seq: number) => void;
   /** 보냈지만 서버가 아직 받지 않은 채팅 (흐리게 먼저 보인다) */
-  sending?: ReadonlyArray<{ id: number; text: string }>;
+  sending?: ReadonlyArray<{ id: number; text: string; fx?: boolean }>;
   /**
    * book: 책 본문처럼 조판한다. GM 대사는 문단(장면 첫 문단은 머리글자), 말은 여백에 화자,
    * 굴림·운명점 기록은 펜으로 적은 여백 메모. 마지막 GM 대사는 한 자씩 적힌다.
@@ -105,7 +106,13 @@ export function StoryLog({ lines, undone, onUndo, sending = [], variant = 'panel
             {variant === 'book' ? (
               <BookLine line={l} typing={l.kind === 'gm' && i === shown.length - 1} />
             ) : (
-              <span>{l.text}</span>
+              <span>
+                {l.kind === 'chat' || l.kind === 'gm' ? (
+                  <RichText text={l.text} fx={l.fx} />
+                ) : (
+                  l.text
+                )}
+              </span>
             )}
             {onUndo && l.undoable !== false && (
               <button
@@ -123,7 +130,9 @@ export function StoryLog({ lines, undone, onUndo, sending = [], variant = 'panel
         {tab === 'story' &&
           sending.map((m) => (
             <li key={`s${m.id}`} className={styles.line} data-kind="chat" data-sending>
-              <span>{m.text}</span>
+              <span>
+                <RichText text={m.text} fx={m.fx} />
+              </span>
             </li>
           ))}
       </ol>
@@ -136,7 +145,11 @@ function BookLine({ line, typing }: { line: LogLine; typing: boolean }) {
     return (
       <span>
         <span className={styles.margin}>GM</span>
-        {typing ? <Typewriter text={line.text} /> : line.text}
+        {typing ? (
+          <Typewriter text={line.text} fx={line.fx} />
+        ) : (
+          <RichText text={line.text} fx={line.fx} />
+        )}
       </span>
     );
   if (line.kind === 'chat') {
@@ -144,7 +157,9 @@ function BookLine({ line, typing }: { line: LogLine; typing: boolean }) {
     return (
       <span>
         {who && <span className={styles.margin}>{who}</span>}
-        <span className={styles.said}>{said}</span>
+        <span className={styles.said}>
+          <RichText text={said} fx={line.fx} />
+        </span>
       </span>
     );
   }
