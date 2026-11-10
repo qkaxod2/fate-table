@@ -15,8 +15,31 @@ export type SfxName =
   | 'scene-transition';
 
 const KEY = 'fate.sfx';
+const VOL_KEY = 'fate.sfx.volume';
 const cache = new Map<SfxName, HTMLAudioElement>();
 let enabled: boolean | undefined;
+let master: number | undefined;
+
+/** 효과음 전체 크기 (0~1). 설정 창의 볼륨 막대 */
+export function sfxVolume(): number {
+  if (master !== undefined) return master;
+  try {
+    const v = Number(localStorage.getItem(VOL_KEY));
+    master = localStorage.getItem(VOL_KEY) !== null && v >= 0 && v <= 1 ? v : 1;
+  } catch {
+    master = 1;
+  }
+  return master;
+}
+
+export function setSfxVolume(v: number): void {
+  master = Math.min(1, Math.max(0, v));
+  try {
+    localStorage.setItem(VOL_KEY, String(master));
+  } catch {
+    // 저장 못 해도 이번 화면에서는 적용된다
+  }
+}
 
 export function sfxEnabled(): boolean {
   if (enabled !== undefined) return enabled;
@@ -47,7 +70,7 @@ export function playSfx(name: SfxName, volume = 0.6, rate = 1): void {
   }
   // 같은 소리가 겹쳐도 끊기지 않게 복제해서 재생
   const a = base.cloneNode() as HTMLAudioElement;
-  a.volume = volume;
+  a.volume = Math.min(1, volume * sfxVolume());
   a.playbackRate = rate;
   // 자동 재생 제한(첫 클릭 전)에 걸리면 조용히 넘어간다
   a.play().catch(() => {});

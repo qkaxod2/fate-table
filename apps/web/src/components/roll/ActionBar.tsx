@@ -38,6 +38,8 @@ interface Props {
   hideRoll?: boolean;
   /** 넓은 화면에서의 모양: 책 아래 목차(기본) 또는 무대 아래 네 칸 버튼 띠(방 화면) */
   layout?: 'toc' | 'strip';
+  /** 접근법마다 성공할 가능성 (0~1). 난이도를 모르는 굴림(공격)은 넘기지 않는다 */
+  odds?: (ap: Approach) => number;
   onAction: (a: Action) => void;
   onApproach: (a: Approach) => void;
   onRoll: () => void;
@@ -64,6 +66,7 @@ export function ActionBar({
   guide,
   hideRoll = false,
   layout = 'toc',
+  odds,
   onAction,
   onApproach,
   onRoll,
@@ -227,6 +230,9 @@ export function ActionBar({
                             {v}
                           </b>
                           <span className={styles.apName}>{term(ap)}</span>
+                          {odds && (
+                            <span className={styles.odds}>성공 {Math.round(odds(ap) * 100)}%</span>
+                          )}
                           <span className={styles.apTip}>{tip(ap)}</span>
                         </button>
                       );

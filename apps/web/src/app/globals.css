@@ -275,3 +275,20 @@ button[aria-busy='true']::after {
     translate: 0 0;
   }
 }
+
+/* 미니 기록지: 여러 줄을 왼쪽 맞춤으로, 단추 왼쪽 끝에 맞춰 연다 */
+[data-tip][data-tip-sheet]::after {
+  left: 0;
+  max-width: 280px;
+  padding: 8px 11px;
+  text-align: left;
+  white-space: pre-line;
+  translate: 0 -3px;
+}
+
+@media (hover: hover) {
+  [data-tip][data-tip-sheet]:hover::after,
+  [data-tip][data-tip-sheet]:focus-visible::after {
+    translate: 0 0;
+  }
+}

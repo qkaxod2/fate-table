@@ -44,7 +44,12 @@ export function MySheet({
   if (!c)
     return (
       <section className={styles.sheet} aria-label="파티">
-        <CompanionList companions={companions} onPick={onPick} pickHint={pickHint} />
+        <CompanionList
+          companions={companions}
+          aspects={aspects}
+          onPick={onPick}
+          pickHint={pickHint}
+        />
       </section>
     );
   const mine = Object.values(aspects).filter(
@@ -122,17 +127,47 @@ export function MySheet({
           </div>
         </div>
       </div>
-      <CompanionList companions={companions} onPick={onPick} pickHint={pickHint} />
+      <CompanionList
+        companions={companions}
+        aspects={aspects}
+        onPick={onPick}
+        pickHint={pickHint}
+      />
     </section>
   );
 }
 
+/** 동료에 마우스를 올리면 뜨는 미니 기록지 (핵심 컨셉 · 약점 · 스트레스 · 후유증) */
+function miniSheet(o: Character, aspects: Readonly<Record<string, Aspect>>): string {
+  const mine = Object.values(aspects).filter(
+    (a) => a.ownerType === 'character' && a.ownerId === o.id,
+  );
+  const high = mine.find((a) => a.kind === 'high')?.text;
+  const trouble = mine.find((a) => a.kind === 'trouble')?.text;
+  const used = o.stress.filter(Boolean).length;
+  const cons = SLOTS.flatMap(([slot]) => {
+    const t = o.consequences[slot];
+    return t ? [`${term(slot)} ${aspects[t.aspectId]?.text ?? ''}`] : [];
+  });
+  return [
+    high && `${term('high')}: ${high}`,
+    trouble && `${term('trouble')}: ${trouble}`,
+    `${term('stress')} ${used}/${o.stress.length}` +
+      (o.isNpc ? '' : ` · ${term('fatePoint')} ${o.fatePoints}`),
+    cons.length ? `${term('consequence')}: ${cons.join(', ')}` : `${term('consequence')} 없음`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
 function CompanionList({
   companions,
+  aspects,
   onPick,
   pickHint,
 }: {
   companions: Companion[];
+  aspects: Readonly<Record<string, Aspect>>;
   onPick?: ((id: string) => void) | undefined;
   pickHint?: ((id: string) => string) | undefined;
 }) {
@@ -164,7 +199,13 @@ function CompanionList({
         return (
           <li key={o.id} data-out={o.takenOut || undefined}>
             {onPick ? (
-              <button type="button" title={pickHint?.(o.id)} onClick={() => onPick(o.id)}>
+              <button
+                type="button"
+                aria-label={pickHint?.(o.id)}
+                data-tip={`${pickHint?.(o.id) ?? o.name}\n${miniSheet(o, aspects)}`}
+                data-tip-sheet=""
+                onClick={() => onPick(o.id)}
+              >
                 {inner}
               </button>
             ) : (
