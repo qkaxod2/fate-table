@@ -1,0 +1,170 @@
+/* 머리글 "설정": 종이 쪽지가 단추 아래로 펼쳐진다 */
+.wrap {
+  position: relative;
+  flex: none;
+}
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--r-token);
+  background: color-mix(in srgb, var(--card) 70%, transparent);
+  color: var(--ink-2);
+  font: 600 13px var(--f-ui);
+  cursor: pointer;
+  transition:
+    color var(--dur-hover) var(--ease),
+    border-color var(--dur-hover) var(--ease),
+    var(--press);
+}
+
+.trigger svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  transition: rotate var(--dur-enter) var(--ease-spring);
+}
+
+.trigger:hover,
+.trigger[aria-expanded='true'] {
+  border-color: var(--seal);
+  color: var(--seal);
+}
+
+.trigger:hover svg,
+.trigger[aria-expanded='true'] svg {
+  rotate: 45deg;
+}
+
+.pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  width: 260px;
+  padding: 6px;
+  border-radius: 12px;
+  background: var(--card);
+  box-shadow:
+    0 0 0 1px var(--paper-edge),
+    0 18px 40px -14px rgb(40 25 10 / 0.55);
+  transform-origin: top right;
+  animation: pop-in var(--dur-enter) var(--ease-out) backwards;
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    scale: 0.96;
+    translate: 0 -4px;
+  }
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  min-height: 40px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--ink-1);
+  font: 500 14px var(--f-ui);
+  text-align: left;
+  cursor: pointer;
+}
+
+.row:hover,
+.row:focus-within {
+  background: var(--paper);
+}
+
+.row select {
+  height: 30px;
+  padding: 0 6px;
+  border: 1px solid var(--paper-edge);
+  border-radius: 6px;
+  background: var(--plate);
+  color: var(--ink-1);
+  font: 500 13px var(--f-ui);
+}
+
+.row kbd {
+  padding: 1px 6px;
+  border: 1px solid var(--paper-edge);
+  border-radius: 4px;
+  color: var(--ink-3);
+  font: 600 11px var(--f-ui);
+}
+
+.row small {
+  color: var(--ink-3);
+  font-size: 12px;
+}
+
+/* 효과음: 작은 켜고 끄기 스위치 (켜짐은 주홍 + 오른쪽 손잡이) */
+.switch {
+  position: relative;
+  width: 38px;
+  height: 22px;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--paper-edge);
+  appearance: none;
+  cursor: pointer;
+  transition: background var(--dur-hover) var(--ease);
+}
+
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--plate);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+  transition: translate var(--dur-hover) var(--ease-spring);
+}
+
+.switch:checked {
+  background: var(--seal);
+}
+
+.switch:checked::after {
+  translate: 16px 0;
+}
+
+.sep {
+  width: calc(100% - 12px);
+  margin: 4px auto;
+  border: 0;
+  border-top: 1px solid var(--paper-edge);
+}
+
+.row[data-danger] span {
+  color: var(--seal);
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pop {
+    animation: none;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .row kbd {
+    display: none;
+  }
+}

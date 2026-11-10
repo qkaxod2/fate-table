@@ -482,114 +482,6 @@
   align-items: center;
 }
 
-/* 화면 설정(주사위·효과음·명령 창)은 한 알약 안에 가는 칸막이로 묶는다 */
-.prefs {
-  display: inline-flex;
-  align-items: center;
-  height: 28px;
-  border: 1px solid var(--paper-edge);
-  border-radius: var(--r-token);
-  background: color-mix(in srgb, var(--card) 70%, transparent);
-}
-
-.prefs > * + * {
-  border-left: 1px solid var(--paper-edge) !important;
-}
-
-.diceSel,
-.prefBtn {
-  height: 100%;
-  padding: 0 8px;
-  border: 0;
-  background: transparent;
-  color: var(--ink-2);
-  font: 600 12px var(--f-ui);
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.diceSel {
-  padding-left: 12px;
-  border-radius: var(--r-token) 0 0 var(--r-token);
-}
-
-.prefBtn:last-child {
-  padding-right: 10px;
-  border-radius: 0 var(--r-token) var(--r-token) 0;
-}
-
-.diceSel:hover,
-.prefBtn:hover {
-  color: var(--ink-1);
-}
-
-.prefBtn kbd {
-  color: var(--ink-2);
-  font: 600 11px var(--f-ui);
-}
-
-/* 키보드가 없는 기기에서는 단축키 대신 "명령"이라고 적는다 */
-.cmdWord {
-  display: none;
-}
-
-@media (hover: none) and (pointer: coarse) {
-  .cmdWord {
-    display: inline;
-  }
-  .cmdWord + kbd {
-    display: none;
-  }
-}
-
-/* 효과음: 꺼지면 음표에 사선이 그어진다 (색만으로 가르지 않는다) */
-.prefBtn[data-sfx] {
-  position: relative;
-  width: 30px;
-  padding: 0;
-  font-size: 14px;
-}
-
-.prefBtn[data-sfx][aria-pressed='false'] {
-  color: var(--ink-3);
-}
-
-.prefBtn[data-sfx][aria-pressed='false']::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 8px;
-  right: 8px;
-  height: 1.5px;
-  background: currentColor;
-  rotate: -40deg;
-}
-
-.exit {
-  flex: none;
-  height: 28px;
-  padding: 0 4px;
-  border: 0;
-  background: none;
-  color: var(--ink-2);
-  font: 600 12px var(--f-ui);
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-/* 책이 좁은 노트북 화면: 방 이름은 무대 장 제목에도 있으니 머리글에서는 뺀다 */
-@media (min-width: 1101px) and (max-width: 1359px) {
-  .runTitle {
-    display: none;
-  }
-}
-
-.exit:hover {
-  color: var(--seal);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
 .empty {
   margin: var(--s-3) var(--s-6);
   color: var(--ink-2);
@@ -607,16 +499,6 @@
   .book > div:has(> section[aria-label='이야기 기록']) {
     flex: none;
     height: max(320px, 55dvh);
-  }
-}
-
-/* 터치 화면에는 키보드 단축키 단추가 필요 없다 */
-@media (hover: none) {
-  .prefBtn:has(kbd) {
-    display: none;
-  }
-  .prefBtn[data-sfx] {
-    border-radius: 0 var(--r-token) var(--r-token) 0;
   }
 }
 
@@ -1150,5 +1032,106 @@
 @media (max-width: 1100px) {
   .book:has([data-drawer]) {
     z-index: 32;
+  }
+}
+
+/* ===================== 배치: 무대 아래 행동 띠 · 좁은 화면 탭 (design-system.md 23절) ===================== */
+
+/* 책 안의 묶음(GM 도구·기록지 / 이야기)은 넓은 화면에서 그냥 책의 줄로 흐른다 */
+.part {
+  display: contents;
+}
+
+.shell {
+  --tabs-h: 0px;
+}
+
+/*
+ * 넓은 화면: 껍데기를 두 줄로 나눠 행동 띠가 무대 아래 줄을 차지한다.
+ * 책은 두 줄을 다 쓰고, 기록지는 한 줄로 줄어 이야기가 높이를 받는다.
+ */
+@media (min-width: 1101px) {
+  .shell {
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+  .shell > .stage {
+    grid-row: 1;
+    grid-column: 1;
+  }
+  .shell > .book {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+  }
+  .shell > [data-actions-dock] {
+    grid-row: 2;
+    grid-column: 1;
+  }
+  .shell .book {
+    padding-bottom: 0;
+  }
+  .shell .previewSlot {
+    bottom: calc(220px + var(--dock-h, 0px));
+  }
+}
+
+/*
+ * 좁은 화면: 아래 탭으로 한 번에 한 화면만.
+ * 무대 탭 = 무대 + 행동 띠, 이야기 탭 = 머리글 + 기록 + 입력, 내 캐릭터 탭 = 머리글 + GM 도구·기록지.
+ */
+@media (max-width: 1100px) {
+  .shell {
+    --tabs-h: 60px;
+    padding-bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom));
+  }
+  .shell > [data-actions-dock] {
+    bottom: calc(var(--coach-sheet, 0px) + var(--tabs-h) + env(safe-area-inset-bottom));
+    padding-bottom: 0;
+  }
+  .shell .previewSlot {
+    bottom: calc(var(--dock-h, 0px) + var(--tabs-h) + 50px);
+  }
+  /* 바텀 시트가 뜨면 탭은 비켜 준다 (행동 띠와 같다) */
+  :global(body:has([data-sheet]:not([data-coach]))) [data-room-tabs] {
+    display: none;
+  }
+
+  .shell[data-tab='stage'] > .stage {
+    height: max(
+      480px,
+      calc(100dvh - var(--tabs-h) - var(--dock-h, 0px) - env(safe-area-inset-bottom))
+    );
+  }
+  .shell[data-tab='stage'] > .book {
+    display: none;
+  }
+
+  .shell:not([data-tab='stage']) > .stage {
+    display: none;
+  }
+  .shell:not([data-tab='stage']) > [data-actions-dock] {
+    display: none;
+  }
+  .shell:not([data-tab='stage']) > .book {
+    min-height: calc(100dvh - var(--tabs-h) - env(safe-area-inset-bottom));
+    border-top: 0;
+  }
+
+  .shell[data-tab='story'] [data-part='tools'] {
+    display: none;
+  }
+  .shell[data-tab='story'] > .book {
+    height: calc(100dvh - var(--tabs-h) - env(safe-area-inset-bottom));
+  }
+  .shell[data-tab='story'] .book > div:has(> section[aria-label='이야기 기록']) {
+    flex: 1 1 0;
+    height: auto;
+    min-height: 0;
+  }
+  .shell[data-tab='story'] .book > div:has(> section[aria-label='이야기 기록']) > section {
+    max-height: none;
+  }
+
+  .shell[data-tab='me'] [data-part='story'] {
+    display: none;
   }
 }

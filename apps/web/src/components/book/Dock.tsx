@@ -8,7 +8,14 @@ import styles from './Dock.module.css';
  * 좁은 화면(1100px 이하)에서는 화면 아래에 붙은 띠가 된다. 띠의 높이를 --dock-h로 알려서
  * 판정 예고 카드와 책 본문이 그만큼 비켜 선다.
  */
-export function Dock({ children }: { children: ReactNode }) {
+export function Dock({
+  children,
+  place = 'book',
+}: {
+  children: ReactNode;
+  /** 넓은 화면에서 놓일 자리: 책 맨 아래(기본) 또는 무대 아래 띠(방 화면) */
+  place?: 'book' | 'stage';
+}) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = ref.current;
@@ -25,7 +32,7 @@ export function Dock({ children }: { children: ReactNode }) {
     };
   }, []);
   return (
-    <div ref={ref} className={styles.dock} data-actions-dock="">
+    <div ref={ref} className={styles.dock} data-actions-dock="" data-place={place}>
       {children}
     </div>
   );
