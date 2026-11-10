@@ -17,6 +17,21 @@
 }
 
 /*
+ * 방 화면(넓은 화면): 무대 아래 띠. 껍데기 그리드의 아랫줄을 차지해서 무대가 그만큼 줄어든다.
+ */
+@media (min-width: 1101px) {
+  .dock[data-place='stage'] {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    width: auto;
+    box-shadow:
+      0 -1px 0 var(--paper-edge),
+      0 -18px 30px -18px rgb(0 0 0 / 0.7);
+  }
+}
+
+/*
  * 좁은 화면: 화면 아래에 붙은 띠. 책을 끝까지 내리지 않아도 바로 고르고 굴릴 수 있다.
  * 판정 시트가 떠 있는 동안(굴림이 끝나기 전)에는 시트가 이 자리를 쓴다.
  */

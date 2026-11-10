@@ -35,14 +35,7 @@ import { isDialogOpen } from '@/components/book/Leaf';
 import { MySheet } from '@/components/book/MySheet';
 import { revealRoll, RollSheet } from '@/components/book/RollSheet';
 import { ActionBar } from '@/components/roll/ActionBar';
-import {
-  DICE_MODES,
-  DiceTray,
-  PendingDice,
-  saveDiceMode,
-  savedDiceMode,
-  type DiceMode,
-} from '@/components/roll/DiceTray';
+import { DiceTray, PendingDice, savedDiceMode, type DiceMode } from '@/components/roll/DiceTray';
 import { InvokeTray, type InvokeChoice } from '@/components/roll/InvokeTray';
 import { OutcomeBanner } from '@/components/roll/OutcomeBanner';
 import { CheckCard, sumLine } from '@/components/roll/CheckCard';
@@ -50,12 +43,13 @@ import { RollPreview } from '@/components/roll/RollPreview';
 import { SceneFade } from '@/components/scene/SceneFade';
 import { OUTCOME_FACES, pickFace, StageCast } from '@/components/scene/StageCast';
 import { toast, Toaster } from '@/components/ui/Toast';
-import { playSfx, setSfxEnabled, sfxEnabled, sfxForEvent, sfxForOutcome } from '@/fx/sfx';
+import { playSfx, sfxEnabled, sfxForEvent, sfxForOutcome } from '@/fx/sfx';
 import { ApiError } from '@/lib/api';
 import { asset } from '@/lib/asset';
 import { Presence } from '@/lib/motion';
 import { describe, ERROR_COPY, JUDGE } from '@/lib/copy';
 import { josa } from '@/lib/josa';
+import { NARROW, useMedia } from '@/lib/media';
 import type { RemoteRoom } from '@/state/remoteRoom';
 import { ExitRoomDialog } from '../rooms/ExitRoomDialog';
 import book from '../tutorial/book.module.css';
@@ -67,6 +61,8 @@ import { CommandPalette, roomCommands, ShortcutHelp } from './CommandPalette';
 import { DamagePrompt } from './DamagePrompt';
 import { FormatBar, formatShortcut } from '@/components/ui/FormatBar';
 import { GmBar, GmPanel, NarrationInput, SceneStarter, type GmOpen } from './GmConsole';
+import { MobileTabs, type RoomTab } from './MobileTabs';
+import { RoomSettings } from './RoomSettings';
 import styles from './room.module.css';
 import { Trackers } from './Trackers';
 import { ZoneMap } from './ZoneMap';
@@ -75,9 +71,6 @@ const BLOCK_REASON: Record<string, string> = {
   NOT_ENOUGH_FATE_POINTS: '운명점이 부족해요',
   ASPECT_ALREADY_INVOKED: '이번 굴림에 이미 썼어요',
 };
-
-/** 단축키 표기: 맥에서는 ⌘ */
-const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
 
 type Prompt = { kind: 'aspect'; freeInvokes: 1 | 2 } | { kind: 'boost'; ownerId: string } | null;
 
@@ -648,8 +641,29 @@ export function RoomTable({
   // 좁은 화면: 굴림이 끝나기 전까지 판정 카드와 발동 카드를 바텀 시트로 띄운다
   const sheetActive = !!rolling || (!!roll && !isFolded && roll.status !== 'final');
 
+  // ---------- 좁은 화면: 아래 탭 (무대 · 이야기 · 내 캐릭터) ----------
+  const narrow = useMedia(NARROW);
+  const [tab, setTab] = useState<RoomTab>('stage');
+  // 판정·방어·강요·피해 창은 무대 위에 뜨므로, 떠 있는 동안은 무대에 붙잡아 둔다
+  const stageLocked = sheetActive || overlayOpen;
+  const shownTab: RoomTab = stageLocked ? 'stage' : tab;
+  // 나에게 물어볼 일이 생기면 무대로 데려간다
+  const [lastCall, setLastCall] = useState(myCall);
+  if (myCall !== lastCall) {
+    setLastCall(myCall);
+    if (myCall) setTab('stage');
+  }
+  // 이야기 탭을 떠나 있는 동안 새로 적힌 줄
+  const [seen, setSeen] = useState(lines.length);
+  if ((shownTab === 'story' || !narrow) && seen !== lines.length) setSeen(lines.length);
+  const unread = Math.max(0, lines.length - seen);
+
   return (
-    <main className={`${book.shell} ${styles.callable}`} data-call={myCall ?? undefined}>
+    <main
+      className={`${book.shell} ${styles.shell} ${styles.callable}`}
+      data-call={myCall ?? undefined}
+      data-tab={shownTab}
+    >
       <Toaster />
       <section
         className={`${book.stage} ${styles.stage}`}
@@ -735,15 +749,8 @@ export function RoomTable({
                 isGm={isGm}
                 canControl={canControl}
                 pending={pending}
-                auto={
-                  rolling
-                    ? 'hidden'
-                    : !roll || isFolded
-                      ? 'full'
-                      : roll.status === 'final'
-                        ? 'compact'
-                        : 'hidden'
-                }
+                // 지도는 무대 위에 켜고 끄는 층: 펼치기 전에는 작은 꼬리표만 남아 스탠딩을 가리지 않는다
+                auto="hidden"
               />
             </div>
 
@@ -1130,7 +1137,7 @@ export function RoomTable({
                 toast({ text: '초대 링크를 복사했어요', tone: 'success', key: 'copy' });
                 setTimeout(() => setCopied(false), 1600);
               }}
-              title={`초대 링크 복사: ${joinUrl}`}
+              data-tip="누르면 초대 링크를 복사해요"
               aria-label={`초대 코드 ${inviteCode}, 누르면 초대 링크를 복사해요`}
             >
               {copied ? (
@@ -1143,101 +1150,63 @@ export function RoomTable({
             </button>
           </span>
           <span className={styles.runTools}>
-            <span className={styles.prefs} role="group" aria-label="화면 설정">
-              <select
-                className={styles.diceSel}
-                aria-label="주사위 연출"
-                title="주사위 연출"
-                value={diceMode}
-                onChange={(e) => {
-                  const m = e.target.value as DiceMode;
-                  setDiceMode(m);
-                  saveDiceMode(m);
-                }}
-              >
-                {DICE_MODES.map(([v, label]) => (
-                  <option key={v} value={v}>
-                    주사위 {label}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                className={styles.prefBtn}
-                aria-pressed={sfxOn}
-                title={sfxOn ? '효과음 끄기' : '효과음 켜기'}
-                aria-label="효과음"
-                data-sfx=""
-                onClick={() => {
-                  setSfxEnabled(!sfxOn);
-                  setSfxOn(!sfxOn);
-                }}
-              >
-                <span aria-hidden>♪</span>
-              </button>
-              <button
-                type="button"
-                className={styles.prefBtn}
-                title={`명령 창 (${IS_MAC ? '⌘K' : 'Ctrl+K'}) · 단축키는 ?`}
-                aria-label="명령 창 열기"
-                onClick={() => setPalette(true)}
-              >
-                <span className={styles.cmdWord}>명령</span>
-                <kbd>{IS_MAC ? '⌘ K' : 'Ctrl K'}</kbd>
-              </button>
-            </span>
-            <button
-              type="button"
-              className={styles.exit}
-              title={isGm ? '방을 지우고 모두 내보내요' : '이 방에서 나가요'}
-              onClick={() => setExitOpen(true)}
-            >
-              {isGm ? '방 지우기' : '나가기'}
-            </button>
+            <RoomSettings
+              isGm={isGm}
+              diceMode={diceMode}
+              onDiceMode={setDiceMode}
+              sfxOn={sfxOn}
+              onSfx={setSfxOn}
+              onPalette={() => setPalette(true)}
+              onHelp={() => setHelp(true)}
+              onExit={() => setExitOpen(true)}
+            />
           </span>
         </div>
-        {isGm && (
-          <GmBar
-            state={state}
-            run={run}
-            pending={pending}
-            lastUndoable={lastUndoable}
-            onOpen={setGmOpen}
-            onArt={() => setArtOpen({ tab: state.scene ? 'scene' : 'standing' })}
+        <div className={styles.part} data-part="tools">
+          {isGm && (
+            <GmBar
+              state={state}
+              run={run}
+              pending={pending}
+              lastUndoable={lastUndoable}
+              onOpen={setGmOpen}
+              onArt={() => setArtOpen({ tab: state.scene ? 'scene' : 'standing' })}
+            />
+          )}
+          <MySheet
+            character={me ?? undefined}
+            aspects={state.aspects}
+            {...(me?.portraitUrl ? { image: me.portraitUrl } : {})}
+            companions={party
+              .filter((c) => c.id !== me?.id)
+              .map((c) => ({
+                character: c,
+                ...(c.portraitUrl ? { image: c.portraitUrl } : {}),
+                note: c.isNpc ? 'NPC' : (state.members[c.ownerId ?? '']?.nickname ?? ''),
+              }))}
+            onPick={(id) =>
+              controllable.some((c) => c.id === id) ? setActingId(id) : setSheetId(id)
+            }
+            pickHint={(id) => {
+              const n = state.characters[id]?.name ?? '';
+              return controllable.some((c) => c.id === id)
+                ? `${josa(n, '으로/로')} 움직이기`
+                : `${n} 시트 보기`;
+            }}
+            {...(me ? { onOpenSheet: () => setSheetId(me.id) } : {})}
+            // 넓은 화면의 책은 이야기에 높이를 내주고 기록지는 한 줄로. 좁은 화면은 "내 캐릭터" 탭에서 다 펼친다
+            compact={isGm || !narrow}
           />
-        )}
-        <MySheet
-          character={me ?? undefined}
-          aspects={state.aspects}
-          {...(me?.portraitUrl ? { image: me.portraitUrl } : {})}
-          companions={party
-            .filter((c) => c.id !== me?.id)
-            .map((c) => ({
-              character: c,
-              ...(c.portraitUrl ? { image: c.portraitUrl } : {}),
-              note: c.isNpc ? 'NPC' : (state.members[c.ownerId ?? '']?.nickname ?? ''),
-            }))}
-          onPick={(id) =>
-            controllable.some((c) => c.id === id) ? setActingId(id) : setSheetId(id)
-          }
-          pickHint={(id) => {
-            const n = state.characters[id]?.name ?? '';
-            return controllable.some((c) => c.id === id)
-              ? `${josa(n, '으로/로')} 움직이기`
-              : `${n} 시트 보기`;
-          }}
-          {...(me ? { onOpenSheet: () => setSheetId(me.id) } : {})}
-          compact={isGm}
-        />
-        {party.length === 0 && <p className={styles.empty}>아직 테이블에 캐릭터가 없어요.</p>}
-        {role === 'player' && (
-          <BringCharacter
-            run={run}
-            has={controllable.length > 0}
-            brought={new Set(controllable.flatMap((c) => (c.sourceKey ? [c.sourceKey] : [])))}
-          />
-        )}
-        <div className={book.text}>
+          {party.length === 0 && <p className={styles.empty}>아직 테이블에 캐릭터가 없어요.</p>}
+          {role === 'player' && (
+            <BringCharacter
+              run={run}
+              has={controllable.length > 0}
+              brought={new Set(controllable.flatMap((c) => (c.sourceKey ? [c.sourceKey] : [])))}
+            />
+          )}
+        </div>
+        <div className={book.text} data-part="story">
           <StoryLog
             variant="book"
             lines={lines}
@@ -1256,7 +1225,7 @@ export function RoomTable({
           />
         </div>
         {role !== 'spectator' && (
-          <div className={styles.composer} data-gm={isGm || undefined}>
+          <div className={styles.composer} data-gm={isGm || undefined} data-part="story">
             {isGm && (
               <div className={styles.composeTabs} role="tablist" aria-label="무엇을 쓸까요">
                 {(
@@ -1318,7 +1287,7 @@ export function RoomTable({
       </section>
 
       {me && (
-        <Dock>
+        <Dock place="stage">
           <div className={styles.actionWrap}>
             {controllable.length > 1 && !busyRoll && (
               <div className={styles.chipRow} role="radiogroup" aria-label="움직일 캐릭터">
@@ -1424,6 +1393,7 @@ export function RoomTable({
               disabled={pending || busyRoll || me.takenOut === true || overlayOpen || palette}
               busy={!!rolling}
               hideRoll
+              layout="strip"
               onAction={pickAction}
               onApproach={setApproach}
               onRoll={() => void onRoll()}
@@ -1507,6 +1477,7 @@ export function RoomTable({
           onDone={() => router.replace('/rooms/')}
         />
       )}
+      <MobileTabs tab={shownTab} onTab={setTab} unread={unread} isGm={isGm} locked={stageLocked} />
       {palette && <CommandPalette build={paletteEntries} onClose={() => setPalette(false)} />}
       {help && <ShortcutHelp isGm={isGm} onClose={() => setHelp(false)} />}
     </main>

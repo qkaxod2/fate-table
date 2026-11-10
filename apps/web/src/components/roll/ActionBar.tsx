@@ -36,12 +36,22 @@ interface Props {
   guide?: { focus: CoachFocus | null; action?: Action };
   /** 굴리기 버튼을 따로(판정 예고 카드의 봉인) 둘 때 */
   hideRoll?: boolean;
+  /** 넓은 화면에서의 모양: 책 아래 목차(기본) 또는 무대 아래 네 칸 버튼 띠(방 화면) */
+  layout?: 'toc' | 'strip';
   onAction: (a: Action) => void;
   onApproach: (a: Approach) => void;
   onRoll: () => void;
 }
 
 const NUMERALS = ['i', 'ii', 'iii', 'iv'];
+
+/** 무대 아래 버튼 띠에서 행동마다 붙는 작은 그림 (선 아이콘) */
+const ICONS: Record<Action, string> = {
+  overcome: 'M3 19 9.5 8l4 6 2.5-3.5L21 19z',
+  create_advantage: 'M6 3h9l3 3v15H6zM9 10h6M9 14h6M9 18h3',
+  attack: 'M4 20 15 9M14 4h6v6M4 15l5 5',
+  defend: 'M12 3 4.5 6v6c0 4.6 3.2 7.8 7.5 9 4.3-1.2 7.5-4.4 7.5-9V6z',
+};
 
 export function ActionBar({
   character,
@@ -53,6 +63,7 @@ export function ActionBar({
   focus,
   guide,
   hideRoll = false,
+  layout = 'toc',
   onAction,
   onApproach,
   onRoll,
@@ -104,7 +115,12 @@ export function ActionBar({
   }, [disabled, action, approach, canDefend, guide, onAction, onApproach, onRoll]);
 
   return (
-    <div className={styles.toc} data-disabled={disabled || undefined} data-tour="actionbar">
+    <div
+      className={styles.toc}
+      data-layout={layout}
+      data-disabled={disabled || undefined}
+      data-tour="actionbar"
+    >
       <h4 className={styles.head}>다음 한 수</h4>
       <ol
         className={styles.rows}
@@ -129,6 +145,20 @@ export function ActionBar({
                 <span className={styles.n} aria-hidden>
                   {NUMERALS[i]}
                 </span>
+                <svg
+                  className={styles.ico}
+                  viewBox="0 0 24 24"
+                  width="24"
+                  height="24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                  aria-hidden
+                >
+                  <path d={ICONS[a]} />
+                </svg>
                 <span className={styles.k}>{term(a)}</span>
                 <span className={styles.desc}>
                   {a === 'defend' && !canDefend ? '상대가 공격해 올 때' : tip(a)}

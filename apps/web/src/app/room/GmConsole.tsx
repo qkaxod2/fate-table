@@ -120,6 +120,7 @@ export function GmBar({
           <button
             type="button"
             aria-label="GM 풀 −1"
+            data-tip="GM 운명점 풀에서 하나 빼기"
             disabled={pending || state.gmPool === 0}
             onClick={() =>
               void run({ type: 'fate.adjust', payload: { target: 'gm_pool', delta: -1 } })
@@ -130,6 +131,7 @@ export function GmBar({
           <button
             type="button"
             aria-label="GM 풀 +1"
+            data-tip="GM 운명점 풀에 하나 더하기"
             disabled={pending}
             onClick={() =>
               void run({ type: 'fate.adjust', payload: { target: 'gm_pool', delta: 1 } })
@@ -142,7 +144,12 @@ export function GmBar({
           type="button"
           className={styles.undo}
           disabled={pending || !lastUndoable}
-          title={lastUndoable ? `되돌리기: ${lastUndoable.text}` : '되돌릴 기록이 없어요'}
+          data-tip={
+            lastUndoable
+              ? `마지막 기록 되돌리기 (Ctrl Z): ${lastUndoable.text}`
+              : '되돌릴 기록이 없어요'
+          }
+          data-tip-end=""
           aria-label="마지막 기록 되돌리기"
           onClick={() =>
             lastUndoable &&

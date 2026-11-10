@@ -219,3 +219,59 @@ button[aria-busy='true']::after {
     opacity: 0;
   }
 }
+
+/*
+ * 바로 뜨는 작은 종이 툴팁: data-tip="설명". 기호만 있는 단추(−, +, ↶ 같은)에 붙인다.
+ * 브라우저 기본 title은 1초쯤 늦게 떠서, 마우스를 올리면 0.25초 뒤에 단추 아래로 뜬다.
+ * 키보드로 닿았을 때(focus-visible)도 보인다. 터치 기기에서는 쓰지 않는다.
+ */
+[data-tip] {
+  position: relative;
+}
+
+[data-tip]:not([aria-busy='true'])::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  z-index: 50;
+  width: max-content;
+  max-width: 240px;
+  padding: 5px 9px;
+  border-radius: 6px;
+  background: var(--ink-1);
+  color: var(--paper);
+  font: 500 12px/1.4 var(--f-ui);
+  letter-spacing: 0;
+  text-align: center;
+  white-space: normal;
+  opacity: 0;
+  translate: -50% -3px;
+  pointer-events: none;
+  transition:
+    opacity 120ms var(--ease-out),
+    translate 120ms var(--ease-out);
+}
+
+@media (hover: hover) {
+  [data-tip]:hover::after,
+  [data-tip]:focus-visible::after {
+    opacity: 1;
+    translate: -50% 0;
+    transition-delay: 250ms;
+  }
+}
+
+/* 오른쪽 끝에 붙은 단추: 툴팁을 오른쪽 끝에 맞춰 화면 밖으로 나가지 않게 */
+[data-tip][data-tip-end]::after {
+  left: auto;
+  right: 0;
+  translate: 0 -3px;
+}
+
+@media (hover: hover) {
+  [data-tip][data-tip-end]:hover::after,
+  [data-tip][data-tip-end]:focus-visible::after {
+    translate: 0 0;
+  }
+}

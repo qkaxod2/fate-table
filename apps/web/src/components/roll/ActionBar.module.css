@@ -67,6 +67,10 @@
   color: var(--seal);
 }
 
+.ico {
+  display: none;
+}
+
 .k {
   flex: none;
   color: var(--seal);
@@ -369,6 +373,116 @@
   }
   .action {
     padding-block: 4px;
+  }
+}
+
+/*
+ * 방 화면 넓은 화면: 무대 아래 네 칸 버튼 띠 (design-system.md 23절).
+ * 목차 줄은 예쁘지만 누를 곳으로 잘 안 읽혀서, 방에서는 큰 종이 버튼으로 둔다.
+ * 고른 행동 아래 줄에 접근법 버튼이 띠 폭만큼 붙고, 접근법 창은 띠 위로 펼쳐진다.
+ */
+@media (min-width: 1101px) {
+  .toc[data-layout='strip'] {
+    padding: 12px 24px 14px;
+    background: none;
+  }
+  .toc[data-layout='strip'] .head,
+  .toc[data-layout='strip'] .n,
+  .toc[data-layout='strip'] .dots,
+  .toc[data-layout='strip'] .row[data-on]::before {
+    display: none;
+  }
+  .toc[data-layout='strip'] .rows {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .toc[data-layout='strip'] .row {
+    display: contents;
+  }
+  .toc[data-layout='strip'] .action {
+    position: relative;
+    grid-row: 1;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    column-gap: 12px;
+    align-items: center;
+    min-height: 62px;
+    padding: 8px 16px;
+    border: 1.5px solid var(--paper-edge);
+    border-radius: 12px;
+    background: var(--card);
+    box-shadow: 0 2px 0 var(--paper-edge);
+    transition:
+      border-color var(--dur-hover) var(--ease),
+      background var(--dur-hover) var(--ease),
+      translate var(--dur-hover) var(--ease),
+      box-shadow var(--dur-hover) var(--ease),
+      var(--press);
+  }
+  .toc[data-layout='strip'] .ico {
+    display: block;
+    grid-row: 1 / span 2;
+    color: var(--seal);
+  }
+  .toc[data-layout='strip'] .k {
+    font: 800 18px/1.25 var(--f-head);
+  }
+  .toc[data-layout='strip'] .desc {
+    grid-column: 2;
+    font: 400 13px/1.35 var(--f-ui);
+  }
+  .toc[data-layout='strip'] .num {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    padding: 0 5px;
+    border: 1px solid var(--paper-edge);
+    border-radius: 4px;
+    font-size: 11px;
+    line-height: 16px;
+  }
+  .toc[data-layout='strip'] .action:not(:disabled):hover {
+    border-color: var(--seal);
+    translate: 0 -2px;
+    box-shadow: 0 4px 0 var(--paper-edge);
+  }
+  .toc[data-layout='strip'] .action:not(:disabled):hover .k,
+  .toc[data-layout='strip'] .action:not(:disabled):hover .desc {
+    text-decoration: none;
+  }
+  .toc[data-layout='strip'] .action[aria-checked='true'] {
+    border-color: var(--seal);
+    background: var(--seal);
+    box-shadow: 0 3px 0 #7d2414;
+  }
+  .toc[data-layout='strip'] .action[aria-checked='true'] .k,
+  .toc[data-layout='strip'] .action[aria-checked='true'] .desc,
+  .toc[data-layout='strip'] .action[aria-checked='true'] .ico {
+    color: var(--seal-ink);
+  }
+  .toc[data-layout='strip'] .action:disabled {
+    opacity: 0.5;
+    background: var(--paper-2);
+    box-shadow: none;
+  }
+  .toc[data-layout='strip'] .apBtn {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    justify-self: center;
+    justify-content: center;
+    width: min(100%, 420px);
+    min-height: 40px;
+    margin-top: 10px;
+    font-size: 16px;
+  }
+  .toc[data-layout='strip'] .picker {
+    right: auto;
+    left: calc(50% - 210px);
+  }
+  .toc[data-layout='strip'] .picker::after {
+    right: calc(50% - 8px);
   }
 }
 
