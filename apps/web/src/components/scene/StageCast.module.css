@@ -117,6 +117,88 @@
   --away: 1;
 }
 
+/* 쓰러졌다: 빛이 빠지고 조금 가라앉는다 */
+.sprite[data-down] {
+  filter: grayscale(1) brightness(0.5);
+  transform: translateY(28px) scale(0.94);
+}
+
+/* 말풍선: 머리 옆, 무대 가운데 쪽으로. 종이 쪽지에 꼬리가 달렸다 */
+.bubble {
+  position: absolute;
+  top: 9%;
+  z-index: 1;
+  width: max-content;
+  max-width: min(300px, 70%);
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow:
+    0 0 0 1px var(--paper-edge),
+    0 14px 30px -12px rgb(0 0 0 / 0.7);
+  color: var(--ink-1);
+  font: 400 15px/1.55 var(--f-book);
+  text-align: left;
+  animation: bubbleIn 260ms var(--ease-spring) backwards;
+}
+
+.bubble b {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--seal);
+  font: 700 11px/1.4 var(--f-ui);
+  letter-spacing: 0.04em;
+}
+
+/* 긴 말은 네 줄까지만 (나머지는 책에 다 적혀 있다) */
+.bubble span {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+}
+
+/* 머리 쪽을 가리키는 작은 꼬리 */
+.bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -7px;
+  width: 14px;
+  height: 14px;
+  background: var(--card);
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+}
+
+.sprite[data-side='left'] .bubble {
+  left: 62%;
+  border-bottom-left-radius: 4px;
+  transform-origin: 0 100%;
+}
+
+.sprite[data-side='left'] .bubble::after {
+  left: 0;
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+
+.sprite[data-side='right'] .bubble {
+  right: 62%;
+  border-bottom-right-radius: 4px;
+  transform-origin: 100% 100%;
+}
+
+.sprite[data-side='right'] .bubble::after {
+  right: 0;
+}
+
+@keyframes bubbleIn {
+  from {
+    opacity: 0;
+    scale: 0.85;
+    translate: 0 6px;
+  }
+}
+
 @keyframes hit {
   0% {
     filter: brightness(2.2) saturate(0.3);
@@ -168,12 +250,29 @@
   }
 }
 
+/* 좁은 화면: 지도와 겹치므로 그림은 흐리게, 말하는 쪽만 조금 진하게. 말풍선은 또렷이 */
 @media (max-width: 1100px) {
-  .sprite {
+  .sprite img {
     opacity: 0.4;
   }
-  .sprite[data-side='right'] {
+  .sprite[data-focus] img {
+    opacity: 0.6;
+  }
+  .sprite[data-side='right']:not([data-focus]) {
     display: none;
+  }
+  /* 그림이 화면보다 넓을 수 있으니 말풍선은 화면 가장자리에 맞춰 가슴께에 띄운다 */
+  .bubble {
+    top: auto;
+    bottom: 44%;
+    max-width: min(280px, calc(100vw - 32px));
+    font-size: 14px;
+  }
+  .sprite[data-side='left'] .bubble {
+    left: 16px;
+  }
+  .sprite[data-side='right'] .bubble {
+    right: 16px;
   }
 }
 
@@ -185,5 +284,8 @@
   }
   .sprite img.leaving {
     display: none;
+  }
+  .bubble {
+    animation: none;
   }
 }

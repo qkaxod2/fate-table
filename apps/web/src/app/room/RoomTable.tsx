@@ -42,7 +42,8 @@ import { OutcomeBanner } from '@/components/roll/OutcomeBanner';
 import { CheckCard, sumLine } from '@/components/roll/CheckCard';
 import { RollPreview } from '@/components/roll/RollPreview';
 import { SceneFade } from '@/components/scene/SceneFade';
-import { OUTCOME_FACES, pickFace, StageCast } from '@/components/scene/StageCast';
+import { OUTCOME_FACES, pickFace, StageCast, type CastMember } from '@/components/scene/StageCast';
+import { beatOf, TALK_IDLE_MS, type StageBeat } from '@/components/scene/stageBeat';
 import { toast, Toaster } from '@/components/ui/Toast';
 import { playSfx, sfxEnabled, sfxForEvent, sfxForOutcome } from '@/fx/sfx';
 import { ApiError } from '@/lib/api';
@@ -529,10 +530,15 @@ export function RoomTable({
   const chatField = useRef<HTMLInputElement>(null);
   const sendIds = useRef(0);
   const myNick = state.members[room.userId]?.nickname;
+  // GM은 NPC 이름으로 말할 수 있다: 그 NPC가 무대에 서서 말풍선으로 말한다
+  const [speakAs, setSpeakAs] = useState('');
+  const voices = isGm ? party.filter((c) => c.isNpc && !c.takenOut) : [];
+  const as = voices.some((c) => c.name === speakAs) ? speakAs : '';
   const sendChat = async (text: string) => {
     const id = ++sendIds.current;
-    setSending((x) => [...x, { id, text: myNick ? `${myNick}: ${text}` : text, fx: isGm }]);
-    await run({ type: 'chat.post', payload: { text } });
+    const who = as || myNick;
+    setSending((x) => [...x, { id, text: who ? `${who}: ${text}` : text, fx: isGm }]);
+    await run({ type: 'chat.post', payload: as ? { text, as } : { text } });
     setSending((x) => x.filter((m) => m.id !== id));
   };
   const [copied, setCopied] = useState(false);
@@ -619,10 +625,76 @@ export function RoomTable({
     });
 
   // ---------- 스탠딩 ----------
-  // 왼쪽: 굴리는 캐릭터 → 갈등 차례 → 내 캐릭터. 오른쪽: 굴림 상대
+  // 새로 들어온 이벤트에서 무대의 한 박자(말 · 맞음 · 쓰러짐 · 강요 수락)를 뽑는다.
+  // 처음 기록을 불러올 때는 지난 일이므로 건너뛴다
+  const newestSeq = liveEvents.at(-1)?.seq ?? 0;
+  const [beatFrom, setBeatFrom] = useState(newestSeq);
+  const [beat, setBeat] = useState<StageBeat | null>(null);
+  // 말을 주고받는 두 사람: [왼쪽, 오른쪽]과 지금 말하는 쪽. 한동안 조용하면 내려간다
+  const [talk, setTalk] = useState<{ ids: [string, string | null]; focus: string } | null>(null);
+  if (newestSeq !== beatFrom) {
+    setBeatFrom(newestSeq);
+    let b: StageBeat | null = null;
+    if (beatFrom > 0) {
+      const mine = { userId: room.userId, character: me };
+      for (let i = liveEvents.length - 1; i >= 0 && liveEvents[i]!.seq > beatFrom; i--) {
+        b = beatOf(liveEvents[i]!, state, liveEvents, mine);
+        if (b) break;
+      }
+    }
+    if (b) {
+      setBeat(b);
+      if (b.kind === 'say') {
+        const x = b.characterId;
+        const home = (turnChar ?? me)?.id;
+        const ids = talk?.ids;
+        let next: [string, string | null];
+        if (ids && (ids[0] === x || ids[1] === x)) next = ids;
+        // 지금 말하던 사람은 제자리에 두고, 다른 자리에 새로 말한 사람을 세운다
+        else if (ids) next = talk.focus === ids[1] ? [x, ids[1]] : [ids[0], x];
+        else if (home && home !== x) next = [home, x];
+        else next = [x, null];
+        setTalk({ ids: next, focus: x });
+      }
+    }
+  }
+  useEffect(() => {
+    if (!beat) return;
+    const t = window.setTimeout(() => setBeat(null), beat.hold);
+    return () => window.clearTimeout(t);
+  }, [beat]);
+  useEffect(() => {
+    if (!talk) return;
+    const t = window.setTimeout(() => setTalk(null), TALK_IDLE_MS);
+    return () => window.clearTimeout(t);
+  }, [talk]);
+
+  // 왼쪽: 굴리는 캐릭터 → 대화 중인 사람 → 갈등 차례 → 내 캐릭터. 오른쪽: 굴림 상대 → 대화 상대
   const showRoll = !!roll && !isFolded;
-  const castLeft = (showRoll ? activeChar : undefined) ?? turnChar ?? me ?? undefined;
+  const talkL = !showRoll && talk ? state.characters[talk.ids[0]] : undefined;
+  const talkR = !showRoll && talk?.ids[1] ? state.characters[talk.ids[1]] : undefined;
+  // 무대에 없던 캐릭터가 맞거나 강요를 받으면 잠깐 왼쪽에 불려 나온다
+  const spot =
+    !showRoll && beat && beat.kind !== 'say' && beat.characterId !== talkR?.id
+      ? state.characters[beat.characterId]
+      : undefined;
+  const castLeft =
+    (showRoll ? activeChar : undefined) ?? spot ?? talkL ?? turnChar ?? me ?? undefined;
   const castRight = showRoll && roll?.targetId ? state.characters[roll.targetId] : undefined;
+  const partner = !castRight && talkR && talkR.id !== castLeft?.id ? talkR : undefined;
+  /** 이 캐릭터에게 지금 걸린 박자의 표정과 말풍선 */
+  const beatFor = (c: Character): Pick<CastMember, 'face' | 'say'> => {
+    if (beat?.characterId !== c.id) return {};
+    const face = pickFace(c, beat.faces);
+    return {
+      // 그 표정 그림이 없으면 굴림 결과 표정을 그대로 둔다
+      ...(face ? { face } : {}),
+      ...(beat.kind === 'say' && !showRoll && beat.text
+        ? { say: { seq: beat.seq, text: beat.text, fx: !!beat.fx } }
+        : {}),
+    };
+  };
+  const talking = (c: Character) => !!talk && (talk.ids[0] === c.id || talk.ids[1] === c.id);
   const faceShown = roll?.status === 'final' && settled && !isFolded && outcome;
   const flip: Record<Outcome, Outcome> = {
     style: 'fail',
@@ -682,12 +754,16 @@ export function RoomTable({
               ? {
                   left: {
                     character: castLeft,
-                    focus: !castRight || roll?.status !== 'awaiting_defense',
+                    focus: castRight
+                      ? roll?.status !== 'awaiting_defense'
+                      : castLeft === spot || !partner || talk?.focus !== partner.id,
                     face:
                       faceShown && castLeft.id === activeChar?.id
                         ? pickFace(castLeft, OUTCOME_FACES[outcome])
                         : null,
-                    portraitFallback: !castLeft.isNpc,
+                    portraitFallback: !castLeft.isNpc || talking(castLeft),
+                    hit: beat?.kind === 'hurt' && beat.characterId === castLeft.id,
+                    ...beatFor(castLeft),
                   },
                 }
               : {})}
@@ -701,9 +777,19 @@ export function RoomTable({
                       !!faceShown &&
                       roll?.action === 'attack' &&
                       (outcome === 'success' || outcome === 'style'),
+                    ...beatFor(castRight),
                   },
                 }
-              : {})}
+              : partner
+                ? {
+                    right: {
+                      character: partner,
+                      focus: talk?.focus === partner.id,
+                      portraitFallback: true,
+                      ...beatFor(partner),
+                    },
+                  }
+                : {})}
           />
         </div>
 
@@ -1269,6 +1355,22 @@ export function RoomTable({
                   void sendChat(text);
                 }}
               >
+                {voices.length > 0 && (
+                  <select
+                    className={styles.voice}
+                    value={as}
+                    onChange={(e) => setSpeakAs(e.target.value)}
+                    aria-label="누구로 말할까요"
+                    data-tip="NPC로 말하면 무대에 서서 말풍선으로 말해요"
+                  >
+                    <option value="">GM으로</option>
+                    {voices.map((c) => (
+                      <option key={c.id} value={c.name}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
                 <input
                   ref={chatField}
                   value={chat}
@@ -1278,7 +1380,7 @@ export function RoomTable({
                     if (e.key === 'Escape') e.currentTarget.blur();
                   }}
                   maxLength={500}
-                  placeholder="말하기… (Enter)"
+                  placeholder={as ? `${josa(as, '으로/로')} 말하기… (Enter)` : '말하기… (Enter)'}
                   aria-label="채팅"
                 />
                 <FormatBar field={chatField} value={chat} onChange={setChat} gm={isGm} />

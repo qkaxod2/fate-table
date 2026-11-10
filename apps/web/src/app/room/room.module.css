@@ -573,10 +573,10 @@
  */
 .composer[data-gm] {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
   grid-template-areas:
-    'field field field'
-    'tabs fmt send';
+    'field field field field'
+    'tabs voice fmt send';
   gap: 6px var(--s-2);
   align-items: center;
   padding-top: var(--s-2);
@@ -599,6 +599,20 @@
 .composer[data-gm] button[type='submit'] {
   grid-area: send;
   min-height: 32px;
+}
+
+/* GM 말하기: 누구 목소리로 말할지 (GM 자신 또는 NPC) */
+.voice {
+  grid-area: voice;
+  height: 30px;
+  max-width: 140px;
+  padding: 0 6px;
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--r-token);
+  background: color-mix(in srgb, var(--card) 70%, transparent);
+  color: var(--ink-1);
+  font: 600 13px var(--f-ui);
+  cursor: pointer;
 }
 
 /* 대사·말하기는 알약 하나 안의 두 칸 */

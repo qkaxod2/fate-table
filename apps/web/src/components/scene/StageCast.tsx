@@ -1,7 +1,9 @@
 'use client';
 
 import type { Character } from '@fate/rules-engine';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { reducedMotion } from '@/lib/motion';
+import { RichText } from '../ui/RichText';
 import styles from './StageCast.module.css';
 
 export interface CastMember {
@@ -14,6 +16,8 @@ export interface CastMember {
   portraitFallback?: boolean;
   /** 공격을 맞았다: 한 번 움찔한다 */
   hit?: boolean;
+  /** 방금 한 말: 말풍선으로 잠깐 띄우고 몸을 살짝 들썩인다 */
+  say?: { seq: number; text: string; fx?: boolean } | null;
 }
 
 /** 표정 → 그림. 없는 표정이면 기본 스탠딩 */
@@ -36,8 +40,9 @@ export function pickFace(c: Character, wants: readonly string[]): string | null 
 }
 
 /**
- * 라이트노벨풍 스탠딩. 왼쪽은 지금 움직이는 캐릭터, 오른쪽은 상대.
+ * 라이트노벨풍 스탠딩. 왼쪽은 지금 움직이는 캐릭터, 오른쪽은 상대(굴림 상대나 대화 상대).
  * 말하는 쪽은 밝고 크게, 듣는 쪽은 살짝 어둡게. 표정이 바뀌면 그림이 부드럽게 바뀐다.
+ * 말을 하면 머리 옆에 말풍선이 뜨고, 쓰러진 캐릭터는 빛이 빠진 채 가라앉는다.
  */
 export function StageCast({ left, right }: { left?: CastMember; right?: CastMember }) {
   return (
@@ -69,19 +74,62 @@ function Sprite({ m, side }: { m: CastMember; side: 'left' | 'right' }) {
   }, [prev]);
   if (!url) return null;
   const cutout = !!c.standing;
+  return <Figure m={m} side={side} url={url} prev={prev} cutout={cutout} />;
+}
+
+function Figure({
+  m,
+  side,
+  url,
+  prev,
+  cutout,
+}: {
+  m: CastMember;
+  side: 'left' | 'right';
+  url: string;
+  prev: string | undefined;
+  cutout: boolean;
+}) {
+  const c = m.character;
+  const fig = useRef<HTMLElement>(null);
+  const saySeq = m.say?.seq;
+  // 말할 때마다 한 번 들썩인다 (그림 자체를 다시 그리지 않도록 Web Animations로)
+  useEffect(() => {
+    if (saySeq == null || reducedMotion()) return;
+    fig.current?.animate(
+      [
+        { translate: '0 0' },
+        { translate: '0 -9px' },
+        { translate: '0 0' },
+        { translate: '0 -4px' },
+        { translate: '0 0' },
+      ],
+      { duration: 620, easing: 'ease-out' },
+    );
+  }, [saySeq]);
   return (
     <figure
+      ref={fig}
       className={styles.sprite}
       data-side={side}
       data-focus={m.focus || undefined}
       data-cutout={cutout || undefined}
       data-hit={m.hit || undefined}
+      data-down={c.takenOut || undefined}
     >
       {prev && prev !== url && (
         <img key={`was:${prev}`} className={styles.leaving} src={prev} alt="" draggable={false} />
       )}
       <img key={url} src={url} alt="" draggable={false} />
       <figcaption className={styles.name}>{c.name}</figcaption>
+      {m.say && (
+        <p key={m.say.seq} className={styles.bubble}>
+          <b>{c.name}</b>
+          <span>
+            <RichText text={m.say.text} fx={m.say.fx} />
+          </span>
+        </p>
+      )}
     </figure>
   );
 }
