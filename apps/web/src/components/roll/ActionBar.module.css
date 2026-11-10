@@ -217,6 +217,16 @@
   font: 700 15px var(--f-book);
 }
 
+.odds {
+  margin-top: 2px;
+  color: var(--seal);
+  font: 700 12px var(--f-ui);
+}
+
+.approach[aria-checked='true'] .odds {
+  color: inherit;
+}
+
 .apTip {
   margin-top: 2px;
   color: var(--ink-2);

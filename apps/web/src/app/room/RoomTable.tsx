@@ -5,6 +5,7 @@ import { EXPRESSIONS } from '@fate/portrait';
 import {
   APPROACHES,
   canInvoke,
+  chanceAtLeast,
   formatRating,
   outcomeFor,
   previewInvokes,
@@ -564,6 +565,10 @@ export function RoomTable({
     const base = `${state.scene?.name ?? name} · 운명점 테이블`;
     document.title = myCall ? `● ${myCall} · ${base}` : base;
   }, [myCall, state.scene?.name, name]);
+  // 다른 탭·창을 보고 있을 때 차례가 오면 작은 종소리로 부른다 (화면을 보고 있으면 테두리가 빛나니 조용히)
+  useEffect(() => {
+    if (myCall && document.hidden) playSfx('style-chime', 0.45);
+  }, [myCall]);
 
   // ---------- 단축키 ----------
   const [palette, setPalette] = useState(false);
@@ -1388,6 +1393,17 @@ export function RoomTable({
             )}
             <ActionBar
               character={me}
+              // 난이도를 아는 굴림(공격이 아닌 것)은 접근법마다 성공할 가능성을 미리 보여 준다
+              {...(action && action !== 'attack'
+                ? {
+                    odds: (ap: Approach) =>
+                      chanceAtLeast(
+                        difficulty -
+                          (me.approaches[ap] + stuntBonuses(me, action, ap).length * 2) +
+                          1,
+                      ),
+                  }
+                : {})}
               action={action}
               approach={approach}
               disabled={pending || busyRoll || me.takenOut === true || overlayOpen || palette}

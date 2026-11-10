@@ -145,6 +145,14 @@
   translate: 16px 0;
 }
 
+/* 효과음 크기: 주홍으로 찬 가는 막대 */
+.volume {
+  flex: 1;
+  max-width: 150px;
+  accent-color: var(--seal);
+  cursor: pointer;
+}
+
 .sep {
   width: calc(100% - 12px);
   margin: 4px auto;

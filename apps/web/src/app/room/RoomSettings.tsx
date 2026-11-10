@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { DICE_MODES, saveDiceMode, type DiceMode } from '@/components/roll/DiceTray';
-import { setSfxEnabled } from '@/fx/sfx';
+import { playSfx, setSfxEnabled, setSfxVolume, sfxVolume } from '@/fx/sfx';
 import styles from './RoomSettings.module.css';
 
 /** 단축키 표기: 맥에서는 ⌘ */
@@ -34,6 +34,7 @@ export function RoomSettings({
   onExit: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [volume, setVolume] = useState(sfxVolume);
   const wrap = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -109,6 +110,30 @@ export function RoomSettings({
               }}
             />
           </label>
+          {sfxOn && (
+            <label className={styles.row}>
+              <span>크기</span>
+              <input
+                type="range"
+                className={styles.volume}
+                min={0}
+                max={100}
+                step={5}
+                value={Math.round(volume * 100)}
+                aria-valuetext={`${Math.round(volume * 100)}%`}
+                onChange={(e) => {
+                  const v = Number(e.target.value) / 100;
+                  setVolume(v);
+                  setSfxVolume(v);
+                }}
+                // 손을 떼면 그 크기로 한 번 들려준다
+                onPointerUp={() => playSfx('token-flip')}
+                onKeyUp={(e) => {
+                  if (e.key.startsWith('Arrow')) playSfx('token-flip');
+                }}
+              />
+            </label>
+          )}
           <button type="button" className={styles.row} onClick={then(onPalette)}>
             <span>명령 창</span>
             <kbd>{IS_MAC ? '⌘ K' : 'Ctrl K'}</kbd>
