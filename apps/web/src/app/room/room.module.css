@@ -528,6 +528,20 @@
   font: 600 11px var(--f-ui);
 }
 
+/* 키보드가 없는 기기에서는 단축키 대신 "명령"이라고 적는다 */
+.cmdWord {
+  display: none;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .cmdWord {
+    display: inline;
+  }
+  .cmdWord + kbd {
+    display: none;
+  }
+}
+
 /* 효과음: 꺼지면 음표에 사선이 그어진다 (색만으로 가르지 않는다) */
 .prefBtn[data-sfx] {
   position: relative;
@@ -669,6 +683,65 @@
 .narrate form {
   align-items: center;
   margin: 0;
+}
+
+/*
+ * GM 입력: 대사·말하기 바꾸기와 꾸밈 버튼이 한 줄에 같이 있으면 입력칸이 손가락 하나만큼 좁아진다.
+ * 입력칸은 위 한 줄을 다 쓰고, 그 아래 도구 줄에 [대사|말하기] · 꾸밈 · 보내기를 둔다.
+ */
+.composer[data-gm] {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'field field field'
+    'tabs fmt send';
+  gap: 6px var(--s-2);
+  align-items: center;
+  padding-top: var(--s-2);
+}
+
+.composer[data-gm] .narrate,
+.composer[data-gm] form {
+  display: contents;
+}
+
+.composer[data-gm] textarea,
+.composer[data-gm] input {
+  grid-area: field;
+}
+
+.composer[data-gm] [role='toolbar'] {
+  grid-area: fmt;
+}
+
+.composer[data-gm] button[type='submit'] {
+  grid-area: send;
+  min-height: 32px;
+}
+
+/* 대사·말하기는 알약 하나 안의 두 칸 */
+.composer[data-gm] .composeTabs {
+  grid-area: tabs;
+  flex-direction: row;
+  gap: 0;
+  padding: 2px;
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--r-token);
+  background: color-mix(in srgb, var(--card) 70%, transparent);
+}
+
+.composer[data-gm] .composeTabs button {
+  height: 26px;
+  padding: 0 12px;
+  font-size: 13px;
+  line-height: 24px;
+}
+
+.composer[data-gm] .narrate textarea {
+  height: auto;
+  min-height: 44px;
+  resize: none;
+  field-sizing: content;
 }
 
 .chat {
@@ -1008,6 +1081,16 @@
     overflow-x: auto;
     padding: 8px 12px 0;
     scrollbar-width: none;
+  }
+}
+
+/*
+ * 휴대폰: 지도를 펼치면 무대 안쪽 스크롤에 지도 아래쪽(지도 밖 줄)이 잘려 숨었다.
+ * 지도가 펼쳐져 있는 동안은 무대를 길게 늘려 한눈에 들어오게 한다.
+ */
+@media (max-width: 700px) {
+  .stage:has([data-top-stack] [data-map]:not([data-compact])) {
+    height: max(740px, 88dvh);
   }
 }
 
