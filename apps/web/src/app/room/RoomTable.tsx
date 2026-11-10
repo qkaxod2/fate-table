@@ -76,6 +76,9 @@ const BLOCK_REASON: Record<string, string> = {
   ASPECT_ALREADY_INVOKED: '이번 굴림에 이미 썼어요',
 };
 
+/** 단축키 표기: 맥에서는 ⌘ */
+const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
+
 type Prompt = { kind: 'aspect'; freeInvokes: 1 | 2 } | { kind: 'boost'; ownerId: string } | null;
 
 /** 기다리는 동안 다른 버튼을 잠글 필요가 없는 가벼운 명령 */
@@ -1175,11 +1178,12 @@ export function RoomTable({
               <button
                 type="button"
                 className={styles.prefBtn}
-                title="명령 창 (Ctrl+K) · 단축키는 ?"
+                title={`명령 창 (${IS_MAC ? '⌘K' : 'Ctrl+K'}) · 단축키는 ?`}
                 aria-label="명령 창 열기"
                 onClick={() => setPalette(true)}
               >
-                <kbd>Ctrl K</kbd>
+                <span className={styles.cmdWord}>명령</span>
+                <kbd>{IS_MAC ? '⌘ K' : 'Ctrl K'}</kbd>
               </button>
             </span>
             <button
@@ -1252,7 +1256,7 @@ export function RoomTable({
           />
         </div>
         {role !== 'spectator' && (
-          <div className={styles.composer}>
+          <div className={styles.composer} data-gm={isGm || undefined}>
             {isGm && (
               <div className={styles.composeTabs} role="tablist" aria-label="무엇을 쓸까요">
                 {(
