@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';
-import { replay, validate, type Command } from '../src/index';
+import { parseCommand, replay, validate, type Command } from '../src/index';
 import { aspect, GM, P1, P2, pc, Table, withCharacters } from './helpers';
 
 function table() {
@@ -559,5 +559,22 @@ describe('invariants (#23)', () => {
       ),
       { numRuns: 200 },
     );
+  });
+});
+
+describe('stage.fx', () => {
+  it('GM만 무대 연출을 쓸 수 있고, 상태는 바뀌지 않는다', () => {
+    const t = table();
+    const before = t.state;
+    t.run(GM, { type: 'stage.fx', payload: { kind: 'tremble', characterId: 'a' } });
+    expect(t.log.at(-1)).toMatchObject({
+      type: 'stage.fx_played',
+      payload: { kind: 'tremble', characterId: 'a' },
+    });
+    expect(t.state.characters).toBe(before.characters);
+    expect(validate(t.state, { type: 'stage.fx', payload: { kind: 'shake' } }, P1)).toMatchObject({
+      code: 'FORBIDDEN_ROLE',
+    });
+    expect(() => parseCommand({ type: 'stage.fx', payload: { kind: 'boom' } })).toThrow();
   });
 });

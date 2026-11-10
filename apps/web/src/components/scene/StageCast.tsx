@@ -18,6 +18,8 @@ export interface CastMember {
   hit?: boolean;
   /** 방금 한 말: 말풍선으로 잠깐 띄우고 몸을 살짝 들썩인다 */
   say?: { seq: number; text: string; fx?: boolean } | null;
+  /** 한 번 움직임: 타격(번쩍 움찔 + 베인 자국) · 떨림(오들오들) */
+  motion?: { seq: number; kind: 'hit' | 'tremble' } | null;
 }
 
 /** 표정 → 그림. 없는 표정이면 기본 스탠딩 */
@@ -107,6 +109,37 @@ function Figure({
       { duration: 620, easing: 'ease-out' },
     );
   }, [saySeq]);
+  const motionSeq = m.motion?.seq;
+  const motionKind = m.motion?.kind;
+  useEffect(() => {
+    if (motionSeq == null || reducedMotion()) return;
+    const el = fig.current;
+    if (!el) return;
+    const away = side === 'right' ? 1 : -1;
+    const a =
+      motionKind === 'tremble'
+        ? el.animate(
+            Array.from({ length: 24 }, (_, i) => ({
+              translate: `${(i % 2 ? -1 : 1) * (i < 20 ? 3 : 1.5)}px ${i % 3 ? 0 : 1}px`,
+            })).concat({ translate: '0 0' }),
+            { duration: 1400, easing: 'linear' },
+          )
+        : el.animate(
+            [
+              { translate: '0 0', filter: 'brightness(2.4) saturate(0.2)' },
+              {
+                translate: `${away * 22}px 0`,
+                filter: 'brightness(1.6) saturate(0.6)',
+                offset: 0.15,
+              },
+              { translate: `${away * -8}px 0`, offset: 0.4 },
+              { translate: `${away * 4}px 0`, filter: 'none', offset: 0.65 },
+              { translate: '0 0', filter: 'none' },
+            ],
+            { duration: 560, easing: 'ease-out' },
+          );
+    return () => a.cancel();
+  }, [motionSeq, motionKind, side]);
   return (
     <figure
       ref={fig}
@@ -121,6 +154,7 @@ function Figure({
         <img key={`was:${prev}`} className={styles.leaving} src={prev} alt="" draggable={false} />
       )}
       <img key={url} src={url} alt="" draggable={false} />
+      {m.motion?.kind === 'hit' && <i key={m.motion.seq} className={styles.slash} />}
       <figcaption className={styles.name}>{c.name}</figcaption>
       {m.say && (
         <p key={m.say.seq} className={styles.bubble}>

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ACTIONS, APPROACHES, CONSEQUENCE_SLOTS } from './types';
+import { ACTIONS, APPROACHES, CONSEQUENCE_SLOTS, STAGE_FX } from './types';
 
 const id = z.string().min(1).max(64);
 const text = z.string().trim().min(1).max(200);
@@ -174,6 +174,7 @@ export const CommandSchema = z.discriminatedUnion('type', [
   cmd('gm.note', { text: z.string().trim().min(1).max(4000) }),
   cmd('narration.post', { text: z.string().trim().min(1).max(4000) }),
   cmd('sfx.play', { assetId: id }),
+  cmd('stage.fx', { kind: z.enum(STAGE_FX), characterId: id.optional() }),
   cmd('event.undo', { targetSeq: z.number().int().min(1), reason: text.optional() }),
 ]);
 

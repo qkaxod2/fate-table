@@ -1,0 +1,121 @@
+/* 무대 위에 겹치는 효과 막. 클릭은 아래로 지나간다 */
+.fx {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* 번쩍: 흰 빛이 한 번 터졌다 사라진다 */
+.fx[data-kind='flash'] {
+  background: #fff;
+  animation: flash 700ms var(--ease-out) forwards;
+}
+
+@keyframes flash {
+  0% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* 어둠: 가장자리부터 먹빛이 번졌다가 걷힌다 */
+.fx[data-kind='dark'] {
+  background: radial-gradient(ellipse at 50% 45%, rgb(5 6 12 / 0.55), rgb(5 6 12 / 0.96) 75%);
+  animation: dark 2.6s var(--ease-in-out) forwards;
+}
+
+@keyframes dark {
+  0% {
+    opacity: 0;
+  }
+  22%,
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* 맞음: 붉은 테가 한 번 조인다 */
+.fx[data-kind='hit'] {
+  box-shadow: inset 0 0 120px 30px rgb(168 30 20 / 0.75);
+  animation: pulse 620ms var(--ease-out) forwards;
+}
+
+/* 쓰러짐: 검은 테가 천천히 조였다 풀린다 */
+.fx[data-kind='down'] {
+  box-shadow: inset 0 0 220px 80px rgb(0 0 0 / 0.85);
+  animation: pulse 1.8s var(--ease-in-out) forwards;
+}
+
+/* 갈등 시작: 주홍 테 + 붓글씨 띠 */
+.fx[data-kind='conflict'] {
+  box-shadow: inset 0 0 160px 40px rgb(168 50 28 / 0.6);
+  animation: pulse 2.2s var(--ease-in-out) forwards;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.banner {
+  margin: 0;
+  padding: 10px 64px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(20 10 8 / 0.82) 18%,
+    rgb(20 10 8 / 0.82) 82%,
+    transparent
+  );
+  color: #f6e7cf;
+  font: 800 clamp(34px, 6vw, 64px) / 1.1 var(--f-head);
+  letter-spacing: 0.3em;
+  text-shadow: 0 0 18px rgb(168 50 28 / 0.9);
+  animation: banner 2.2s var(--ease-out) forwards;
+}
+
+@keyframes banner {
+  0% {
+    opacity: 0;
+    translate: -14% 0;
+    letter-spacing: 0.6em;
+  }
+  20% {
+    opacity: 1;
+    translate: 0 0;
+    letter-spacing: 0.3em;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    translate: 6% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fx[data-kind='flash'] {
+    animation-duration: 1.2s;
+    opacity: 0.4;
+  }
+  .banner {
+    animation: pulse 2.2s linear forwards;
+  }
+}

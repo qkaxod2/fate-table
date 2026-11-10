@@ -10,6 +10,10 @@ export type Dice = [DieFace, DieFace, DieFace, DieFace];
 export type AspectKind = 'high' | 'trouble' | 'normal' | 'situation' | 'consequence' | 'boost';
 export type ConsequenceSlot = (typeof CONSEQUENCE_SLOTS)[number];
 export type Role = 'gm' | 'player' | 'spectator';
+
+/** GM의 무대 연출 (화면 효과일 뿐 상태는 바꾸지 않는다) */
+export const STAGE_FX = ['shake', 'flash', 'dark', 'tremble', 'hit'] as const;
+export type StageFxKind = (typeof STAGE_FX)[number];
 export type Visibility = 'public' | 'gm' | 'owner';
 
 export const CONSEQUENCE_VALUE: Record<ConsequenceSlot, number> = {

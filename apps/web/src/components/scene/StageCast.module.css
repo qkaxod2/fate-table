@@ -123,6 +123,43 @@
   transform: translateY(28px) scale(0.94);
 }
 
+/* 타격: 몸을 가로지르는 흰 베인 자국이 번쩍 그어졌다 사라진다 */
+.slash {
+  position: absolute;
+  top: 34%;
+  left: 8%;
+  width: 84%;
+  height: 7px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, transparent, #fff 30%, #ffe2c8 70%, transparent);
+  box-shadow:
+    0 0 14px 4px rgb(255 120 80 / 0.8),
+    0 0 40px 10px rgb(168 30 20 / 0.6);
+  rotate: -28deg;
+  transform-origin: 0 50%;
+  animation: slash 520ms var(--ease-out) forwards;
+}
+
+.sprite[data-side='right'] .slash {
+  rotate: 28deg;
+  transform-origin: 100% 50%;
+}
+
+@keyframes slash {
+  0% {
+    opacity: 1;
+    scale: 0 1;
+  }
+  35% {
+    opacity: 1;
+    scale: 1 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 1 0.4;
+  }
+}
+
 /* 말풍선: 머리 옆, 무대 가운데 쪽으로. 종이 쪽지에 꼬리가 달렸다 */
 .bubble {
   position: absolute;
@@ -287,5 +324,8 @@
   }
   .bubble {
     animation: none;
+  }
+  .slash {
+    display: none;
   }
 }

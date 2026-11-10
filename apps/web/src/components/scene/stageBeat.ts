@@ -7,7 +7,9 @@ import type { Character, RoomEvent, RoomState } from '@fate/rules-engine';
 export interface StageBeat {
   seq: number;
   characterId: string;
-  kind: 'say' | 'hurt' | 'down' | 'compel';
+  kind: 'say' | 'hurt' | 'down' | 'compel' | 'fx';
+  /** 그림이 움직이는 방식: 타격(움찔하며 베인 자국) · 떨림 */
+  motion?: 'hit' | 'tremble';
   /** 있는 것 중 앞에서부터 고를 표정 */
   faces: readonly string[];
   /** 말풍선 글 (말일 때만) */
@@ -81,6 +83,7 @@ export function beatOf(
         seq: e.seq,
         characterId: e.payload.targetId,
         kind: 'hurt',
+        motion: 'hit',
         faces: heavy ? ['sad', 'angry', 'serious'] : ['angry', 'serious', 'sad'],
         hold: heavy ? 4200 : 2800,
       };
@@ -107,6 +110,37 @@ export function beatOf(
         hold: 3200,
       };
     }
+    // GM이 캐릭터 하나를 떨게 하거나 때렸다
+    case 'stage.fx_played': {
+      const { kind, characterId } = e.payload;
+      if (!characterId || (kind !== 'tremble' && kind !== 'hit')) return null;
+      return {
+        seq: e.seq,
+        characterId,
+        kind: 'fx',
+        motion: kind,
+        faces: kind === 'hit' ? ['angry', 'sad', 'serious'] : ['surprised', 'embarrassed', 'sad'],
+        hold: kind === 'hit' ? 2400 : 2000,
+      };
+    }
+    default:
+      return null;
+  }
+}
+
+/** 무대 전체에 거는 효과 */
+export type StageFxKind = 'shake' | 'flash' | 'dark' | 'hit' | 'down' | 'conflict';
+
+export function stageFxOf(e: RoomEvent): StageFxKind | null {
+  switch (e.type) {
+    case 'stage.fx_played':
+      return e.payload.kind === 'tremble' ? null : e.payload.kind;
+    case 'damage.absorbed':
+      return 'hit';
+    case 'character.taken_out':
+      return 'down';
+    case 'conflict.started':
+      return 'conflict';
     default:
       return null;
   }

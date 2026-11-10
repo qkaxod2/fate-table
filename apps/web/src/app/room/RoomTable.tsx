@@ -43,7 +43,15 @@ import { CheckCard, sumLine } from '@/components/roll/CheckCard';
 import { RollPreview } from '@/components/roll/RollPreview';
 import { SceneFade } from '@/components/scene/SceneFade';
 import { OUTCOME_FACES, pickFace, StageCast, type CastMember } from '@/components/scene/StageCast';
-import { beatOf, TALK_IDLE_MS, type StageBeat } from '@/components/scene/stageBeat';
+import {
+  beatOf,
+  stageFxOf,
+  TALK_IDLE_MS,
+  type StageBeat,
+  type StageFxKind,
+} from '@/components/scene/stageBeat';
+import { StageFx } from '@/components/scene/StageFx';
+import { StageFxMenu } from './StageFxMenu';
 import { toast, Toaster } from '@/components/ui/Toast';
 import { playSfx, sfxEnabled, sfxForEvent, sfxForOutcome } from '@/fx/sfx';
 import { ApiError } from '@/lib/api';
@@ -632,16 +640,26 @@ export function RoomTable({
   const [beat, setBeat] = useState<StageBeat | null>(null);
   // 말을 주고받는 두 사람: [왼쪽, 오른쪽]과 지금 말하는 쪽. 한동안 조용하면 내려간다
   const [talk, setTalk] = useState<{ ids: [string, string | null]; focus: string } | null>(null);
+  const stageEl = useRef<HTMLElement>(null);
+  // 무대 전체 효과 (흔들림 · 번쩍 · 어둠 · 맞음 · 쓰러짐 · 갈등 시작)
+  const [stageFx, setStageFx] = useState<{ seq: number; kind: StageFxKind } | null>(null);
   if (newestSeq !== beatFrom) {
     setBeatFrom(newestSeq);
     let b: StageBeat | null = null;
+    let f: { seq: number; kind: StageFxKind } | null = null;
     if (beatFrom > 0) {
       const mine = { userId: room.userId, character: me };
       for (let i = liveEvents.length - 1; i >= 0 && liveEvents[i]!.seq > beatFrom; i--) {
-        b = beatOf(liveEvents[i]!, state, liveEvents, mine);
-        if (b) break;
+        const e = liveEvents[i]!;
+        b ??= beatOf(e, state, liveEvents, mine);
+        if (!f) {
+          const k = stageFxOf(e);
+          if (k) f = { seq: e.seq, kind: k };
+        }
+        if (b && f) break;
       }
     }
+    if (f) setStageFx(f);
     if (b) {
       setBeat(b);
       if (b.kind === 'say') {
@@ -660,9 +678,16 @@ export function RoomTable({
   }
   useEffect(() => {
     if (!beat) return;
+    // 말풍선이 뜰 때 작게 톡
+    if (beat.kind === 'say') playSfx('speech-pop', 0.35);
     const t = window.setTimeout(() => setBeat(null), beat.hold);
     return () => window.clearTimeout(t);
   }, [beat]);
+  useEffect(() => {
+    if (!stageFx) return;
+    const t = window.setTimeout(() => setStageFx(null), 3000);
+    return () => window.clearTimeout(t);
+  }, [stageFx]);
   useEffect(() => {
     if (!talk) return;
     const t = window.setTimeout(() => setTalk(null), TALK_IDLE_MS);
@@ -683,10 +708,11 @@ export function RoomTable({
   const castRight = showRoll && roll?.targetId ? state.characters[roll.targetId] : undefined;
   const partner = !castRight && talkR && talkR.id !== castLeft?.id ? talkR : undefined;
   /** 이 캐릭터에게 지금 걸린 박자의 표정과 말풍선 */
-  const beatFor = (c: Character): Pick<CastMember, 'face' | 'say'> => {
+  const beatFor = (c: Character): Pick<CastMember, 'face' | 'say' | 'motion'> => {
     if (beat?.characterId !== c.id) return {};
     const face = pickFace(c, beat.faces);
     return {
+      ...(beat.motion ? { motion: { seq: beat.seq, kind: beat.motion } } : {}),
       // 그 표정 그림이 없으면 굴림 결과 표정을 그대로 둔다
       ...(face ? { face } : {}),
       ...(beat.kind === 'say' && !showRoll && beat.text
@@ -694,6 +720,10 @@ export function RoomTable({
         : {}),
     };
   };
+  // GM 연출에서 고를 캐릭터: 무대에 선 사람 → 장면의 PC → 나머지 (쓰러진 사람은 빼고)
+  const stageCharacters = [castLeft, castRight ?? partner, ...party].filter(
+    (c, i, all): c is Character => !!c && !c.takenOut && all.findIndex((x) => x?.id === c.id) === i,
+  );
   const talking = (c: Character) => !!talk && (talk.ids[0] === c.id || talk.ids[1] === c.id);
   const faceShown = roll?.status === 'final' && settled && !isFolded && outcome;
   const flip: Record<Outcome, Outcome> = {
@@ -743,11 +773,13 @@ export function RoomTable({
     >
       <Toaster />
       <section
+        ref={stageEl}
         className={`${book.stage} ${styles.stage}`}
         data-roll={(showRoll && !!castRight) || undefined}
         style={{ backgroundImage: stageBg }}
       >
         <SceneFade background={stageBg} />
+        <StageFx fx={stageFx} stage={stageEl} />
         <div className={styles.cast}>
           <StageCast
             {...(castLeft
@@ -762,7 +794,6 @@ export function RoomTable({
                         ? pickFace(castLeft, OUTCOME_FACES[outcome])
                         : null,
                     portraitFallback: !castLeft.isNpc || talking(castLeft),
-                    hit: beat?.kind === 'hurt' && beat.characterId === castLeft.id,
                     ...beatFor(castLeft),
                   },
                 }
@@ -1339,6 +1370,13 @@ export function RoomTable({
                   </button>
                 ))}
               </div>
+            )}
+            {isGm && (
+              <StageFxMenu
+                run={run}
+                characters={stageCharacters}
+                focusId={talk?.focus ?? castLeft?.id}
+              />
             )}
             {isGm && composeMode === 'narrate' ? (
               <div className={styles.narrate}>

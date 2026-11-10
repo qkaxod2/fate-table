@@ -1,4 +1,4 @@
-// 기본 효과음 10종을 ElevenLabs로 한 번 만들어 apps/web/public/sfx/ 에 저장한다.
+// 기본 효과음을 ElevenLabs로 한 번 만들어 apps/web/public/sfx/ 에 저장한다.
 // 실행: ELEVENLABS_API_KEY=... node scripts/gen-sfx.mjs [이름...]   (이미 있는 파일은 건너뛴다, --force로 덮어쓰기)
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 
@@ -13,6 +13,12 @@ export const SFX = {
   'compel-card': ['a playing card slid across a table and flipped over, paper swish', 0.8],
   'consequence-slot': ['a heavy iron latch clanking shut with a dull impact', 0.8],
   'scene-transition': ['a soft page turn followed by a low cinematic whoosh', 1.6],
+  'speech-pop': ['a tiny soft paper pop, a speech bubble appearing, very short and subtle', 0.5],
+  'hit-slash': ['a quick sword slash whoosh followed by a punchy cinematic impact hit', 0.8],
+  'taken-out': ['a heavy body collapsing to the ground with a deep cinematic boom fading out', 1.6],
+  'conflict-drum': ['two deep taiko war drum hits, tense and cinematic, short', 1.4],
+  'compel-accept': ['a short ominous low string sting with a single coin clink', 1.0],
+  'stage-shake': ['a short low rumbling tremor, ground shaking briefly', 0.9],
 };
 
 const out = 'apps/web/public/sfx';

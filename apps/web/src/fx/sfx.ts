@@ -12,7 +12,13 @@ export type SfxName =
   | 'fail-thud'
   | 'compel-card'
   | 'consequence-slot'
-  | 'scene-transition';
+  | 'scene-transition'
+  | 'speech-pop'
+  | 'hit-slash'
+  | 'taken-out'
+  | 'conflict-drum'
+  | 'compel-accept'
+  | 'stage-shake';
 
 const KEY = 'fate.sfx';
 const VOL_KEY = 'fate.sfx.volume';
@@ -97,8 +103,21 @@ export function sfxForEvent(e: RoomEvent): SfxName | null {
       return 'compel-card';
     case 'fate.adjusted':
       return e.payload.delta > 0 && e.payload.target !== 'gm_pool' ? 'token-fly' : null;
+    case 'compel.accepted':
+      return 'compel-accept';
+    // 스트레스로 막으면 베이는 소리, 후유증까지 받으면 무거운 걸쇠 소리
     case 'damage.absorbed':
-      return 'consequence-slot';
+      return e.payload.consequences.length ? 'consequence-slot' : 'hit-slash';
+    case 'character.taken_out':
+      return 'taken-out';
+    case 'conflict.started':
+      return 'conflict-drum';
+    case 'stage.fx_played':
+      return e.payload.kind === 'shake'
+        ? 'stage-shake'
+        : e.payload.kind === 'hit'
+          ? 'hit-slash'
+          : null;
     default:
       return null;
   }
