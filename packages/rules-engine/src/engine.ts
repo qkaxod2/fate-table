@@ -117,6 +117,7 @@ const GM_ONLY: ReadonlySet<CommandType> = new Set<CommandType>([
   'gm.note',
   'narration.post',
   'sfx.play',
+  'stage.fx',
   'event.undo',
 ]);
 
@@ -133,7 +134,8 @@ function ev<K extends EventType>(
     payload,
     visibility,
     ...(ownerId ? { ownerId } : {}),
-  } as NewEvent<K>;
+    // 이벤트 종류가 많아지면 TS가 제네릭 객체와 분배된 유니온을 맞대어 보지 못해 unknown을 거친다
+  } as unknown as NewEvent<K>;
 }
 
 function need<T>(value: T | undefined | null, what = 'target'): T {
@@ -709,6 +711,8 @@ const resolvers: Resolvers = {
   'gm.note': (_s, p, a) => one(ev('gm.note', a, p, 'gm')),
   'narration.post': (_s, p, a) => one(ev('narration.posted', a, p)),
   'sfx.play': (_s, p, a) => one(ev('sfx.played', a, p)),
+  // 화면 효과일 뿐이라 상태를 보지 않는다 (없는 캐릭터면 화면에서 그냥 지나간다)
+  'stage.fx': (_s, p, a) => one(ev('stage.fx_played', a, p)),
   'event.undo': (s, p, a, ctx) => {
     if (p.targetSeq > s.seq) throw new CommandError('NOT_FOUND', 'event not found');
     const history = ctx.history;

@@ -36,6 +36,7 @@ export const STATELESS: ReadonlySet<string> = new Set([
   'narration.post',
   'gm.note',
   'sfx.play',
+  'stage.fx',
 ]);
 
 export async function handleCommand(

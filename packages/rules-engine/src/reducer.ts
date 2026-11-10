@@ -512,6 +512,7 @@ const handlers: Handlers = {
   'gm.note': (s) => s,
   'narration.posted': (s) => s,
   'sfx.played': (s) => s,
+  'stage.fx_played': (s) => s,
   'media.attached': (s, p) => {
     if (p.kind === 'portrait')
       return patchCharacter(s, p.target, (c) => ({

@@ -573,10 +573,10 @@
  */
 .composer[data-gm] {
   display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  grid-template-columns: auto auto auto minmax(0, 1fr) auto;
   grid-template-areas:
-    'field field field field'
-    'tabs voice fmt send';
+    'field field field field field'
+    'tabs fxm voice fmt send';
   gap: 6px var(--s-2);
   align-items: center;
   padding-top: var(--s-2);
@@ -594,6 +594,21 @@
 
 .composer[data-gm] [role='toolbar'] {
   grid-area: fmt;
+}
+
+/* 휴대폰: 도구가 한 줄에 다 들어가지 않으니 꾸밈 단추는 맨 아래 줄로 내린다 */
+@media (max-width: 600px) {
+  .composer[data-gm] {
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'field field field field'
+      'tabs fxm voice send'
+      'fmt fmt fmt fmt';
+  }
+  .composer[data-gm] .voice {
+    max-width: 100%;
+    justify-self: start;
+  }
 }
 
 .composer[data-gm] button[type='submit'] {

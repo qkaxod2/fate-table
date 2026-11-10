@@ -9,6 +9,7 @@ import type {
   Modifier,
   Outcome,
   Role,
+  StageFxKind,
   Visibility,
   Zone,
 } from './types';
@@ -134,6 +135,8 @@ export interface EventPayloads {
   'gm.note': { text: string };
   'narration.posted': { text: string };
   'sfx.played': { assetId: string };
+  /** GM의 무대 연출: 흔들기 · 번쩍 · 어둠 · 캐릭터 떨림 · 타격 */
+  'stage.fx_played': { kind: StageFxKind; characterId?: string };
   'media.attached': {
     assetId?: string;
     kind: string;
