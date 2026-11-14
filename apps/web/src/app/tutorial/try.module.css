@@ -18,13 +18,6 @@
   text-align: center;
 }
 
-.pickKicker {
-  margin: 0 0 6px;
-  color: var(--seal);
-  font: 600 var(--fs-sm) / 1.4 var(--f-ui);
-  letter-spacing: var(--label-track);
-}
-
 /* 쪽 제목 아래 가는 두 줄 (책의 장 표제) */
 .pickTitle {
   margin: 0;

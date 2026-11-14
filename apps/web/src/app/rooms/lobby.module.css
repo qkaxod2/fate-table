@@ -19,15 +19,6 @@
   background: var(--card);
   color: var(--ink-1);
   box-shadow: 0 24px 48px -32px rgb(40 25 10 / 0.45);
-  /* 살짝 떠오르며 놓인다 */
-  animation: card-in var(--dur-scene) var(--ease-out) backwards;
-}
-
-@keyframes card-in {
-  from {
-    opacity: 0;
-    translate: 0 14px;
-  }
 }
 
 .back {
@@ -153,17 +144,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .card {
-    animation-name: fade-only;
-  }
   .error {
     animation: none;
-  }
-}
-
-@keyframes fade-only {
-  from {
-    opacity: 0;
   }
 }
 

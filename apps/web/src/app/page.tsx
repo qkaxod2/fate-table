@@ -63,10 +63,6 @@ export default function Landing() {
             src={asset('/try/knight.webp')}
             alt=""
           />
-          <p className={styles.coverLabel}>
-            <span>튜토리얼 · 첫 장면</span>
-            불타는 곡물 창고
-          </p>
           <ul className={styles.ruleCards}>
             {RULE_CARDS.map((c) => (
               <li key={c.label}>
@@ -80,18 +76,17 @@ export default function Landing() {
 
         {/* 오른쪽: 첫째로 할 일은 튜토리얼 하나 */}
         <section className={styles.titlePage}>
-          <p className={styles.kicker}>기동형 페이트 온라인 TRPG</p>
           <h1 className={styles.title}>운명점 테이블</h1>
           <p className={styles.lead}>
-            {term('aspect')} 한 줄과 {term('fatePoint')} 몇 개로 친구들과 이야기를 굴려요. 규칙을
-            몰라도 튜토리얼 한 판이면 바로 같이 놀 수 있어요.
+            기동형 페이트로 친구들과 이야기를 굴리는 온라인 테이블이에요. {term('aspect')} 한 줄과{' '}
+            {term('fatePoint')} 몇 개면 되고, 규칙은 튜토리얼 한 판이면 익혀요.
           </p>
 
           <div className={styles.start}>
             <Link href="/tutorial/" className={styles.primary}>
               튜토리얼로 시작하기
             </Link>
-            <span className={styles.startNote}>5분이면 충분해요 · 가입 필요 없어요</span>
+            <span className={styles.startNote}>가입 없이 5분이면 끝나요.</span>
           </div>
 
           <nav className={styles.contents} aria-label="직접 시작하기">
@@ -103,9 +98,6 @@ export default function Landing() {
                     <span className={styles.entryText}>
                       <strong>{c.title}</strong>
                       <span>{c.desc}</span>
-                    </span>
-                    <span className={styles.go} aria-hidden>
-                      →
                     </span>
                   </Link>
                 </li>

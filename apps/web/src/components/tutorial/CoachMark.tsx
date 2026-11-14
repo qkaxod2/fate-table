@@ -411,7 +411,6 @@ export function CoachMark({
             {coach.next && (
               <button type="button" className={styles.next} onClick={coach.next.onClick} autoFocus>
                 {coach.next.label}
-                <span aria-hidden> →</span>
               </button>
             )}
           </div>

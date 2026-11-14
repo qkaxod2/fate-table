@@ -128,7 +128,7 @@ export function MyRoomsList({
       )}
       {limit !== undefined && load.rows.length > limit && (
         <Link href="/rooms/" className={styles.more}>
-          전체 {load.rows.length}개 보기 →
+          전체 {load.rows.length}개 보기
         </Link>
       )}
       {!load.fromServer && (
