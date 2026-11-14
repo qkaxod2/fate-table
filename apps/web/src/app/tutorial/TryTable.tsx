@@ -260,10 +260,10 @@ function Picker({ onPick }: { onPick: (s: SampleCharacter) => void }) {
         <PageNav />
       </div>
       <header className={styles.pickHead}>
-        <p className={styles.pickKicker}>튜토리얼 · 첫 장면 「{SCENE.name}」</p>
         <h1 className={styles.pickTitle}>누구로 플레이할까요?</h1>
         <p className={styles.pickLead}>
-          한 명을 골라 5분 안에 첫 굴림까지 가 봐요. 규칙은 몰라도 괜찮아요.
+          첫 장면은 &lsquo;{SCENE.name}&rsquo;에서 시작해요. 한 명을 고르면 5분 안에 첫 굴림까지
+          가요. 규칙은 몰라도 괜찮아요.
         </p>
       </header>
       <ol className={styles.pickGrid} aria-label="등장인물">
@@ -303,7 +303,7 @@ function Picker({ onPick }: { onPick: (s: SampleCharacter) => void }) {
                       </span>
                     ))}
                   </span>
-                  <span className={styles.pickGo}>{josa(s.name, '으로/로')} 시작 →</span>
+                  <span className={styles.pickGo}>{josa(s.name, '으로/로')} 시작</span>
                 </span>
               </button>
             </li>
@@ -1421,7 +1421,6 @@ function Table({
         )}
         <header className={book.chapter}>
           <PageNav tone="stage" className={book.stageNav} />
-          <p>튜토리얼 · 첫 장면</p>
           <h1 key={state.scene?.id ?? 'none'}>{state.scene?.name}</h1>
         </header>
 

@@ -394,7 +394,7 @@
 
 .notes li {
   padding: 4px 0 4px var(--s-3);
-  border-left: 2px solid var(--paper-edge);
+  border-left: 1px solid var(--line-hi);
   white-space: pre-wrap;
 }
 
