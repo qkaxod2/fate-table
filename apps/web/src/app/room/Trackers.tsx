@@ -1,5 +1,6 @@
 'use client';
 
+import { initialOf } from '@/lib/initial';
 import { term } from '@fate/glossary';
 import {
   CONTEST_VICTORIES_TO_WIN,
@@ -81,7 +82,7 @@ export function Trackers({ state, run, isGm, canControl, pending }: Props) {
                   {c?.portraitUrl ? (
                     <img src={c.portraitUrl} alt="" />
                   ) : (
-                    <span className={styles.initial}>{c?.name.slice(0, 1)}</span>
+                    <span className={styles.initial}>{initialOf(c?.name)}</span>
                   )}
                   <span>{c?.name ?? '???'}</span>
                 </li>

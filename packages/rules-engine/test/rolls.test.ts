@@ -169,6 +169,19 @@ describe('scene change closes unfinished rolls', () => {
     }
   });
 
+  it('refuses an attack on a character already taken out', () => {
+    const t = new Table((s) => withCharacters(pc('a', 'u1'), pc('b', 'u2', { takenOut: true }))(s));
+    t.run(GM, { type: 'scene.start', payload: { name: '불타는 창고' } });
+    expect(
+      codeOf(() =>
+        t.run(P1, {
+          type: 'roll.request',
+          payload: { characterId: 'a', action: 'attack', approach: 'forceful', targetId: 'b' },
+        }),
+      ),
+    ).toBe('INVALID');
+  });
+
   it('refuses a defense against an attack from an ended scene', () => {
     const t = table();
     t.run(P1, {

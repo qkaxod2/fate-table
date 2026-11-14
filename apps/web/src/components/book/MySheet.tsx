@@ -1,3 +1,4 @@
+import { initialOf } from '@/lib/initial';
 import { term } from '@fate/glossary';
 import type { Aspect, Character, ConsequenceSlot } from '@fate/rules-engine';
 import { FatePointToken } from '../fate/FatePointToken';
@@ -180,7 +181,7 @@ function CompanionList({
             {img ? (
               <img src={img} alt="" />
             ) : (
-              <span className={styles.initial}>{o.name.slice(0, 1)}</span>
+              <span className={styles.initial}>{initialOf(o.name)}</span>
             )}
             <span>{o.name}</span>
             {note && <small>{note}</small>}

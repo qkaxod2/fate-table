@@ -38,6 +38,12 @@
   scrollbar-width: thin;
 }
 
+/* 카드가 많아 옆으로 넘칠 때: 오른쪽 끝을 흐리게 해서 더 있다는 걸 보여 준다 (끝까지 밀면 여백이 흐려진다) */
+.cards:has(> :nth-child(5)) {
+  padding-right: 48px;
+  mask-image: linear-gradient(to right, #000 calc(100% - 48px), transparent);
+}
+
 .cards > * {
   flex: 1 0 150px;
   min-width: 150px;

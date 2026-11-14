@@ -1,5 +1,6 @@
 'use client';
 
+import { initialOf } from '@/lib/initial';
 import { term } from '@fate/glossary';
 import type { Character, Command, RoomEvent, RoomState, Zone } from '@fate/rules-engine';
 import {
@@ -175,7 +176,7 @@ export function ZoneMap({ state, run, isGm, canControl, pending, auto = 'full' }
           setPicked(picked === c.id ? null : c.id);
         }}
       >
-        {c.portraitUrl ? <img src={c.portraitUrl} alt="" /> : <span>{c.name.slice(0, 1)}</span>}
+        {c.portraitUrl ? <img src={c.portraitUrl} alt="" /> : <span>{initialOf(c.name)}</span>}
         <small>{c.name}</small>
       </button>
     );

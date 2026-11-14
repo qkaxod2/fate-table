@@ -20533,7 +20533,10 @@ function date4(params) {
 
 // packages/rules-engine/src/commands.ts
 var id = external_exports.string().min(1).max(64);
-var text = external_exports.string().trim().min(1).max(200);
+var INVISIBLE = /[\s\u00AD\u034F\u115F\u1160\u17B4\u17B5\u180E\u200B-\u200F\u202A-\u202E\u2060-\u2064\u206A-\u206F\u3164\uFEFF\uFFA0]/gu;
+var hasVisibleText = (s) => s.replace(INVISIBLE, "").length > 0;
+var visible = (max) => external_exports.string().trim().min(1).max(max).refine(hasVisibleText, { message: "empty" });
+var text = visible(200);
 var approach = external_exports.enum(APPROACHES);
 var action = external_exports.enum(ACTIONS);
 var slot = external_exports.enum(CONSEQUENCE_SLOTS);
@@ -20677,9 +20680,9 @@ var CommandSchema = external_exports.discriminatedUnion("type", [
     characterId: id,
     expression: external_exports.string().min(1).max(24).nullable()
   }),
-  cmd("chat.post", { text: external_exports.string().trim().min(1).max(2e3), as: text.optional() }),
-  cmd("gm.note", { text: external_exports.string().trim().min(1).max(4e3) }),
-  cmd("narration.post", { text: external_exports.string().trim().min(1).max(4e3) }),
+  cmd("chat.post", { text: visible(2e3), as: text.optional() }),
+  cmd("gm.note", { text: visible(4e3) }),
+  cmd("narration.post", { text: visible(4e3) }),
   cmd("sfx.play", { assetId: id }),
   cmd("stage.fx", { kind: external_exports.enum(STAGE_FX), characterId: id.optional() }),
   cmd("event.undo", { targetSeq: external_exports.number().int().min(1), reason: text.optional() })
@@ -21022,6 +21025,7 @@ var resolvers = {
     if (p.targetId) {
       const target = need(s.characters[p.targetId], "target");
       if (target.id === c.id) throw new CommandError("INVALID", "cannot target self");
+      if (target.takenOut) throw new CommandError("INVALID", "target is out of the scene");
       return {
         events: [
           ev("roll.opposition_requested", a, {
@@ -21404,6 +21408,7 @@ export {
   concedeReward,
   formatRating,
   hasGmMarks,
+  hasVisibleText,
   initialState,
   isValidAbsorb,
   ladderLabel,

@@ -3,9 +3,16 @@
   flex: none;
   gap: 2px;
   align-items: center;
+  /* 자리가 모자라면 단추를 찌그러뜨리지 않고 옆으로 밀어 본다 */
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
 .bar > .btn {
+  flex: none;
+  white-space: nowrap;
   min-width: 28px;
   min-height: 28px;
   padding: 0 6px;

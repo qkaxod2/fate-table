@@ -1,0 +1,34 @@
+name: Keep alive
+
+# Supabase 무료 플랜은 7일 동안 요청이 없으면 프로젝트를 멈춘다. 5일에 한 번 가벼운 조회를 보낸다.
+# 매달 1·6·11·16·21·26·31일에 돈다 (월말에서 다음 달 1일까지도 5일 이내).
+on:
+  schedule:
+    - cron: '17 3 */5 * *'
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Supabase 조회
+        env:
+          URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          ANON: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: |
+          code=$(curl -sS -o /dev/null -w '%{http_code}' --retry 3 --retry-delay 10 \
+            -H "apikey: $ANON" -H "Authorization: Bearer $ANON" \
+            "$URL/rest/v1/rooms?select=id&limit=1")
+          echo "rest=$code"
+          if [ "$code" != 200 ]; then
+            echo "::error::Supabase가 응답하지 않아요 ($code). 프로젝트가 멈췄으면 대시보드에서 Restore를 눌러 주세요."
+            exit 1
+          fi
+      # 저장소에 60일 동안 활동이 없으면 GitHub가 예약 워크플로를 끈다. 스스로 다시 켜 둔다
+      - name: 예약 유지
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/keepalive.yml/enable"

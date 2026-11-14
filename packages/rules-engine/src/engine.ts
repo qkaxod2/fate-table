@@ -371,6 +371,7 @@ const resolvers: Resolvers = {
     if (p.targetId) {
       const target = need(s.characters[p.targetId], 'target');
       if (target.id === c.id) throw new CommandError('INVALID', 'cannot target self');
+      if (target.takenOut) throw new CommandError('INVALID', 'target is out of the scene');
       return {
         events: [
           ev('roll.opposition_requested', a, {

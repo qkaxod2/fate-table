@@ -73,8 +73,18 @@ export class RemoteRoom {
     return { userId: this.userId, role: this.state.members[this.userId]?.role ?? 'spectator' };
   }
 
+  /** start/stop 짝을 구분한다. 채우는 도중에 stop되면 그 start는 채널을 만들지 않는다 */
+  private generation = 0;
+
   async start(): Promise<void> {
+    const gen = ++this.generation;
     await this.fill();
+    if (gen !== this.generation) return;
+    // 같은 주제의 채널이 남아 있으면(빠르게 나갔다 다시 들어온 경우) 먼저 치운다.
+    // 남은 채널을 그대로 돌려받으면 subscribe 뒤에 콜백을 붙일 수 없다는 오류가 난다
+    const topic = `realtime:room:${this.roomId}`;
+    for (const ch of this.sb.getChannels()) if (ch.topic === topic) await this.sb.removeChannel(ch);
+    if (gen !== this.generation) return;
     this.snapshot = { ...this.snapshot, live: true };
     this.channel = this.sb
       .channel(`room:${this.roomId}`)
@@ -92,6 +102,7 @@ export class RemoteRoom {
   }
 
   stop(): void {
+    this.generation++;
     if (this.channel) void this.sb.removeChannel(this.channel);
     this.channel = null;
   }

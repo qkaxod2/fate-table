@@ -620,7 +620,7 @@
 .voice {
   grid-area: voice;
   height: 30px;
-  max-width: 140px;
+  max-width: 110px;
   padding: 0 6px;
   border: 1px solid var(--paper-edge);
   border-radius: var(--r-token);

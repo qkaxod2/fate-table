@@ -2,7 +2,16 @@ import { z } from 'zod';
 import { ACTIONS, APPROACHES, CONSEQUENCE_SLOTS, STAGE_FX } from './types';
 
 const id = z.string().min(1).max(64);
-const text = z.string().trim().min(1).max(200);
+
+/** 공백·폭 0 공백·한글 채움문자·방향 제어처럼 화면에 아무것도 안 보이는 글자 */
+const INVISIBLE =
+  /[\s\u00AD\u034F\u115F\u1160\u17B4\u17B5\u180E\u200B-\u200F\u202A-\u202E\u2060-\u2064\u206A-\u206F\u3164\uFEFF\uFFA0]/gu;
+/** 눈에 보이는 글자가 하나라도 있는지 (이름·채팅이 빈칸처럼 보이지 않게) */
+export const hasVisibleText = (s: string) => s.replace(INVISIBLE, '').length > 0;
+
+const visible = (max: number) =>
+  z.string().trim().min(1).max(max).refine(hasVisibleText, { message: 'empty' });
+const text = visible(200);
 const approach = z.enum(APPROACHES);
 const action = z.enum(ACTIONS);
 const slot = z.enum(CONSEQUENCE_SLOTS);
@@ -170,9 +179,9 @@ export const CommandSchema = z.discriminatedUnion('type', [
     expression: z.string().min(1).max(24).nullable(),
   }),
 
-  cmd('chat.post', { text: z.string().trim().min(1).max(2000), as: text.optional() }),
-  cmd('gm.note', { text: z.string().trim().min(1).max(4000) }),
-  cmd('narration.post', { text: z.string().trim().min(1).max(4000) }),
+  cmd('chat.post', { text: visible(2000), as: text.optional() }),
+  cmd('gm.note', { text: visible(4000) }),
+  cmd('narration.post', { text: visible(4000) }),
   cmd('sfx.play', { assetId: id }),
   cmd('stage.fx', { kind: z.enum(STAGE_FX), characterId: id.optional() }),
   cmd('event.undo', { targetSeq: z.number().int().min(1), reason: text.optional() }),

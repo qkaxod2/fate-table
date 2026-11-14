@@ -63,6 +63,7 @@ function fakeServer() {
       };
       return q;
     },
+    getChannels: () => [],
     channel: () => {
       const ch = {
         on: (kind: string, _f: unknown, cb: typeof onInsert) => {

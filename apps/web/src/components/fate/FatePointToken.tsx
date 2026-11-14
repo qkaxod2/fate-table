@@ -6,7 +6,9 @@ import styles from './FatePointToken.module.css';
 
 /** 운명점 토큰 줄. 개수가 바뀌면 바뀐 토큰이 튀고, 옆에 +1 / −1이 떠오른다 */
 export function FatePointToken({ count, max = 5 }: { count: number; max?: number }) {
-  const shown = Math.max(count, Math.min(max, 3));
+  // 많아지면 한 줄로 길게 늘어나 옆 단추를 밀어내지 않게 동전 하나와 ×N으로 줄인다
+  const many = count > max;
+  const shown = many ? 1 : Math.max(count, Math.min(max, 3));
   const prev = useRef(count);
   const [bump, setBump] = useState<{ delta: number; n: number } | null>(null);
   useEffect(() => {
@@ -31,6 +33,7 @@ export function FatePointToken({ count, max = 5 }: { count: number; max?: number
           data-empty={i >= count || undefined}
           data-changed={
             (bump &&
+              !many &&
               (bump.delta > 0
                 ? i >= count - bump.delta && i < count
                 : i >= count && i < count - bump.delta)) ||
@@ -38,6 +41,7 @@ export function FatePointToken({ count, max = 5 }: { count: number; max?: number
           }
         />
       ))}
+      {many && <span className={styles.count}>×{count}</span>}
       {bump && (
         <span key={bump.n} className={styles.delta}>
           {bump.delta > 0 ? `+${bump.delta}` : `−${-bump.delta}`}
