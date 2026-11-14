@@ -88,6 +88,11 @@
   text-shadow: 0 2px 14px rgb(0 0 0 / 0.85);
 }
 
+/* 장 표제 위 길잡이(뒤로 · 로비): 무대 위라 밝은 글자 */
+.stageNav {
+  margin-bottom: 10px;
+}
+
 .chapter p {
   margin: 0;
   color: var(--brass-hi);
@@ -138,7 +143,6 @@
 .center > * {
   pointer-events: auto;
 }
-
 
 /* 굴린 뒤: 판정 카드는 두 사람 사이 오른쪽으로 비켜 내 얼굴을 가리지 않는다 */
 .stage[data-roll] .center {

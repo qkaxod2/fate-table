@@ -42,6 +42,8 @@ import { OutcomeBanner } from '@/components/roll/OutcomeBanner';
 import { RollPreview } from '@/components/roll/RollPreview';
 import { CoachMark, type Coach } from '@/components/tutorial/CoachMark';
 import { Spotlight } from '@/components/tutorial/Spotlight';
+import { PageNav } from '@/components/nav/PageNav';
+import { useHistoryStep } from '@/components/nav/useHistoryStep';
 import { BOSS, SAMPLE_CHARACTERS, SCENE, type SampleCharacter } from '@/content/oneshot';
 import { playSfx, setSfxEnabled, sfxEnabled, sfxForEvent, sfxForOutcome } from '@/fx/sfx';
 import { asset } from '@/lib/asset';
@@ -225,8 +227,16 @@ function setupRoom(pick: SampleCharacter): LocalRoom {
 export function TryTable() {
   const [pick, setPick] = useState<SampleCharacter | null>(null);
   const room = useMemo(() => (pick ? setupRoom(pick) : null), [pick]);
-  if (!pick || !room) return <Picker onPick={setPick} />;
-  return <Table room={room} pick={pick} onRestart={() => setPick(null)} />;
+  // 캐릭터 고르기 ↔ 테이블을 브라우저 기록에 남겨, 뒤로가기가 고르기 화면으로 돌아오게 한다
+  const pushPick = useHistoryStep<string | null>('ftTutorialPick', null, (key) =>
+    setPick(SAMPLE_CHARACTERS.find((s) => s.key === key) ?? null),
+  );
+  const choose = (s: SampleCharacter | null) => {
+    setPick(s);
+    pushPick(s?.key ?? null);
+  };
+  if (!pick || !room) return <Picker onPick={choose} />;
+  return <Table room={room} pick={pick} onRestart={() => choose(null)} />;
 }
 
 function Picker({ onPick }: { onPick: (s: SampleCharacter) => void }) {
@@ -246,6 +256,9 @@ function Picker({ onPick }: { onPick: (s: SampleCharacter) => void }) {
   };
   return (
     <main className={styles.picker} data-chosen={chosen ? '' : undefined}>
+      <div className={styles.pickNav}>
+        <PageNav />
+      </div>
       <header className={styles.pickHead}>
         <p className={styles.pickKicker}>튜토리얼 · 첫 장면 「{SCENE.name}」</p>
         <h1 className={styles.pickTitle}>누구로 플레이할까요?</h1>
@@ -1407,6 +1420,7 @@ function Table({
           />
         )}
         <header className={book.chapter}>
+          <PageNav tone="stage" className={book.stageNav} />
           <p>튜토리얼 · 첫 장면</p>
           <h1 key={state.scene?.id ?? 'none'}>{state.scene?.name}</h1>
         </header>

@@ -6,6 +6,12 @@
   color: var(--ink-1);
 }
 
+/* 왼쪽 위 길잡이(뒤로 · 로비): 카드 줄과 같은 폭 안에 */
+.pickNav {
+  max-width: 956px;
+  margin: calc(-1 * clamp(16px, 3vh, 40px)) auto 16px;
+}
+
 .pickHead {
   max-width: 720px;
   margin: 0 auto 32px;

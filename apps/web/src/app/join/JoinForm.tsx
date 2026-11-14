@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { PageNav } from '@/components/nav/PageNav';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { ApiError, callFunction } from '@/lib/api';
@@ -41,9 +42,7 @@ export function JoinForm() {
   return (
     <main className={styles.main}>
       <div className={styles.card}>
-        <Link href="/" className={styles.back}>
-          ← 처음으로
-        </Link>
+        <PageNav />
         <h1 className={styles.title}>방 참가</h1>
         <p className={styles.lead}>GM에게 받은 초대 코드와 이 방에서 쓸 닉네임을 적어 주세요.</p>
         {!online && (

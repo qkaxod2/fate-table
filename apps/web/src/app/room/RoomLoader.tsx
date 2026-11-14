@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { PageNav } from '@/components/nav/PageNav';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Loading } from '@/components/ui/Loading';
@@ -58,6 +59,7 @@ export function RoomLoader() {
           <Loading label="테이블을 펼치는 중…" />
         ) : (
           <>
+            <PageNav fallback="/rooms/" />
             <h1 className={styles.title}>들어갈 수 없어요</h1>
             <p className={styles.lead}>{load.message}</p>
             <div className={styles.links}>
@@ -92,6 +94,7 @@ function OpenRoom({
   return (
     <main className={styles.main}>
       <div className={styles.card} role="alert">
+        <PageNav fallback="/rooms/" />
         <h1 className={styles.title}>방이 닫혔어요</h1>
         <p className={styles.lead}>
           {room.actor.role === 'gm' ? '' : 'GM이 '}「{name}」 방을 지웠어요. 이야기 기록도 함께

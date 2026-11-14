@@ -63,6 +63,7 @@ import { josa } from '@/lib/josa';
 import { NARROW, useMedia } from '@/lib/media';
 import type { RemoteRoom } from '@/state/remoteRoom';
 import { ExitRoomDialog } from '../rooms/ExitRoomDialog';
+import { PageNav } from '@/components/nav/PageNav';
 import book from '../tutorial/book.module.css';
 import tryStyles from '../tutorial/try.module.css';
 import { ArtDialog, type ArtOpen } from './ArtDialog';
@@ -895,6 +896,7 @@ export function RoomTable({
         </div>
 
         <header className={`${book.chapter} ${styles.chapter}`}>
+          <PageNav tone="stage" fallback="/rooms/" className={book.stageNav} />
           <p>
             {state.session ? `세션 ${state.session.number}` : '방'} · {name}
           </p>

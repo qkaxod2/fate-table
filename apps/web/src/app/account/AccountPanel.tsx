@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { PageNav } from '@/components/nav/PageNav';
 import { useEffect, useState } from 'react';
 import {
   type Account,
@@ -57,9 +58,7 @@ export function AccountPanel() {
   return (
     <main className={styles.main}>
       <div className={styles.card}>
-        <Link href="/" className={styles.back}>
-          ← 처음으로
-        </Link>
+        <PageNav />
         <h1 className={styles.title}>계정</h1>
         {notice && (
           <div className={notice.tone === 'ok' ? own.ok : own.notice} role="status">

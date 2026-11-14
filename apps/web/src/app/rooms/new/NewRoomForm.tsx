@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { PageNav } from '@/components/nav/PageNav';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { ApiError, callFunction } from '@/lib/api';
@@ -40,9 +41,7 @@ export function NewRoomForm() {
   return (
     <main className={styles.main}>
       <div className={styles.card}>
-        <Link href="/" className={styles.back}>
-          ← 처음으로
-        </Link>
+        <PageNav />
         <h1 className={styles.title}>방 만들기</h1>
         <p className={styles.lead}>
           방을 만든 사람이 GM이 돼요. 만들고 나면 초대 링크를 일행에게 보내 주세요.
