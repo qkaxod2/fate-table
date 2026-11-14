@@ -16,22 +16,9 @@
   background: var(--card);
   color: var(--ink-1);
   text-align: center;
-  rotate: 0.4deg;
   box-shadow: 0 30px 60px -18px rgb(0 0 0 / 0.85);
   scrollbar-width: thin;
   transform-origin: 50% 100%;
-}
-
-/* 겹테두리: 안쪽 먹 실선 + 바깥 종이 테 (예고 카드와 같다) */
-.card::before {
-  content: '';
-  position: absolute;
-  inset: 7px;
-  border: 1px solid var(--ink-3);
-  border-radius: 3px;
-  outline: 1px solid var(--paper-edge);
-  outline-offset: 3px;
-  pointer-events: none;
 }
 
 /* 판정 카드는 무대 아래에서 떠오른다. 기다리던 카드를 이어받을 때는 다시 뜨지 않는다 */

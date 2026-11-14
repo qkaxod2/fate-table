@@ -53,23 +53,18 @@
 }
 .cards > :nth-child(1) {
   animation-delay: calc(140ms + var(--stagger) * 1);
-  rotate: -1.6deg;
 }
 .cards > :nth-child(2) {
   animation-delay: calc(140ms + var(--stagger) * 2);
-  rotate: 1.1deg;
 }
 .cards > :nth-child(3) {
   animation-delay: calc(140ms + var(--stagger) * 3);
-  rotate: -0.7deg;
 }
 .cards > :nth-child(4) {
   animation-delay: calc(140ms + var(--stagger) * 4);
-  rotate: 1.5deg;
 }
 .cards > :nth-child(5) {
   animation-delay: calc(140ms + var(--stagger) * 5);
-  rotate: -1.2deg;
 }
 .cards > :nth-child(n + 6) {
   animation-delay: calc(140ms + var(--stagger) * 6);

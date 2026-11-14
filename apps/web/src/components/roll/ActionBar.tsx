@@ -45,8 +45,6 @@ interface Props {
   onRoll: () => void;
 }
 
-const NUMERALS = ['i', 'ii', 'iii', 'iv'];
-
 /** 무대 아래 버튼 띠에서 행동마다 붙는 작은 그림 (선 아이콘) */
 const ICONS: Record<Action, string> = {
   overcome: 'M3 19 9.5 8l4 6 2.5-3.5L21 19z',
@@ -124,7 +122,7 @@ export function ActionBar({
       data-disabled={disabled || undefined}
       data-tour="actionbar"
     >
-      <h4 className={styles.head}>다음 한 수</h4>
+      <h4 className={styles.head}>행동</h4>
       <ol
         className={styles.rows}
         data-tour="actions"
@@ -145,9 +143,6 @@ export function ActionBar({
                 disabled={disabled || (a === 'defend' && !canDefend) || !allowAction(a)}
                 onClick={() => onAction(a)}
               >
-                <span className={styles.n} aria-hidden>
-                  {NUMERALS[i]}
-                </span>
                 <svg
                   className={styles.ico}
                   viewBox="0 0 24 24"

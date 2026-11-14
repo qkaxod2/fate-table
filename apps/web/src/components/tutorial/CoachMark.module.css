@@ -198,13 +198,13 @@
   overflow-wrap: anywhere;
 }
 
-/* 지금 할 일·쉬운 예시: 여백에 펜으로 적은 메모 */
+/* 지금 할 일·쉬운 예시 */
 .example {
   margin: 8px 0 0;
   padding-left: 10px;
-  border-left: 2px solid var(--rule-red);
-  color: var(--pen);
-  font: 400 21px / 1.25 var(--f-hand);
+  border-left: 2px solid var(--paper-edge);
+  color: var(--ink-2);
+  font: 500 var(--fs-sm) / 1.55 var(--f-ui);
   word-break: keep-all;
 }
 
@@ -294,7 +294,7 @@
   color: var(--seal-ink);
   font: 600 var(--fs-sm) / 1.3 var(--f-ui);
   cursor: pointer;
-  box-shadow: 0 2px 0 #7d2414;
+  box-shadow: none;
   animation: next-nudge 1.8s ease-in-out 1.4s infinite;
 }
 
@@ -306,14 +306,10 @@
   0%,
   70%,
   100% {
-    box-shadow:
-      0 2px 0 #7d2414,
-      0 0 0 0 rgb(168 50 28 / 0.45);
+    box-shadow: 0 0 0 0 rgb(168 50 28 / 0.45);
   }
   85% {
-    box-shadow:
-      0 2px 0 #7d2414,
-      0 0 0 7px rgb(168 50 28 / 0);
+    box-shadow: 0 0 0 7px rgb(168 50 28 / 0);
   }
 }
 
@@ -421,10 +417,6 @@
 .coach[data-sheet] .body {
   font-size: 15px;
   line-height: 1.6;
-}
-
-.coach[data-sheet] .example {
-  font-size: 20px;
 }
 
 /* 시트 안에서 스크롤해도 다음 버튼은 늘 손 닿는 곳에 */

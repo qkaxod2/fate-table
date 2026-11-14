@@ -1707,8 +1707,6 @@ function Table({
         </Presence>
       </section>
 
-      <div className={book.deckle} aria-hidden />
-
       <section className={book.book}>
         <div className={book.running}>
           <span>세션 1 · 튜토리얼</span>

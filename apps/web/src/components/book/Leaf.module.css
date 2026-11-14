@@ -50,7 +50,7 @@
   align-items: flex-start;
   gap: var(--s-3);
   padding: 22px var(--pad) 14px;
-  border-bottom: 3px double var(--paper-edge);
+  border-bottom: 1px solid var(--paper-edge);
 }
 
 .titles {

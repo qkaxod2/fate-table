@@ -1,4 +1,4 @@
-/* 판정 예고 카드: 타로처럼 세운 종이 카드 + 밀랍 봉인 */
+/* 판정 예고 카드 */
 .card {
   position: relative;
   width: 300px;
@@ -7,27 +7,14 @@
   background: var(--card);
   color: var(--ink-1);
   text-align: center;
-  rotate: 1deg;
   box-shadow: 0 30px 60px -18px rgb(0 0 0 / 0.85);
   animation: card-in var(--dur-enter) var(--ease-out) backwards;
-}
-
-.card::before {
-  content: '';
-  position: absolute;
-  inset: 7px;
-  border: 1px solid var(--ink-3);
-  border-radius: 3px;
-  outline: 1px solid var(--paper-edge);
-  outline-offset: 3px;
-  pointer-events: none;
 }
 
 @keyframes card-in {
   from {
     opacity: 0;
     translate: 0 14px;
-    rotate: -2deg;
   }
 }
 
@@ -85,24 +72,12 @@
   height: 96px;
   border: 0;
   border-radius: 50%;
-  background: radial-gradient(circle at 38% 32%, var(--seal-hi), var(--seal) 55%, #6e1e10);
+  background: var(--seal);
   color: var(--seal-ink);
   font: 800 21px var(--f-head);
   letter-spacing: 0.06em;
-  text-shadow: 0 -1px 0 rgb(0 0 0 / 0.4);
-  box-shadow:
-    0 10px 24px -6px rgb(0 0 0 / 0.7),
-    inset 0 -6px 12px rgb(0 0 0 / 0.35),
-    inset 0 4px 8px rgb(255 255 255 / 0.18);
+  box-shadow: 0 8px 18px -8px rgb(0 0 0 / 0.5);
   cursor: pointer;
-}
-
-.seal::before {
-  content: '';
-  position: absolute;
-  inset: 9px;
-  border: 1.5px dashed rgb(255 243 232 / 0.45);
-  border-radius: 50%;
 }
 
 .seal kbd {

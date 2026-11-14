@@ -378,7 +378,6 @@ button:disabled {
   background: color-mix(in srgb, var(--card) 92%, transparent);
   color: var(--ink-1);
   font: 600 13px var(--f-ui);
-  rotate: -0.6deg;
   box-shadow: 0 8px 18px -10px rgb(0 0 0 / 0.8);
   cursor: pointer;
   transition:

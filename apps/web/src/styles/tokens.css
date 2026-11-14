@@ -36,15 +36,21 @@
   --seal-ink: #fff3e8;
   --brass: #b08a45;
   --brass-hi: #e2c27e;
-  --rule-blue: #9fb6cf;
-  --rule-red: #d27a6e;
-  --pen: #2f4f80;
+  --rule-blue: var(--paper-edge);
+  --rule-red: var(--paper-edge);
+  /* 손글씨·인덱스 카드 장식은 걷어냈다(23절). 옛 이름은 남기고 값만 평범한 먹·선으로 둔다. */
+  --pen: var(--ink-1);
   --stage-ink: #f4ecdc;
-  --f-head: 'Hahmlet', 'Noto Serif KR', serif;
-  --f-book: 'Gowun Batang', 'Noto Serif KR', serif;
-  --f-hand: 'Nanum Pen Script', 'Gowun Batang', cursive;
-  --f-fig: 'Fraunces', 'Noto Serif KR', serif;
-  --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .3 0 0 0 0 .22 0 0 0 0 .12 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  /*
+   * 글꼴은 둘만 쓴다: 화면 전체는 IBM Plex Sans KR, 이야기 본문만 Noto Serif KR.
+   * 제목·책 본문·손글씨·숫자용 이름은 옛 코드가 읽으니 남겨 두고 같은 글꼴을 가리킨다.
+   */
+  --f-head: var(--f-ui);
+  --f-book: var(--f-ui);
+  --f-hand: var(--f-ui);
+  --f-fig: var(--f-ui);
+  /* 종이 결 노이즈는 뺐다. background 목록에 그대로 끼워 쓸 수 있게 none으로 둔다. */
+  --paper-grain: none;
 
   /* accents */
   --gold: #a8321c;

@@ -26,7 +26,6 @@
   background: var(--card);
   object-fit: cover;
   object-position: top;
-  rotate: -1.5deg;
   box-shadow: 0 6px 12px -6px rgb(0 0 0 / 0.5);
 }
 

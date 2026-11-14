@@ -389,16 +389,12 @@
   padding: 0;
   list-style: none;
   color: var(--ink-1);
-  font: 20px/1.4 var(--f-hand);
+  font: 500 var(--fs-md) / 1.45 var(--f-ui);
 }
 
 .notes li {
   padding: 4px 0 4px var(--s-3);
-  border-left: 2px solid var(--rule-red);
-  background: repeating-linear-gradient(
-    transparent 0 27px,
-    color-mix(in srgb, var(--rule-blue) 60%, transparent) 27px 28px
-  );
+  border-left: 2px solid var(--paper-edge);
   white-space: pre-wrap;
 }
 
@@ -422,7 +418,6 @@
   background: var(--paper-grain), var(--card);
   color: var(--ink-1);
   box-shadow: 0 30px 60px -18px rgb(0 0 0 / 0.85);
-  rotate: -0.4deg;
 }
 
 .starter h2 {

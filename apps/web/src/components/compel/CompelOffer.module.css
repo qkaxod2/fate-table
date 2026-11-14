@@ -13,7 +13,6 @@
   border-radius: 6px;
   background: var(--paper-grain), var(--card);
   color: var(--ink-1);
-  rotate: -0.8deg;
   box-shadow:
     0 1px 0 var(--paper-edge),
     0 34px 70px -22px rgb(0 0 0 / 0.9);
@@ -33,10 +32,6 @@
   font: 700 14px var(--f-ui);
   letter-spacing: 0.04em;
   box-shadow: 0 -4px 10px -6px rgb(0 0 0 / 0.5);
-}
-
-.card {
-  rotate: 1.2deg;
 }
 
 .text {

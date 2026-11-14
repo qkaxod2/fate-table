@@ -4,7 +4,6 @@
   border-radius: 6px;
   background: var(--card);
   color: var(--ink-1);
-  rotate: 0.8deg;
   box-shadow:
     0 2px 0 var(--paper-edge),
     0 14px 28px -10px rgb(0 0 0 / 0.75);

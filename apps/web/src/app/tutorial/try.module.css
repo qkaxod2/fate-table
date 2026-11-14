@@ -23,7 +23,7 @@
 .pickTitle {
   margin: 0;
   padding-bottom: 14px;
-  border-bottom: 3px double var(--ink-3);
+  border-bottom: 1px solid var(--paper-edge);
   font: 800 clamp(28px, 4.6vw, 44px) / 1.2 var(--f-head);
   word-break: keep-all;
 }
@@ -66,20 +66,11 @@
   box-shadow:
     0 1px 0 var(--paper-edge),
     0 14px 28px -18px rgb(40 25 10 / 0.6);
-  rotate: -0.6deg;
   transition:
     transform var(--dur-enter) var(--ease-out),
     box-shadow var(--dur-enter) var(--ease-out),
     var(--hover),
     var(--press);
-}
-
-.pickItem:nth-child(2) .pickCard {
-  rotate: 0.5deg;
-}
-
-.pickItem:nth-child(3) .pickCard {
-  rotate: -0.3deg;
 }
 
 .pickCard:hover,
@@ -98,20 +89,6 @@
   overflow: hidden;
   border: 1px solid var(--paper-edge);
   background: linear-gradient(180deg, var(--paper-2), var(--paper));
-}
-
-.pickPhoto::before {
-  content: '';
-  position: absolute;
-  top: -4px;
-  left: 50%;
-  z-index: 1;
-  width: 72px;
-  height: 18px;
-  background: rgb(226 205 160 / 0.75);
-  box-shadow: 0 1px 2px rgb(40 25 10 / 0.15);
-  translate: -50% 0;
-  rotate: -2deg;
 }
 
 .pickImg {
@@ -175,7 +152,7 @@
   color: var(--pen);
   padding-bottom: 2px;
   border-bottom: 1px solid var(--rule-blue);
-  font: 400 23px / 1.15 var(--f-hand);
+  font: 500 var(--fs-md) / 1.45 var(--f-ui);
   word-break: keep-all;
 }
 
@@ -455,17 +432,6 @@
   outline: none;
 }
 
-.prompt::before {
-  content: '';
-  position: absolute;
-  inset: 7px;
-  border: 1px solid var(--ink-3);
-  border-radius: 3px;
-  outline: 1px solid var(--paper-edge);
-  outline-offset: 3px;
-  pointer-events: none;
-}
-
 .promptHead {
   font: 800 21px/1.35 var(--f-head);
 }
@@ -486,19 +452,11 @@
   width: 100%;
   min-height: 64px;
   padding: 22px 14px 6px;
-  border: 0;
-  border-radius: 3px;
-  background:
-    linear-gradient(var(--rule-red), var(--rule-red)) 0 16px / 100% 1.5px no-repeat,
-    repeating-linear-gradient(transparent 0 35px, var(--rule-blue) 35px 36px) 0 16px / 100% 100%
-      no-repeat,
-    #fffdf8;
-  color: var(--pen);
-  font: 30px/1.2 var(--f-hand);
-  box-shadow:
-    0 0 0 1px var(--paper-edge),
-    0 8px 16px -10px rgb(0 0 0 / 0.45);
-  rotate: -0.5deg;
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--r-ctl);
+  background: var(--plate);
+  color: var(--ink-1);
+  font: 500 var(--fs-md) / 1.45 var(--f-ui);
 }
 
 .promptInput::placeholder {
@@ -825,15 +783,14 @@
   background: var(--seal);
   box-shadow: 0 0 0 2px var(--seal);
   color: var(--seal-ink);
-  font: 800 16px / 1 var(--f-head);
-  rotate: -12deg;
-  animation: stamp 360ms var(--ease-spring) backwards;
+  font: 700 14px / 1 var(--f-ui);
+  animation: stamp 200ms var(--ease-out) backwards;
 }
 
 @keyframes stamp {
   from {
     opacity: 0;
-    scale: 1.8;
+    scale: 0.9;
   }
 }
 
@@ -903,7 +860,6 @@
   30% {
     opacity: 1;
     translate: 6px -6px;
-    rotate: -1deg;
   }
 }
 

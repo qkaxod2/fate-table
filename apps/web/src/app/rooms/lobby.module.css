@@ -1,6 +1,6 @@
 /*
- * 로비 화면들(내 방·방 만들기·참가·계정·내 그림): 책상 위에 놓인 책 한 쪽.
- * 랜딩 속표지와 같은 문법: 종이 위 먹 글자, 겹줄 표제, 누를 것은 주홍 봉인.
+ * 로비 화면들(내 방·방 만들기·참가·계정·내 그림): 가운데 카드 한 장.
+ * 랜딩 오른쪽과 같은 문법: 밝은 면 위 먹 글자, 누를 것은 주홍.
  */
 .main {
   display: grid;
@@ -10,23 +10,16 @@
   background: var(--paper-grain), var(--night);
 }
 
-/* 한 쪽짜리 종이. 아래로 몇 장이 더 깔려 있는 것처럼 가장자리를 겹친다 */
 .card {
   position: relative;
   width: min(460px, 100%);
   padding: 28px 28px 32px;
-  border-radius: 4px;
-  background:
-    linear-gradient(90deg, rgb(60 40 20 / 0.1), transparent 5%), var(--paper-grain), var(--card);
+  border: 1px solid var(--paper-edge);
+  border-radius: 12px;
+  background: var(--card);
   color: var(--ink-1);
-  box-shadow:
-    0 1px 0 var(--paper-edge),
-    3px 3px 0 -1px var(--card),
-    3px 3px 0 0 var(--paper-edge),
-    6px 6px 0 -1px var(--card),
-    6px 6px 0 0 var(--paper-edge),
-    0 30px 50px -26px rgb(40 25 10 / 0.6);
-  /* 종이가 살짝 떠오르며 놓인다 */
+  box-shadow: 0 24px 48px -32px rgb(40 25 10 / 0.45);
+  /* 살짝 떠오르며 놓인다 */
   animation: card-in var(--dur-scene) var(--ease-out) backwards;
 }
 
@@ -52,7 +45,7 @@
 .title {
   margin: 12px 0 0;
   padding-bottom: 10px;
-  border-bottom: 3px double var(--ink-3);
+  border-bottom: 1px solid var(--paper-edge);
   font: 800 var(--fs-2xl) / 1.2 var(--f-head);
 }
 
@@ -117,14 +110,12 @@
 .primary {
   padding: 13px var(--s-4);
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--r-ctl);
   background: var(--seal);
   color: var(--seal-ink);
-  font: 600 var(--fs-lg) / 1.2 var(--f-head);
+  font: 600 var(--fs-md) / 1.2 var(--f-ui);
   cursor: pointer;
-  box-shadow:
-    0 3px 0 #7d2414,
-    0 12px 22px -12px rgb(125 36 20 / 0.7);
+  box-shadow: 0 12px 22px -12px rgb(125 36 20 / 0.7);
 }
 
 .primary:disabled {
@@ -255,11 +246,10 @@
   color: var(--seal);
 }
 
-/* 이름과 역할을 잇는 점선 */
+/* 이름과 역할 사이 빈칸 */
 .leader {
   flex: 1;
   min-width: 16px;
-  border-bottom: 2px dotted var(--line-hi);
 }
 
 .roomMeta {
