@@ -14,7 +14,7 @@
   pointer-events: none;
   box-shadow:
     inset 0 0 0 3px var(--seal),
-    inset 0 0 70px rgb(200 72 44 / 0.4);
+    inset 0 0 70px color-mix(in srgb, var(--seal-hi) 40%, transparent);
   animation: call 1.6s var(--ease) forwards;
 }
 
@@ -351,7 +351,7 @@
 .defendBtn:not(:disabled):hover,
 .defendBtn:focus-visible {
   border-color: var(--seal);
-  background: #f7e9e2;
+  background: var(--seal-tint);
 }
 
 .defendBtn:not(:disabled):hover b,
@@ -400,7 +400,7 @@
 
 .plan[aria-pressed='true'] {
   border-color: var(--seal);
-  background: #f7e9e2;
+  background: var(--seal-tint);
   color: var(--seal);
 }
 
@@ -918,7 +918,7 @@
 .face[aria-checked='true'] {
   border-style: solid;
   border-color: var(--seal);
-  background: #f7e9e2;
+  background: var(--seal-tint);
   color: var(--seal);
 }
 

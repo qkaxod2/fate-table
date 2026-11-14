@@ -86,7 +86,7 @@
     var(--paper);
   box-shadow:
     0 0 0 1px var(--paper-edge),
-    0 8px 14px -10px rgb(40 25 10 / 0.6);
+    0 8px 14px -10px color-mix(in srgb, var(--shade) 60%, transparent);
 }
 
 .thumb img {

@@ -17,7 +17,7 @@
     background: var(--card);
     box-shadow:
       0 -1px 0 var(--paper-edge),
-      0 -10px 24px -16px rgb(40 25 10 / 0.5);
+      0 -10px 24px -16px color-mix(in srgb, var(--shade) 50%, transparent);
   }
 }
 

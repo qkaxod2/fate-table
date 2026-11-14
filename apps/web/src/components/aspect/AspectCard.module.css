@@ -90,7 +90,7 @@ button.card:not(:disabled):hover::after {
   50% {
     box-shadow:
       0 0 0 4px var(--seal-hi),
-      0 0 22px rgb(200 72 44 / 0.45),
+      0 0 22px color-mix(in srgb, var(--seal-hi) 45%, transparent),
       0 14px 26px -10px rgb(0 0 0 / 0.85);
   }
 }

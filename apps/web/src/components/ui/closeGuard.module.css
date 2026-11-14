@@ -11,7 +11,7 @@
   color: var(--ink-1);
   font: 500 var(--fs-sm) / 1.5 var(--f-ui);
   white-space: nowrap;
-  box-shadow: 0 14px 30px -12px rgb(40 25 10 / 0.6);
+  box-shadow: 0 14px 30px -12px color-mix(in srgb, var(--shade) 60%, transparent);
   transform: translateX(-50%);
   pointer-events: none;
   animation: nudge-in 160ms ease-out;

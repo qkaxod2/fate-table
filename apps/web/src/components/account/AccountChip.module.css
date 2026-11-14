@@ -15,7 +15,7 @@
   text-decoration: none;
   text-overflow: ellipsis;
   white-space: nowrap;
-  box-shadow: 0 6px 14px -10px rgb(40 25 10 / 0.6);
+  box-shadow: 0 6px 14px -10px color-mix(in srgb, var(--shade) 60%, transparent);
 }
 
 .chip[data-member='true'] {

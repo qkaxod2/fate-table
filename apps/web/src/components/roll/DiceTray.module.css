@@ -29,7 +29,7 @@
   font: 800 calc(var(--size) * 0.62) / 1 var(--f-fig);
   box-shadow:
     inset 0 0 0 2px color-mix(in srgb, var(--body) 70%, var(--edge)),
-    0 1px 0 rgb(60 40 20 / 0.18);
+    0 1px 0 color-mix(in srgb, var(--shade) 18%, transparent);
 }
 
 .die:nth-child(2) {

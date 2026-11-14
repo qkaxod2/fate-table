@@ -13,7 +13,12 @@
   width: var(--coin, 14px);
   height: var(--coin, 14px);
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 32%, var(--brass-hi), var(--brass) 58%, #7a5a22);
+  background: radial-gradient(
+    circle at 35% 32%,
+    var(--brass-hi),
+    var(--brass) 58%,
+    var(--brass-ink)
+  );
   box-shadow:
     0 1px 2px rgb(0 0 0 / 0.35),
     inset 0 -1px 2px rgb(0 0 0 / 0.25);
@@ -73,7 +78,7 @@
 @keyframes token-pop {
   0% {
     transform: scale(1.9);
-    box-shadow: 0 0 16px rgb(200 72 44 / 0.95);
+    box-shadow: 0 0 16px color-mix(in srgb, var(--seal-hi) 95%, transparent);
   }
   100% {
     transform: scale(1);
@@ -94,7 +99,7 @@
 @keyframes token-drain {
   0% {
     background: linear-gradient(135deg, var(--gold-hi), var(--gold));
-    box-shadow: 0 0 14px rgb(200 72 44 / 0.9);
+    box-shadow: 0 0 14px color-mix(in srgb, var(--seal-hi) 90%, transparent);
     opacity: 1;
     transform: scale(1.2);
   }

@@ -82,7 +82,7 @@
   position: absolute;
   bottom: 18%;
   padding: 2px 10px;
-  border: 1px solid rgb(168 50 28 / 0.6);
+  border: 1px solid color-mix(in srgb, var(--seal) 60%, transparent);
   border-radius: 999px;
   background: var(--card);
   color: var(--ink-1);
