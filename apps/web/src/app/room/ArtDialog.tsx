@@ -89,7 +89,7 @@ export function ArtDialog({
 
       {tab !== 'scene' &&
         (editable.length ? (
-          <div className={gm.chips} aria-label="누구를 그릴까요">
+          <div className={gm.chips} aria-label="그릴 캐릭터">
             {editable.map((x) => (
               <button
                 key={x.id}
@@ -103,7 +103,7 @@ export function ArtDialog({
             ))}
           </div>
         ) : (
-          <p className={gm.help}>그릴 캐릭터가 아직 없어요.</p>
+          <p className={gm.help}>그릴 캐릭터가 아직 없음</p>
         ))}
 
       {tab === 'scene' &&
@@ -123,20 +123,20 @@ export function ArtDialog({
                     type: 'media.attach',
                     payload: { kind: 'scene', target: state.scene!.id, url: d.url },
                   },
-                  '배경을 바꿨어요',
+                  '배경 바뀜',
                 )
               }
             />
           </>
         ) : (
-          <p className={gm.help}>장면을 연 다음 배경을 그릴 수 있어요.</p>
+          <p className={gm.help}>장면을 연 다음 배경을 그릴 수 있다.</p>
         ))}
 
       {tab === 'standing' && c && (
         <>
           <p className={gm.help}>
-            전신을 흰 바탕에 그린 뒤 배경을 따서 무대에 세워요. 새로 그리면 만들어 둔 표정은
-            지워져요.
+            전신을 흰 바탕에 그린 뒤 배경을 따서 무대에 세운다. 새로 그리면 만들어 둔 표정은
+            지워진다.
           </p>
           <MediaStudio
             key={`standing:${c.id}`}
@@ -158,7 +158,7 @@ export function ArtDialog({
                     meta: { presetId: d.presetId, prompt: d.prompt, seed: d.seed },
                   },
                 },
-                `${c.name} 스탠딩을 세웠어요`,
+                `${c.name} 스탠딩 세움`,
               );
               if (ok) setTab('face');
               return ok;
@@ -182,7 +182,7 @@ export function ArtDialog({
           onApply={(d) =>
             attach(
               { type: 'media.attach', payload: { kind: 'portrait', target: c.id, url: d.url } },
-              `${c.name} 초상화를 바꿨어요`,
+              `${c.name} 초상화 바뀜`,
             )
           }
         />
@@ -205,8 +205,7 @@ function FacePanel({
   const [error, setError] = useState<string | null>(null);
   const base = c.standing?.neutral;
   const meta = c.standingMeta;
-  if (!base || !meta)
-    return <p className={gm.help}>먼저 스탠딩 탭에서 기본 스탠딩을 그려 주세요.</p>;
+  if (!base || !meta) return <p className={gm.help}>먼저 스탠딩 탭에서 기본 스탠딩 그리기</p>;
   const current = c.expression ?? 'neutral';
 
   async function make(id: string) {
@@ -228,10 +227,10 @@ function FacePanel({
           type: 'media.attach',
           payload: { kind: 'standing', target: c.id, url: r.url, expression: id },
         },
-        '표정을 하나 더 만들었어요',
+        '표정 추가됨',
       );
     } catch (e) {
-      setError(e instanceof PortraitError ? e.message : '표정을 그리지 못했어요.');
+      setError(e instanceof PortraitError ? e.message : '표정을 그리지 못함');
     } finally {
       setBusy(null);
     }
@@ -240,8 +239,8 @@ function FacePanel({
   return (
     <>
       <p className={gm.help}>
-        만든 표정은 대사창 위 표정 칩으로 바로 바꿔 쓸 수 있어요. 굴림 결과에 따라 잠깐씩 저절로
-        바뀌기도 해요.
+        만든 표정은 대사창 위 표정 칩으로 바로 바꿔 쓴다. 굴림 결과에 따라 잠깐씩 저절로 바뀌기도
+        한다.
       </p>
       <div className={styles.faces}>
         {EXPRESSIONS.map((e) => {
@@ -252,7 +251,7 @@ function FacePanel({
                 {url ? (
                   <img src={url} alt={`${c.name} ${e.label}`} />
                 ) : (
-                  <span>{busy === e.id ? '그리는 중…' : '아직 없어요'}</span>
+                  <span>{busy === e.id ? '그리는 중…' : '아직 없음'}</span>
                 )}
               </div>
               <b>{e.label}</b>

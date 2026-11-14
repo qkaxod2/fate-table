@@ -13,7 +13,7 @@ export class ApiError extends Error {
 /** Edge Function 호출. 응답 형식은 { ok, data } | { ok:false, error:{code,message} } */
 export async function callFunction<T>(name: string, body: Record<string, unknown>): Promise<T> {
   const sb = getSupabase();
-  if (!sb) throw new ApiError('OFFLINE', '아직 서버가 연결되지 않았어요.');
+  if (!sb) throw new ApiError('OFFLINE', '서버 미연결');
   await ensureSession(sb);
   const { data, error } = await sb.functions.invoke(name, { body });
   if (error) {
@@ -22,7 +22,7 @@ export async function callFunction<T>(name: string, body: Record<string, unknown
       const e = res?.error;
       if (e?.code) throw new ApiError(e.code, e.message);
     }
-    throw new ApiError('NETWORK', '서버에 닿지 못했어요. 잠시 뒤 다시 시도해 주세요.');
+    throw new ApiError('NETWORK', '서버에 닿지 못함. 잠시 뒤 다시 시도');
   }
   return data.data as T;
 }

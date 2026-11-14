@@ -25,7 +25,7 @@ export function RoomLoader() {
     let room: RemoteRoom | null = null;
     let cancelled = false;
     (async () => {
-      if (!sb) throw new Error('서버가 연결된 배포 사이트에서만 방에 들어갈 수 있어요.');
+      if (!sb) throw new Error('서버가 연결된 배포 사이트에서만 방에 들어갈 수 있다.');
       await ensureSession(sb);
       const { data: auth } = await sb.auth.getUser();
       const { data: info } = await sb
@@ -33,7 +33,7 @@ export function RoomLoader() {
         .select('name, invite_code')
         .eq('id', id)
         .maybeSingle();
-      if (!info) throw new Error('이 방의 참가자가 아니에요. 초대 코드로 먼저 들어와 주세요.');
+      if (!info) throw new Error('이 방의 참가자가 아님. 초대 코드로 먼저 입장');
       // 읽는 사이에 화면을 떠났으면 채널을 열지 않는다 (빠른 이탈·재입장, 개발 모드의 두 번 실행)
       if (cancelled) return;
       room = new RemoteRoom(sb, id, auth.user!.id);
@@ -42,7 +42,7 @@ export function RoomLoader() {
         setLoad({ kind: 'ready', room, name: info.name, inviteCode: info.invite_code });
     })().catch((e: unknown) => {
       if (!cancelled)
-        setLoad({ kind: 'error', message: e instanceof Error ? e.message : '방을 열지 못했어요.' });
+        setLoad({ kind: 'error', message: e instanceof Error ? e.message : '방을 열지 못함' });
     });
     return () => {
       cancelled = true;
@@ -60,7 +60,7 @@ export function RoomLoader() {
         ) : (
           <>
             <PageNav fallback="/rooms/" />
-            <h1 className={styles.title}>들어갈 수 없어요</h1>
+            <h1 className={styles.title}>들어갈 수 없음</h1>
             <p className={styles.lead}>{load.message}</p>
             <div className={styles.links}>
               <Link href="/join/">초대 코드로 참가하기</Link>
@@ -95,10 +95,10 @@ function OpenRoom({
     <main className={styles.main}>
       <div className={styles.card} role="alert">
         <PageNav fallback="/rooms/" />
-        <h1 className={styles.title}>방이 닫혔어요</h1>
+        <h1 className={styles.title}>방이 닫혔다</h1>
         <p className={styles.lead}>
-          {room.actor.role === 'gm' ? '' : 'GM이 '}「{name}」 방을 지웠어요. 이야기 기록도 함께
-          정리됐어요. 함께해 주셔서 고마워요.
+          {room.actor.role === 'gm' ? '' : 'GM이 '}「{name}」 방을 지웠다. 이야기 기록도 함께
+          정리됐다.
         </p>
         <div className={styles.links}>
           <Link href="/rooms/">내 방 목록</Link>

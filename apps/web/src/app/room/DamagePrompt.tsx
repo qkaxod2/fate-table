@@ -40,16 +40,14 @@ export function DamagePrompt({ damage, character, run, pending }: Props) {
       tabIndex={-1}
     >
       <div className={tryStyles.promptHead}>
-        {josa(character.name, '이/가')} 피해 {josa(String(damage.shifts), '을/를')} 받았어요
+        {josa(character.name, '이/가')} 피해 {josa(String(damage.shifts), '을/를')} 받았다
       </div>
       {plans.length === 0 ? (
-        <p className={tryStyles.promptHelp}>
-          받아낼 칸이 없어요. 이번 갈등에서 {term('takenOut')}해요.
-        </p>
+        <p className={tryStyles.promptHelp}>받아낼 칸 없음. 이번 갈등에서 {term('takenOut')}.</p>
       ) : (
         <>
           <p className={tryStyles.promptHelp}>
-            어떻게 받아낼지 골라요. {term('consequence')}을 쓰면 다친 곳을 짧게 적어요.
+            받아낼 방법 고르기. {term('consequence')}을 쓰면 다친 곳을 짧게 적는다.
           </p>
           <div className={styles.plans}>
             {plans.map((p, i) => (

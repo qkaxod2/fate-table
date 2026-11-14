@@ -46,7 +46,7 @@ export function Typewriter({ text, fx }: { text: string; fx?: boolean | undefine
       className={styles.line}
       data-typing={!done || undefined}
       onClick={() => setShown({ text, n: Infinity })}
-      title={done ? undefined : '누르면 바로 다 보여요'}
+      title={done ? undefined : '누르면 전부 표시'}
     >
       <span>
         <RichSegments segs={sliceSegments(segs, 0, n)} />

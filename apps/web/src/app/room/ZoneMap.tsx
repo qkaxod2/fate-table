@@ -199,7 +199,7 @@ export function ZoneMap({ state, run, isGm, canControl, pending, auto = 'full' }
     <section className={styles.wrap} aria-label={`${term('zone')} 지도`}>
       <div className={styles.head}>
         <span className={styles.kicker}>{term('zone')} 지도</span>
-        {picked && !editing && <span className={styles.hint}>옮길 구역을 눌러 주세요</span>}
+        {picked && !editing && <span className={styles.hint}>옮길 구역 누르기</span>}
         <button
           type="button"
           className={styles.fold}
@@ -256,9 +256,7 @@ export function ZoneMap({ state, run, isGm, canControl, pending, auto = 'full' }
 
           {zones.length === 0 && (
             <p className={styles.empty}>
-              {editing
-                ? '빈 곳을 눌러 첫 구역을 놓아 보세요.'
-                : '지도 편집을 눌러 구역을 만들어요.'}
+              {editing ? '빈 곳을 눌러 첫 구역 놓기' : '지도 편집을 눌러 구역 만들기'}
             </p>
           )}
 
@@ -356,7 +354,7 @@ export function ZoneMap({ state, run, isGm, canControl, pending, auto = 'full' }
             aria-pressed={tool === 'link'}
             onClick={() => setTool(tool === 'link' ? 'move' : 'link')}
           >
-            {tool === 'link' ? '이을 구역을 눌러 주세요' : '길 잇기 · 끊기'}
+            {tool === 'link' ? '이을 구역 누르기' : '길 잇기 · 끊기'}
           </button>
           <form
             onSubmit={(e) => {

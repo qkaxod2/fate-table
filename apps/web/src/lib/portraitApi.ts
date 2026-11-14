@@ -53,8 +53,8 @@ export class PortraitError extends Error {
 }
 
 const FALLBACK: Record<string, string> = {
-  OFFLINE: '아직 서버가 연결되지 않아 그림을 만들 수 없어요.',
-  NETWORK: '서버에 닿지 못했어요. 잠시 뒤 다시 눌러 주세요.',
+  OFFLINE: '서버 미연결이라 그림을 만들 수 없음',
+  NETWORK: '서버에 닿지 못함. 잠시 뒤 다시 시도',
 };
 
 export function portraitAvailable(): boolean {

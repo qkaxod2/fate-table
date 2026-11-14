@@ -29,9 +29,9 @@ interface Props {
 }
 
 const ISSUE_COPY = {
-  EMPTY: '외형을 한 가지 이상 적어 주세요.',
-  TOO_LONG: `외형은 ${APPEARANCE_MAX}자까지 적을 수 있어요.`,
-  BLOCKED_TAG: '작가 태그나 노출 관련 태그는 넣을 수 없어요. 화풍은 위에서 골라 주세요.',
+  EMPTY: '외형을 한 가지 이상 입력',
+  TOO_LONG: `외형은 ${APPEARANCE_MAX}자까지`,
+  BLOCKED_TAG: '작가 태그와 노출 관련 태그는 넣을 수 없음. 화풍은 위에서 고르기',
 } as const;
 
 function splitTags(text: string): string[] {
@@ -81,7 +81,7 @@ export function PortraitStudio({ value, onChange }: Props) {
       setCandidates((c) => [{ ...r, presetId }, ...c].slice(0, 8));
       if (!value) onChange(r.url);
     } catch (e) {
-      setError(e instanceof PortraitError ? e.message : '그림을 만들지 못했어요.');
+      setError(e instanceof PortraitError ? e.message : '그림을 만들지 못함');
     } finally {
       setBusy(false);
     }
@@ -116,9 +116,7 @@ export function PortraitStudio({ value, onChange }: Props) {
         <label htmlFor="ps-look" className={styles.h}>
           외형
         </label>
-        <p className={styles.hint}>
-          영어 태그를 쉼표로 이어 적어요. 아래 칩을 눌러 넣을 수도 있어요.
-        </p>
+        <p className={styles.hint}>영어 태그를 쉼표로 이어 적기. 아래 칩을 눌러 넣어도 된다.</p>
         <div className={styles.chips}>
           {APPEARANCE_CHIPS.map((c) => (
             <button
@@ -189,8 +187,8 @@ export function PortraitStudio({ value, onChange }: Props) {
         >
           {busy ? '그리는 중…' : candidates.length ? '한 장 더 그리기' : '그리기'}
         </button>
-        {busy && <span className={styles.wait}>보통 10초 안팎 걸려요</span>}
-        {!online && <span className={styles.wait}>서버가 연결되면 쓸 수 있어요</span>}
+        {busy && <span className={styles.wait}>보통 10초 안팎</span>}
+        {!online && <span className={styles.wait}>서버 연결 후 사용 가능</span>}
       </div>
       {error && (
         <p className={styles.bad} role="alert">
@@ -221,7 +219,7 @@ export function PortraitStudio({ value, onChange }: Props) {
               </button>
             ))}
           </div>
-          <p className={styles.hint}>마음에 드는 그림을 눌러 초상화로 정해요.</p>
+          <p className={styles.hint}>마음에 드는 그림을 눌러 초상화로 지정</p>
         </section>
       )}
     </div>

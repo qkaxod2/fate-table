@@ -80,8 +80,8 @@ import { Trackers } from './Trackers';
 import { ZoneMap } from './ZoneMap';
 
 const BLOCK_REASON: Record<string, string> = {
-  NOT_ENOUGH_FATE_POINTS: '운명점이 부족해요',
-  ASPECT_ALREADY_INVOKED: '이번 굴림에 이미 썼어요',
+  NOT_ENOUGH_FATE_POINTS: '운명점 부족',
+  ASPECT_ALREADY_INVOKED: '이번 굴림에 이미 씀',
 };
 
 type Prompt = { kind: 'aspect'; freeInvokes: 1 | 2 } | { kind: 'boost'; ownerId: string } | null;
@@ -100,19 +100,19 @@ const LIGHT: ReadonlySet<Command['type']> = new Set([
 
 /** GM이 한 일 중 알림에 "되돌리기"를 달아 주는 것 */
 const DONE_COPY: Partial<Record<Command['type'], string>> = {
-  'aspect.add': '특성을 붙였어요',
-  'aspect.remove': '특성을 지웠어요',
-  'aspect.reveal': '특성을 공개했어요',
-  'character.create': '캐릭터를 만들었어요',
-  'scene.start': '장면을 열었어요',
-  'scene.end': '장면을 닫았어요',
-  'compel.offer': '강요를 걸었어요',
-  'conflict.start': '갈등을 시작했어요',
-  'conflict.end': '갈등을 끝냈어요',
-  'zone.add': '구역을 만들었어요',
-  'zone.remove': '구역을 지웠어요',
-  'gm.note': '메모를 남겼어요',
-  'media.attach': '그림을 바꿨어요',
+  'aspect.add': '특성 붙임',
+  'aspect.remove': '특성 지움',
+  'aspect.reveal': '특성 공개',
+  'character.create': '캐릭터 생성',
+  'scene.start': '장면 열림',
+  'scene.end': '장면 닫힘',
+  'compel.offer': '강요 제안',
+  'conflict.start': '갈등 시작',
+  'conflict.end': '갈등 끝',
+  'zone.add': '구역 생성',
+  'zone.remove': '구역 지움',
+  'gm.note': '메모 남김',
+  'media.attach': '그림 바뀜',
 };
 
 const signed = (n: number) => `${n >= 0 ? '+' : ''}${n}`;
@@ -222,20 +222,18 @@ export function RoomTable({
               run: () =>
                 void room
                   .run({ type: 'event.undo', payload: { targetSeq: first.seq } })
-                  .then(() => toast({ text: '되돌렸어요', key: 'done' }))
-                  .catch(() => toast({ text: '되돌리지 못했어요', tone: 'error' })),
+                  .then(() => toast({ text: '되돌림', key: 'done' }))
+                  .catch(() => toast({ text: '되돌리지 못함', tone: 'error' })),
             },
           });
-        if (cmd.type === 'event.undo') toast({ text: '되돌렸어요', key: 'done' });
+        if (cmd.type === 'event.undo') toast({ text: '되돌림', key: 'done' });
         return evs;
       } catch (e) {
         toast({
           tone: 'error',
           key: 'error',
           text:
-            e instanceof ApiError
-              ? (ERROR_COPY[e.code] ?? e.message)
-              : '지금은 할 수 없는 행동이에요.',
+            e instanceof ApiError ? (ERROR_COPY[e.code] ?? e.message) : '지금은 할 수 없는 행동',
         });
         return [];
       } finally {
@@ -352,7 +350,7 @@ export function RoomTable({
     if (!me || !action || !approach || busyRoll || rolling) return;
     const needsTarget = action === 'attack';
     if (needsTarget && !targets.some((c) => c.id === targetId)) {
-      toast({ text: '공격할 대상을 골라 주세요.', tone: 'error', key: 'error' });
+      toast({ text: '공격할 대상 고르기', tone: 'error', key: 'error' });
       return;
     }
     setSelectedAspect(null);
@@ -407,7 +405,7 @@ export function RoomTable({
         );
         return {
           ...base,
-          blocked: check.ok ? '쓸 수 없어요' : (BLOCK_REASON[check.code] ?? '쓸 수 없어요'),
+          blocked: check.ok ? '쓸 수 없음' : (BLOCK_REASON[check.code] ?? '쓸 수 없음'),
         };
       }
       const bonus = previews.find((p) => p.mode === 'bonus');
@@ -1059,7 +1057,7 @@ export function RoomTable({
                 }
               >
                 {roll.status === 'awaiting_defense' && (
-                  <p className={tryStyles.waiting}>다 굴렸어요. 상대를 기다리는 중이에요</p>
+                  <p className={tryStyles.waiting}>굴림 완료. 상대를 기다리는 중</p>
                 )}
                 {settled && roll.status === 'open' && iRoll && unusedStunt && (
                   <button
@@ -1113,7 +1111,7 @@ export function RoomTable({
                   {...(a.ownerType === 'character'
                     ? { owner: state.characters[a.ownerId]?.name ?? '' }
                     : {})}
-                  {...(a.hidden ? { note: 'GM만 보여요' } : {})}
+                  {...(a.hidden ? { note: 'GM에게만 보임' } : {})}
                 />
                 {isGm && (
                   <div className={styles.aspectTools}>
@@ -1201,10 +1199,10 @@ export function RoomTable({
               >
                 <div className={tryStyles.promptHead}>
                   {activeChar?.name}의 {term(roll.action)}! {josa(defender.name, '은/는')} 어떻게
-                  막을까요?
+                  막을까?
                 </div>
                 <p className={tryStyles.promptHelp}>
-                  {term('defend')}에 쓸 {term('approach')}을 골라요. 두 결과가 동시에 공개돼요.
+                  {term('defend')}에 쓸 {term('approach')} 고르기. 두 결과가 동시에 공개된다.
                   <br />
                   <small>키보드 Q W E / A S D</small>
                 </p>
@@ -1280,8 +1278,8 @@ export function RoomTable({
                 </div>
                 <p className={tryStyles.promptHelp}>
                   {prompt.kind === 'aspect'
-                    ? '장면에 새로 생긴 사실을 짧은 문구로 적어요.'
-                    : '한 번 쓰고 사라지는 순간의 기회예요.'}
+                    ? '장면에 새로 생긴 사실을 짧은 문구로'
+                    : '한 번 쓰고 사라지는 순간의 기회'}
                 </p>
                 <input
                   autoFocus
@@ -1329,14 +1327,14 @@ export function RoomTable({
               onClick={() => {
                 void navigator.clipboard?.writeText(joinUrl);
                 setCopied(true);
-                toast({ text: '초대 링크를 복사했어요', tone: 'success', key: 'copy' });
+                toast({ text: '초대 링크 복사됨', tone: 'success', key: 'copy' });
                 setTimeout(() => setCopied(false), 1600);
               }}
-              data-tip="누르면 초대 링크를 복사해요"
-              aria-label={`초대 코드 ${inviteCode}, 누르면 초대 링크를 복사해요`}
+              data-tip="눌러서 초대 링크 복사"
+              aria-label={`초대 코드 ${inviteCode}, 눌러서 초대 링크 복사`}
             >
               {copied ? (
-                '복사했어요 ✓'
+                '복사됨 ✓'
               ) : (
                 <>
                   초대 <b>{inviteCode}</b>
@@ -1392,7 +1390,7 @@ export function RoomTable({
             // 넓은 화면의 책은 이야기에 높이를 내주고 기록지는 한 줄로. 좁은 화면은 "내 캐릭터" 탭에서 다 펼친다
             compact={isGm || !narrow}
           />
-          {party.length === 0 && <p className={styles.empty}>아직 테이블에 캐릭터가 없어요.</p>}
+          {party.length === 0 && <p className={styles.empty}>아직 테이블에 캐릭터 없음</p>}
           {role === 'player' && (
             <BringCharacter
               run={run}
@@ -1422,7 +1420,7 @@ export function RoomTable({
         {role !== 'spectator' && (
           <div className={styles.composer} data-gm={isGm || undefined} data-part="story">
             {isGm && (
-              <div className={styles.composeTabs} role="tablist" aria-label="무엇을 쓸까요">
+              <div className={styles.composeTabs} role="tablist" aria-label="쓸 종류">
                 {(
                   [
                     ['narrate', '대사'],
@@ -1435,7 +1433,7 @@ export function RoomTable({
                     role="tab"
                     aria-selected={composeMode === m}
                     title={
-                      m === 'narrate' ? 'GM 대사: 장면 묘사로 책에 적혀요' : '말하기: 테이블 대화'
+                      m === 'narrate' ? 'GM 대사: 장면 묘사로 책에 기록' : '말하기: 테이블 대화'
                     }
                     onClick={() => setComposeMode(m)}
                   >
@@ -1474,8 +1472,8 @@ export function RoomTable({
                     className={styles.voice}
                     value={as}
                     onChange={(e) => setSpeakAs(e.target.value)}
-                    aria-label="누구로 말할까요"
-                    data-tip="NPC로 말하면 무대에 서서 말풍선으로 말해요"
+                    aria-label="말할 사람"
+                    data-tip="NPC로 말하면 무대에 서서 말풍선으로 말한다"
                   >
                     <option value="">GM으로</option>
                     {voices.map((c) => (

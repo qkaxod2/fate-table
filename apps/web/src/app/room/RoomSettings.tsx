@@ -150,7 +150,7 @@ export function RoomSettings({
             onClick={then(onExit)}
           >
             <span>{isGm ? '방 지우기' : '이 방에서 나가기'}</span>
-            <small>{isGm ? '모두 내보내고 기록을 지워요' : ''}</small>
+            <small>{isGm ? '모두 내보내고 기록 삭제' : ''}</small>
           </button>
         </div>
       )}

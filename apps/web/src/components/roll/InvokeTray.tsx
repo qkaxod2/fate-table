@@ -117,7 +117,7 @@ export function InvokeTray({
   return (
     <div className={styles.tray} data-roll-tray="">
       <div className={styles.head}>
-        {term('aspect')} {term('invoke')} · 카드를 집어 +2를 받거나 다시 굴려요
+        {term('aspect')} {term('invoke')} · 카드를 집어 +2 또는 다시 굴리기
       </div>
       <div className={styles.cards} data-tour="invoke-cards">
         {choices.map((c, i) => (
@@ -141,7 +141,7 @@ export function InvokeTray({
               {...(c.blocked
                 ? { note: c.blocked }
                 : c.against
-                  ? { note: '쓰면 상대가 운명점 1개를 받아요' }
+                  ? { note: '쓰면 상대가 운명점 +1' }
                   : {})}
               onClick={() => onSelect(c.aspect.id)}
             />

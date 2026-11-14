@@ -90,7 +90,7 @@ export function StoryLog({ lines, undone, onUndo, sending = [], variant = 'panel
       </div>
       {shown.length === 0 && sending.length === 0 && (
         <p className={styles.empty}>
-          {tab === 'story' ? '첫 굴림이 여기 기록돼요.' : '입장·생성 같은 알림이 여기 모여요.'}
+          {tab === 'story' ? '첫 굴림부터 여기 기록' : '입장, 생성 같은 알림이 여기 모임'}
         </p>
       )}
       <ol className={styles.list}>
@@ -118,7 +118,7 @@ export function StoryLog({ lines, undone, onUndo, sending = [], variant = 'panel
               <button
                 type="button"
                 className={styles.undo}
-                title="이 일을 되돌려요"
+                title="이 일 되돌리기"
                 aria-label="되돌리기"
                 onClick={() => onUndo(l.seq)}
               >

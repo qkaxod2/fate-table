@@ -27,13 +27,13 @@ export interface GmOpen {
 }
 
 const TOOLS: ReadonlyArray<readonly [GmTool, string, string]> = [
-  ['scene', '장면', '장면을 열고 닫아요'],
-  ['aspect', term('aspect'), '장면 특성을 붙이거나 숨겨 둔 걸 공개해요'],
-  ['npc', 'NPC', '적이나 조연을 바로 만들어요'],
+  ['scene', '장면', '장면 열고 닫기'],
+  ['aspect', term('aspect'), '장면 특성 붙이기, 숨긴 특성 공개'],
+  ['npc', 'NPC', '적이나 조연 바로 만들기'],
   ['conflict', '갈등·경합', '차례가 있는 싸움, 3승 겨루기, 여러 단계 도전'],
-  ['compel', term('compel'), '특성 때문에 일이 꼬이게 하고 운명점을 줘요'],
+  ['compel', term('compel'), '특성 때문에 일을 꼬이게 하고 운명점 주기'],
   ['note', '메모', '나만 보는 메모'],
-  ['session', '세션', '세션을 열고 닫아요. 열면 운명점이 다시 채워져요'],
+  ['session', '세션', '세션 열고 닫기. 열면 운명점이 다시 채워진다'],
 ];
 
 /**
@@ -115,7 +115,7 @@ export function GmBar({
           {state.scene ? state.scene.name : '장면 없음'}
           {state.conflict && ` · ${term('conflict')} 중`}
         </span>
-        <span className={styles.pool} title="GM 운명점 풀 (NPC가 써요)">
+        <span className={styles.pool} title="GM 운명점 풀 (NPC용)">
           <span className={styles.poolLabel}>풀</span>
           <FatePointToken count={state.gmPool} />
           <button
@@ -148,7 +148,7 @@ export function GmBar({
           data-tip={
             lastUndoable
               ? `마지막 기록 되돌리기 (Ctrl Z): ${lastUndoable.text}`
-              : '되돌릴 기록이 없어요'
+              : '되돌릴 기록 없음'
           }
           data-tip-end=""
           aria-label="마지막 기록 되돌리기"
@@ -184,7 +184,7 @@ export function GmBar({
                   {TOOLS.length + 1}
                 </span>
                 <b>그림</b>
-                <small>장면 배경 · 스탠딩과 표정 · 초상화를 그려요</small>
+                <small>장면 배경, 스탠딩과 표정, 초상화</small>
               </button>
             </li>
           </ol>
@@ -260,7 +260,7 @@ function SceneForm({
       </div>
       <button type="submit" className={styles.primary} disabled={pending || !hasVisibleText(name)}>
         {submitLabel}
-        {!state.session && ' (세션도 함께 시작해요)'}
+        {!state.session && ' (세션도 함께 시작)'}
       </button>
     </form>
   );
@@ -281,14 +281,14 @@ export function SceneStarter({
   if (!isGm)
     return (
       <div className={styles.starter}>
-        <h2>GM이 장면을 준비하고 있어요</h2>
-        <p>장면이 열리면 여기서 굴림과 지도가 보여요.</p>
+        <h2>GM이 장면을 준비하는 중</h2>
+        <p>장면이 열리면 여기에 굴림과 지도가 보인다.</p>
       </div>
     );
   return (
     <div className={styles.starter}>
-      <h2>첫 장면을 열어 볼까요?</h2>
-      <p>이름만 적어도 바로 시작할 수 있어요. 구역 지도와 NPC는 나중에 GM 도구에서 더해도 돼요.</p>
+      <h2>첫 장면 열기</h2>
+      <p>이름만 적어도 바로 시작할 수 있다. 구역 지도와 NPC는 나중에 GM 도구에서 더해도 된다.</p>
       <SceneForm state={state} run={run} pending={pending} />
     </div>
   );
@@ -327,7 +327,7 @@ export function NarrationInput({
         ref={field}
         rows={2}
         value={text}
-        placeholder="장면을 묘사해요… (Enter)"
+        placeholder="장면 묘사… (Enter)"
         aria-label="GM 대사"
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => {
@@ -447,8 +447,8 @@ function ScenePanel({ state, run, pending, done, onClose }: PanelProps) {
       )}
       <p className={styles.help}>
         {state.scene
-          ? '새 장면을 열면 지금 장면은 자동으로 끝나요. 스트레스가 회복되고 장면 특성이 사라져요.'
-          : '장면을 열면 GM 운명점 풀이 PC 수만큼 채워져요.'}
+          ? '새 장면을 열면 지금 장면은 자동으로 끝난다. 스트레스가 회복되고 장면 특성이 사라진다.'
+          : '장면을 열면 GM 운명점 풀이 PC 수만큼 채워진다.'}
       </p>
       <SceneForm
         state={state}
@@ -466,7 +466,7 @@ function AspectPanel({ state, pending, done }: PanelProps) {
   const [hidden, setHidden] = useState(false);
   const [free, setFree] = useState(0);
   const secret = Object.values(state.aspects).filter((a) => a.hidden);
-  if (!state.scene) return <p className={styles.help}>먼저 장면을 열어 주세요.</p>;
+  if (!state.scene) return <p className={styles.help}>먼저 장면 열기</p>;
   const sceneId = state.scene.id;
   return (
     <>
@@ -576,7 +576,7 @@ function NpcPanel({ pending, done }: PanelProps) {
         />
       </label>
       <label className={styles.field}>
-        {term('high')} <small>(비우면 이름을 그대로 써요)</small>
+        {term('high')} <small>(비우면 이름 그대로)</small>
         <input
           placeholder="예: 부두의 칼잡이"
           value={high}
@@ -619,7 +619,7 @@ function ConflictPanel({ state, pending, done }: PanelProps) {
       <h3 className={styles.sub}>{term('conflict')} · 서로 해치려 할 때</h3>
       {state.conflict ? (
         <p className={styles.help}>
-          {term('conflict')}이 진행 중이에요. 위쪽 띠에서 차례를 넘기거나 끝내요.
+          {term('conflict')} 진행 중. 위쪽 띠에서 차례를 넘기거나 끝낸다.
         </p>
       ) : (
         <div className={styles.form}>
@@ -670,7 +670,7 @@ function ConflictPanel({ state, pending, done }: PanelProps) {
 
       <h3 className={styles.sub}>{term('contest')} · 먼저 3번 이기는 겨루기</h3>
       {state.contest ? (
-        <p className={styles.help}>{term('contest')}이 진행 중이에요.</p>
+        <p className={styles.help}>{term('contest')} 진행 중</p>
       ) : (
         <div className={styles.form}>
           <div className={styles.chips}>
@@ -693,14 +693,14 @@ function ConflictPanel({ state, pending, done }: PanelProps) {
           >
             {sides.length === 2
               ? `${sides.map((id) => state.characters[id]?.name).join(' vs ')} 시작`
-              : '두 쪽을 골라 주세요'}
+              : '두 쪽 고르기'}
           </button>
         </div>
       )}
 
       <h3 className={styles.sub}>{term('challenge')} · 여러 번 극복해서 푸는 일</h3>
       {state.challenge ? (
-        <p className={styles.help}>{term('challenge')}이 진행 중이에요.</p>
+        <p className={styles.help}>{term('challenge')} 진행 중</p>
       ) : (
         <form
           className={styles.form}
@@ -755,7 +755,7 @@ function CompelPanel({ state, pending, done, aspectId }: PanelProps & { aspectId
   const options = Object.values(state.aspects).filter(
     (a) => !a.hidden && (a.ownerType !== 'character' || a.ownerId === target),
   );
-  if (pcs.length === 0) return <p className={styles.help}>아직 PC가 없어요.</p>;
+  if (pcs.length === 0) return <p className={styles.help}>아직 PC 없음</p>;
   return (
     <form
       className={styles.form}
@@ -768,7 +768,7 @@ function CompelPanel({ state, pending, done, aspectId }: PanelProps & { aspectId
       }}
     >
       <p className={styles.help}>
-        받아들이면 {term('fatePoint')} +1, 거절하면 −1이에요. 플레이어 화면에 바로 떠요.
+        수락하면 {term('fatePoint')} +1, 거절하면 −1. 플레이어 화면에 바로 뜬다.
       </p>
       <div className={styles.field}>
         누구에게
@@ -800,9 +800,9 @@ function CompelPanel({ state, pending, done, aspectId }: PanelProps & { aspectId
         </div>
       </div>
       <label className={styles.field}>
-        무슨 일이 꼬이나요?
+        무슨 일이 꼬이나
         <input
-          placeholder="예: 빚쟁이가 하필 지금 나타나 앞을 막아요"
+          placeholder="예: 빚쟁이가 하필 지금 나타나 앞을 막는다"
           value={text}
           maxLength={200}
           onChange={(e) => setText(e.target.value)}
@@ -833,7 +833,7 @@ function NotePanel({ pending, done, notes }: PanelProps & { notes: string[] }) {
         <textarea
           autoFocus
           rows={3}
-          placeholder="플레이어에게는 보이지 않아요"
+          placeholder="플레이어에게는 안 보임"
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
@@ -865,7 +865,7 @@ function SessionPanel({ state, pending, done }: PanelProps) {
     return (
       <>
         <p className={styles.help}>
-          새 세션을 열면 PC들의 {term('fatePoint')}이 {term('refresh')} 수치까지 다시 채워져요.
+          새 세션을 열면 PC들의 {term('fatePoint')}이 {term('refresh')} 수치까지 다시 채워진다.
         </p>
         <button
           type="button"
@@ -889,7 +889,7 @@ function SessionPanel({ state, pending, done }: PanelProps) {
       }}
     >
       <p className={styles.help}>
-        세션 {state.session.number} 진행 중이에요. 끝내면 진행 중인 장면도 닫혀요.
+        세션 {state.session.number} 진행 중. 끝내면 진행 중인 장면도 닫힌다.
       </p>
       <textarea
         rows={3}

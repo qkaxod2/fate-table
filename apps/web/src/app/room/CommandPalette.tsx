@@ -57,7 +57,7 @@ export function roomCommands({
     {
       words: ['장면', 'scene'],
       label: '새 장면 열기',
-      hint: '이름을 적고 Enter. 세션이 없으면 같이 열어요',
+      hint: '이름을 적고 Enter. 세션이 없으면 같이 열림',
       arg: '장면 이름',
       gmOnly: true,
       act: async (name) => {
@@ -93,7 +93,7 @@ export function roomCommands({
     {
       words: ['숨김', '숨은특성', 'secret'],
       label: `숨겨 둔 ${term('aspect')} 붙이기`,
-      hint: 'GM에게만 보이고, 나중에 공개해요',
+      hint: 'GM에게만 보이고 나중에 공개',
       arg: '특성 문구',
       gmOnly: true,
       act: (text) =>
@@ -114,7 +114,7 @@ export function roomCommands({
     {
       words: ['npc', '엔피씨'],
       label: 'NPC 만들기',
-      hint: `예: "npc 밀수꾼 은밀". 끝에 적은 ${josa(term('approach'), '이/가')} +2가 돼요`,
+      hint: `예: "npc 밀수꾼 은밀". 끝에 적은 ${josa(term('approach'), '이/가')} +2`,
       arg: '이름 [접근법]',
       gmOnly: true,
       act: (arg) => {
@@ -134,7 +134,7 @@ export function roomCommands({
     {
       words: ['대사', '묘사', 'say'],
       label: 'GM 대사 보내기',
-      hint: '모두의 책 본문에 적혀요',
+      hint: '모두의 책 본문에 기록',
       arg: '대사',
       gmOnly: true,
       act: (text) => text && run({ type: 'narration.post', payload: { text } }),
@@ -142,7 +142,7 @@ export function roomCommands({
     {
       words: ['메모', 'note'],
       label: '나만 보는 메모',
-      hint: '플레이어에게는 보이지 않아요',
+      hint: '플레이어에게는 안 보임',
       arg: '메모',
       gmOnly: true,
       act: (text) =>
@@ -184,14 +184,14 @@ export function roomCommands({
     {
       words: ['갈등', '경합', '도전', 'conflict'],
       label: `${term('conflict')} · ${term('contest')} · ${term('challenge')}`,
-      hint: '창을 열어 참가자를 골라요',
+      hint: '창을 열어 참가자 선택',
       gmOnly: true,
       act: () => openGm({ tool: 'conflict' }),
     },
     {
       words: ['강요', 'compel'],
       label: `${term('compel')} 걸기`,
-      hint: '창을 열어 대상과 특성을 골라요',
+      hint: '창을 열어 대상과 특성 선택',
       gmOnly: true,
       act: () => openGm({ tool: 'compel' }),
     },
@@ -205,14 +205,14 @@ export function roomCommands({
     {
       words: ['말', 'chat', '/'],
       label: '채팅',
-      hint: '기록에 한 줄 남겨요',
+      hint: '기록에 한 줄 남기기',
       arg: '할 말',
       act: (text) => text && chat(text),
     },
     {
       words: ['시트', 'sheet'],
       label: '캐릭터 시트 열기',
-      hint: '이름 일부만 적어도 돼요',
+      hint: '이름 일부만 적어도 됨',
       arg: '이름',
       act: (q) => {
         const c = q ? findChar(q) : undefined;
@@ -280,7 +280,7 @@ export function CommandPalette({
           aria-label="명령"
           className={styles.input}
           value={input}
-          placeholder="무엇을 할까요?  예: npc 밀수꾼 은밀 · 특성 짙은 안개 · 대사 문이 열린다"
+          placeholder="명령 입력  예: npc 밀수꾼 은밀 · 특성 짙은 안개 · 대사 문이 열린다"
           onChange={(e) => {
             setInput(e.target.value);
             setIndex(0);
@@ -321,7 +321,7 @@ export function CommandPalette({
               </button>
             </li>
           ))}
-          {matches.length === 0 && <li className={styles.none}>맞는 명령이 없어요</li>}
+          {matches.length === 0 && <li className={styles.none}>맞는 명령 없음</li>}
         </ul>
         <div className={styles.foot}>
           <kbd>↑</kbd>
@@ -335,7 +335,7 @@ export function CommandPalette({
 /** ? 단축키 목록 */
 export function ShortcutHelp({ isGm, onClose }: { isGm: boolean; onClose: () => void }) {
   const rows: Array<[string[], string]> = [
-    [['Ctrl', 'K'], '명령 창 열기 (/ 도 돼요)'],
+    [['Ctrl', 'K'], '명령 창 열기 (/ 도 가능)'],
     [['1', '–', '4'], '행동 고르기 (극복 · 이점 만들기 · 공격 · 방어)'],
     [['Q', 'W', 'E', 'A', 'S', 'D'], `${term('approach')} 고르기`],
     [['Space'], '굴리기'],

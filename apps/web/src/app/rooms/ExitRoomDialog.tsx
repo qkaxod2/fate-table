@@ -43,7 +43,7 @@ export function ExitRoomDialog({
       await (isGm ? closeRoom(roomId) : leaveRoom(roomId));
       onDone();
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : '지금은 할 수 없어요. 잠시 뒤 다시 해 주세요.');
+      setError(e instanceof ApiError ? e.message : '지금은 할 수 없다. 잠시 뒤 다시 시도');
       setBusy(false);
     }
   };
@@ -52,9 +52,9 @@ export function ExitRoomDialog({
     <Leaf
       role="alertdialog"
       size="sm"
-      kicker={isGm ? '되돌릴 수 없어요' : '방 나가기'}
-      title={isGm ? '방을 지울까요?' : '방에서 나갈까요?'}
-      label={isGm ? '방을 지울까요?' : '방에서 나갈까요?'}
+      kicker={isGm ? '되돌릴 수 없음' : undefined}
+      title={isGm ? '방 지우기' : '방 나가기'}
+      label={isGm ? '방 지우기' : '방 나가기'}
       onClose={onCancel}
       locked={busy}
     >
@@ -71,14 +71,13 @@ export function ExitRoomDialog({
           <>
             <p id="exit-desc" className={styles.text}>
               「{roomName}」{objectJosa(roomName)} 지우면 장면·캐릭터·이야기 기록이 모두 사라지고{' '}
-              <strong>되돌릴 수 없어요.</strong> 접속 중인 참가자에게는 방이 닫혔다고 알리고
-              내보내요.
+              <strong>되돌릴 수 없다.</strong> 접속 중인 참가자에게는 방이 닫혔다고 알리고 내보낸다.
             </p>
             <p className={styles.note}>
-              GM은 방을 나갈 수 없어요. 잠깐 쉬려는 거라면 그냥 창을 닫아도 방은 그대로 남아요.
+              GM은 방을 나갈 수 없다. 잠깐 쉬려면 창만 닫아도 방은 그대로 남는다.
             </p>
             <label className={styles.field}>
-              확인하려면 방 이름을 그대로 적어 주세요
+              확인용으로 방 이름 입력
               <input
                 ref={nameInput}
                 value={typed}
@@ -91,8 +90,8 @@ export function ExitRoomDialog({
           </>
         ) : (
           <p id="exit-desc" className={styles.text}>
-            「{roomName}」에서 나가면 내 방 목록에서도 빠져요. 내 캐릭터는 방에 남고, 초대 코드로
-            언제든 다시 들어올 수 있어요.
+            「{roomName}」에서 나가면 내 방 목록에서도 빠진다. 내 캐릭터는 방에 남고, 초대 코드로
+            언제든 다시 들어올 수 있다.
           </p>
         )}
         {error && (
