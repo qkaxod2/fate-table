@@ -64,7 +64,7 @@
   cursor: pointer;
   box-shadow:
     0 1px 0 var(--paper-edge),
-    0 14px 28px -18px rgb(40 25 10 / 0.6);
+    0 14px 28px -18px color-mix(in srgb, var(--shade) 60%, transparent);
   transition:
     transform var(--dur-enter) var(--ease-out),
     box-shadow var(--dur-enter) var(--ease-out),
@@ -78,7 +78,7 @@
   border-color: var(--ink-3);
   box-shadow:
     0 1px 0 var(--paper-edge),
-    0 24px 36px -18px rgb(40 25 10 / 0.65);
+    0 24px 36px -18px color-mix(in srgb, var(--shade) 65%, transparent);
 }
 
 /* 초상: 액자 안의 그림, 위에 테이프 한 조각 */
@@ -365,7 +365,7 @@
 }
 
 .stunt:not(:disabled):hover {
-  background: #f7e9e2;
+  background: var(--seal-tint);
 }
 
 .stunt:disabled {
@@ -600,8 +600,8 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgb(168 50 28 / 0.55) 15%,
-    rgb(168 50 28 / 0.55) 85%,
+    color-mix(in srgb, var(--seal) 55%, transparent) 15%,
+    color-mix(in srgb, var(--seal) 55%, transparent) 85%,
     transparent
   );
   pointer-events: none;
@@ -764,7 +764,7 @@
   border-color: var(--seal);
   box-shadow:
     0 1px 0 var(--paper-edge),
-    0 28px 44px -18px rgb(40 25 10 / 0.7);
+    0 28px 44px -18px color-mix(in srgb, var(--shade) 70%, transparent);
 }
 
 .pickCard[data-chosen]::after {

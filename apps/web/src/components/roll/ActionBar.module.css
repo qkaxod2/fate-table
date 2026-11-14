@@ -226,7 +226,7 @@
 
 .approach[aria-checked='true'] {
   border-color: var(--seal);
-  background: #f7e9e2;
+  background: var(--seal-tint);
 }
 
 .approach[aria-checked='true'] b,
@@ -331,7 +331,7 @@
 
 @keyframes focus-glow {
   50% {
-    box-shadow: 0 0 0 4px rgb(200 72 44 / 0.35);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--seal-hi) 35%, transparent);
   }
 }
 
@@ -523,7 +523,7 @@
   }
   .action[aria-checked='true'] {
     border-color: var(--seal);
-    background: #f7e9e2;
+    background: var(--seal-tint);
   }
   .apBtn {
     grid-row: 2;

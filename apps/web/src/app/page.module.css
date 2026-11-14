@@ -20,7 +20,7 @@
   border-radius: 12px;
   overflow: hidden;
   background: var(--card);
-  box-shadow: 0 24px 48px -32px rgb(40 25 10 / 0.45);
+  box-shadow: 0 24px 48px -32px color-mix(in srgb, var(--shade) 45%, transparent);
 }
 
 /* ---------- 표지 ---------- */

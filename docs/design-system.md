@@ -4,197 +4,260 @@
 > 용어는 /mnt/project-files/plan/glossary.md 기준.
 
 ## 0. 확정한 기본값 (열린 질문)
-| 질문 | 기본값 | 근거 |
-|---|---|---|
-| 온라인/오프라인 | 온라인 우선. 테이블 모드(큰 화면 보기 전용)는 P3 | 이벤트 구조상 나중에 추가 비용이 작음 |
-| 공개 범위 | 초대 링크 기반 비공개 그룹용. 공개 전환 가능 구조(방별 AI 생성 한도, 이용약관 동의 화면 자리만 확보) | 입문자 일행 우선 |
-| 첫 테마 | `paper`(기본, 인덱스 카드) + `fantasy` | 가장 흔한 장르 |
+
+| 질문            | 기본값                                                                                               | 근거                                  |
+| --------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| 온라인/오프라인 | 온라인 우선. 테이블 모드(큰 화면 보기 전용)는 P3                                                     | 이벤트 구조상 나중에 추가 비용이 작음 |
+| 공개 범위       | 초대 링크 기반 비공개 그룹용. 공개 전환 가능 구조(방별 AI 생성 한도, 이용약관 동의 화면 자리만 확보) | 입문자 일행 우선                      |
+| 첫 테마         | `paper`(기본, 인덱스 카드) + `fantasy`                                                               | 가장 흔한 장르                        |
 
 ## 1. 비주얼 컨셉: 책상 위의 인덱스 카드
+
 페이트 테이블에서 실제로 측면(특성)을 인덱스 카드에 적어 테이블 가운데 놓는 관습을 그대로 화면으로 옮긴다.
+
 - 바탕은 차분한 회녹색 책상, 특성은 **파란 가로줄 + 빨간 머리줄이 있는 인덱스 카드**에 손글씨체로 적힌다.
 - 운명점은 황동색 토큰(동전). 페이트 주사위는 +/−/빈 면이 있는 정사각 타일.
 - UI 크롬(버튼·패널)은 조용한 산세리프, 손글씨는 특성 문구에만 쓴다(절제).
 
 ## 2. 디자인 토큰 (CSS 변수, `src/styles/tokens.css`)
+
 ```css
 :root {
   /* surface */
-  --desk: #E9EBE6;        --desk-2: #DDE1DA;   /* 바탕, 패널 */
-  --card: #FFFEFA;        --card-edge: #D8D6CC;
-  --ink: #1F2933;         --ink-2: #52606D;    --ink-3: #8A949E;
+  --desk: #e9ebe6;
+  --desk-2: #dde1da; /* 바탕, 패널 */
+  --card: #fffefa;
+  --card-edge: #d8d6cc;
+  --ink: #1f2933;
+  --ink-2: #52606d;
+  --ink-3: #8a949e;
   /* index card */
-  --rule: #A9C1DC;        --rule-head: #D9786F;
+  --rule: #a9c1dc;
+  --rule-head: #d9786f;
   /* fate */
-  --token: #C98A1E;       --token-hi: #F2C46B;  --token-ink: #3A2A08;
+  --token: #c98a1e;
+  --token-hi: #f2c46b;
+  --token-ink: #3a2a08;
   /* outcome (semantic) */
-  --fail: #B8443A;  --tie: #56699A;  --success: #2C8559;  --style: #B98A12;
+  --fail: #b8443a;
+  --tie: #56699a;
+  --success: #2c8559;
+  --style: #b98a12;
   /* aspect kind edge */
-  --k-high: var(--token); --k-trouble: var(--fail); --k-normal: var(--ink-2);
-  --k-scene: #2F7F86; --k-consequence: #7A4E9A; --k-boost: var(--ink-3);
+  --k-high: var(--token);
+  --k-trouble: var(--fail);
+  --k-normal: var(--ink-2);
+  --k-scene: #2f7f86;
+  --k-consequence: #7a4e9a;
+  --k-boost: var(--ink-3);
   /* type */
-  --font-ui: "Pretendard", "IBM Plex Sans KR", system-ui, sans-serif;
-  --font-hand: "Gaegu", "Nanum Pen Script", var(--font-ui);
-  --font-num: "IBM Plex Mono", ui-monospace, monospace;
-  --fs-xs: 12px; --fs-sm: 13px; --fs-md: 15px; --fs-lg: 18px; --fs-xl: 24px; --fs-2xl: 32px;
+  --font-ui: 'Pretendard', 'IBM Plex Sans KR', system-ui, sans-serif;
+  --font-hand: 'Gaegu', 'Nanum Pen Script', var(--font-ui);
+  --font-num: 'IBM Plex Mono', ui-monospace, monospace;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 15px;
+  --fs-lg: 18px;
+  --fs-xl: 24px;
+  --fs-2xl: 32px;
   /* space / radius / shadow */
-  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px; --s-6: 32px;
-  --r-card: 6px; --r-ctl: 10px; --r-token: 999px;
-  --shadow-card: 0 1px 0 var(--card-edge), 0 6px 14px -8px rgb(31 41 51 / .35);
-  --dur-fast: 120ms; --dur-dice: 600ms; --dur-token: 700ms; --ease: cubic-bezier(.2,.8,.2,1);
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --r-card: 6px;
+  --r-ctl: 10px;
+  --r-token: 999px;
+  --shadow-card: 0 1px 0 var(--card-edge), 0 6px 14px -8px rgb(31 41 51 / 0.35);
+  --dur-fast: 120ms;
+  --dur-dice: 600ms;
+  --dur-token: 700ms;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-[data-theme-mode="dark"] {
-  --desk: #15181B; --desk-2: #1C2024; --card: #23272C; --card-edge: #343A41;
-  --ink: #E6E8E3; --ink-2: #B4BCC4; --ink-3: #7D8790;
-  --rule: #34506E; --rule-head: #A4544C;
-  --token: #E0A83A; --token-hi: #F6D48C; --token-ink: #2A1E05;
-  --fail: #E06C61; --tie: #8C9CC8; --success: #4FB383; --style: #E2B94A;
-  --k-scene: #4FA8AF; --k-consequence: #A880C6;
+[data-theme-mode='dark'] {
+  --desk: #15181b;
+  --desk-2: #1c2024;
+  --card: #23272c;
+  --card-edge: #343a41;
+  --ink: #e6e8e3;
+  --ink-2: #b4bcc4;
+  --ink-3: #7d8790;
+  --rule: #34506e;
+  --rule-head: #a4544c;
+  --token: #e0a83a;
+  --token-hi: #f6d48c;
+  --token-ink: #2a1e05;
+  --fail: #e06c61;
+  --tie: #8c9cc8;
+  --success: #4fb383;
+  --style: #e2b94a;
+  --k-scene: #4fa8af;
+  --k-consequence: #a880c6;
 }
 ```
+
 - 장르 테마는 `[data-genre="fantasy"]`에서 `--desk`, `--card`, `--rule`, `--font-hand`만 교체(예: 양피지 카드, 갈색 괘선).
 - 결과는 색만으로 구분하지 않는다: 아이콘(✕ / = / ✓ / ★)과 문구를 항상 함께.
 - 대비 4.5:1 이상, `prefers-reduced-motion` 시 주사위는 즉시 결과, 토큰은 페이드만.
 
 ## 3. 레이아웃
+
 - 데스크톱(≥1200): `PartyRail 240px | SceneStage 1fr | StoryLog 340px`, 하단 `ActionBar 72px` 고정. GM은 우측에 `GmDrawer 320px`가 로그 위로 슬라이드.
 - 태블릿(768–1199): PartyRail을 상단 가로 띠(아바타+운명점)로 접음, StoryLog는 우측 서랍.
 - 모바일(<768): 하단 탭 `내 캐릭터 | 장면 | 로그`, ActionBar는 탭 위 고정. 굴림·발동·강요·피해는 바텀 시트.
 
 ## 4. 컴포넌트 목록 (`src/components/`)
-| 컴포넌트 | 위치 | 주요 props | 상태/변형 |
-|---|---|---|---|
-| `AspectCard` | aspect/ | aspect, freeInvokes, canInvoke, canCompel, onInvoke, onCompel | kind별 테두리, hidden(GM만), boost는 점선, 무료 발동 체크 칸 |
-| `AspectBoard` | aspect/ | sceneAspects, zoneAspects | 장면 특성 가로 배열, 드롭으로 추가 |
-| `FatePointToken` | fate/ | count, size | 개수 표시, 이동 애니(`flyTo`) |
-| `FateEconomyBar` | fate/ | players[], gmPool | 상단 미니 그래프 |
-| `FateDie` / `DiceTray` | roll/ | faces[-1,0,1]x4, mode('2d'\|'3d') | rolling / settled / reduced-motion |
-| `LadderBadge` | roll/ | value | "양호 +3" 형식, 등급표 툴팁 |
-| `ActionBar` | roll/ | onRoll | 행동 4버튼 → 접근법 6버튼(등급 표시) → 대상/난이도 → 굴림 |
-| `InvokeTray` | roll/ | roll, invokables[], fatePoints | 결과를 바꾸는 카드 강조, +2/다시 굴림, 확정 |
-| `OutcomeBanner` | roll/ | action, outcome, shifts | 행동×결과별 문구(아래 6절), 후속 버튼 |
-| `OpposedRollPrompt` | roll/ | request | 방어자에게 뜨는 요청 시트, 대기 표시 |
-| `CompelOffer` | compel/ | aspect, text, from | 수락(+1)/거절(−1) 카드, GM은 발송 폼 |
-| `StressTrack` | sheet/ | boxes[3] | 체크 토글 |
-| `ConsequenceSlots` | sheet/ | mild, moderate, severe | 경상2/중상4/중태6, 회복 중 표시 |
-| `DamageAbsorber` | conflict/ | incoming, stress, consequences | 조합 제안 칩, 남은 피해 실시간, 탈락/양보 |
-| `CharacterSheet` | sheet/ | character, editable | 카드형 시트 |
-| `CharacterMini` | party/ | character | 아바타, 운명점, 스트레스, 후유증 점 |
-| `PartyRail` | party/ | characters[] | |
-| `SceneStage` | scene/ | scene, background | 배경 일러스트, AspectBoard, ZoneBoard |
-| `ZoneBoard` | scene/ | zones[], tokens[] | 구역 상자+연결선 (P1) |
-| `StoryLog` / `LogEntry` | log/ | events[] | 굴림·발동·강요·채팅·내레이션, 음성 재생 버튼 |
-| `CreationWizard` | create/ | draft | 6단계 + 진행 표시 |
-| `ApproachAllocator` | create/ | ratings | +3/+2/+2/+1/+1/+0 칩 드래그(키보드로도) |
-| `StuntComposer` | create/ | stunt | 문장 템플릿 빈칸 채우기 |
-| `PortraitPicker` | media/ | prompt, candidates | NAI 후보 4장, 업로드 |
-| `MediaJobToast` | media/ | job | 대기 순번/생성 중/완료 |
-| `SfxPanel` | media/ | library[], ambient | GM 서랍 '효과음' 탭: 설명 입력 → ElevenLabs 생성 → 라이브러리 → 재생(모두 동시, `sfx.played`), 장면 앰비언트 루프 켜기/끄기 |
-| `SoundSettings` | media/ | volume, sfxOn | 입장 시 '소리 켜기' 1회 바, 개인 볼륨·효과음 끄기(localStorage) |
-| `GmDrawer` | gm/ | | 탭: 강요 · NPC · 장면 · 효과음 · 메모 · 이정표 |
-| `Glossary` / `Term` | ui/ | term | 용어 툴팁(입문 모드) |
-| 기본 UI | ui/ | | Button, IconButton, Sheet(바텀시트), Dialog, Tabs, Toast, Tooltip, Chip |
+
+| 컴포넌트                | 위치      | 주요 props                                                    | 상태/변형                                                                                                                   |
+| ----------------------- | --------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `AspectCard`            | aspect/   | aspect, freeInvokes, canInvoke, canCompel, onInvoke, onCompel | kind별 테두리, hidden(GM만), boost는 점선, 무료 발동 체크 칸                                                                |
+| `AspectBoard`           | aspect/   | sceneAspects, zoneAspects                                     | 장면 특성 가로 배열, 드롭으로 추가                                                                                          |
+| `FatePointToken`        | fate/     | count, size                                                   | 개수 표시, 이동 애니(`flyTo`)                                                                                               |
+| `FateEconomyBar`        | fate/     | players[], gmPool                                             | 상단 미니 그래프                                                                                                            |
+| `FateDie` / `DiceTray`  | roll/     | faces[-1,0,1]x4, mode('2d'\|'3d')                             | rolling / settled / reduced-motion                                                                                          |
+| `LadderBadge`           | roll/     | value                                                         | "양호 +3" 형식, 등급표 툴팁                                                                                                 |
+| `ActionBar`             | roll/     | onRoll                                                        | 행동 4버튼 → 접근법 6버튼(등급 표시) → 대상/난이도 → 굴림                                                                   |
+| `InvokeTray`            | roll/     | roll, invokables[], fatePoints                                | 결과를 바꾸는 카드 강조, +2/다시 굴림, 확정                                                                                 |
+| `OutcomeBanner`         | roll/     | action, outcome, shifts                                       | 행동×결과별 문구(아래 6절), 후속 버튼                                                                                       |
+| `OpposedRollPrompt`     | roll/     | request                                                       | 방어자에게 뜨는 요청 시트, 대기 표시                                                                                        |
+| `CompelOffer`           | compel/   | aspect, text, from                                            | 수락(+1)/거절(−1) 카드, GM은 발송 폼                                                                                        |
+| `StressTrack`           | sheet/    | boxes[3]                                                      | 체크 토글                                                                                                                   |
+| `ConsequenceSlots`      | sheet/    | mild, moderate, severe                                        | 경상2/중상4/중태6, 회복 중 표시                                                                                             |
+| `DamageAbsorber`        | conflict/ | incoming, stress, consequences                                | 조합 제안 칩, 남은 피해 실시간, 탈락/양보                                                                                   |
+| `CharacterSheet`        | sheet/    | character, editable                                           | 카드형 시트                                                                                                                 |
+| `CharacterMini`         | party/    | character                                                     | 아바타, 운명점, 스트레스, 후유증 점                                                                                         |
+| `PartyRail`             | party/    | characters[]                                                  |                                                                                                                             |
+| `SceneStage`            | scene/    | scene, background                                             | 배경 일러스트, AspectBoard, ZoneBoard                                                                                       |
+| `ZoneBoard`             | scene/    | zones[], tokens[]                                             | 구역 상자+연결선 (P1)                                                                                                       |
+| `StoryLog` / `LogEntry` | log/      | events[]                                                      | 굴림·발동·강요·채팅·내레이션, 음성 재생 버튼                                                                                |
+| `CreationWizard`        | create/   | draft                                                         | 6단계 + 진행 표시                                                                                                           |
+| `ApproachAllocator`     | create/   | ratings                                                       | +3/+2/+2/+1/+1/+0 칩 드래그(키보드로도)                                                                                     |
+| `StuntComposer`         | create/   | stunt                                                         | 문장 템플릿 빈칸 채우기                                                                                                     |
+| `PortraitPicker`        | media/    | prompt, candidates                                            | NAI 후보 4장, 업로드                                                                                                        |
+| `MediaJobToast`         | media/    | job                                                           | 대기 순번/생성 중/완료                                                                                                      |
+| `SfxPanel`              | media/    | library[], ambient                                            | GM 서랍 '효과음' 탭: 설명 입력 → ElevenLabs 생성 → 라이브러리 → 재생(모두 동시, `sfx.played`), 장면 앰비언트 루프 켜기/끄기 |
+| `SoundSettings`         | media/    | volume, sfxOn                                                 | 입장 시 '소리 켜기' 1회 바, 개인 볼륨·효과음 끄기(localStorage)                                                             |
+| `GmDrawer`              | gm/       |                                                               | 탭: 강요 · NPC · 장면 · 효과음 · 메모 · 이정표                                                                              |
+| `Glossary` / `Term`     | ui/       | term                                                          | 용어 툴팁(입문 모드)                                                                                                        |
+| 기본 UI                 | ui/       |                                                               | Button, IconButton, Sheet(바텀시트), Dialog, Tabs, Toast, Tooltip, Chip                                                     |
 
 ## 5. 화면 목록 (App Router 경로)
-| 경로 | 화면 | 핵심 내용 |
-|---|---|---|
-| `/` | 랜딩 | "바로 해보기"(샘플 원샷) / 방 만들기 / 방 참가 |
-| `/try` | 샘플 원샷 | 샘플 캐릭터 4명 중 선택 → 바로 세션 화면, 단계별 코치마크 |
-| `/rooms/new` | 방 만들기 | 캠페인 이름, 테마, AI 사용 여부·한도 |
-| `/r/[roomId]/join` | 참가 | 닉네임, 캐릭터 선택/새로 만들기 |
-| `/r/[roomId]/create` | 캐릭터 생성 | CreationWizard |
-| `/r/[roomId]` | 세션 | 메인 3단 레이아웃 |
-| `/r/[roomId]/sheet/[charId]` | 시트 상세 | 모바일 전체 화면 시트 |
-| `/r/[roomId]/replay/[sessionId]` | 리플레이 | 공유용 읽기 전용 |
+
+| 경로                             | 화면        | 핵심 내용                                                 |
+| -------------------------------- | ----------- | --------------------------------------------------------- |
+| `/`                              | 랜딩        | "바로 해보기"(샘플 원샷) / 방 만들기 / 방 참가            |
+| `/try`                           | 샘플 원샷   | 샘플 캐릭터 4명 중 선택 → 바로 세션 화면, 단계별 코치마크 |
+| `/rooms/new`                     | 방 만들기   | 캠페인 이름, 테마, AI 사용 여부·한도                      |
+| `/r/[roomId]/join`               | 참가        | 닉네임, 캐릭터 선택/새로 만들기                           |
+| `/r/[roomId]/create`             | 캐릭터 생성 | CreationWizard                                            |
+| `/r/[roomId]`                    | 세션        | 메인 3단 레이아웃                                         |
+| `/r/[roomId]/sheet/[charId]`     | 시트 상세   | 모바일 전체 화면 시트                                     |
+| `/r/[roomId]/replay/[sessionId]` | 리플레이    | 공유용 읽기 전용                                          |
 
 ## 6. 결과 안내 문구 (OutcomeBanner)
-| 행동 | 실패 | 동점 | 성공 | 대성공 |
-|---|---|---|---|---|
-| 극복 | 실패했어요. 또는 큰 대가를 치르고 성공할 수 있어요 | 작은 대가를 치르고 성공해요 | 성공! | 대성공! 부스트도 얻어요 |
-| 이점 창출 | 특성을 만들지 못했어요(상대가 무료 발동을 얻을 수 있어요) | 부스트를 얻어요 | 특성 + 무료 발동 1 | 특성 + 무료 발동 2 |
-| 공격 | 빗나갔어요 | 부스트를 얻어요 | 차이만큼 피해 | 피해, 또는 피해 1을 줄이고 부스트 |
-| 방어 | 상대의 행동이 통해요 | 상대가 동점 결과를 얻어요 | 막아냈어요 | 막아내고 부스트를 얻어요 |
+
+| 행동      | 실패                                                      | 동점                        | 성공               | 대성공                            |
+| --------- | --------------------------------------------------------- | --------------------------- | ------------------ | --------------------------------- |
+| 극복      | 실패했어요. 또는 큰 대가를 치르고 성공할 수 있어요        | 작은 대가를 치르고 성공해요 | 성공!              | 대성공! 부스트도 얻어요           |
+| 이점 창출 | 특성을 만들지 못했어요(상대가 무료 발동을 얻을 수 있어요) | 부스트를 얻어요             | 특성 + 무료 발동 1 | 특성 + 무료 발동 2                |
+| 공격      | 빗나갔어요                                                | 부스트를 얻어요             | 차이만큼 피해      | 피해, 또는 피해 1을 줄이고 부스트 |
+| 방어      | 상대의 행동이 통해요                                      | 상대가 동점 결과를 얻어요   | 막아냈어요         | 막아내고 부스트를 얻어요          |
 
 ## 7. 모션 사양
-| 이벤트 | 연출 | 시간 |
-|---|---|---|
-| 굴림 | 주사위 4개가 순서대로 뒤집힘(80ms 간격) | 600ms |
-| 발동 | 카드가 살짝 들리고 +2 배지가 합계로 날아감, 토큰이 플레이어→중앙 | 700ms |
-| 강요 수락 | 토큰이 GM→플레이어 | 700ms |
-| 대성공 | 합계 숫자에 금색 광택 1회 | 400ms |
-| 후유증 | 카드가 슬롯에 꽂힘 | 300ms |
+
+| 이벤트    | 연출                                                             | 시간  |
+| --------- | ---------------------------------------------------------------- | ----- |
+| 굴림      | 주사위 4개가 순서대로 뒤집힘(80ms 간격)                          | 600ms |
+| 발동      | 카드가 살짝 들리고 +2 배지가 합계로 날아감, 토큰이 플레이어→중앙 | 700ms |
+| 강요 수락 | 토큰이 GM→플레이어                                               | 700ms |
+| 대성공    | 합계 숫자에 금색 광택 1회                                        | 400ms |
+| 후유증    | 카드가 슬롯에 꽂힘                                               | 300ms |
 
 ### 7-1. 움직임 어휘 (18절에서 다듬음)
+
 모든 움직임은 `tokens.css`의 같은 곡선과 시간을 써요. 자세한 기준은 18절이에요.
 
 ## 8. 접근성·입력
+
 - 단축키: 1–4 행동, Q/W/E/A/S/D 접근법(신중/지략/화려/완력/신속/은밀), Space 굴림, I 발동 트레이, Esc 취소.
 - 모든 드래그는 버튼 대안(ApproachAllocator는 선택 후 슬롯 클릭).
 - 로그는 `aria-live="polite"`.
 
 ---
+
 # v2 보강 (architecture.md v1 리뷰 반영)
 
 ## 9. 아키텍처와의 매핑
+
 - 특성 kind → 카드 테두리 토큰: `high→--k-high`, `trouble→--k-trouble`, `normal→--k-normal`, `situation→--k-scene`, `consequence→--k-consequence`, `boost→--k-boost`(점선).
 - 테마 속성: `data-theme-mode="light|dark"`(시스템 기본 따름), `data-genre="paper|fantasy"`.
 - 연출은 `fx` 큐 항목 하나 = 7절 모션 하나. 도착 3초 지난 이벤트는 연출 생략, `prefers-reduced-motion`이면 모든 fx를 페이드 150ms로 대체.
 - 효과음은 fx와 같은 키 이름을 씀: `dice-roll`, `dice-settle`, `token-flip`, `token-fly`, `success`, `style-chime`, `fail-thud`, `compel-card`, `consequence-slot`, `scene-transition`.
 
 ## 10. 프레즌스 표시 (PartyRail)
-| presence.status | 표시 |
-|---|---|
-| idle | 없음 |
-| choosing | 아바타 아래 "고르는 중…" 점 세 개 |
-| rolling | 작은 주사위 아이콘 회전 |
-| typing | 로그 하단 "미라가 입력 중" |
-오프라인 참가자는 카드 채도 40%로 낮춤.
+
+| presence.status                         | 표시                              |
+| --------------------------------------- | --------------------------------- |
+| idle                                    | 없음                              |
+| choosing                                | 아바타 아래 "고르는 중…" 점 세 개 |
+| rolling                                 | 작은 주사위 아이콘 회전           |
+| typing                                  | 로그 하단 "미라가 입력 중"        |
+| 오프라인 참가자는 카드 채도 40%로 낮춤. |
 
 ## 11. 오류 코드 → 사용자 문구 (Toast)
-| code | 문구 | 다음 행동 |
-|---|---|---|
-| NOT_ENOUGH_FATE_POINTS | 운명점이 부족해요. | 무료 발동이 있는 특성을 써 보세요 |
-| ASPECT_ALREADY_INVOKED | 이 특성은 이번 굴림에 이미 썼어요. | 다른 특성 카드를 골라 주세요 |
-| ROLL_NOT_OPEN | 이미 확정된 굴림이에요. | — |
-| FORBIDDEN_ROLE | GM만 할 수 있는 일이에요. | — |
-| INVALID_CHARACTER | 캐릭터 시트에 고칠 곳이 있어요. | 해당 단계로 이동 버튼 |
-| QUOTA_EXCEEDED | 이번 달 생성 한도를 다 썼어요. | GM이 방 설정에서 늘릴 수 있어요 |
-| STALE_STATE | (표시 안 함, 자동 재시도) | — |
-| NOT_MEMBER | 이 방의 참가자가 아니에요. | 초대 링크로 다시 들어오기 |
+
+| code                   | 문구                               | 다음 행동                         |
+| ---------------------- | ---------------------------------- | --------------------------------- |
+| NOT_ENOUGH_FATE_POINTS | 운명점이 부족해요.                 | 무료 발동이 있는 특성을 써 보세요 |
+| ASPECT_ALREADY_INVOKED | 이 특성은 이번 굴림에 이미 썼어요. | 다른 특성 카드를 골라 주세요      |
+| ROLL_NOT_OPEN          | 이미 확정된 굴림이에요.            | —                                 |
+| FORBIDDEN_ROLE         | GM만 할 수 있는 일이에요.          | —                                 |
+| INVALID_CHARACTER      | 캐릭터 시트에 고칠 곳이 있어요.    | 해당 단계로 이동 버튼             |
+| QUOTA_EXCEEDED         | 이번 달 생성 한도를 다 썼어요.     | GM이 방 설정에서 늘릴 수 있어요   |
+| STALE_STATE            | (표시 안 함, 자동 재시도)          | —                                 |
+| NOT_MEMBER             | 이 방의 참가자가 아니에요.         | 초대 링크로 다시 들어오기         |
 
 ## 12. 되돌리기 (event.undo)
+
 - GM만. 로그 항목에 마우스를 올리면(모바일은 길게 누르기) "되돌리기" 메뉴. 확인은 같은 자리에서 "되돌릴까요? [되돌리기][취소]" 인라인으로.
 - 되돌려진 항목은 로그에 취소선 + "GM이 되돌림"으로 남김(삭제하지 않음).
 
 ## 13. 빈 상태·첫 실행
-| 화면 | 빈 상태 문구 | 행동 |
-|---|---|---|
-| 장면 특성 없음 | "아직 장면 특성이 없어요. 장면을 한 줄로 묘사해 볼까요?" | GM: 특성 추가 |
-| 로그 없음 | "첫 굴림이 여기 기록돼요." | — |
-| 캐릭터 없음(참가 직후) | "샘플 캐릭터로 바로 시작하거나 직접 만들 수 있어요." | 샘플 고르기 / 만들기 |
-| 소리 꺼짐 | 상단 작은 바 "소리 켜기" (브라우저 자동 재생 정책상 1회 필요) | 소리 켜기 |
-| AI 꺼진 방 | 배경 자리에 테마 텍스처 + 장면 이름 | — |
+
+| 화면                   | 빈 상태 문구                                                  | 행동                 |
+| ---------------------- | ------------------------------------------------------------- | -------------------- |
+| 장면 특성 없음         | "아직 장면 특성이 없어요. 장면을 한 줄로 묘사해 볼까요?"      | GM: 특성 추가        |
+| 로그 없음              | "첫 굴림이 여기 기록돼요."                                    | —                    |
+| 캐릭터 없음(참가 직후) | "샘플 캐릭터로 바로 시작하거나 직접 만들 수 있어요."          | 샘플 고르기 / 만들기 |
+| 소리 꺼짐              | 상단 작은 바 "소리 켜기" (브라우저 자동 재생 정책상 1회 필요) | 소리 켜기            |
+| AI 꺼진 방             | 배경 자리에 테마 텍스처 + 장면 이름                           | —                    |
 
 ## 14. /try 코치마크 (샘플 원샷 5분 경로)
+
 1. "이 사람이 당신의 캐릭터예요" → 캐릭터 카드 강조
 2. "행동을 골라요: 극복" → 행동 바
 3. "어떻게 할까요? 접근법을 골라요" → 접근법 버튼
 4. "굴려 볼까요?" → 굴리기
-5. 실패/동점이면 "특성을 발동하면 +2!" → 발동 트레이, 성공이면 "잘했어요! 다음 장면으로" 
+5. 실패/동점이면 "특성을 발동하면 +2!" → 발동 트레이, 성공이면 "잘했어요! 다음 장면으로"
 6. GM 역할 NPC(자동)가 강요 1회 제안 → 운명점 거래 체험
-각 단계는 건너뛰기 가능, 다시 보기는 도움말 메뉴.
+   각 단계는 건너뛰기 가능, 다시 보기는 도움말 메뉴.
 
 ## 15. 랜딩 (/)
+
 - 첫 화면 왼쪽: 제목 "운명점을 주고받는 테이블", 버튼 [바로 해보기] [방 만들기], 초대 코드 입력칸.
 - 오른쪽: 인덱스 카드 세 장이 책상 위에 흩어진 정지 화면(핵심 컨셉/약점/장면 특성 예시)과 운명점 토큰.
 - 하단: Fate Accelerated(CC BY 3.0, Evil Hat) 기반 표기.
 
 ## 16. 음성 정책 변경 (사용자 결정)
+
 - ElevenLabs는 **효과음 전용**. 내레이션 낭독·NPC 목소리(TTS)는 범위에서 제외.
 - `narration.posted`는 텍스트 전용: 로그에서 왼쪽 굵은 괘선과 "GM 서술" 라벨로 강조하고 본문은 `--ink-2`.
 - 기본 효과음 10종은 빌드 시 생성해 fx와 같은 타이밍에 재생. GM이 만든 효과음은 `sfx.played` 이벤트로 모두에게 동시 재생, 앰비언트 루프는 장면이 끝나면 자동 정지.
 
 ## 17. 밤의 무대 v2: 판정 연출 · 주사위 토큰 (2026-10-23)
+
 판정 연출(07)을 밤의 무대 테마에 맞게 다시 잡았어요. 시안은 `plan/screens/index.html`이에요.
 
 - **판정 글자 (21절에서 바꿈):** 크게 찍는 글자는 한국어 결과 **실패 · 동점 · 성공 · 대성공**이에요. 함렛(`--f-head`) 800에 판정 색을 먹에 섞어 찍고, 느낌표는 붙이지 않아요. 예전의 영어 연출 글자(MISS·GOOD·GREAT·PERFECT)는 화면에 쓰지 않아요.
@@ -261,6 +324,7 @@
 "3열 대시보드라 구시대적이다", "남색·금·보라 빛 번짐이 AI가 만든 판타지 UI 같다"는 피드백을 받았어요. 그래서 화면 구조와 색을 함께 새로 잡았어요. 시안을 여러 번 만들어 비교한 끝에 정한 방향이에요.
 
 **구조**
+
 - **왼쪽 무대:**
   - 배경 그림과 스탠딩이 크게 보여요.
   - 위에 장 제목과 상대 이름표, 가운데에 판정 카드(굴리기 전에는 예고 카드), 아래 테이블에 특성 인덱스 카드가 놓여요.
@@ -274,6 +338,7 @@
 - **좁은 화면(1100px 이하):** 무대가 위, 책이 아래예요.
 
 **규칙**
+
 - **읽는 것은 모두 종이 위에 둬요.** 그림 위에 반투명 어두운 패널을 깔지 않아요. 상대 이름표, 판정 카드, 지도, 트래커, 알림 모두 불투명 종이(`--card`)에 먹 글자예요.
 - **색 네 가지:**
   - 종이(`--paper`, `--card`)
@@ -377,6 +442,7 @@
 - 움직임 줄이기를 켜면 흔들기 · 떨림 · 베인 자국은 빠지고 색만 바뀌어요.
 
 ## 27. 장식 걷어내기 (2026-11-14)
+
 "AI가 만든 사이트 같다"는 피드백을 받고, 종이·책 은유를 흉내 내던 장식을 걷어냈어요. 색(종이·먹·주홍·놋쇠)과 그림, 화면 구조는 그대로예요.
 
 - **글꼴은 둘만:** 화면 전체는 IBM Plex Sans KR, 판정 연출의 라틴 글자만 Cinzel이에요. 손글씨체(Nanum Pen Script), 제목 세리프(Hahmlet), 책 본문체(Gowun Batang), 숫자 세리프(Fraunces)는 뺐어요. `--f-head`·`--f-book`·`--f-hand`·`--f-fig`는 옛 코드가 읽으니 이름만 남기고 `--f-ui`를 가리켜요.
@@ -384,3 +450,13 @@
 - **카드:** 1px `--paper-edge` 테두리, 둥글기 12px(큰 면)·10px(컨트롤), 그림자는 부드러운 것 하나만.
 - **특성 카드:** 흰 카드에 600 굵기 문구 한 줄, 종류는 위쪽 작은 글자와 왼쪽 4px 색 막대로만 구분해요.
 - **1순위 버튼:** 주홍 단색, 둥글기 `--r-ctl`, 아래로 눌린 단단한 그림자는 쓰지 않아요.
+
+## 28. 강철과 진홍 팔레트 (2026-11-14)
+
+크림 바탕 + 주홍 포인트는 지금 AI가 만든 화면이 가장 많이 몰리는 조합이라, 튜토리얼 그림에서 색을 다시 뽑았어요.
+
+- **바탕:** 하윤의 갑옷 회색. `--paper #e4e6ea`, `--night #d9dce1`, 카드 `--card #f7f7f8`, 선 `--paper-edge #c9cdd4`
+- **글자:** `--ink-1 #1c1e25`, `--ink-2 #474b57`, `--ink-3 #626774`
+- **강조:** 망토의 진홍. `--seal #8f2634`, `--seal-hi #a8323f`, 옅은 바탕 `--seal-tint`
+- **운명점:** 칼자루의 놋쇠. `--brass`는 그대로, 짙은 글자용 `--brass-ink #6e5520`
+- **그림자:** 따뜻한 갈색 대신 `--shade #161820`을 섞어 써요. 컴포넌트에 박혀 있던 주홍·갈색 rgb 값은 모두 `color-mix(… var(--seal|--shade) …)`로 바꿨어요.

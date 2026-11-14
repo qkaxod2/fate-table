@@ -75,7 +75,7 @@
   bottom: -8px;
   height: 6px;
   border-radius: 50%;
-  background: rgb(60 40 20 / 0.32);
+  background: color-mix(in srgb, var(--shade) 32%, transparent);
   filter: blur(3px);
   z-index: -1;
 }
@@ -87,7 +87,11 @@
   inset: -40%;
   z-index: -1;
   border-radius: 50%;
-  background: radial-gradient(closest-side, rgb(60 40 20 / 0.28), transparent);
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--shade) 28%, transparent),
+    transparent
+  );
   opacity: 0;
   pointer-events: none;
 }

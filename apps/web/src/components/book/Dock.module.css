@@ -13,7 +13,7 @@
   background: var(--paper-grain), var(--paper);
   box-shadow:
     0 -1px 0 var(--paper-edge),
-    0 -14px 22px -18px rgb(40 25 10 / 0.5);
+    0 -14px 22px -18px color-mix(in srgb, var(--shade) 50%, transparent);
 }
 
 /*
@@ -46,7 +46,7 @@
     padding-bottom: env(safe-area-inset-bottom);
     box-shadow:
       0 -1px 0 var(--paper-edge),
-      0 -12px 28px -14px rgb(40 25 10 / 0.6);
+      0 -12px 28px -14px color-mix(in srgb, var(--shade) 60%, transparent);
   }
   :global(body:has([data-sheet]:not([data-coach]))) .dock {
     display: none;

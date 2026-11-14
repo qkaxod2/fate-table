@@ -43,7 +43,7 @@
 }
 
 .item[data-active] {
-  background: #f7e9e2;
+  background: var(--seal-tint);
   box-shadow: inset 3px 0 0 var(--seal);
 }
 

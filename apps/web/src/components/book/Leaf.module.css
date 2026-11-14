@@ -30,7 +30,7 @@
   background: var(--paper-grain), var(--card);
   color: var(--ink-1);
   box-shadow:
-    inset 16px 0 22px -18px rgb(90 60 20 / 0.45),
+    inset 16px 0 22px -18px color-mix(in srgb, var(--shade) 45%, transparent),
     0 1px 0 var(--paper-edge),
     0 30px 70px -24px rgb(20 12 4 / 0.85);
   outline: none;

@@ -45,7 +45,7 @@
   background: var(--card);
   box-shadow:
     0 0 0 1px var(--paper-edge),
-    0 18px 40px -14px rgb(40 25 10 / 0.55);
+    0 18px 40px -14px color-mix(in srgb, var(--shade) 55%, transparent);
   transform-origin: bottom left;
   animation: pop-in var(--dur-enter) var(--ease-out) backwards;
 }

@@ -45,7 +45,7 @@
 
 @keyframes glow {
   50% {
-    box-shadow: 0 0 0 4px rgb(200 72 44 / 0.25);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--seal-hi) 25%, transparent);
   }
 }
 
@@ -130,7 +130,7 @@
   background: var(--paper-grain), var(--card);
   box-shadow:
     0 0 0 1px var(--paper-edge),
-    0 22px 44px -16px rgb(40 25 10 / 0.6);
+    0 22px 44px -16px color-mix(in srgb, var(--shade) 60%, transparent);
   animation: drawer-in var(--dur-enter) var(--ease-out) backwards;
 }
 
@@ -311,7 +311,7 @@
 
 .chips button[aria-pressed='true'] {
   border-color: var(--seal);
-  background: #f7e9e2;
+  background: var(--seal-tint);
   color: var(--seal);
 }
 

@@ -145,7 +145,7 @@
   border: 1px solid var(--paper-edge);
   border-radius: 12px;
   background: var(--card);
-  box-shadow: 0 24px 48px -32px rgb(40 25 10 / 0.45);
+  box-shadow: 0 24px 48px -32px color-mix(in srgb, var(--shade) 45%, transparent);
 }
 
 .form {
@@ -195,7 +195,7 @@
 .stunt input:focus-visible,
 .stunt select:focus-visible {
   border-bottom-color: var(--seal);
-  outline: 2px solid rgb(168 50 28 / 0.35);
+  outline: 2px solid color-mix(in srgb, var(--seal) 35%, transparent);
   outline-offset: 1px;
 }
 
@@ -390,7 +390,7 @@
   border: 0;
   background: var(--seal);
   color: var(--seal-ink);
-  box-shadow: 0 12px 22px -12px rgb(125 36 20 / 0.7);
+  box-shadow: 0 12px 22px -12px color-mix(in srgb, var(--seal) 70%, transparent);
 }
 
 .primary:not(:disabled):hover {
@@ -444,7 +444,7 @@
   background: var(--paper-grain), var(--card);
   box-shadow:
     0 1px 0 var(--paper-edge),
-    0 22px 36px -22px rgb(40 25 10 / 0.6);
+    0 22px 36px -22px color-mix(in srgb, var(--shade) 60%, transparent);
 }
 
 .sheetTop {
@@ -461,7 +461,7 @@
   background: var(--plate);
   box-shadow:
     0 0 0 1px var(--paper-edge),
-    0 6px 12px -8px rgb(40 25 10 / 0.6);
+    0 6px 12px -8px color-mix(in srgb, var(--shade) 60%, transparent);
 }
 
 .portrait,
@@ -829,13 +829,13 @@
 
 @keyframes saved-ring {
   0% {
-    box-shadow: 0 0 0 0 rgb(168 50 28 / 0.8);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--seal) 80%, transparent);
   }
   40% {
-    box-shadow: 0 0 0 8px rgb(168 50 28 / 0.25);
+    box-shadow: 0 0 0 8px color-mix(in srgb, var(--seal) 25%, transparent);
   }
   100% {
-    box-shadow: 0 0 0 0 rgb(168 50 28 / 0);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--seal) 0%, transparent);
   }
 }
 

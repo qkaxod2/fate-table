@@ -118,10 +118,10 @@
   0%,
   70%,
   100% {
-    box-shadow: 0 0 0 0 rgb(200 72 44 / 0);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--seal-hi) 0%, transparent);
   }
   35% {
-    box-shadow: 0 0 0 4px rgb(200 72 44 / 0.25);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--seal-hi) 25%, transparent);
   }
 }
 

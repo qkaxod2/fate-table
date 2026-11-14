@@ -18,7 +18,7 @@
   border-radius: 12px;
   background: var(--card);
   color: var(--ink-1);
-  box-shadow: 0 24px 48px -32px rgb(40 25 10 / 0.45);
+  box-shadow: 0 24px 48px -32px color-mix(in srgb, var(--shade) 45%, transparent);
 }
 
 .back {
@@ -74,7 +74,7 @@
 
 .field input:focus-visible {
   border-bottom-color: var(--seal);
-  outline: 2px solid rgb(168 50 28 / 0.35);
+  outline: 2px solid color-mix(in srgb, var(--seal) 35%, transparent);
   outline-offset: 1px;
 }
 
@@ -106,7 +106,7 @@
   color: var(--seal-ink);
   font: 600 var(--fs-md) / 1.2 var(--f-ui);
   cursor: pointer;
-  box-shadow: 0 12px 22px -12px rgb(125 36 20 / 0.7);
+  box-shadow: 0 12px 22px -12px color-mix(in srgb, var(--seal) 70%, transparent);
 }
 
 .primary:disabled {
