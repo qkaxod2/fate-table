@@ -209,7 +209,7 @@
     font-size: 22px;
   }
   .pickHand {
-    font-size: 21px;
+    font-size: var(--fs-sm);
   }
   .pickIndex {
     margin-top: 8px;
