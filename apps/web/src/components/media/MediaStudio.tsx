@@ -42,24 +42,24 @@ interface Props {
 const COPY: Record<PromptKind, { what: string; placeholder: string; tags: string; wait: string }> =
   {
     scene: {
-      what: '어떤 곳인가요?',
-      placeholder: '예: 도적들이 불을 지르고 숨어 있는 시골 곡물 창고. 밤, 연기가 자욱해요.',
+      what: '어떤 곳?',
+      placeholder: '예: 도적들이 불을 지르고 숨어 있는 시골 곡물 창고. 밤, 연기가 자욱하다.',
       tags: 'outdoors, ruins, ancient forest, moss, stone pillars, night, moonlight, fog',
-      wait: '배경은 보통 15초 안팎 걸려요',
+      wait: '배경은 보통 15초 안팎',
     },
     npc: {
-      what: '어떤 사람인가요?',
+      what: '어떤 사람?',
       placeholder:
-        '예: 덩치 큰 산적 두목. 털옷에 한쪽 눈 흉터, 도끼를 어깨에 메고 비열하게 웃어요.',
+        '예: 덩치 큰 산적 두목. 털옷에 한쪽 눈 흉터, 도끼를 어깨에 메고 비열하게 웃는다.',
       tags: '1boy, bandit, scar across eye, fur cloak, holding axe, smirk, upper body',
-      wait: '보통 10초 안팎 걸려요',
+      wait: '보통 10초 안팎',
     },
     standing: {
-      what: '어떤 모습으로 서 있나요?',
+      what: '어떤 모습으로 서 있나?',
       placeholder:
         '예: 은발 단발에 둥근 안경, 주머니 많은 코트를 입고 빛나는 플라스크를 든 견습 연금술사.',
       tags: '1girl, alchemist, silver hair, bob cut, round eyewear, long coat, knee boots, holding flask',
-      wait: '그린 뒤 배경을 따느라 15초쯤 걸려요',
+      wait: '그린 뒤 배경을 따느라 15초쯤',
     },
   };
 
@@ -121,7 +121,7 @@ export function MediaStudio({ kind, context, applyLabel, onApply }: Props) {
       setNegative(r.negative);
       setSummary(r.summary);
     } catch (e) {
-      fail(e, '프롬프트를 만들지 못했어요.');
+      fail(e, '프롬프트를 만들지 못함');
     } finally {
       setThinking(false);
     }
@@ -144,7 +144,7 @@ export function MediaStudio({ kind, context, applyLabel, onApply }: Props) {
       setPicked(r.url);
       setApplied(false);
     } catch (e) {
-      fail(e, '그림을 만들지 못했어요.');
+      fail(e, '그림을 만들지 못함');
     } finally {
       setDrawing(false);
     }
@@ -159,7 +159,7 @@ export function MediaStudio({ kind, context, applyLabel, onApply }: Props) {
   async function download() {
     if (!chosen) return;
     if (!(await downloadImage({ url: chosen.url, kind, seed: chosen.seed })))
-      toast({ text: '그림을 받아 오지 못했어요.', tone: 'error', key: 'gallery' });
+      toast({ text: '그림을 받아 오지 못함', tone: 'error', key: 'gallery' });
   }
 
   async function apply() {
@@ -187,7 +187,7 @@ export function MediaStudio({ kind, context, applyLabel, onApply }: Props) {
             {context.aspects?.map((a) => (
               <span key={a}>「{a}」</span>
             ))}
-            <small>· 함께 참고해요</small>
+            <small>함께 참고</small>
           </p>
         )}
         <textarea
@@ -208,14 +208,14 @@ export function MediaStudio({ kind, context, applyLabel, onApply }: Props) {
           >
             {thinking ? '태그로 옮기는 중…' : prompt ? '✦ 다시 만들기' : '✦ 프롬프트 만들기'}
           </button>
-          <span className={styles.wait}>한국어로 편하게 적으면 그림용 태그로 바꿔 줘요</span>
+          <span className={styles.wait}>한국어로 적으면 그림용 태그로 바뀐다</span>
         </div>
         {summary && <p className={styles.summary}>{summary}</p>}
       </section>
 
       <section className={styles.block}>
         <label htmlFor="ms-tags" className={styles.h}>
-          프롬프트 <small>직접 고쳐도 돼요</small>
+          프롬프트 <small>직접 고쳐도 됨</small>
         </label>
         <textarea
           id="ms-tags"
@@ -227,11 +227,9 @@ export function MediaStudio({ kind, context, applyLabel, onApply }: Props) {
           aria-invalid={issue ? true : undefined}
         />
         {issue === 'BLOCKED_TAG' && (
-          <p className={styles.bad}>작가 태그는 넣을 수 없어요. 화풍은 아래에서 골라 주세요.</p>
+          <p className={styles.bad}>작가 태그는 넣을 수 없음. 화풍은 아래에서 고르기</p>
         )}
-        {issue === 'TOO_LONG' && (
-          <p className={styles.bad}>프롬프트는 {TAGS_MAX}자까지 쓸 수 있어요.</p>
-        )}
+        {issue === 'TOO_LONG' && <p className={styles.bad}>프롬프트는 {TAGS_MAX}자까지</p>}
         <details className={styles.neg}>
           <summary>빼고 싶은 것{negative ? ` · ${negative.split(',').length}개` : ''}</summary>
           <input
@@ -281,7 +279,7 @@ export function MediaStudio({ kind, context, applyLabel, onApply }: Props) {
           {drawing ? '그리는 중…' : drawn.length ? '한 장 더 그리기' : '그리기'}
         </button>
         {drawing && <span className={styles.wait}>{copy.wait}</span>}
-        {!online && <span className={styles.wait}>서버가 연결되면 쓸 수 있어요</span>}
+        {!online && <span className={styles.wait}>서버 연결 후 사용 가능</span>}
       </div>
       {error && (
         <p className={styles.bad} role="alert">
@@ -325,12 +323,12 @@ export function MediaStudio({ kind, context, applyLabel, onApply }: Props) {
               className={styles.save}
               onClick={() => void download()}
               disabled={!chosen}
-              title="고른 그림을 PNG 파일로 받아요"
+              title="고른 그림을 PNG로 내려받기"
             >
               PNG로 받기
             </button>
           </div>
-          <p className={styles.wait}>그린 그림은 이 브라우저의 내 그림 보관함에도 담겨요.</p>
+          <p className={styles.wait}>그린 그림은 이 브라우저의 내 그림 보관함에도 담김</p>
         </section>
       )}
     </div>

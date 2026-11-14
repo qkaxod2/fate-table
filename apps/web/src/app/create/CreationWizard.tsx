@@ -28,8 +28,8 @@ const MAX_STUNTS = 3;
 
 /** 나머지 특성 두 칸에 무엇을 적으면 좋을지 */
 const EXTRA_HELP = [
-  `${term('high')}과 ${term('trouble')} 말고도 캐릭터를 잘 보여 주는 점을 하나 더 적어요. 아끼는 물건, 특별한 재주, 남다른 버릇 같은 거요.`,
-  '다른 사람과의 관계나 지나온 일을 적어 봐요. 누구에게 빚을 졌는지, 누구와 원수인지 같은 거요. 비워 두고 게임하면서 채워도 돼요.',
+  `${term('high')}과 ${term('trouble')} 말고 캐릭터를 잘 보여 주는 점 하나. 아끼는 물건, 특별한 재주, 남다른 버릇 등`,
+  '다른 사람과의 관계나 지나온 일. 누구에게 빚을 졌는지, 누구와 원수인지 등. 비워 두고 게임하면서 채워도 된다.',
 ];
 const EXTRA_EXAMPLE = ['예: 아버지가 남긴 낡은 방패', '예: 세라에게는 목숨을 빚졌다'];
 
@@ -183,19 +183,18 @@ export function CreationWizard() {
               <div className={styles.form}>
                 <div className={styles.lead}>
                   <p>
-                    {term('aspect')}은 캐릭터를 설명하는 짧은 문구예요. 숫자 대신 &quot;이 사람은
-                    어떤 사람인가&quot;를 말로 적어 두는 거죠. 적는 대로 미리보기 카드에 바로
-                    써져요.
+                    {term('aspect')}은 캐릭터를 설명하는 짧은 문구다. 숫자 대신 &quot;이 사람은 어떤
+                    사람인가&quot;를 말로 적어 둔다. 적는 대로 미리보기 카드에 바로 써진다.
                   </p>
                   <p>
                     굴림이 아쉬우면 {term('fatePoint')} 1개를 내고 {term('aspect')}을{' '}
-                    {term('invoke')}해 +2를 받아요. 이때 &quot;이 {term('aspect')} 덕분에
-                    잘한다&quot;는 이유를 이야기로 대요. 반대로 GM이 {term('aspect')} 때문에 일이
-                    꼬인다고 제안하면, 받아들이는 대가로 {term('fatePoint')}을 얻어요.
+                    {term('invoke')}해 +2를 받는다. 이때 &quot;이 {term('aspect')} 덕분에
+                    잘한다&quot;는 이유를 이야기로 댄다. 반대로 GM이 {term('aspect')} 때문에 일이
+                    꼬인다고 제안하면, 받아들이는 대가로 {term('fatePoint')}을 얻는다.
                   </p>
                   <p>
-                    그래서 장점과 단점이 함께 보이는 문구가 좋아요. &quot;힘이 세다&quot;보다
-                    &quot;황소도 넘어뜨리는 대장장이&quot;가 쓸 곳이 많아요.
+                    그래서 장점과 단점이 함께 보이는 문구가 좋다. &quot;힘이 세다&quot;보다
+                    &quot;황소도 넘어뜨리는 대장장이&quot;가 쓸 곳이 많다.
                   </p>
                 </div>
                 <Field label="이름">
@@ -208,14 +207,14 @@ export function CreationWizard() {
                 </Field>
                 <Field
                   label={term('high')}
-                  help={`캐릭터가 어떤 사람인지 한 줄로 요약해요. 직업이나 역할에 특징 하나를 붙이면 좋아요. 게임에서 가장 자주 ${term('invoke')}하게 될 ${term('aspect')}이에요.`}
+                  help={`캐릭터가 어떤 사람인지 한 줄 요약. 직업이나 역할에 특징 하나를 붙이면 좋다. 게임에서 가장 자주 ${term('invoke')}할 ${term('aspect')}.`}
                   example="예: 망한 왕국의 마지막 기사"
                 >
                   <input value={high} onChange={(e) => setHigh(e.target.value)} maxLength={80} />
                 </Field>
                 <Field
                   label={term('trouble')}
-                  help={`캐릭터를 자꾸 곤란하게 만드는 점이에요. 나쁜 버릇, 쫓아오는 원수, 꼭 지켜야 하는 맹세 같은 거요. GM이 이걸로 일을 꼬이게 하면 ${term('fatePoint')}을 받을 수 있어요.`}
+                  help={`캐릭터를 자꾸 곤란하게 만드는 점. 나쁜 버릇, 쫓아오는 원수, 꼭 지켜야 하는 맹세 등. GM이 이걸로 일을 꼬이게 하면 ${term('fatePoint')}을 받는다.`}
                   example="예: 맹세를 어길 수 없다"
                 >
                   <input
@@ -247,8 +246,8 @@ export function CreationWizard() {
               <div className={styles.form}>
                 <p className={styles.lead}>
                   여섯 {term('approach')}에 {formatRating(3)} 하나, {formatRating(2)} 둘,{' '}
-                  {formatRating(1)} 둘, {formatRating(0)} 하나를 나눠 줘요. 가장 자신 있는 방식에
-                  +3을 주면 돼요.
+                  {formatRating(1)} 둘, {formatRating(0)} 하나를 나눠 준다. 가장 자신 있는 방식에
+                  +3.
                 </p>
                 <Allocation ratings={ratings} />
                 <ul className={styles.approaches}>
@@ -284,9 +283,9 @@ export function CreationWizard() {
             {step === 2 && (
               <div className={styles.form}>
                 <p className={styles.lead}>
-                  {josa(term('stunt'), '은/는')} 정해진 상황에서 +2를 받는 능력이에요. 3개까지 넣을
-                  수 있고, 지금은 비워 둬도 괜찮아요. 세션이 시작될 때마다 {term('fatePoint')}은{' '}
-                  {refreshFor(stunts.length)}개까지 채워져요. 이 수를 {term('refresh')}이라고 해요.
+                  {josa(term('stunt'), '은/는')} 정해진 상황에서 +2를 받는 능력. 3개까지 넣을 수
+                  있고 지금은 비워 둬도 된다. 세션이 시작될 때마다 {term('fatePoint')}은{' '}
+                  {refreshFor(stunts.length)}개까지 채워지고, 이 수를 {term('refresh')}이라고 한다.
                 </p>
                 {stunts.map((s, i) => (
                   <div key={i} className={styles.stunt}>
@@ -382,8 +381,8 @@ export function CreationWizard() {
                   {saved ? (
                     <p className={styles.ok} role="status">
                       {fromRoom
-                        ? '저장했어요. 방으로 돌아가는 중…'
-                        : '이 브라우저에 저장했어요. 방에 들어가면 바로 불러올 수 있어요.'}
+                        ? '저장됨. 방으로 돌아가는 중…'
+                        : '이 브라우저에 저장됨. 방에 들어가면 바로 불러올 수 있다.'}
                     </p>
                   ) : (
                     <button type="button" className={styles.primary} onClick={save}>
@@ -493,7 +492,7 @@ function Allocation({ ratings }: { ratings: Ratings }) {
       <p className={styles.allocNote} role="status">
         {left.length
           ? `남은 값 ${left.map((v) => `+${v}`).join(' ')}`
-          : `다 나눴어요. 바꾸려면 숫자를 한 번 더 눌러 비워요.`}
+          : `다 나눔. 바꾸려면 숫자를 한 번 더 눌러 비우기`}
       </p>
     </div>
   );

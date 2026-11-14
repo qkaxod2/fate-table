@@ -35,9 +35,9 @@ interface Props {
 
 const MILESTONE_LABEL = { minor: '작은', significant: '중요한', major: '큰' } as const;
 const MILESTONE_HELP = {
-  minor: '접근법 두 개의 값을 맞바꾸거나, 특기 하나를 바꾸거나, 특성 하나의 문구를 고칠 수 있어요.',
-  significant: '작은 이정표에 더해, 접근법 하나를 +1 올리거나 특기를 하나 더 얻을 수 있어요.',
-  major: '중요한 이정표에 더해, 핵심 컨셉도 고쳐 쓸 수 있어요.',
+  minor: '접근법 두 개 값 맞바꾸기, 특기 하나 바꾸기, 특성 하나 문구 고치기 중 하나',
+  significant: '작은 이정표에 더해 접근법 하나 +1 또는 특기 하나 추가',
+  major: '중요한 이정표에 더해 핵심 컨셉도 고쳐 쓰기 가능',
 } as const;
 
 /** 캐릭터 시트: 특성·접근법·특기·스트레스·후유증. 양보·회복·이정표 성장도 여기서 한다 */
@@ -146,7 +146,7 @@ export function CharacterSheet({
       {c.milestone && (
         <div className={styles.milestone}>
           <strong>
-            {MILESTONE_LABEL[c.milestone]} {term('milestone')}에 도달했어요!
+            {MILESTONE_LABEL[c.milestone]} {term('milestone')} 도달
           </strong>
           <p>{MILESTONE_HELP[c.milestone]}</p>
           {mine && !growing && (
@@ -444,9 +444,13 @@ export function CharacterSheet({
               type="button"
               className={styles.ghost}
               disabled={pending}
-              title="지기로 하고 장면에서 빠져요. 운명점을 받아요."
+              title="지기로 하고 장면에서 빠진다. 운명점을 받는다."
               onClick={() => {
-                if (window.confirm(`${josa(c.name, '이/가')} ${term('concede')}할까요?`))
+                if (
+                  window.confirm(
+                    `${josa(c.name, '이/가')} ${term('concede')}한다. 확인을 누르면 진행`,
+                  )
+                )
                   void run({ type: 'character.concede', payload: { characterId: c.id } });
               }}
             >

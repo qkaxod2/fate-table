@@ -51,7 +51,7 @@ export function OutcomeBanner({ action, outcome, total, provisional }: Props) {
       </div>
       <p className={styles.copy}>
         {provisional && (outcome === 'fail' || outcome === 'tie')
-          ? '아직 확정 전이에요. 특성을 발동하면 결과를 바꿀 수 있어요'
+          ? '아직 확정 전. 특성을 발동하면 결과를 바꿀 수 있다'
           : OUTCOME_COPY[action][outcome]}
       </p>
     </div>

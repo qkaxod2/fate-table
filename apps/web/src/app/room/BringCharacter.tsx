@@ -88,7 +88,7 @@ export function BringCharacter({ run, has, brought }: Props) {
           </button>
         )}
       </div>
-      {drafts.length === 0 && <p className={styles.muted}>저장한 캐릭터가 없어요.</p>}
+      {drafts.length === 0 && <p className={styles.muted}>저장한 캐릭터 없음</p>}
       <ul className={styles.drafts}>
         {drafts.map((d) => {
           const here = brought.has(d.key);
@@ -105,7 +105,7 @@ export function BringCharacter({ run, has, brought }: Props) {
                 <span>
                   <b>{d.name}</b>
                   <small>
-                    {here ? '이미 이 방에 있어요' : busy === d.key ? '데려오는 중…' : d.highConcept}
+                    {here ? '이미 이 방에 있음' : busy === d.key ? '데려오는 중…' : d.highConcept}
                   </small>
                 </span>
               </button>

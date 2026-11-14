@@ -17,7 +17,7 @@ export default function MyRoomsPage() {
       <div className={styles.card}>
         <PageNav />
         <h1 className={styles.title}>내 방</h1>
-        <p className={styles.lead}>한 번 들어간 방은 초대 코드 없이 바로 다시 들어갈 수 있어요.</p>
+        <p className={styles.lead}>한 번 들어간 방은 초대 코드 없이 다시 입장</p>
         <ClientOnly>
           <MyRoomsList />
           <AccountHint />

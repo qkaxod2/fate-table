@@ -17,7 +17,7 @@ export interface Coach {
   example?: string;
   /** 하나씩 짚어 주는 목록 (결과 4단계, 굴림 계산 순서 등). "더 보기"를 눌러야 펼쳐진다 */
   points?: string[];
-  /** "더 보기" 대신 쓸 문구 (예: "결과마다 어떻게 되나요?") */
+  /** "더 보기" 대신 쓸 문구 (예: "결과별 차이") */
   moreLabel?: string;
   /** 설명만 하는 단계: 읽고 이 버튼을 눌러 넘어간다 */
   next?: { label: string; onClick: () => void };

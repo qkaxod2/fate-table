@@ -11,17 +11,17 @@ const CONTENTS = [
   {
     href: '/create/',
     title: '캐릭터 만들기',
-    desc: '컨셉과 약점을 한 줄씩 적으면 내 캐릭터가 생겨요.',
+    desc: '컨셉과 약점 한 줄씩이면 캐릭터 완성',
   },
   {
     href: '/rooms/new/',
     title: '방 만들기',
-    desc: 'GM이 되어 방을 열고, 초대 링크로 일행을 불러요.',
+    desc: 'GM이 되어 방을 열고 초대 링크로 일행 부르기',
   },
   {
     href: '/join/',
     title: '초대 코드로 참가',
-    desc: 'GM에게 받은 코드를 넣고 바로 테이블에 앉아요.',
+    desc: 'GM에게 받은 코드로 바로 입장',
   },
 ];
 
@@ -34,8 +34,8 @@ const SHELF = [
 /** 표지 아래 규칙 세 줄: 이 게임에서 알아야 할 것 전부 */
 const RULE_CARDS = [
   { label: term('aspect'), text: '캐릭터와 장면을 한 줄로', note: '"사방에 번지는 불길"' },
-  { label: term('fatePoint'), text: '쓰면 +2, 곤란을 받으면 하나 더', note: '동전 3개로 시작해요' },
-  { label: term('fateDice'), text: '넷을 굴려 접근법 수치에 더해요', note: '＋ ○ － ＋' },
+  { label: term('fatePoint'), text: '쓰면 +2, 곤란을 받으면 하나 더', note: '동전 3개로 시작' },
+  { label: term('fateDice'), text: '넷을 굴려 접근법 수치에 더하기', note: '＋ ○ － ＋' },
 ];
 
 export default function Landing() {
@@ -78,15 +78,15 @@ export default function Landing() {
         <section className={styles.titlePage}>
           <h1 className={styles.title}>운명점 테이블</h1>
           <p className={styles.lead}>
-            기동형 페이트로 친구들과 이야기를 굴리는 온라인 테이블이에요. {term('aspect')} 한 줄과{' '}
-            {term('fatePoint')} 몇 개면 되고, 규칙은 튜토리얼 한 판이면 익혀요.
+            기동형 페이트로 친구들과 이야기를 굴리는 온라인 테이블. {term('aspect')} 한 줄과{' '}
+            {term('fatePoint')} 몇 개면 충분하고, 규칙은 튜토리얼 한 판으로 익힌다.
           </p>
 
           <div className={styles.start}>
             <Link href="/tutorial/" className={styles.primary}>
               튜토리얼로 시작하기
             </Link>
-            <span className={styles.startNote}>가입 없이 5분이면 끝나요.</span>
+            <span className={styles.startNote}>가입 없이 5분</span>
           </div>
 
           <nav className={styles.contents} aria-label="직접 시작하기">
@@ -121,7 +121,7 @@ export default function Landing() {
           </div>
 
           <p className={styles.colophon}>
-            Fate Accelerated Edition(Evil Hat Productions, CC BY 3.0)을 바탕으로 만들었어요.
+            Fate Accelerated Edition(Evil Hat Productions, CC BY 3.0) 기반
           </p>
         </section>
       </div>

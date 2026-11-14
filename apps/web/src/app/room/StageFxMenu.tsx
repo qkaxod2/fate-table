@@ -7,14 +7,14 @@ import styles from './StageFxMenu.module.css';
 type Run = (cmd: Command) => Promise<RoomEvent[]>;
 
 const WHOLE: ReadonlyArray<readonly [StageFxKind, string, string]> = [
-  ['shake', '흔들기', '무대가 우르르 흔들려요 (땅울림 소리)'],
-  ['flash', '번쩍', '흰 빛이 한 번 터져요 (번개, 폭발)'],
-  ['dark', '어둠', '가장자리부터 어둠이 번졌다 걷혀요'],
+  ['shake', '흔들기', '무대가 우르르 흔들림 (땅울림 소리)'],
+  ['flash', '번쩍', '흰 빛이 한 번 터짐 (번개, 폭발)'],
+  ['dark', '어둠', '가장자리부터 어둠이 번졌다 걷힘'],
 ];
 
 const ONE: ReadonlyArray<readonly [StageFxKind, string, string]> = [
-  ['tremble', '떨림', '그 캐릭터 그림이 오들오들 떨려요 (두려움, 추위)'],
-  ['hit', '타격', '그 캐릭터가 번쩍 움찔하고 베인 자국이 그어져요'],
+  ['tremble', '떨림', '그 캐릭터 그림이 오들오들 떨림 (두려움, 추위)'],
+  ['hit', '타격', '그 캐릭터가 움찔하고 베인 자국이 그어짐'],
 ];
 
 /**

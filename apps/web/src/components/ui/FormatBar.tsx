@@ -23,7 +23,7 @@ const MARKS: readonly Mark[] = [
     open: RICH_TAGS.glitch[0],
     close: RICH_TAGS.glitch[1],
     label: '글리치',
-    title: 'GM 연출: 글자가 지직거려요',
+    title: 'GM 연출: 글자 지직거림',
     gm: true,
   },
   {
@@ -31,7 +31,7 @@ const MARKS: readonly Mark[] = [
     open: RICH_TAGS.flip[0],
     close: RICH_TAGS.flip[1],
     label: '뒤집기',
-    title: 'GM 연출: 글자가 거꾸로 뒤집혀요',
+    title: 'GM 연출: 글자 뒤집기',
     gm: true,
   },
 ];

@@ -122,7 +122,7 @@ export function useCloseGuard(onClose: () => void, dirty = false) {
 function CloseNudge() {
   return (
     <p className={styles.nudge} role="status">
-      작성 중인 내용이 있어요. 닫으려면 한 번 더 눌러 주세요
+      작성 중인 내용 있음. 닫으려면 한 번 더 누르기
     </p>
   );
 }

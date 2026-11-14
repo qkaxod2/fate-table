@@ -31,9 +31,7 @@ export function NewRoomForm() {
       rememberRoom({ id: r.roomId, name: name.trim(), role: 'gm' });
       router.push(roomHref(r.roomId));
     } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : '방을 만들지 못했어요. 잠시 뒤에 다시 해 주세요.',
-      );
+      setError(err instanceof ApiError ? err.message : '방을 만들지 못했다. 잠시 뒤 다시 시도');
       setBusy(false);
     }
   }
@@ -44,14 +42,14 @@ export function NewRoomForm() {
         <PageNav />
         <h1 className={styles.title}>방 만들기</h1>
         <p className={styles.lead}>
-          방을 만든 사람이 GM이 돼요. 만들고 나면 초대 링크를 일행에게 보내 주세요.
+          방을 만든 사람이 GM. 만든 뒤 초대 링크를 일행에게 보내면 된다.
         </p>
         {!online && (
           <p className={styles.note}>
-            <strong>지금은 방을 만들 수 없어요</strong>
-            서버가 연결된 배포 사이트에서만 방을 열 수 있어요. 여기서는{' '}
+            <strong>지금은 방을 만들 수 없음</strong>
+            서버가 연결된 배포 사이트에서만 방을 열 수 있다. 여기서는{' '}
             <Link href="/tutorial/">튜토리얼</Link>과 <Link href="/create/">캐릭터 만들기</Link>를
-            바로 해 볼 수 있어요.
+            바로 해 볼 수 있다.
           </p>
         )}
         <form className={styles.form} onSubmit={submit}>

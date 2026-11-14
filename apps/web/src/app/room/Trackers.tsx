@@ -44,7 +44,7 @@ export function Trackers({ state, run, isGm, canControl, pending }: Props) {
               const mine = canControl(current);
               return (
                 <span className={styles.actions}>
-                  {mine && !isGm && <strong className={styles.yourTurn}>내 차례예요!</strong>}
+                  {mine && !isGm && <strong className={styles.yourTurn}>내 차례</strong>}
                   {(isGm || mine) && (
                     <button
                       type="button"
@@ -153,7 +153,7 @@ export function Trackers({ state, run, isGm, canControl, pending }: Props) {
                   void run({ type: 'contest.exchange', payload: { winnerId: null, victories: 1 } })
                 }
               >
-                무승부 · 판이 뒤집혀요
+                무승부 · 판이 뒤집힘
               </button>
             )}
           </div>

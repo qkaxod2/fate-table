@@ -24,10 +24,10 @@ import own from './account.module.css';
 type Notice = { tone: 'ok' | 'error'; text: string; retryGoogle?: boolean };
 
 const errorText = (e: unknown) =>
-  e instanceof AccountError ? e.message : '잠시 문제가 있었어요. 다시 시도해 주세요.';
+  e instanceof AccountError ? e.message : '일시적인 문제. 다시 시도';
 
 const moved = (rooms: number) =>
-  rooms > 0 ? ` 이 브라우저에서 쓰던 방 ${rooms}개도 계정으로 옮겼어요.` : '';
+  rooms > 0 ? ` 이 브라우저에서 쓰던 방 ${rooms}개도 계정으로 옮김.` : '';
 
 export function AccountPanel() {
   const account = useAccount();
@@ -40,7 +40,7 @@ export function AccountPanel() {
       tone: 'error',
       text:
         err.code === 'identity_already_exists'
-          ? `${err.message} 그 계정으로 로그인하면 지금 기록을 그쪽으로 옮겨 드려요.`
+          ? `${err.message} 그 계정으로 로그인하면 지금 기록을 그쪽으로 옮긴다.`
           : err.message,
       retryGoogle: err.code === 'identity_already_exists',
     };
@@ -50,7 +50,7 @@ export function AccountPanel() {
     void loadAuthOptions().then(setOptions);
     finishRedirect()
       .then((rooms) => {
-        if (rooms !== null) setNotice({ tone: 'ok', text: `로그인했어요.${moved(rooms)}` });
+        if (rooms !== null) setNotice({ tone: 'ok', text: `로그인 완료.${moved(rooms)}` });
       })
       .catch((e: unknown) => setNotice({ tone: 'error', text: errorText(e) }));
   }, []);
@@ -80,17 +80,19 @@ export function AccountPanel() {
         )}
         {account === undefined && (
           <p className={styles.lead} role="status">
-            계정을 확인하는 중이에요…
+            계정 확인 중…
           </p>
         )}
         {account === null && (
           <>
-            <p className={styles.lead}>로그인하면 내 방과 캐릭터를 다른 기기에서도 이어서 써요.</p>
+            <p className={styles.lead}>
+              로그인하면 내 방과 캐릭터를 다른 기기에서도 이어서 쓸 수 있다.
+            </p>
             <p className={styles.note}>
-              <strong>지금은 계정을 쓸 수 없어요</strong>
-              서버가 연결된 배포 사이트에서만 로그인할 수 있어요.{' '}
+              <strong>지금은 계정을 쓸 수 없음</strong>
+              서버가 연결된 배포 사이트에서만 로그인할 수 있다.{' '}
               <Link href="/tutorial/">튜토리얼</Link>과 <Link href="/create/">캐릭터 만들기</Link>는
-              로그인 없이도 돼요.
+              로그인 없이도 된다.
             </p>
           </>
         )}
@@ -125,18 +127,18 @@ function SignInForms({
     try {
       if (mode === 'signin') {
         const rooms = await signIn(email.trim(), password);
-        onNotice({ tone: 'ok', text: `로그인했어요.${moved(rooms)}` });
+        onNotice({ tone: 'ok', text: `로그인 완료.${moved(rooms)}` });
       } else {
         const r = await signUp(email.trim(), password);
         onNotice(
           r === 'done'
             ? {
                 tone: 'ok',
-                text: '계정을 만들었어요. 이제 어느 기기에서든 같은 방에 들어갈 수 있어요.',
+                text: '계정 생성 완료. 이제 어느 기기에서든 같은 방에 들어갈 수 있다.',
               }
             : {
                 tone: 'ok',
-                text: `${email.trim()} 주소로 확인 메일을 보냈어요. 링크를 누르면 이 화면으로 돌아와요.`,
+                text: `${email.trim()} 주소로 확인 메일 발송. 링크를 누르면 이 화면으로 돌아온다.`,
               },
         );
       }
@@ -150,8 +152,8 @@ function SignInForms({
   return (
     <>
       <p className={styles.lead}>
-        로그인하면 내가 들어간 방과 만든 캐릭터를 다른 기기에서도 그대로 이어서 써요.
-        {account.kind === 'anonymous' && ' 지금 이 브라우저에서 쓰던 기록도 계정으로 옮겨져요.'}
+        로그인하면 들어간 방과 만든 캐릭터를 다른 기기에서도 그대로 이어서 쓸 수 있다.
+        {account.kind === 'anonymous' && ' 지금 이 브라우저의 기록도 계정으로 옮겨진다.'}
       </p>
       <div className={own.tabs} role="tablist">
         {(['signin', 'signup'] as const).map((m) => (
@@ -189,7 +191,7 @@ function SignInForms({
             required
           />
         </label>
-        {mode === 'signup' && <p className={styles.muted}>비밀번호는 8자 이상이에요.</p>}
+        {mode === 'signup' && <p className={styles.muted}>비밀번호 8자 이상</p>}
         <button
           type="submit"
           className={styles.primary}
@@ -248,7 +250,7 @@ function Profile({
       <p className={styles.lead}>
         <b className={own.email}>{account.email}</b>
         <br />
-        {account.providers.includes('google') ? '구글 계정으로 로그인했어요.' : '로그인했어요.'}
+        {account.providers.includes('google') ? '구글 계정으로 로그인함' : '로그인함'}
       </p>
 
       {account.needsPassword && (
@@ -259,7 +261,7 @@ function Profile({
             void run(async () => {
               await setPassword(password);
               setPw('');
-            }, '비밀번호를 정했어요. 다른 기기에서는 이메일과 이 비밀번호로 로그인해요.');
+            }, '비밀번호 설정 완료. 다른 기기에서는 이메일과 이 비밀번호로 로그인');
           }}
         >
           <label className={styles.field}>
@@ -283,7 +285,7 @@ function Profile({
         className={`${styles.form} ${own.section}`}
         onSubmit={(e) => {
           e.preventDefault();
-          void run(() => setAccountNickname(nickname.trim()), '닉네임을 저장했어요.');
+          void run(() => setAccountNickname(nickname.trim()), '닉네임 저장됨');
         }}
       >
         <label className={styles.field}>
@@ -292,7 +294,7 @@ function Profile({
             value={nickname}
             onChange={(e) => setNick(e.target.value)}
             maxLength={30}
-            placeholder="방에 들어갈 때 미리 채워져요"
+            placeholder="방에 들어갈 때 미리 채워짐"
           />
         </label>
         <button
@@ -311,7 +313,7 @@ function Profile({
           type="button"
           className={own.signOut}
           disabled={busy}
-          onClick={() => void run(signOut, '로그아웃했어요.')}
+          onClick={() => void run(signOut, '로그아웃됨')}
         >
           로그아웃
         </button>

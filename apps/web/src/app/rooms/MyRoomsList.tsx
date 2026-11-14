@@ -68,8 +68,8 @@ export function MyRoomsList({
   if (rows.length === 0)
     return hideWhenEmpty ? null : (
       <p className={styles.note}>
-        <strong>아직 들어간 방이 없어요</strong>방을 만들거나 초대 코드로 들어가면 여기에 차례로
-        남아요. 처음이라면 <Link href="/tutorial/">튜토리얼</Link>부터 해 봐요.
+        <strong>아직 들어간 방 없음</strong>방을 만들거나 초대 코드로 들어가면 여기에 쌓인다.
+        처음이라면 <Link href="/tutorial/">튜토리얼</Link>부터.
       </p>
     );
 
@@ -106,7 +106,7 @@ export function MyRoomsList({
                   drop(r.id);
                 }}
                 aria-label={`${r.name} 기록 지우기`}
-                title="이 브라우저 기록에서만 지워요"
+                title="이 브라우저 기록에서만 지우기"
               >
                 지우기
               </button>
@@ -132,7 +132,7 @@ export function MyRoomsList({
         </Link>
       )}
       {!load.fromServer && (
-        <p className={styles.muted}>이 브라우저에만 남은 기록이에요. 지워도 방은 그대로예요.</p>
+        <p className={styles.muted}>이 브라우저에만 남은 기록. 지워도 방은 그대로 남는다.</p>
       )}
     </>
   );
@@ -144,8 +144,7 @@ export function AccountHint() {
   if (!account || account.kind === 'member') return null;
   return (
     <p className={styles.muted}>
-      지금 목록은 이 기기에만 있어요. <Link href="/account/">로그인</Link>하면 다른 기기에서도
-      보여요.
+      지금 목록은 이 기기에만 있다. <Link href="/account/">로그인</Link>하면 다른 기기에서도 보인다.
     </p>
   );
 }

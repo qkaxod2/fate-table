@@ -76,9 +76,9 @@ export function RollPreview({
             이길 가능성 <b>{Math.round(win * 100)}%</b>
           </>
         ) : (
-          '상대도 주사위를 굴려 맞서요'
+          '상대도 주사위를 굴려 맞섬'
         )}
-        {canInvoke && ' · 굴린 뒤 특성 카드로 뒤집을 수 있어요'}
+        {canInvoke && '. 굴린 뒤 특성 카드로 뒤집기 가능'}
       </p>
       <button type="button" className={styles.seal} disabled={disabled} onClick={onRoll}>
         굴린다

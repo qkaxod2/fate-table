@@ -95,19 +95,19 @@ export function accountUrl(): string {
 }
 
 const MESSAGES: Record<string, string> = {
-  invalid_credentials: '이메일이나 비밀번호가 맞지 않아요.',
-  email_exists: '이미 계정이 있는 이메일이에요. 로그인으로 들어와 주세요.',
-  user_already_exists: '이미 계정이 있는 이메일이에요. 로그인으로 들어와 주세요.',
-  weak_password: '비밀번호를 8자 이상으로 정해 주세요.',
-  email_address_invalid: '이메일 주소를 다시 확인해 주세요.',
-  validation_failed: '이메일 주소를 다시 확인해 주세요.',
-  email_not_confirmed: '메일함에서 확인 링크를 먼저 눌러 주세요.',
-  over_email_send_rate_limit: '메일을 너무 자주 보냈어요. 잠시 뒤 다시 시도해 주세요.',
-  over_request_rate_limit: '요청이 너무 많아요. 잠시 뒤 다시 시도해 주세요.',
-  identity_already_exists: '이 구글 계정은 이미 다른 계정에 연결되어 있어요.',
-  provider_disabled: '아직 켜지지 않은 로그인 방법이에요.',
-  signup_disabled: '지금은 새 계정을 만들 수 없어요.',
-  same_password: '지금 쓰는 비밀번호와 같아요.',
+  invalid_credentials: '이메일이나 비밀번호가 맞지 않음',
+  email_exists: '이미 가입된 이메일. 로그인으로 들어오기',
+  user_already_exists: '이미 가입된 이메일. 로그인으로 들어오기',
+  weak_password: '비밀번호는 8자 이상',
+  email_address_invalid: '이메일 주소를 다시 확인',
+  validation_failed: '이메일 주소를 다시 확인',
+  email_not_confirmed: '메일함의 확인 링크를 먼저 누르기',
+  over_email_send_rate_limit: '메일 발송이 너무 잦음. 잠시 뒤 다시 시도',
+  over_request_rate_limit: '요청이 너무 많음. 잠시 뒤 다시 시도',
+  identity_already_exists: '이 구글 계정은 이미 다른 계정에 연결됨',
+  provider_disabled: '아직 켜지지 않은 로그인 방법',
+  signup_disabled: '지금은 새 계정을 만들 수 없음',
+  same_password: '지금 쓰는 비밀번호와 같음',
 };
 
 export class AccountError extends Error {
@@ -121,12 +121,12 @@ export class AccountError extends Error {
 
 function fail(error: AuthError | { code?: string; message?: string }): never {
   const code = error.code ?? '';
-  throw new AccountError(code, MESSAGES[code] ?? '잠시 문제가 있었어요. 다시 시도해 주세요.');
+  throw new AccountError(code, MESSAGES[code] ?? '일시적인 문제. 다시 시도');
 }
 
 function need(): SupabaseClient {
   const sb = getSupabase();
-  if (!sb) throw new AccountError('OFFLINE', '아직 서버가 연결되지 않았어요.');
+  if (!sb) throw new AccountError('OFFLINE', '서버 미연결');
   return sb;
 }
 
@@ -222,7 +222,7 @@ export function redirectError(): { code: string; message: string } | null {
   if (!code) return null;
   return {
     code,
-    message: MESSAGES[code] ?? params.get('error_description') ?? '로그인하지 못했어요.',
+    message: MESSAGES[code] ?? params.get('error_description') ?? '로그인 실패',
   };
 }
 
