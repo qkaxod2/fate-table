@@ -38,7 +38,7 @@
   --brass-hi: #e2c27e;
   --rule-blue: var(--paper-edge);
   --rule-red: var(--paper-edge);
-  /* 손글씨·인덱스 카드 장식은 걷어냈다(23절). 옛 이름은 남기고 값만 평범한 먹·선으로 둔다. */
+  /* 손글씨·인덱스 카드 장식은 걷어냈다(27절). 옛 이름은 남기고 값만 평범한 먹·선으로 둔다. */
   --pen: var(--ink-1);
   --stage-ink: #f4ecdc;
   /*
