@@ -33,6 +33,8 @@ export function RoomLoader() {
         .eq('id', id)
         .maybeSingle();
       if (!info) throw new Error('이 방의 참가자가 아니에요. 초대 코드로 먼저 들어와 주세요.');
+      // 읽는 사이에 화면을 떠났으면 채널을 열지 않는다 (빠른 이탈·재입장, 개발 모드의 두 번 실행)
+      if (cancelled) return;
       room = new RemoteRoom(sb, id, auth.user!.id);
       await room.start();
       if (!cancelled)

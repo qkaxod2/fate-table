@@ -59,8 +59,10 @@ export function JoinForm() {
             <input
               className={styles.code}
               value={code}
-              onChange={(e) => setCode(e.target.value)}
-              maxLength={8}
+              // 붙여 넣은 코드의 앞뒤 공백·하이픈은 빼고 대문자로 맞춘다
+              onChange={(e) =>
+                setCode(e.target.value.replace(/[\s-]/g, '').toUpperCase().slice(0, 8))
+              }
               placeholder="8자리 코드"
               autoComplete="off"
               autoCapitalize="characters"

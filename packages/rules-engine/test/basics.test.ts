@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  CommandSchema,
+  hasVisibleText,
   chanceAtLeast,
   FATE_DICE_DISTRIBUTION,
   formatRating,
@@ -60,5 +62,17 @@ describe('rewardsFor (#4-8)', () => {
   });
   it('defend with style → boost', () => {
     expect(rewardsFor('defend', 'style', 3)).toEqual([{ type: 'boost', to: 'self' }]);
+  });
+});
+
+describe('invisible text', () => {
+  it('refuses chat and names made only of invisible characters', () => {
+    const chat = (text: string) =>
+      CommandSchema.safeParse({ type: 'chat.post', payload: { text } }).success;
+    expect(chat('​')).toBe(false);
+    expect(chat(' ㅤ ')).toBe(false);
+    expect(chat('안녕​')).toBe(true);
+    expect(hasVisibleText('﻿⁠')).toBe(false);
+    expect(hasVisibleText('🎲')).toBe(true);
   });
 });

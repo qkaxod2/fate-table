@@ -1688,6 +1688,9 @@ function Table({
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
                   maxLength={40}
+                  placeholder={
+                    prompt.kind === 'aspect' ? '예: 연기에 가려진 뒷문' : '예: 흔들리는 발판'
+                  }
                   className={styles.promptInput}
                 />
                 <div className={styles.promptButtons}>
@@ -1759,7 +1762,13 @@ function Table({
           action={action}
           approach={approach}
           hideRoll
-          disabled={(busy && !defending) || !!compel || !!prompt || me.takenOut === true}
+          disabled={
+            (busy && !defending) ||
+            !!compel ||
+            !!prompt ||
+            me.takenOut === true ||
+            boss.takenOut === true
+          }
           canDefend={defending}
           {...(coach?.focus && showCoach && !guided ? { focus: coach.focus } : {})}
           {...(guided && tour?.guide ? { guide: tour.guide } : {})}

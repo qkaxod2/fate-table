@@ -124,3 +124,13 @@
     animation: none;
   }
 }
+
+/* 동전이 max를 넘으면 ×N으로 줄여 보인다 */
+.count {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: calc(var(--coin, 14px) * 0.85);
+  line-height: 1;
+  color: inherit;
+  white-space: nowrap;
+}

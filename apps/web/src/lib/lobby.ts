@@ -30,7 +30,20 @@ export function saveNickname(v: string): void {
 
 export function loadRecentRooms(): RecentRoom[] {
   try {
-    return JSON.parse(localStorage.getItem(ROOMS) ?? '[]') as RecentRoom[];
+    const raw: unknown = JSON.parse(localStorage.getItem(ROOMS) ?? '[]');
+    // 손상된 값(배열이 아니거나 빈 칸이 섞임)은 버리고 쓸 수 있는 것만 남긴다
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .filter(
+        (x): x is RecentRoom =>
+          !!x && typeof x === 'object' && typeof (x as RecentRoom).id === 'string',
+      )
+      .map((x) => ({
+        id: x.id,
+        name: typeof x.name === 'string' ? x.name : '',
+        role: typeof x.role === 'string' ? x.role : 'player',
+        at: typeof x.at === 'string' ? x.at : '',
+      }));
   } catch {
     return [];
   }

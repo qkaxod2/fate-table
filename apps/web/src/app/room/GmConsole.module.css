@@ -411,6 +411,12 @@
   gap: var(--s-3);
   width: min(100%, 520px);
   margin: var(--s-4) auto auto;
+  /* 무대가 낮아도 시작 단추까지 닿도록 카드 안에서 스크롤한다 */
+  max-height: calc(100% - var(--s-4) * 2);
+  min-height: 0;
+  flex-shrink: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 22px 26px 24px;
   border-radius: 6px;
   background: var(--paper-grain), var(--card);

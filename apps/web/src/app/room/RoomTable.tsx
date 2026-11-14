@@ -1,5 +1,6 @@
 'use client';
 
+import { initialOf } from '@/lib/initial';
 import { term } from '@fate/glossary';
 import { EXPRESSIONS } from '@fate/portrait';
 import {
@@ -7,6 +8,7 @@ import {
   canInvoke,
   chanceAtLeast,
   formatRating,
+  hasVisibleText,
   outcomeFor,
   previewInvokes,
   resolveRoll,
@@ -21,7 +23,6 @@ import {
   type InvokeSide,
   type Outcome,
   type PaidWith,
-  type Reward,
   type RoomEvent,
   undoneSeqs,
 } from '@fate/rules-engine';
@@ -121,6 +122,59 @@ const isTyping = (t: EventTarget | null) =>
   t instanceof HTMLSelectElement ||
   (t instanceof HTMLElement && t.isContentEditable);
 
+type PendingReward = {
+  seq: number;
+  rollId: string;
+  kind: 'aspect' | 'boost';
+  freeInvokes: 1 | 2;
+};
+
+/**
+ * 마지막 확정 굴림이 남긴 이름 짓기(새 특성·부스트)가 아직 안 붙었으면 그것.
+ * 화면 상태가 아니라 기록에서 계산하므로 새로고침하거나 다시 들어와도 이어진다.
+ * 같은 사람이 그 뒤에 특성을 붙였거나, 다음 굴림·장면 전환이 있었으면 끝난 것으로 본다.
+ */
+function pendingRewardOf(events: RoomEvent[]): PendingReward | null {
+  const addedBy = new Set<string | null>();
+  for (let i = events.length - 1; i >= 0; i--) {
+    const e = events[i]!;
+    if (e.type === 'aspect.added') addedBy.add(e.actorId);
+    else if (
+      e.type === 'roll.resolved' ||
+      e.type === 'scene.started' ||
+      e.type === 'scene.ended' ||
+      e.type === 'session.ended'
+    )
+      return null;
+    else if (e.type === 'roll.finalized') {
+      if (addedBy.has(e.actorId)) return null;
+      let found: PendingReward | null = null;
+      for (const r of e.payload.rewards) {
+        if (r.type === 'new_aspect')
+          found = {
+            seq: e.seq,
+            rollId: e.payload.rollId,
+            kind: 'aspect',
+            freeInvokes: r.freeInvokes,
+          };
+        if (r.type === 'boost' && r.to === 'self')
+          found = { seq: e.seq, rollId: e.payload.rollId, kind: 'boost', freeInvokes: 1 };
+      }
+      return found;
+    }
+  }
+  return null;
+}
+
+const skippedKey = (roomId: string) => `fate.skippedReward.${roomId}`;
+function readSkipped(roomId: string): number {
+  try {
+    return Number(localStorage.getItem(skippedKey(roomId))) || 0;
+  } catch {
+    return 0;
+  }
+}
+
 function lastRollIdOf(events: RoomEvent[]): string | null {
   for (let i = events.length - 1; i >= 0; i--) {
     const p = events[i]!.payload as { rollId?: unknown };
@@ -218,7 +272,6 @@ export function RoomTable({
   const [targetId, setTargetId] = useState<string>('');
   const [settledKey, setSettledKey] = useState('');
   const [selectedAspect, setSelectedAspect] = useState<string | null>(null);
-  const [prompt, setPrompt] = useState<Prompt>(null);
   const [draft, setDraft] = useState('');
   const [diceMode, setDiceMode] = useState<DiceMode>(savedDiceMode);
 
@@ -241,6 +294,30 @@ export function RoomTable({
   const mineToAnswer = (c: Character | undefined) =>
     !!c && canControl(c) && (!isGm || c.isNpc || gmTakeOver === roll?.id);
   const iRoll = mineToAnswer(activeChar);
+
+  // 이점·부스트 이름 짓기: 기록에서 계산해서 새로고침해도 사라지지 않는다
+  const [skippedReward, setSkippedReward] = useState(() => readSkipped(room.roomId));
+  const pendingReward = useMemo(() => pendingRewardOf(liveEvents), [liveEvents]);
+  const rewardOwnerId = pendingReward ? state.rolls[pendingReward.rollId]?.active.characterId : '';
+  const prompt: Prompt =
+    pendingReward &&
+    rewardOwnerId &&
+    pendingReward.seq > skippedReward &&
+    canControl(state.characters[rewardOwnerId]) &&
+    (!isGm || state.characters[rewardOwnerId]?.isNpc || gmTakeOver === pendingReward.rollId)
+      ? pendingReward.kind === 'aspect'
+        ? { kind: 'aspect', freeInvokes: pendingReward.freeInvokes }
+        : { kind: 'boost', ownerId: rewardOwnerId }
+      : null;
+  const closePrompt = () => {
+    if (!pendingReward) return;
+    setSkippedReward(pendingReward.seq);
+    try {
+      localStorage.setItem(skippedKey(room.roomId), String(pendingReward.seq));
+    } catch {
+      /* 저장소를 못 써도 이번 화면에서는 닫힌다 */
+    }
+  };
   const busyRoll = !!roll && roll.status !== 'final';
 
   // 공격 대상: 반대편(PC ↔ NPC)을 앞에 둔다
@@ -371,56 +448,48 @@ export function RoomTable({
     setFinalizing(true);
     if (defenseAdjusting && !ownDefense && gmClosesDefense)
       await run({ type: 'roll.defense_ready', payload: { rollId: roll.id } });
-    const evs = await run({
+    await run({
       type: 'roll.finalize',
       payload: { rollId: roll.id, reduceForBoost: false },
     });
-    const fin = evs.find((e) => e.type === 'roll.finalized');
-    if (fin && fin.type === 'roll.finalized')
-      askRewards(fin.payload.rewards, roll.active.characterId);
     setFinalizing(false);
     setAction(null);
     setApproach(null);
   };
 
-  const askRewards = (rewards: Reward[], ownerId: string) => {
-    for (const r of rewards) {
-      if (r.type === 'new_aspect') setPrompt({ kind: 'aspect', freeInvokes: r.freeInvokes });
-      if (r.type === 'boost' && r.to === 'self') setPrompt({ kind: 'boost', ownerId });
-    }
-  };
-
-  const submitPrompt = () => {
+  const [naming, setNaming] = useState(false);
+  const submitPrompt = async () => {
     const text = draft.trim();
-    if (!text || !prompt) return;
-    if (prompt.kind === 'aspect') {
-      if (!state.scene) return setPrompt(null);
-      void run({
-        type: 'aspect.add',
-        payload: {
-          ownerType: 'scene',
-          ownerId: state.scene.id,
-          kind: 'situation',
-          text,
-          freeInvokes: prompt.freeInvokes,
-          hidden: false,
-        },
-      });
-    } else {
-      void run({
-        type: 'aspect.add',
-        payload: {
-          ownerType: 'character',
-          ownerId: prompt.ownerId,
-          kind: 'boost',
-          text,
-          freeInvokes: 0,
-          hidden: false,
-        },
-      });
+    if (!text || !prompt || naming) return;
+    if (prompt.kind === 'aspect' && !state.scene) return closePrompt();
+    setNaming(true);
+    const evs = await run({
+      type: 'aspect.add',
+      payload:
+        prompt.kind === 'aspect'
+          ? {
+              ownerType: 'scene',
+              ownerId: state.scene!.id,
+              kind: 'situation',
+              text,
+              freeInvokes: prompt.freeInvokes,
+              hidden: false,
+            }
+          : {
+              ownerType: 'character',
+              ownerId: prompt.ownerId,
+              kind: 'boost',
+              text,
+              freeInvokes: 0,
+              hidden: false,
+            },
+    });
+    setNaming(false);
+    // 붙지 못했으면 쓴 이름을 남겨 두고 다시 붙일 수 있게 한다
+    if (evs.length) {
+      closePrompt();
+      setDraft('');
     }
-    setPrompt(null);
-    setDraft('');
   };
 
   const myStunts =
@@ -546,8 +615,9 @@ export function RoomTable({
     const id = ++sendIds.current;
     const who = as || myNick;
     setSending((x) => [...x, { id, text: who ? `${who}: ${text}` : text, fx: isGm }]);
-    await run({ type: 'chat.post', payload: as ? { text, as } : { text } });
+    const evs = await run({ type: 'chat.post', payload: as ? { text, as } : { text } });
     setSending((x) => x.filter((m) => m.id !== id));
+    return evs.length > 0;
   };
   const [copied, setCopied] = useState(false);
   const [exitOpen, setExitOpen] = useState(false);
@@ -1198,7 +1268,7 @@ export function RoomTable({
                 className={tryStyles.prompt}
                 onSubmit={(e) => {
                   e.preventDefault();
-                  submitPrompt();
+                  void submitPrompt();
                 }}
               >
                 <div className={tryStyles.promptHead}>
@@ -1216,20 +1286,23 @@ export function RoomTable({
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Escape') setPrompt(null);
+                    if (e.key === 'Escape') closePrompt();
                   }}
                   maxLength={40}
+                  placeholder={
+                    prompt.kind === 'aspect' ? '예: 연기로 가득 찬 복도' : '예: 잠깐 휘청임'
+                  }
                   className={tryStyles.promptInput}
                 />
                 <div className={tryStyles.promptButtons}>
-                  <button
-                    type="button"
-                    onClick={() => setPrompt(null)}
-                    className={tryStyles.restart}
-                  >
+                  <button type="button" onClick={() => closePrompt()} className={tryStyles.restart}>
                     건너뛰기 <kbd aria-hidden>Esc</kbd>
                   </button>
-                  <button type="submit" className={tryStyles.promptOk} disabled={!draft.trim()}>
+                  <button
+                    type="submit"
+                    className={tryStyles.promptOk}
+                    disabled={!draft.trim() || naming}
+                  >
                     붙이기 <kbd aria-hidden>Enter</kbd>
                   </button>
                 </div>
@@ -1388,9 +1461,12 @@ export function RoomTable({
                 onSubmit={(e) => {
                   e.preventDefault();
                   const text = chat.trim();
-                  if (!text) return;
+                  if (!hasVisibleText(text)) return;
                   setChat('');
-                  void sendChat(text);
+                  // 못 보냈으면 쓴 글을 되살린다 (그 사이 새로 쓴 게 없을 때만)
+                  void sendChat(text).then((ok) => {
+                    if (!ok) setChat((cur) => (cur ? cur : text));
+                  });
                 }}
               >
                 {voices.length > 0 && (
@@ -1422,7 +1498,7 @@ export function RoomTable({
                   aria-label="채팅"
                 />
                 <FormatBar field={chatField} value={chat} onChange={setChat} gm={isGm} />
-                <button type="submit" disabled={!chat.trim()}>
+                <button type="submit" disabled={!hasVisibleText(chat)}>
                   보내기
                 </button>
               </form>
@@ -1455,7 +1531,7 @@ export function RoomTable({
                       {c.portraitUrl ? (
                         <img src={c.portraitUrl} alt="" />
                       ) : (
-                        <span>{c.name.slice(0, 1)}</span>
+                        <span>{initialOf(c.name)}</span>
                       )}
                       {c.name}
                     </button>
@@ -1483,7 +1559,7 @@ export function RoomTable({
                         {c.portraitUrl ? (
                           <img src={c.portraitUrl} alt="" />
                         ) : (
-                          <span>{c.name.slice(0, 1)}</span>
+                          <span>{initialOf(c.name)}</span>
                         )}
                         {c.name}
                       </button>
@@ -1546,7 +1622,14 @@ export function RoomTable({
                 : {})}
               action={action}
               approach={approach}
-              disabled={pending || busyRoll || me.takenOut === true || overlayOpen || palette}
+              disabled={
+                !state.scene ||
+                pending ||
+                busyRoll ||
+                me.takenOut === true ||
+                overlayOpen ||
+                palette
+              }
               busy={!!rolling}
               hideRoll
               layout="strip"

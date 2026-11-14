@@ -3,6 +3,7 @@
 import { term } from '@fate/glossary';
 import {
   APPROACHES,
+  hasVisibleText,
   type Approach,
   type Command,
   type RoomEvent,
@@ -257,7 +258,7 @@ function SceneForm({
           />
         ))}
       </div>
-      <button type="submit" className={styles.primary} disabled={pending || !name.trim()}>
+      <button type="submit" className={styles.primary} disabled={pending || !hasVisibleText(name)}>
         {submitLabel}
         {!state.session && ' (세션도 함께 시작해요)'}
       </button>
@@ -306,7 +307,7 @@ export function NarrationInput({
   const field = useRef<HTMLTextAreaElement>(null);
   const send = async () => {
     const t = text.trim();
-    if (!t) return;
+    if (!hasVisibleText(t)) return;
     // 바로 비우고 먼저 보여 준 뒤, 실패하면 되돌려 놓는다
     setText('');
     onEcho?.(t);
@@ -338,7 +339,7 @@ export function NarrationInput({
         }}
       />
       <FormatBar field={field} value={text} onChange={setText} gm />
-      <button type="submit" disabled={!text.trim()}>
+      <button type="submit" disabled={!hasVisibleText(text)}>
         보내기
       </button>
     </form>
@@ -511,7 +512,11 @@ function AspectPanel({ state, pending, done }: PanelProps) {
             </button>
           ))}
         </div>
-        <button type="submit" className={styles.primary} disabled={pending || !text.trim()}>
+        <button
+          type="submit"
+          className={styles.primary}
+          disabled={pending || !hasVisibleText(text)}
+        >
           붙이기
         </button>
       </form>
@@ -589,7 +594,7 @@ function NpcPanel({ pending, done }: PanelProps) {
           ))}
         </div>
       </div>
-      <button type="submit" className={styles.primary} disabled={pending || !name.trim()}>
+      <button type="submit" className={styles.primary} disabled={pending || !hasVisibleText(name)}>
         만들기
       </button>
     </form>
@@ -806,7 +811,7 @@ function CompelPanel({ state, pending, done, aspectId }: PanelProps & { aspectId
       <button
         type="submit"
         className={styles.primary}
-        disabled={pending || !target || !aspect || !text.trim()}
+        disabled={pending || !target || !aspect || !hasVisibleText(text)}
       >
         {term('compel')} 걸기
       </button>
@@ -832,7 +837,11 @@ function NotePanel({ pending, done, notes }: PanelProps & { notes: string[] }) {
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
-        <button type="submit" className={styles.primary} disabled={pending || !text.trim()}>
+        <button
+          type="submit"
+          className={styles.primary}
+          disabled={pending || !hasVisibleText(text)}
+        >
           메모 남기기
         </button>
       </form>
