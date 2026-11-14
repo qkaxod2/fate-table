@@ -22,7 +22,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          # 3.x는 db push가 로컬을 기본으로 보고 --project-ref를 받지 않는다. 바꿀 때 명령도 함께 고친다
+          version: 2.122.1
       - run: supabase link --project-ref "$PROJECT_REF"
       - run: supabase db push
       - name: 함수 시크릿
