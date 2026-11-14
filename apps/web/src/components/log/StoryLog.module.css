@@ -284,7 +284,7 @@
   padding: 0;
   border: 0;
   color: var(--ink-1);
-  font: 400 17px/1.9 var(--f-book);
+  font: 400 16px/1.75 var(--f-ui);
 }
 
 .log[data-variant='book'] .line > span {
@@ -311,14 +311,6 @@
   font-weight: 700;
 }
 
-/* 장면 첫 문단: 주홍 머리글자 */
-.log[data-variant='book'] .line[data-open] > span::first-letter {
-  float: left;
-  margin: 6px 8px 0 0;
-  color: var(--seal);
-  font: 800 54px/0.9 var(--f-head);
-}
-
 .log[data-variant='book'] .line[data-open] .margin {
   display: none;
 }
@@ -338,14 +330,14 @@
   content: ' — ';
 }
 
-/* 굴림·운명점 기록: 펜으로 적은 여백 메모 */
+/* 굴림·운명점 기록: 본문보다 한 단계 작고 흐린 메모 */
 .log[data-variant='book'] .line[data-kind='roll'],
 .log[data-variant='book'] .line[data-kind='fate'],
 .log[data-variant='book'] .line[data-kind='system'] {
   padding-left: var(--s-3);
-  border-left: 2px solid rgb(47 79 128 / 0.35);
-  color: var(--pen);
-  font: 400 22px/1.15 var(--f-hand);
+  border-left: 2px solid var(--paper-edge);
+  color: var(--ink-2);
+  font: 500 var(--fs-sm) / 1.55 var(--f-ui);
 }
 
 .log[data-variant='book'] .line[data-kind='fate'] {

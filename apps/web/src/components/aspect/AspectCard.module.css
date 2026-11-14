@@ -1,6 +1,6 @@
 /*
- * 특성 = 테이블 위의 인덱스 카드 (design-system.md 20절).
- * 파란 가로줄 + 빨간 머리줄, 손글씨 문구, 위에 테이프. 종류는 머리줄 위 작은 글자와 왼쪽 띠로 구분한다.
+ * 특성 카드 (design-system.md 27절). 흰 카드에 굵은 문구 한 줄,
+ * 종류는 위쪽 작은 글자와 왼쪽 4px 색 막대로 구분한다.
  */
 .card {
   --bar: var(--ink-3);
@@ -14,13 +14,6 @@
   border-radius: 3px;
   background:
     linear-gradient(var(--bar), var(--bar)) left top / 4px 100% no-repeat,
-    linear-gradient(var(--rule-red), var(--rule-red)) 0 30px / 100% 1.5px no-repeat,
-    repeating-linear-gradient(
-        180deg,
-        transparent 0 calc(var(--line-h) - 1px),
-        var(--rule-blue) calc(var(--line-h) - 1px) var(--line-h)
-      )
-      0 31px / 100% 100% no-repeat,
     var(--card);
   color: var(--pen);
   font: inherit;
@@ -35,27 +28,12 @@
     var(--press);
 }
 
-/* 테이프 */
-.card::before {
-  content: '';
-  position: absolute;
-  top: -9px;
-  left: 50%;
-  width: 62px;
-  height: 18px;
-  translate: -50% 0;
-  rotate: -3deg;
-  background: rgb(240 228 196 / 0.78);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
-  pointer-events: none;
-}
-
 button.card {
   cursor: pointer;
 }
 
 button.card:not(:disabled):hover {
-  transform: perspective(600px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(-4px);
+  transform: translateY(-2px);
   box-shadow:
     0 1px 0 var(--paper-edge),
     0 16px 28px -12px rgb(0 0 0 / 0.85);
@@ -157,15 +135,12 @@ button.card:not(:disabled):hover::after {
   width: 15px;
   height: 15px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #f08a74, var(--seal) 60%, #5e170b);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.45);
+  background: var(--seal);
 }
 
 .text {
   padding-top: 4px;
-  font-family: var(--f-hand);
-  font-size: clamp(26px, 2.2vw, 34px);
-  line-height: var(--line-h);
+  font: 600 clamp(16px, 1.3vw, 19px) / 1.4 var(--f-ui);
   word-break: keep-all;
 }
 

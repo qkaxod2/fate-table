@@ -279,15 +279,7 @@
   border-radius: 3px;
   outline: 1.5px dashed color-mix(in srgb, var(--ink-3) 70%, transparent);
   outline-offset: -6px;
-  background:
-    linear-gradient(var(--rule-red), var(--rule-red)) 0 30px / 100% 1.5px no-repeat,
-    repeating-linear-gradient(
-        180deg,
-        transparent 0 calc(var(--line-h) - 1px),
-        var(--rule-blue) calc(var(--line-h) - 1px) var(--line-h)
-      )
-      0 31px / 100% 100% no-repeat,
-    var(--paper);
+  background: var(--paper);
   color: var(--ink-3);
   text-align: left;
   box-shadow: 0 10px 20px -12px rgb(0 0 0 / 0.7);
@@ -303,7 +295,7 @@
 .addText {
   padding-top: 4px;
   color: color-mix(in srgb, var(--pen) 70%, var(--card));
-  font: 400 clamp(24px, 2vw, 30px) / var(--line-h) var(--f-hand);
+  font: 500 var(--fs-md) / 1.45 var(--f-ui);
   white-space: nowrap;
 }
 

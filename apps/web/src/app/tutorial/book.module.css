@@ -178,49 +178,9 @@
   max-width: 240px;
 }
 
-.table > :nth-child(1) {
-  rotate: -2deg;
-}
-.table > :nth-child(2) {
-  rotate: 1.2deg;
-  translate: 0 6px;
-}
-.table > :nth-child(3) {
-  rotate: -0.8deg;
-  translate: 0 -4px;
-}
-.table > :nth-child(4) {
-  rotate: 1.8deg;
-  translate: 0 4px;
-}
-.table > :nth-child(5) {
-  rotate: -1.4deg;
-}
-
 .tray {
   flex: 1;
   min-width: 0;
-}
-
-/* 발동 카드 줄은 카드마다 기울어 있으니 줄 전체는 기울이지 않는다 */
-.table > .tray {
-  rotate: none;
-  translate: none;
-}
-
-/* 찢어진 종이 가장자리 */
-.deckle {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  right: calc(var(--book-w) - 12px);
-  z-index: 7;
-  width: 30px;
-  background: var(--paper);
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='120' preserveAspectRatio='none'%3E%3Cpath d='M30 0 L30 120 L9 120 L13 112 L6 104 L12 95 L4 86 L11 78 L7 69 L14 61 L5 52 L10 44 L3 35 L12 27 L6 18 L13 9 L8 0Z'/%3E%3C/svg%3E");
-  mask-size: 30px 120px;
-  filter: drop-shadow(-6px 0 10px rgb(0 0 0 / 0.5));
-  pointer-events: none;
 }
 
 /* ---------- 책 ---------- */
@@ -234,7 +194,7 @@
   padding-bottom: var(--dock-h, 0px);
   background: var(--paper-grain), var(--paper);
   color: var(--ink-1);
-  box-shadow: inset 18px 0 30px -18px rgb(90 60 20 / 0.35);
+  border-left: 1px solid var(--paper-edge);
 }
 
 .running {
@@ -352,9 +312,6 @@
   /* 행동 띠 위에 뜬 예고 카드가 테이블 위 특성 카드에 가리지 않게 */
   .stage:has(.previewDock) .center {
     z-index: 6;
-  }
-  .deckle {
-    display: none;
   }
   .book {
     border-top: 6px solid var(--paper-edge);

@@ -1314,8 +1314,6 @@ export function RoomTable({
         </Presence>
       </section>
 
-      <div className={book.deckle} aria-hidden />
-
       <section className={`${book.book} ${styles.book}`}>
         <div className={`${book.running} ${styles.running}`}>
           <span className={styles.runHead}>

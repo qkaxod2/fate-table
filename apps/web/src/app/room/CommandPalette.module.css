@@ -9,7 +9,7 @@
 .input {
   padding: 18px 22px 14px;
   border: 0;
-  border-bottom: 3px double var(--paper-edge);
+  border-bottom: 1px solid var(--paper-edge);
   background: transparent;
   color: var(--ink-1);
   font: 400 19px/1.4 var(--f-book);

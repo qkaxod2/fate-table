@@ -6,7 +6,7 @@ import { asset } from '@/lib/asset';
 import { MyRoomsList } from './rooms/MyRoomsList';
 import styles from './page.module.css';
 
-/** 속표지의 차례: 튜토리얼 다음에 갈 수 있는 곳 */
+/** 튜토리얼 다음에 갈 수 있는 곳 */
 const CONTENTS = [
   {
     href: '/create/',
@@ -25,15 +25,13 @@ const CONTENTS = [
   },
 ];
 
-const NUMERALS = ['i', 'ii', 'iii'];
-
-/** 책갈피: 해 본 사람이 돌아갈 곳 */
+/** 해 본 사람이 돌아갈 곳 */
 const SHELF = [
   { href: '/rooms/', title: '내 방', desc: '들어갔던 방 다시 열기' },
   { href: '/gallery/', title: '내 그림', desc: '방에서 그린 그림 모음' },
 ];
 
-/** 표지 아래에 핀으로 꽂아 둔 규칙 카드 세 장: 이 게임에서 알아야 할 것 전부 */
+/** 표지 아래 규칙 세 줄: 이 게임에서 알아야 할 것 전부 */
 const RULE_CARDS = [
   { label: term('aspect'), text: '캐릭터와 장면을 한 줄로', note: '"사방에 번지는 불길"' },
   { label: term('fatePoint'), text: '쓰면 +2, 곤란을 받으면 하나 더', note: '동전 3개로 시작해요' },
@@ -47,7 +45,7 @@ export default function Landing() {
         <AccountChip />
       </ClientOnly>
       <div className={styles.spread}>
-        {/* 왼쪽: 표지. 튜토리얼 첫 장면 그림 위에 제목 딱지를 붙였다 */}
+        {/* 왼쪽: 튜토리얼 첫 장면 그림 */}
         <div className={styles.cover} aria-hidden>
           <img className={styles.coverArt} src={asset('/try/bg.jpg')} alt="" />
           <img
@@ -80,7 +78,7 @@ export default function Landing() {
           </ul>
         </div>
 
-        {/* 오른쪽: 속표지. 첫째로 할 일은 튜토리얼 하나 */}
+        {/* 오른쪽: 첫째로 할 일은 튜토리얼 하나 */}
         <section className={styles.titlePage}>
           <p className={styles.kicker}>기동형 페이트 온라인 TRPG</p>
           <h1 className={styles.title}>운명점 테이블</h1>
@@ -96,20 +94,16 @@ export default function Landing() {
             <span className={styles.startNote}>5분이면 충분해요 · 가입 필요 없어요</span>
           </div>
 
-          <nav className={styles.contents} aria-label="차례">
-            <h2 className={styles.contentsHead}>차례</h2>
+          <nav className={styles.contents} aria-label="직접 시작하기">
+            <h2 className={styles.contentsHead}>직접 시작하기</h2>
             <ol>
-              {CONTENTS.map((c, i) => (
+              {CONTENTS.map((c) => (
                 <li key={c.href}>
                   <Link href={c.href} className={styles.entry}>
-                    <span className={styles.num} aria-hidden>
-                      {NUMERALS[i]}
-                    </span>
                     <span className={styles.entryText}>
                       <strong>{c.title}</strong>
                       <span>{c.desc}</span>
                     </span>
-                    <span className={styles.leader} aria-hidden />
                     <span className={styles.go} aria-hidden>
                       →
                     </span>
@@ -119,7 +113,6 @@ export default function Landing() {
             </ol>
           </nav>
 
-          {/* 책갈피: 이미 해 본 사람이 돌아갈 곳 */}
           <nav className={styles.shelf} aria-label="내 기록">
             {SHELF.map((s) => (
               <Link key={s.href} href={s.href} className={styles.tab}>
