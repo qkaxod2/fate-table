@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { RouteTracker } from '@/components/nav/RouteTracker';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -18,7 +19,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Cinzel+Decorative:wght@900&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono&family=Noto+Serif+KR:wght@500;700&family=Hahmlet:wght@600;800&family=Gowun+Batang:wght@400;700&family=Nanum+Pen+Script&family=Fraunces:opsz,wght@9..144,500;9..144,800&display=swap"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <RouteTracker />
+        {children}
+      </body>
     </html>
   );
 }

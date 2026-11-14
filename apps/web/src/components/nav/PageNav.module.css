@@ -1,0 +1,44 @@
+/* 기존 "← 처음으로" 글자 단추와 같은 결: 테두리 없는 먹 글자, 누르면 주홍 */
+.nav {
+  display: inline-flex;
+  flex: none;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--ink-3);
+  font: 500 var(--fs-sm) / 1.4 var(--f-ui);
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.nav[data-tone='stage'] {
+  color: var(--stage-ink);
+  opacity: 0.85;
+}
+
+.nav[data-tone='stage'] .link:hover,
+.nav[data-tone='stage'] .link:focus-visible {
+  color: var(--brass-hi);
+}
+
+.nav[data-tone='stage']:hover {
+  opacity: 1;
+}
+
+.link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.link:hover,
+.link:focus-visible {
+  color: var(--seal);
+}
+
+.dot {
+  opacity: 0.6;
+}

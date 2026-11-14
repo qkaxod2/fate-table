@@ -11,6 +11,8 @@ import {
   type Stunt,
 } from '@fate/rules-engine';
 import Link from 'next/link';
+import { PageNav } from '@/components/nav/PageNav';
+import { useHistoryStep } from '@/components/nav/useHistoryStep';
 import { useRouter } from 'next/navigation';
 import { useState, useSyncExternalStore } from 'react';
 import { PortraitStudio } from '@/components/media/PortraitStudio';
@@ -58,9 +60,17 @@ export function CreationWizard() {
   const [step, setStep] = useState(0);
   /** 넘어가는 방향: 다음이면 오른쪽에서, 이전이면 왼쪽에서 들어온다 */
   const [dir, setDir] = useState<'next' | 'back'>('next');
-  const go = (to: number) => {
+  const show = (to: number) => {
     setDir(to > step ? 'next' : 'back');
     setStep(to);
+  };
+  // 단계마다 브라우저 기록을 한 칸씩 쌓아, 브라우저 뒤로가기가 이전 단계로 돌아가게 한다
+  const pushStep = useHistoryStep<number>('ftCreateStep', 0, (to) =>
+    show(Math.min(Math.max(0, to), STEPS.length - 1)),
+  );
+  const go = (to: number) => {
+    show(to);
+    pushStep(to);
   };
   const [name, setName] = useState('');
   const [high, setHigh] = useState('');
@@ -126,13 +136,17 @@ export function CreationWizard() {
     <main className={styles.main}>
       <header className={styles.top}>
         {fromRoom ? (
-          <Link href={roomHref(fromRoom)} className={styles.back}>
-            ← 방으로 돌아가기
-          </Link>
+          <nav aria-label="화면 이동" className={styles.backRow}>
+            <Link href={roomHref(fromRoom)} className={styles.back}>
+              ← 방으로 돌아가기
+            </Link>
+            <span aria-hidden>·</span>
+            <Link href="/" className={styles.back}>
+              로비
+            </Link>
+          </nav>
         ) : (
-          <Link href="/" className={styles.back}>
-            ← 처음으로
-          </Link>
+          <PageNav />
         )}
         <h1 className={styles.title}>캐릭터 만들기</h1>
         <ol className={styles.steps} aria-label="단계">
