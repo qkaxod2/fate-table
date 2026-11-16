@@ -160,7 +160,7 @@ export function CreationWizard() {
     return (
       <main className={styles.main}>
         <header className={styles.top}>
-          <PageNav fallback="/characters/" />
+          <PageNav tone="stage" fallback="/characters/" />
           <h1 className={styles.title}>캐릭터 고치기</h1>
         </header>
         {editMissing ? (
@@ -190,7 +190,7 @@ export function CreationWizard() {
             </Link>
           </nav>
         ) : (
-          <PageNav fallback={editKey ? '/characters/' : '/'} />
+          <PageNav tone="stage" fallback={editKey ? '/characters/' : '/'} />
         )}
         <h1 className={styles.title}>{editKey ? '캐릭터 고치기' : '캐릭터 만들기'}</h1>
         <ol className={styles.steps} aria-label="단계">

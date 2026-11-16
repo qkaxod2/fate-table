@@ -1312,7 +1312,7 @@ export function RoomTable({
         </Presence>
       </section>
 
-      <section className={`${book.book} ${styles.book}`}>
+      <section className={`${book.book} ${styles.book}`} data-ink="night">
         <div className={`${book.running} ${styles.running}`}>
           <span className={styles.runHead}>
             <span className={styles.runTitle} title={name}>

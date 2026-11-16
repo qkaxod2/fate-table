@@ -128,7 +128,7 @@
 
 .milestone {
   padding: 12px 16px;
-  border-left: 3px solid var(--seal);
+  border-left: 1px solid var(--seal);
   border-radius: 4px;
   background: var(--seal-tint);
 }

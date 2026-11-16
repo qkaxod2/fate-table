@@ -10,7 +10,7 @@
   grid-template-columns: minmax(0, 1fr) var(--book-w);
   height: 100dvh;
   overflow: hidden;
-  background: #0d0b09;
+  background: var(--table);
 }
 
 /* ---------- 무대 ---------- */
@@ -192,9 +192,10 @@
   min-height: 0;
   /* 맨 아래 행동 띠(Dock)만큼 비워 둔다 */
   padding-bottom: var(--dock-h, 0px);
-  background: var(--paper-grain), var(--paper);
+  /* 어두운 읽기 칼럼: 토큰은 tokens.css의 [data-ink='night'] (TSX에서 data-ink="night"를 붙인다) */
+  background: var(--table-2);
   color: var(--ink-1);
-  border-left: 1px solid var(--paper-edge);
+  border-left: 1px solid var(--table-line);
 }
 
 .running {
@@ -314,7 +315,7 @@
     z-index: 6;
   }
   .book {
-    border-top: 6px solid var(--paper-edge);
+    border-top: 1px solid var(--table-line-hi);
   }
   .text > section {
     max-height: 60dvh;

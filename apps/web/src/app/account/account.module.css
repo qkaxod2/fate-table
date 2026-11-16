@@ -73,7 +73,7 @@
 .ok {
   margin-bottom: var(--s-4);
   padding: 10px 12px;
-  border-left: 3px solid var(--danger);
+  border-left: 1px solid var(--danger);
   background: rgb(179 38 30 / 0.07);
   color: var(--ink-1);
   font: 400 var(--fs-sm) / 1.6 var(--f-ui);
