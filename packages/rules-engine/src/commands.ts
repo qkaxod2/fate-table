@@ -1,5 +1,14 @@
 import { z } from 'zod';
-import { ACTIONS, APPROACHES, CONSEQUENCE_SLOTS, STAGE_FX } from './types';
+import {
+  ACTIONS,
+  APPROACHES,
+  BACKDROPS,
+  CONSEQUENCE_SLOTS,
+  SCENE_CONDITIONS,
+  SCENE_TIMES,
+  SCENE_WEATHERS,
+  STAGE_FX,
+} from './types';
 
 const id = z.string().min(1).max(64);
 
@@ -50,6 +59,13 @@ export const CommandSchema = z.discriminatedUnion('type', [
       .optional(),
   }),
   cmd('scene.end', {}),
+  /** 지금 장면의 기본 배경과 분위기. 빠진 것은 그대로 둔다 */
+  cmd('scene.mood', {
+    backdrop: z.enum(BACKDROPS).nullable().optional(),
+    time: z.enum(SCENE_TIMES).optional(),
+    weather: z.enum(SCENE_WEATHERS).optional(),
+    conditions: z.array(z.enum(SCENE_CONDITIONS)).max(SCENE_CONDITIONS.length).optional(),
+  }),
 
   cmd('character.create', {
     name: text,

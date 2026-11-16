@@ -106,6 +106,20 @@ const handlers: Handlers = {
     gmPool: p.pcIds.length,
   }),
 
+  'scene.mood_set': (s, p) => {
+    if (s.scene?.id !== p.sceneId) return s;
+    const scene = { ...s.scene };
+    if (p.backdrop !== undefined) {
+      // 기본 배경을 고르면 그린 배경은 내려놓는다 (나중에 정한 쪽만 남는다)
+      delete scene.backdrop;
+      delete scene.backgroundUrl;
+      delete scene.backgroundAssetId;
+      if (p.backdrop) scene.backdrop = p.backdrop;
+    }
+    if (p.ambience) scene.ambience = p.ambience;
+    return { ...s, scene };
+  },
+
   'scene.ended': (s, p) => {
     const zoneIds = new Set(Object.keys(s.scene?.zones ?? {}));
     const aspects = Object.fromEntries(
@@ -589,15 +603,18 @@ const handlers: Handlers = {
         ...(face === 'neutral' && p.meta ? { standingMeta: p.meta } : {}),
       }));
     }
-    if (p.kind === 'scene' && s.scene?.id === p.target)
+    if (p.kind === 'scene' && s.scene?.id === p.target) {
+      // 새로 그린 배경을 붙이면 기본 배경은 내려놓는다 (나중에 정한 쪽만 남는다)
+      const { backdrop: _was, ...scene } = s.scene;
       return {
         ...s,
         scene: {
-          ...s.scene,
+          ...scene,
           ...(p.assetId ? { backgroundAssetId: p.assetId } : {}),
           ...(p.url ? { backgroundUrl: p.url } : {}),
         },
       };
+    }
     return s;
   },
   'character.expression_set': (s, p) =>

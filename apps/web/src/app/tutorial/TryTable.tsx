@@ -41,6 +41,7 @@ import { DICE_MODES, DiceTray, saveDiceMode, type DiceMode } from '@/components/
 import type { InvokeChoice } from '@/components/roll/InvokeTray';
 import { CoachMark, type Coach } from '@/components/tutorial/CoachMark';
 import { Spotlight } from '@/components/tutorial/Spotlight';
+import { SceneAmbience } from '@/components/ambience/SceneAmbience';
 import { PageNav } from '@/components/nav/PageNav';
 import { useHistoryStep } from '@/components/nav/useHistoryStep';
 import { BOSS, SAMPLE_CHARACTERS, SCENE, type SampleCharacter } from '@/content/oneshot';
@@ -211,6 +212,8 @@ function setupRoom(pick: SampleCharacter): LocalRoom {
   }
   room.run(GM, { type: 'session.start', payload: { title: '튜토리얼' } });
   room.run(GM, { type: 'scene.start', payload: { name: SCENE.name, aspects: SCENE.aspects } });
+  // 불타는 창고: 배경 위에 화재 분위기를 깐다 (불빛 · 그을음 · 불티)
+  room.run(GM, { type: 'scene.mood', payload: { conditions: ['fire'] } });
   room.run(GM, { type: 'narration.post', payload: { text: SCENE.opening } });
   // 튜토리얼이 길어지지 않게 두목은 이미 많이 다친 채로 시작한다: 스트레스 1·2번 칸과 중상·중태가 차 있다
   const bossId = findId(room.getSnapshot().state, BOSS.name);
@@ -1529,6 +1532,8 @@ function Table({
           }
         />
       )}
+
+      <SceneAmbience ambience={state.scene?.ambience} />
 
       <header className={th.top}>
         <PageNav tone="stage" />

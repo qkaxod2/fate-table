@@ -10,6 +10,21 @@ var APPROACHES = ["careful", "clever", "flashy", "forceful", "quick", "sneaky"];
 var ACTIONS = ["overcome", "create_advantage", "attack", "defend"];
 var CONSEQUENCE_SLOTS = ["mild", "moderate", "severe"];
 var STAGE_FX = ["shake", "flash", "dark", "tremble", "hit"];
+var BACKDROPS = [
+  "forest",
+  "village",
+  "tavern",
+  "castle",
+  "dungeon",
+  "harbor",
+  "plains",
+  "mountain",
+  "ruins",
+  "alley"
+];
+var SCENE_TIMES = ["day", "dawn", "dusk", "night"];
+var SCENE_WEATHERS = ["clear", "rain", "storm", "snow"];
+var SCENE_CONDITIONS = ["fire", "dust", "fog"];
 var CONSEQUENCE_VALUE = {
   mild: 2,
   moderate: 4,
@@ -353,6 +368,18 @@ var handlers = {
     // GM 운명점 풀은 장면마다 그 장면의 PC 수로 재설정
     gmPool: p.pcIds.length
   }),
+  "scene.mood_set": (s, p) => {
+    if (s.scene?.id !== p.sceneId) return s;
+    const scene = { ...s.scene };
+    if (p.backdrop !== void 0) {
+      delete scene.backdrop;
+      delete scene.backgroundUrl;
+      delete scene.backgroundAssetId;
+      if (p.backdrop) scene.backdrop = p.backdrop;
+    }
+    if (p.ambience) scene.ambience = p.ambience;
+    return { ...s, scene };
+  },
   "scene.ended": (s, p) => {
     const zoneIds = new Set(Object.keys(s.scene?.zones ?? {}));
     const aspects = Object.fromEntries(
@@ -798,15 +825,17 @@ var handlers = {
         ...face === "neutral" && p.meta ? { standingMeta: p.meta } : {}
       }));
     }
-    if (p.kind === "scene" && s.scene?.id === p.target)
+    if (p.kind === "scene" && s.scene?.id === p.target) {
+      const { backdrop: _was, ...scene } = s.scene;
       return {
         ...s,
         scene: {
-          ...s.scene,
+          ...scene,
           ...p.assetId ? { backgroundAssetId: p.assetId } : {},
           ...p.url ? { backgroundUrl: p.url } : {}
         }
       };
+    }
     return s;
   },
   "character.expression_set": (s, p) => patchCharacter(s, p.characterId, (c) => {
@@ -20617,6 +20646,13 @@ var CommandSchema = external_exports.discriminatedUnion("type", [
     aspects: external_exports.array(external_exports.object({ text, hidden: external_exports.boolean().default(false) })).max(8).optional()
   }),
   cmd("scene.end", {}),
+  /** 지금 장면의 기본 배경과 분위기. 빠진 것은 그대로 둔다 */
+  cmd("scene.mood", {
+    backdrop: external_exports.enum(BACKDROPS).nullable().optional(),
+    time: external_exports.enum(SCENE_TIMES).optional(),
+    weather: external_exports.enum(SCENE_WEATHERS).optional(),
+    conditions: external_exports.array(external_exports.enum(SCENE_CONDITIONS)).max(SCENE_CONDITIONS.length).optional()
+  }),
   cmd("character.create", {
     name: text,
     isNpc: external_exports.boolean().default(false),
@@ -20837,6 +20873,7 @@ var GM_ONLY = /* @__PURE__ */ new Set([
   "session.end",
   "scene.start",
   "scene.end",
+  "scene.mood",
   "milestone.grant",
   "aspect.reveal",
   "fate.adjust",
@@ -20955,6 +20992,25 @@ var resolvers = {
     return { events };
   },
   "scene.end": (s, _p, a) => one(ev("scene.ended", a, { sceneId: need(s.scene, "scene").id })),
+  "scene.mood": (s, p, a) => {
+    const scene = s.scene;
+    if (!scene) throw new CommandError("NO_ACTIVE_SCENE");
+    const was = scene.ambience ?? { time: "day", weather: "clear", conditions: [] };
+    const touched = p.time !== void 0 || p.weather !== void 0 || p.conditions !== void 0;
+    return one(
+      ev("scene.mood_set", a, {
+        sceneId: scene.id,
+        ...p.backdrop !== void 0 ? { backdrop: p.backdrop } : {},
+        ...touched ? {
+          ambience: {
+            time: p.time ?? was.time,
+            weather: p.weather ?? was.weather,
+            conditions: [...new Set(p.conditions ?? was.conditions)]
+          }
+        } : {}
+      })
+    );
+  },
   "character.create": (s, p, a, ctx) => {
     if (a.role === "spectator") throw new CommandError("FORBIDDEN_ROLE");
     if (a.role === "player" && p.isNpc) throw new CommandError("FORBIDDEN_ROLE");
@@ -21469,6 +21525,7 @@ function validate2(state, command, actor, sealed) {
 export {
   ACTIONS,
   APPROACHES,
+  BACKDROPS,
   CONSEQUENCE_SLOTS,
   CONSEQUENCE_VALUE,
   CONTEST_VICTORIES_TO_WIN,
@@ -21479,6 +21536,9 @@ export {
   LADDER,
   MAX_STUNTS,
   RICH_TAGS,
+  SCENE_CONDITIONS,
+  SCENE_TIMES,
+  SCENE_WEATHERS,
   STAGE_FX,
   absorbOptions,
   applyInvoke,
