@@ -1,0 +1,480 @@
+/*
+ * 특성 카드 (design-system.md 32절).
+ * 그림이 카드를 채우고, 종류는 테·이름판 재질·문장(왼쪽 위 원)으로 가른다.
+ * 초상을 쓰는 카드는 자르는 위치를 정하지 않는다: 언제나 위에서부터 꽉 채운다.
+ */
+.card {
+  --tone: var(--brass-hi);
+  --w: 196px;
+  --h: 286px;
+  --rx: 0deg;
+  --ry: 0deg;
+  --mx: 50%;
+  --my: 30%;
+  position: relative;
+  flex: none;
+  width: var(--w);
+  height: var(--h);
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #16130f;
+  color: #f4efe4;
+  font-family: var(--f-ui);
+  text-align: left;
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.6),
+    0 26px 40px -18px rgb(0 0 0 / 0.9);
+  transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry));
+  transition:
+    transform 0.35s var(--ease-out),
+    translate 0.3s var(--ease-out),
+    box-shadow 0.3s,
+    opacity 0.3s,
+    filter 0.3s;
+}
+
+button.card {
+  cursor: pointer;
+}
+
+button.card:hover {
+  transition:
+    transform 0.08s linear,
+    translate 0.3s var(--ease-out),
+    box-shadow 0.3s;
+}
+
+/* 안쪽 금선 테 + 위 두 모서리 장식 */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  z-index: 3;
+  border: 1px solid color-mix(in srgb, var(--tone) 70%, transparent);
+  border-radius: 9px;
+  background:
+    var(--corner) top left / 26px no-repeat,
+    var(--corner) top right / 26px no-repeat;
+  pointer-events: none;
+  --corner: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28' fill='none' stroke='%23e2c27e' stroke-width='1.3'%3E%3Cpath d='M2 26V8a6 6 0 0 1 6-6h18'/%3E%3Cpath d='M6 26V12a6 6 0 0 1 6-6h14'/%3E%3Ccircle cx='8' cy='8' r='2' fill='%23e2c27e'/%3E%3C/svg%3E");
+}
+
+.card:is([data-tone='plain'], [data-tone='trouble'], [data-tone='core'])::before {
+  /* 오른쪽 위 모서리는 배지 자리를 비운다 */
+  background: var(--corner) top left / 26px no-repeat;
+}
+
+/* 박: 마우스를 따라 움직이는 빛 */
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  opacity: 0;
+  mix-blend-mode: color-dodge;
+  background:
+    radial-gradient(circle at var(--mx) var(--my), rgb(255 240 200 / 0.5), transparent 45%),
+    linear-gradient(
+        115deg,
+        transparent 30%,
+        rgb(255 220 160 / 0.18) 45%,
+        rgb(180 220 255 / 0.16) 52%,
+        transparent 65%
+      )
+      var(--mx) 0 / 250% 100%;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+button.card:hover::after,
+button.card:focus-visible::after,
+.card[data-selected]::after {
+  opacity: 1;
+}
+
+.pic {
+  position: absolute;
+  inset: 0;
+  background: var(--art) center top / cover no-repeat;
+}
+
+.pic::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.shade {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    180deg,
+    rgb(0 0 0 / 0.25),
+    transparent 22%,
+    transparent 46%,
+    rgb(10 8 6 / 0.92) 78%
+  );
+}
+
+.gem {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: var(--tone);
+  background: radial-gradient(circle at 35% 30%, rgb(255 255 255 / 0.18), rgb(0 0 0 / 0.55) 70%);
+  box-shadow:
+    0 0 0 1.5px var(--tone),
+    0 4px 10px rgb(0 0 0 / 0.6);
+}
+
+.gem svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  min-width: 40px;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 15px;
+  color: #1d1c19;
+  background: linear-gradient(180deg, #f3dda6, var(--brass));
+  box-shadow:
+    0 2px 0 #6e5220,
+    0 6px 12px rgb(0 0 0 / 0.5);
+  font: 800 16px var(--f-ui);
+}
+
+.plate {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  left: 10px;
+  z-index: 2;
+  padding: 12px 14px;
+  border-radius: 7px;
+}
+
+/* 이름판 위 가운데 작은 마름모 */
+.plate::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  translate: -50% 0;
+  rotate: 45deg;
+  background: var(--tone);
+  box-shadow: 0 0 0 2px rgb(0 0 0 / 0.4);
+}
+
+.kind {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--tone);
+  font: 700 10.5px / 1.2 var(--f-ui);
+  letter-spacing: 0.06em;
+}
+
+.depth {
+  display: flex;
+  gap: 3px;
+  margin-left: auto;
+}
+
+.depth i {
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--seal);
+  opacity: 0.2;
+  transform: skewX(-20deg);
+}
+
+.depth i[data-on] {
+  opacity: 1;
+}
+
+.name {
+  display: block;
+  margin-top: 4px;
+  font: 700 17px / 1.3 var(--f-story);
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font: 600 11px / 1 var(--f-ui);
+  opacity: 0.8;
+}
+
+.pip {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--brass-hi), var(--brass));
+}
+
+/* ---------- 종류 ---------- */
+.card[data-tone='core'] {
+  --tone: #f0a3ab;
+}
+.card[data-tone='core']::before {
+  border-color: #e27a83;
+  border-width: 1.5px;
+}
+.card[data-tone='core'] .plate {
+  color: #1d1c19;
+  background: linear-gradient(180deg, #f6f1e7, #e9e1d1);
+  box-shadow:
+    inset 0 0 0 1px #c9bfa9,
+    inset 0 3px 0 var(--seal);
+}
+.card[data-tone='core'] .kind {
+  color: var(--seal);
+}
+
+.card[data-tone='plain'] .plate {
+  color: #2a2116;
+  background: linear-gradient(180deg, #f2ead8, #e2d6bb);
+  box-shadow: inset 0 0 0 1px #b99b5a;
+}
+.card[data-tone='plain'] .kind {
+  color: #7a5c25;
+}
+.card[data-tone='plain'][data-owned] .pic {
+  filter: saturate(0.8) sepia(0.25);
+}
+.card[data-tone='plain'][data-owned] .pic::after {
+  background: radial-gradient(120% 80% at 50% 30%, transparent 40%, rgb(60 44 16 / 0.55));
+}
+
+.card[data-tone='trouble'] {
+  --tone: #d9a37a;
+}
+.card[data-tone='trouble'] .plate {
+  background:
+    repeating-linear-gradient(135deg, rgb(255 255 255 / 0.03) 0 5px, transparent 5px 10px), #241d18;
+  box-shadow:
+    inset 0 0 0 1px #6b5442,
+    inset 0 0 0 4px #241d18,
+    inset 0 0 0 5px rgb(217 163 122 / 0.25);
+}
+.card[data-tone='trouble'] .foot {
+  color: #d9a37a;
+}
+.card[data-tone='trouble'][data-owned] .pic {
+  filter: grayscale(1) sepia(0.45) brightness(0.55) contrast(1.25);
+}
+.card[data-tone='trouble'][data-owned] .pic::after {
+  background: var(--chain) center / cover;
+  mix-blend-mode: screen;
+  opacity: 0.7;
+}
+
+.card[data-tone='scene'] {
+  --tone: #a9d3b2;
+}
+.card[data-tone='scene'] .pic {
+  background-position: 52% 60%;
+  background-size: auto 130%;
+}
+.card[data-tone='scene'] .plate {
+  background: rgb(16 26 20 / 0.72);
+  backdrop-filter: blur(6px);
+  box-shadow: inset 0 0 0 1px rgb(169 211 178 / 0.35);
+}
+
+.card[data-tone='cons'] {
+  --tone: #e27a83;
+}
+.card[data-tone='cons'] .plate {
+  padding-bottom: 18px;
+  color: #2a1a17;
+  background: #efe3d6;
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - 7px),
+    92% 100%,
+    84% calc(100% - 5px),
+    74% 100%,
+    63% calc(100% - 6px),
+    52% 100%,
+    42% calc(100% - 4px),
+    31% 100%,
+    20% calc(100% - 6px),
+    10% 100%,
+    0 calc(100% - 5px)
+  );
+}
+.card[data-tone='cons'] .plate::after {
+  display: none;
+}
+.card[data-tone='cons'] .kind {
+  color: var(--seal);
+}
+.card[data-tone='cons'][data-owned] .pic {
+  filter: saturate(0.55) brightness(0.95);
+}
+.card[data-tone='cons'][data-owned] .pic::after {
+  background: var(--slash) center / cover;
+  mix-blend-mode: multiply;
+  opacity: 0.95;
+}
+
+.card[data-tone='boost'] {
+  box-shadow:
+    0 0 0 1px rgb(226 194 126 / 0.6),
+    0 0 30px -6px rgb(226 194 126 / 0.55),
+    0 26px 40px -18px rgb(0 0 0 / 0.9);
+}
+.card[data-tone='boost']::before {
+  border-style: dashed;
+}
+.card[data-tone='boost'] .plate {
+  background: rgb(40 32 18 / 0.7);
+  backdrop-filter: blur(6px);
+  box-shadow: inset 0 0 0 1px rgb(226 194 126 / 0.5);
+}
+.card[data-tone='boost'] .name {
+  color: #f8e9c6;
+}
+
+/* ---------- 상태 ---------- */
+.card[data-state='can'] {
+  animation: can 1.6s ease-in-out infinite;
+}
+@keyframes can {
+  50% {
+    box-shadow:
+      0 0 0 2px var(--brass-hi),
+      0 0 28px -4px var(--brass-hi),
+      0 26px 40px -18px rgb(0 0 0 / 0.9);
+  }
+}
+.card[data-state='used'] {
+  opacity: 0.3;
+  filter: grayscale(0.6);
+}
+.card[data-state='off'] {
+  filter: brightness(0.55);
+}
+.card[data-selected] {
+  translate: 0 -24px;
+}
+
+/* ---------- 크기 ---------- */
+.card[data-size='small'] {
+  --w: 150px;
+  --h: 218px;
+}
+.card[data-size='small'] .name {
+  font-size: 15px;
+}
+.card[data-size='small'] .gem {
+  top: 13px;
+  left: 13px;
+  width: 28px;
+  height: 28px;
+}
+
+/* 장면 위 꼬리표: 그림 없이 재질만 */
+.card[data-size='tag'] {
+  --w: auto;
+  --h: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px 9px 9px;
+  overflow: visible;
+  border-radius: 10px;
+  background: rgb(20 18 15 / 0.82);
+  backdrop-filter: blur(4px);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--tone) 45%, transparent),
+    0 10px 24px -10px rgb(0 0 0 / 0.8);
+}
+.card[data-size='tag']::before,
+.card[data-size='tag']::after,
+.card[data-size='tag'] .plate::after {
+  display: none;
+}
+.card[data-size='tag'] .gem {
+  position: static;
+  width: 26px;
+  height: 26px;
+}
+.card[data-size='tag'] .gem svg {
+  width: 13px;
+  height: 13px;
+}
+.card[data-size='tag'] .plate {
+  position: static;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  clip-path: none;
+  color: #f4efe4;
+}
+.card[data-size='tag'] .kind {
+  color: var(--tone);
+}
+.card[data-size='tag'] .name {
+  margin-top: 2px;
+  font-size: 15px;
+  white-space: nowrap;
+  color: #f4efe4;
+}
+.card[data-size='tag'] .badge {
+  position: static;
+  min-width: 0;
+  height: 22px;
+  margin-left: 2px;
+  font-size: 13px;
+}
+.card[data-size='tag'][data-tone='boost'] {
+  border: 1.5px dashed var(--brass-hi);
+}
+.card[data-size='tag'][data-tone='scene'] {
+  background:
+    linear-gradient(90deg, rgb(14 20 16 / 0.92) 30%, rgb(14 20 16 / 0.6)),
+    var(--art) 52% 60% / 400% no-repeat;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transform: none;
+    transition: opacity 0.3s;
+  }
+  .card[data-state='can'] {
+    animation: none;
+    box-shadow: 0 0 0 2px var(--brass-hi);
+  }
+}

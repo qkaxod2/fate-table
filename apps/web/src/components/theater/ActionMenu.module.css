@@ -1,0 +1,202 @@
+/* 대사창 오른쪽 행동 고르기: 글자만 있는 게임 메뉴 */
+.menu {
+  display: grid;
+  align-content: center;
+  height: 100%;
+  padding: 14px 16px;
+  color: var(--ink-1);
+}
+
+.menu[data-disabled] {
+  opacity: 0.55;
+}
+
+.list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.list[data-focus] .row:not(:disabled),
+.grid[data-focus] .ap:not(:disabled),
+.go[data-focus] .roll:not(:disabled) {
+  animation: ping 1.4s var(--ease-in-out) infinite;
+}
+
+@keyframes ping {
+  50% {
+    box-shadow: 0 0 0 3px var(--seal-tint);
+  }
+}
+
+.row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  color: var(--ink-1);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--dur-hover) var(--ease-out),
+    color var(--dur-hover) var(--ease-out);
+}
+
+.label {
+  font: 700 17px / 1.3 var(--f-ui);
+}
+
+.note {
+  overflow: hidden;
+  color: var(--ink-3);
+  font: 500 12px / 1.3 var(--f-ui);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.key {
+  color: var(--ink-3);
+  font: 600 11px var(--f-ui);
+}
+
+.row:hover:not(:disabled),
+.row:focus-visible {
+  background: var(--seal);
+  color: #fff;
+}
+
+.row:hover:not(:disabled) :is(.note, .key),
+.row:focus-visible :is(.note, .key) {
+  color: #f2d4d7;
+}
+
+.row:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.pick {
+  display: grid;
+  gap: 10px;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  color: var(--ink-3);
+  font: 500 12px var(--f-ui);
+}
+
+.back {
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: var(--seal);
+  font: 800 16px var(--f-ui);
+  cursor: pointer;
+}
+
+.back:not(:disabled)::before {
+  content: '‹ ';
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.ap {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 0 6px;
+  padding: 6px 9px;
+  border: 1px solid var(--edge);
+  border-radius: 5px;
+  background: none;
+  color: var(--ink-1);
+  cursor: pointer;
+  transition:
+    background var(--dur-hover) var(--ease-out),
+    border-color var(--dur-hover) var(--ease-out);
+}
+
+.apName {
+  font: 600 14px var(--f-ui);
+  text-align: left;
+}
+
+.ap b {
+  font: 800 16px var(--f-ui);
+}
+
+.apTags {
+  display: flex;
+  grid-column: 1 / -1;
+  gap: 6px;
+  min-height: 0;
+  color: var(--ink-3);
+  font: 600 10.5px var(--f-ui);
+}
+
+.apTags:empty {
+  display: none;
+}
+
+.apTags em {
+  color: var(--seal);
+  font-style: normal;
+}
+
+.ap:hover:not(:disabled) {
+  border-color: var(--ink-3);
+}
+
+.ap[aria-checked='true'] {
+  border-color: var(--seal);
+  background: var(--seal);
+  color: #fff;
+}
+
+.ap[aria-checked='true'] .apTags,
+.ap[aria-checked='true'] .apTags em {
+  color: #f2d4d7;
+}
+
+.ap:disabled {
+  cursor: default;
+}
+
+.roll {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--seal);
+  color: #fff;
+  font: 800 17px var(--f-ui);
+  cursor: pointer;
+}
+
+.roll kbd {
+  opacity: 0.7;
+  font: 600 11px var(--f-ui);
+}
+
+.roll:disabled {
+  cursor: default;
+  opacity: 0.35;
+}

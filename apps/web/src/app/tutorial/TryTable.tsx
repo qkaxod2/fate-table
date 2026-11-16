@@ -18,6 +18,7 @@ import {
   type Actor,
   type Approach,
   type Aspect,
+  type Character,
   type Command,
   type Dice,
   type InvokeMode,
@@ -27,19 +28,17 @@ import {
   type RoomState,
 } from '@fate/rules-engine';
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { AspectCard } from '@/components/aspect/AspectCard';
 import { CompelOffer } from '@/components/compel/CompelOffer';
 import { StoryLog } from '@/components/log/StoryLog';
-import { FoePlate } from '@/components/book/FoePlate';
-import { Dock } from '@/components/book/Dock';
-import { MySheet } from '@/components/book/MySheet';
-import { revealRoll, RollSheet } from '@/components/book/RollSheet';
-import { ActionBar, type CoachFocus } from '@/components/roll/ActionBar';
-import { CheckCard, sumLine } from '@/components/roll/CheckCard';
+import type { CoachFocus } from '@/components/roll/ActionBar';
+import { ActionMenu } from '@/components/theater/ActionMenu';
+import { Duel } from '@/components/theater/Duel';
+import { Nameplate } from '@/components/theater/Nameplate';
+import { TableView } from '@/components/theater/TableView';
+import { consequenceDepth, TraitCard } from '@/components/theater/TraitCard';
+import th from '@/components/theater/theater.module.css';
 import { DICE_MODES, DiceTray, saveDiceMode, type DiceMode } from '@/components/roll/DiceTray';
-import { InvokeTray, type InvokeChoice } from '@/components/roll/InvokeTray';
-import { OutcomeBanner } from '@/components/roll/OutcomeBanner';
-import { RollPreview } from '@/components/roll/RollPreview';
+import type { InvokeChoice } from '@/components/roll/InvokeTray';
 import { CoachMark, type Coach } from '@/components/tutorial/CoachMark';
 import { Spotlight } from '@/components/tutorial/Spotlight';
 import { PageNav } from '@/components/nav/PageNav';
@@ -52,7 +51,6 @@ import { Typewriter } from '@/components/ui/Typewriter';
 import { describe, ERROR_COPY, JUDGE, OUTCOME_COPY } from '@/lib/copy';
 import { josa } from '@/lib/josa';
 import { LocalRoom } from '@/state/localRoom';
-import book from './book.module.css';
 import styles from './try.module.css';
 
 const ME: Actor = { userId: 'me', role: 'player' };
@@ -149,6 +147,24 @@ const COACH_SHY = [
   '[data-tour="dialogue"]',
   '[data-tour="actionbar"]',
   '[data-tour="foe"]',
+];
+
+/** 장면 꼬리표 자리 (화면 비율 %): 이야기 중에는 장면 여기저기, 판정 중에는 판정판 둘레 */
+const TAG_SPOTS: ReadonlyArray<readonly [number, number]> = [
+  [40, 46],
+  [45, 17],
+  [57, 31],
+  [36, 28],
+  [52, 52],
+  [62, 12],
+];
+const TAG_SPOTS_ROLL: ReadonlyArray<readonly [number, number]> = [
+  [5, 52],
+  [27, 3],
+  [74, 56],
+  [75, 14],
+  [6, 68],
+  [77, 70],
 ];
 
 const sign = (n: number) => `${n >= 0 ? '+' : ''}${n}`;
@@ -338,10 +354,6 @@ function Table({
   const [approach, setApproach] = useState<Approach | null>(null);
   const [rollId, setRollId] = useState<string | null>(null);
   const [settled, setSettled] = useState(false);
-  // 좁은 화면: 결과가 나오면 패널이 다시 보이게 (안내 카드가 위에 생겨도)
-  useEffect(() => {
-    if (settled) revealRoll(document.querySelector('[data-roll-panel]'));
-  }, [settled]);
   const [selectedAspect, setSelectedAspect] = useState<string | null>(null);
   const [prompt, setPrompt] = useState<Prompt>(null);
   const [draft, setDraft] = useState('');
@@ -1390,403 +1402,589 @@ function Table({
   const lastLine = lines.at(-1);
   const heroSpeaks = lastLine?.kind === 'chat' && lastLine.text.startsWith(`${pick.name}:`);
 
+  // ---------- 장면 극장 (design-system.md 32절) ----------
+  const [tableOpen, setTableOpen] = useState(false);
+  const [logOpen, setLogOpen] = useState(false);
+  const [rerollMode, setRerollMode] = useState(false);
+  // 끝난 판정을 닫고 이야기로 돌아간 굴림
+  const [dismissed, setDismissed] = useState<string | null>(null);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab' || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (compel || prompt) return;
+      e.preventDefault();
+      setTableOpen((o) => !o);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [compel, prompt]);
+
+  // 내가 막을 접근법을 고르는 동안은 이야기 화면(행동 메뉴)에 머문다
+  const pickingDefense = defending && roll?.status === 'awaiting_defense';
+  const wantsAction = guided && tour?.guide?.focus === 'action';
+  const rollMode =
+    !!roll && !stale && !pickingDefense && !(final && (dismissed === roll.id || wantsAction));
+
+  const choiceById = new Map(choices.map((c) => [c.aspect.id, c]));
+  const canPlayNow = !!roll && settled && roll.status === 'open' && myRoll;
+  const playable = (a: Aspect) => {
+    const c = choiceById.get(a.id);
+    if (!canPlayNow || !c || c.blocked) return null;
+    return rerollMode ? (c.reroll ?? null) : (c.bonus ?? null);
+  };
+  const play = (a: Aspect) => {
+    const p = playable(a);
+    if (!p) return;
+    onInvoke(a.id, rerollMode ? 'reroll' : 'bonus', p.free ? 'free_invoke' : 'fate_point');
+    setRerollMode(false);
+  };
+  const onRevoke = (aspectId: string) => {
+    if (!roll) return;
+    run(ME, { type: 'invoke.revoke', payload: { rollId: roll.id, side: 'active', aspectId } });
+  };
+
+  const sceneArt = asset(SCENE.background);
+  const portraitFor = (c: Character | undefined) =>
+    !c
+      ? null
+      : c.id === bossId
+        ? asset(SCENE.bossImage)
+        : (() => {
+            const s = SAMPLE_CHARACTERS.find((x) => x.name === c.name);
+            return s ? asset(s.image) : (c.portraitUrl ?? null);
+          })();
+  const artOf = (a: Aspect) => ({
+    portrait: a.ownerType === 'character' ? portraitFor(state.characters[a.ownerId]) : null,
+    scene: sceneArt,
+  });
+  const ownerName = (a: Aspect) =>
+    a.ownerType === 'character' ? state.characters[a.ownerId]?.name : undefined;
+
+  const handAspects = Object.values(state.aspects).filter(
+    (a) =>
+      !a.hidden &&
+      a.ownerType === 'character' &&
+      a.ownerId === meId &&
+      (a.kind === 'high' || a.kind === 'normal' || a.kind === 'trouble'),
+  );
+  const fan = (i: number, n: number) => {
+    const mid = (n - 1) / 2;
+    const d = i - mid;
+    if (n <= 1) return th.fan2;
+    if (Math.abs(d) < 0.6) return th.fan2;
+    if (Math.abs(d) < 1.6) return d < 0 ? th.fan1 : th.fan3;
+    return d < 0 ? th.fanL : th.fanR;
+  };
+
+  const played =
+    roll?.active.modifiers.map((m, i) => {
+      if (m.source.startsWith('stunt:')) {
+        const st = activeChar?.stunts.find((s) => `stunt:${s.id}` === m.source);
+        return { id: `${m.source}:${i}`, text: st?.text ?? term('stunt'), how: term('stunt') };
+      }
+      const id = m.source.replace(/^aspect:/, '');
+      const a = state.aspects[id] ?? m.restore;
+      return {
+        id,
+        text: a?.text ?? term('aspect'),
+        how:
+          m.paidWith === 'free_invoke'
+            ? a?.kind === 'boost'
+              ? term('boost')
+              : term('freeInvoke')
+            : `${term('fatePoint')} 1`,
+        onRevoke: roll.status === 'open' && myRoll && m.paidWith ? () => onRevoke(id) : undefined,
+      };
+    }) ?? [];
+
+  const lastSpeaker = heroSpeaks ? pick.name : 'GM';
+  const intent =
+    roll && roll.targetId === bossId
+      ? roll.defense
+        ? `${term('defend')} · ${term(roll.defense.approach)} ${sign(roll.defense.rating)}`
+        : `${term('defend')} 준비 중`
+      : null;
+
   return (
-    <main className={book.shell}>
-      <section
-        className={book.stage}
-        data-coach-region=""
-        data-roll={(!!roll && !stale) || undefined}
-        style={{ backgroundImage: `url(${asset(SCENE.background)})` }}
-      >
+    <main className={th.theater} data-mode={rollMode ? 'roll' : 'story'} data-coach-region="">
+      <div className={th.bg} style={{ backgroundImage: `url(${sceneArt})` }} />
+      <img
+        className={`${th.cast} ${th.hero}`}
+        src={asset(pick.image)}
+        alt={pick.name}
+        data-focus={heroSpeaks || undefined}
+      />
+      {showBoss && (
         <img
-          className={`${styles.standee} ${book.hero}`}
-          src={asset(pick.image)}
-          alt={pick.name}
-          data-focus={heroSpeaks || undefined}
+          className={`${th.cast} ${th.foe}`}
+          src={asset(SCENE.bossImage)}
+          alt={boss.name}
+          data-out={boss.takenOut || undefined}
+          data-hit={
+            (final &&
+              roll?.action === 'attack' &&
+              (roll.result?.outcome === 'success' || roll.result?.outcome === 'style')) ||
+            undefined
+          }
         />
-        {showBoss && (
-          <img
-            className={`${styles.bossStandee} ${book.foe}`}
-            src={asset(SCENE.bossImage)}
-            alt={boss.name}
-            data-out={boss.takenOut || undefined}
-            data-hit={
-              (final &&
-                roll?.action === 'attack' &&
-                (roll.result?.outcome === 'success' || roll.result?.outcome === 'style')) ||
-              undefined
+      )}
+
+      <header className={th.top}>
+        <PageNav tone="stage" />
+        <h1 key={state.scene?.id ?? 'none'}>{state.scene?.name}</h1>
+      </header>
+      <div className={th.tools}>
+        <button type="button" className={th.tableBtn} onClick={() => setTableOpen(true)}>
+          탁자 보기<kbd>Tab</kbd>
+        </button>
+        <select
+          aria-label="주사위 연출"
+          value={diceMode}
+          onChange={(e) => {
+            const m = e.target.value as DiceMode;
+            setDiceMode(m);
+            saveDiceMode(m);
+          }}
+        >
+          {DICE_MODES.map(([v, label]) => (
+            <option key={v} value={v}>
+              주사위 {label}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          aria-pressed={sfxOn}
+          onClick={() => {
+            setSfxEnabled(!sfxOn);
+            setSfxOn(!sfxOn);
+          }}
+        >
+          효과음 {sfxOn ? '켜짐' : '꺼짐'}
+        </button>
+        <button type="button" onClick={onRestart}>
+          처음부터
+        </button>
+      </div>
+
+      <div className={th.myPlate} data-tour="party">
+        <Nameplate character={me} sub={pick.create.highConcept} me />
+      </div>
+      {showBoss && (
+        <div className={th.foePlate} data-tour="foe">
+          <Nameplate character={boss} sub={BOSS.highConcept} />
+        </div>
+      )}
+      {rollMode && intent && (
+        <div className={th.intent}>
+          상대가 맞서는 수<b>{intent}</b>
+        </div>
+      )}
+
+      {/* 장면에 깔린 특성: 장면 여기저기에 붙는다. 판정 중에는 판정판 둘레로 옮겨 가며 빛난다 */}
+      <div className={th.tags} data-tour="aspects">
+        {sceneAspects.map((a, i) => {
+          const spot = (rollMode ? TAG_SPOTS_ROLL : TAG_SPOTS)[i % TAG_SPOTS.length]!;
+          const can = !!playable(a);
+          return (
+            <div key={a.id} className={th.tag} style={{ left: `${spot[0]}%`, top: `${spot[1]}%` }}>
+              <TraitCard
+                aspect={a}
+                art={artOf(a)}
+                owner={ownerName(a)}
+                depth={consequenceDepth(a, state)}
+                size="tag"
+                badge={can ? (rerollMode ? '다시' : '+2') : undefined}
+                state={can ? 'can' : undefined}
+                onClick={can ? () => play(a) : undefined}
+              />
+            </div>
+          );
+        })}
+      </div>
+
+      <div className={th.duelSlot}>
+        {roll && !stale && (
+          <Duel
+            kind={`${term(roll.action)} 판정`}
+            me={{
+              name: activeChar?.name ?? '',
+              note: (
+                <>
+                  {term(roll.active.approach)} {sign(roll.active.rating)}
+                </>
+              ),
+              dice: (
+                <DiceTray
+                  dice={roll.active.dice}
+                  rollKey={`${roll.id}:${roll.active.animSeed}`}
+                  sealed={roll.status === 'awaiting_defense'}
+                  mode={diceMode}
+                  onSettled={() => setSettled(true)}
+                />
+              ),
+              total: roll.active.dice && settled && result ? sideTotal(roll.active) : null,
+            }}
+            opp={
+              roll.targetId
+                ? {
+                    name: targetChar?.name ?? '',
+                    note: roll.defense
+                      ? `${term('defend')} · ${term(roll.defense.approach)} ${sign(roll.defense.rating)}`
+                      : `${term('defend')} 준비 중`,
+                    dice: (
+                      <DiceTray
+                        dice={roll.defense?.dice ?? null}
+                        rollKey={`${roll.id}:d:${roll.defense?.animSeed ?? 'x'}`}
+                        sealed={!roll.defense}
+                        tone="op"
+                        mode={diceMode}
+                      />
+                    ),
+                    total: roll.defense?.dice && settled ? sideTotal(roll.defense) : null,
+                  }
+                : { difficulty: roll.difficulty ?? 0 }
             }
+            outcome={
+              settled && myOutcome && result
+                ? final && mySide === 'active'
+                  ? roll.result!.outcome
+                  : myOutcome
+                : null
+            }
+            provisional={!final}
+            canRaise={canPlayNow && canInvokeNow}
+            played={played}
+            copy={
+              settled && myOutcome
+                ? !final && (myOutcome === 'fail' || myOutcome === 'tie') && canInvokeNow
+                  ? '아직 확정 전. 특성 카드를 내면 바뀐다'
+                  : OUTCOME_COPY[mySide === 'defense' ? 'defend' : roll.action][
+                      final && mySide === 'active' ? roll.result!.outcome : myOutcome
+                    ]
+                : undefined
+            }
+          >
+            {roll.status === 'awaiting_defense' && (
+              <p className={th.waiting}>굴림 완료. 상대 기다리는 중</p>
+            )}
+            {settled && roll.status === 'open' && myRoll && unusedStunt && (
+              <button
+                type="button"
+                className={th.ghost}
+                onClick={() =>
+                  run(ME, {
+                    type: 'stunt.apply',
+                    payload: { rollId: roll.id, side: 'active', stuntId: unusedStunt.id },
+                  })
+                }
+              >
+                {term('stunt')} 적용: {unusedStunt.text}
+              </button>
+            )}
+          </Duel>
+        )}
+      </div>
+
+      {/* 손패: 내 캐릭터 특성. 누르면 판정판으로 날아가 +2가 붙는다 */}
+      <div className={th.hand} data-tour="invoke-cards" data-roll-tray="">
+        {handAspects.map((a, i) => {
+          const can = !!playable(a);
+          const used = !!roll?.active.modifiers.some((m) => m.source === `aspect:${a.id}`);
+          return (
+            <TraitCard
+              key={a.id}
+              aspect={a}
+              art={artOf(a)}
+              badge={can ? (rerollMode ? '다시' : '+2') : undefined}
+              state={can ? 'can' : used ? 'used' : a.kind === 'trouble' ? 'off' : undefined}
+              onClick={can ? () => play(a) : undefined}
+              className={fan(i, handAspects.length)}
+            />
+          );
+        })}
+      </div>
+      <div className={th.chips}>
+        <div
+          className={th.stack}
+          data-tour="fate"
+          aria-label={`${term('fatePoint')} ${me.fatePoints}`}
+        >
+          {Array.from({ length: Math.max(1, Math.min(me.fatePoints, 6)) }, (_, i) => (
+            <i key={i} style={me.fatePoints === 0 ? { opacity: 0.2 } : undefined} />
+          ))}
+        </div>
+        <div className={th.chipText}>
+          {term('fatePoint')}
+          <b>{me.fatePoints}</b>
+        </div>
+        {canPlayNow && (
+          <div className={th.modeSwitch} role="radiogroup" aria-label="카드 쓰는 법">
+            <button type="button" aria-pressed={!rerollMode} onClick={() => setRerollMode(false)}>
+              +2 더하기
+            </button>
+            <button type="button" aria-pressed={rerollMode} onClick={() => setRerollMode(true)}>
+              다시 굴리기
+            </button>
+          </div>
+        )}
+      </div>
+      <div className={th.go}>
+        {settled && roll?.status === 'open' && myRoll && (
+          <button
+            type="button"
+            className={th.btn}
+            data-tour="finalize"
+            disabled={guided && !!tour?.lockFinalize}
+            onClick={onFinalize}
+          >
+            확정
+          </button>
+        )}
+        {settled && roll?.status === 'open' && !myRoll && (
+          <button
+            type="button"
+            className={th.btn}
+            data-tour="finalize"
+            disabled={guided && !!tour?.lockFinalize}
+            onClick={onDefenseFinalize}
+          >
+            결과 확정
+          </button>
+        )}
+        {final && roll && (
+          <button type="button" className={th.btn} onClick={() => setDismissed(roll.id)}>
+            이야기로
+          </button>
+        )}
+      </div>
+
+      <div className={th.coachSlot}>
+        <Presence show={showCoach}>
+          {coach && showCoach && (
+            <CoachMark
+              key={coach.clear ? 'clear' : `${lesson}:${introStep}:${coach.step}:${coach.title}`}
+              coach={coach}
+              hideLabel={guided ? '튜토리얼 건너뛰기' : '안내 숨기기'}
+              anchor={
+                tour?.ring ??
+                tour?.open[0] ??
+                (roll && !coach.clear ? '[data-roll-panel]' : undefined)
+              }
+              avoid={[...(tour?.open ?? []), ...COACH_AVOID]}
+              shy={COACH_SHY.filter((sel) => sel !== tour?.ring && !tour?.open.includes(sel))}
+              region="[data-coach-region]"
+              pinned={guided}
+              onHide={() => {
+                if (!guided) return setCoachHidden(true);
+                setLesson('free');
+                setNotes([]);
+              }}
+            />
+          )}
+        </Presence>
+      </div>
+
+      <section className={th.dialogue} data-tour="dialogue" data-log={logOpen || undefined}>
+        <div className={th.say}>
+          <span className={th.speaker}>{lastSpeaker}</span>
+          <div className={th.text}>
+            <StoryLog lines={lines} variant="book" />
+          </div>
+          <div className={th.sys}>
+            <button type="button" onClick={() => setLogOpen((o) => !o)}>
+              {logOpen ? '이야기 접기' : '지난 이야기'}
+            </button>
+            <button type="button" onClick={() => setTableOpen(true)}>
+              탁자 보기 Tab
+            </button>
+            {error && <span className={th.error}>{error}</span>}
+          </div>
+        </div>
+        <div className={th.menu}>
+          <ActionMenu
+            character={me}
+            action={action}
+            approach={approach}
+            disabled={
+              (busy && !defending) ||
+              !!compel ||
+              !!prompt ||
+              me.takenOut === true ||
+              boss.takenOut === true
+            }
+            canDefend={defending}
+            {...(coach?.focus && showCoach && !guided ? { focus: coach.focus } : {})}
+            {...(guided && tour?.guide ? { guide: tour.guide } : {})}
+            onAction={(a) => {
+              setAction(a);
+              setApproach(null);
+            }}
+            onApproach={setApproach}
+            onRoll={onRoll}
+          />
+        </div>
+      </section>
+
+      <Presence show={!!compel}>
+        {compel && (
+          <div className={styles.overlay} data-overlay="">
+            <CompelOffer
+              aspect={state.aspects[compel.aspectId]!}
+              text={compel.text}
+              targetId={meId}
+              fatePoints={me.fatePoints}
+              onAccept={() => {
+                run(ME, {
+                  type: 'compel.respond',
+                  payload: { compelId: compel.id, accept: true },
+                });
+                if (lesson !== 'free') setNotes(compelNotes(true));
+              }}
+              onRefuse={() => {
+                run(ME, {
+                  type: 'compel.respond',
+                  payload: { compelId: compel.id, accept: false },
+                });
+                if (lesson !== 'free') setNotes(compelNotes(false));
+              }}
+            />
+          </div>
+        )}
+      </Presence>
+
+      <Presence show={!!prompt}>
+        {prompt && (
+          <div className={styles.overlay} data-overlay="">
+            <form
+              className={styles.prompt}
+              onSubmit={(e) => {
+                e.preventDefault();
+                submitPrompt();
+              }}
+            >
+              <div className={styles.promptHead}>
+                {prompt.kind === 'aspect'
+                  ? `새 ${term('aspect')} 이름 짓기 · ${term('freeInvoke')} ${prompt.freeInvokes}`
+                  : `${term('boost')} 이름 짓기`}
+              </div>
+              <ul className={styles.promptExplain}>
+                {prompt.kind === 'aspect' ? (
+                  <>
+                    <li>
+                      방금 만든 유리한 상황이 장면의 새 {term('aspect')}이 된다. 이야기에서
+                      &quot;사실&quot;이 되는 것.
+                    </li>
+                    <li>
+                      카드에 핀 {prompt.freeInvokes}개가 꽂힌다. 핀 하나로 {term('fatePoint')} 없이
+                      한 번 {term('invoke')}할 수 있다.
+                    </li>
+                    <li>
+                      핀을 다 써도 {term('aspect')}은 남는다. 그다음부턴{' '}
+                      {josa(term('fatePoint'), '을/를')} 내고 쓴다.
+                    </li>
+                  </>
+                ) : (
+                  <>
+                    <li>
+                      {term('boost')}는 굴림 덕분에 잠깐 생긴 작은 기회. 오래가는 {term('aspect')}이
+                      아니다.
+                    </li>
+                    <li>
+                      {term('fatePoint')} 없이 딱 한 번 +2를 받을 수 있다. 쓰면 바로 사라진다.
+                    </li>
+                    <li>장면이 바뀌면 없어지므로 바로 다음 굴림에 쓰는 편이 좋다.</li>
+                  </>
+                )}
+              </ul>
+              <p className={styles.promptHelp}>
+                {prompt.kind === 'aspect'
+                  ? '장면에 새로 생긴 사실을 짧은 문구로. 예: "연기에 가려진 뒷문"'
+                  : '그 순간의 기회를 짧게. 예: "흔들리는 발판", "연기 사이로 난 틈"'}
+              </p>
+              <input
+                autoFocus
+                aria-label={
+                  prompt.kind === 'aspect' ? `새 ${term('aspect')} 이름` : `${term('boost')} 이름`
+                }
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                maxLength={40}
+                placeholder={
+                  prompt.kind === 'aspect' ? '예: 연기에 가려진 뒷문' : '예: 흔들리는 발판'
+                }
+                className={styles.promptInput}
+              />
+              <div className={styles.promptButtons}>
+                <button type="button" onClick={() => setPrompt(null)} className={styles.restart}>
+                  건너뛰기
+                </button>
+                <button type="submit" className={styles.promptOk} disabled={!draft.trim()}>
+                  붙이기
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+      </Presence>
+
+      <TableView
+        open={tableOpen}
+        onClose={() => setTableOpen(false)}
+        scene={{
+          name: state.scene?.name ?? '',
+          image: sceneArt,
+          note:
+            roll && !final ? `${activeChar?.name ?? ''}의 ${term(roll.action)} 판정 중` : undefined,
+        }}
+        sceneAspects={sceneAspects.filter((a) => a.ownerType !== 'character')}
+        foes={[
+          {
+            character: boss,
+            image: asset(SCENE.bossImage),
+            aspects: Object.values(state.aspects).filter(
+              (a) => !a.hidden && a.ownerType === 'character' && a.ownerId === bossId,
+            ),
+          },
+        ]}
+        seats={[
+          {
+            character: me,
+            image: asset(pick.image),
+            player: '나',
+            me: true,
+            aspects: Object.values(state.aspects).filter(
+              (a) =>
+                !a.hidden &&
+                a.ownerType === 'character' &&
+                a.ownerId === meId &&
+                (a.kind === 'consequence' || a.kind === 'boost'),
+            ),
+          },
+          ...companions.map((c) => ({
+            character: c.character,
+            image: c.image,
+            aspects: Object.values(state.aspects).filter(
+              (a) =>
+                !a.hidden &&
+                a.ownerType === 'character' &&
+                a.ownerId === c.character.id &&
+                (a.kind === 'consequence' || a.kind === 'boost'),
+            ),
+          })),
+        ]}
+        gmPool={state.gmPool}
+        card={(a) => (
+          <TraitCard
+            aspect={a}
+            art={artOf(a)}
+            owner={ownerName(a)}
+            depth={consequenceDepth(a, state)}
+            size="small"
           />
         )}
-        <header className={book.chapter}>
-          <PageNav tone="stage" className={book.stageNav} />
-          <h1 key={state.scene?.id ?? 'none'}>{state.scene?.name}</h1>
-        </header>
-
-        <div className={book.foePlate} data-tour="foe">
-          <FoePlate
-            character={boss}
-            image={asset(SCENE.bossImage)}
-            note={BOSS.highConcept}
-            compact={!!roll}
-          />
-        </div>
-
-        <div className={book.coachSlot}>
-          <Presence show={showCoach}>
-            {coach && showCoach && (
-              <CoachMark
-                key={coach.clear ? 'clear' : `${lesson}:${introStep}:${coach.step}:${coach.title}`}
-                coach={coach}
-                hideLabel={guided ? '튜토리얼 건너뛰기' : '안내 숨기기'}
-                // 말풍선은 눌러야 할 곳(고리) 옆에 붙는다. 고리가 없으면 밝게 남긴 곳, 그것도 없으면
-                // 굴림 중엔 판정 카드 옆, 아니면 무대 위 기본 자리에 선다
-                anchor={
-                  tour?.ring ??
-                  tour?.open[0] ??
-                  (roll && !coach.clear ? '[data-roll-panel]' : undefined)
-                }
-                // 밝게 남긴 곳과 판정 카드·예고 카드·발동 카드 줄은 덮지 않는다
-                avoid={[...(tour?.open ?? []), ...COACH_AVOID]}
-                // 책(기록지·본문·목차)과 상대 이름표는 지금 설명하는 곳이 아니면 되도록 비켜 선다
-                shy={COACH_SHY.filter((sel) => sel !== tour?.ring && !tour?.open.includes(sel))}
-                region="[data-coach-region]"
-                pinned={guided}
-                onHide={() => {
-                  if (!guided) return setCoachHidden(true);
-                  setLesson('free');
-                  setNotes([]);
-                }}
-              />
-            )}
-          </Presence>
-        </div>
-
-        <RollSheet
-          active={sheetActive}
-          resetKey={roll?.id ?? ''}
-          summary={
-            settled && myOutcome ? (
-              <>
-                <b>{JUDGE[myOutcome].word}</b> · {term(roll!.action)} 판정 · {sign(myTotal)}
-              </>
-            ) : (
-              '주사위를 굴리는 중…'
-            )
-          }
-        >
-          <div className={book.center}>
-            {previewing && (
-              <div className={book.previewDock}>
-                <RollPreview
-                  name={me.name}
-                  action={action!}
-                  approach={approach!}
-                  rating={me.approaches[approach!]}
-                  stunt={stuntPlus}
-                  difficulty={action === 'attack' || defending ? null : SCENE.overcomeDifficulty}
-                  opponent={boss.name}
-                  canInvoke={invokable > 0}
-                  disabled={
-                    (busy && !defending) ||
-                    !!compel ||
-                    !!prompt ||
-                    (guided && !!tour?.guide && tour.guide.focus !== 'roll')
-                  }
-                  focus={coach?.focus === 'roll' && showCoach}
-                  onRoll={onRoll}
-                />
-              </div>
-            )}
-            {roll && !stale && (
-              <CheckCard
-                panelRef={revealRoll}
-                kind={`${term(roll.action)} 판정`}
-                me={{
-                  label: (
-                    <>
-                      {activeChar?.name} · {term(roll.active.approach)} {sign(roll.active.rating)}
-                    </>
-                  ),
-                  dice: (
-                    <DiceTray
-                      dice={roll.active.dice}
-                      rollKey={`${roll.id}:${roll.active.animSeed}`}
-                      sealed={roll.status === 'awaiting_defense'}
-                      mode={diceMode}
-                      onSettled={() => setSettled(true)}
-                    />
-                  ),
-                  total: roll.active.dice && settled && result ? sideTotal(roll.active) : null,
-                  sum: roll.active.dice && settled ? sumLine(roll.active) : null,
-                }}
-                opp={
-                  roll.targetId
-                    ? {
-                        label: (
-                          <>
-                            {targetChar?.name} · {term('defend')}
-                            {roll.defense &&
-                              ` · ${term(roll.defense.approach)} ${sign(roll.defense.rating)}`}
-                          </>
-                        ),
-                        dice: (
-                          <DiceTray
-                            dice={roll.defense?.dice ?? null}
-                            rollKey={`${roll.id}:d:${roll.defense?.animSeed ?? 'x'}`}
-                            sealed={!roll.defense}
-                            tone="op"
-                            mode={diceMode}
-                          />
-                        ),
-                        total: roll.defense?.dice && settled ? sideTotal(roll.defense) : null,
-                        sum: roll.defense?.dice && settled ? sumLine(roll.defense) : null,
-                      }
-                    : { difficulty: roll.difficulty ?? 0 }
-                }
-                verdict={
-                  settled &&
-                  myOutcome &&
-                  result && (
-                    <OutcomeBanner
-                      action={mySide === 'defense' ? 'defend' : roll.action}
-                      outcome={final && mySide === 'active' ? roll.result!.outcome : myOutcome}
-                      total={myTotal}
-                      provisional={!final}
-                    />
-                  )
-                }
-              >
-                {roll.status === 'awaiting_defense' && (
-                  <p className={styles.waiting}>굴림 완료. 상대 기다리는 중</p>
-                )}
-                {settled && roll.status === 'open' && !myRoll && (
-                  <button
-                    type="button"
-                    className={styles.defenseOk}
-                    data-tour="finalize"
-                    disabled={guided && !!tour?.lockFinalize}
-                    onClick={onDefenseFinalize}
-                  >
-                    결과 확정
-                  </button>
-                )}
-                {settled && roll.status === 'open' && myRoll && unusedStunt && (
-                  <button
-                    type="button"
-                    className={styles.stunt}
-                    onClick={() =>
-                      run(ME, {
-                        type: 'stunt.apply',
-                        payload: { rollId: roll.id, side: 'active', stuntId: unusedStunt.id },
-                      })
-                    }
-                  >
-                    {term('stunt')} 적용: {unusedStunt.text}
-                  </button>
-                )}
-              </CheckCard>
-            )}
-          </div>
-
-          <div className={book.table} data-tour="aspects">
-            {!(roll && settled && roll.status === 'open' && myRoll) &&
-              sceneAspects.map((a: Aspect) => (
-                <AspectCard
-                  key={a.id}
-                  aspect={a}
-                  {...(a.ownerType === 'character'
-                    ? { owner: state.characters[a.ownerId]?.name ?? '' }
-                    : {})}
-                />
-              ))}
-            {roll && settled && roll.status === 'open' && myRoll && (
-              <div className={book.tray}>
-                <InvokeTray
-                  choices={choices}
-                  fatePoints={me.fatePoints}
-                  selectedId={selectedAspect}
-                  onSelect={setSelectedAspect}
-                  onInvoke={onInvoke}
-                  onFinalize={onFinalize}
-                  lockFinalize={guided && !!tour?.lockFinalize}
-                />
-              </div>
-            )}
-          </div>
-        </RollSheet>
-
-        <Presence show={!!compel}>
-          {compel && (
-            <div className={styles.overlay} data-overlay="">
-              <CompelOffer
-                aspect={state.aspects[compel.aspectId]!}
-                text={compel.text}
-                targetId={meId}
-                fatePoints={me.fatePoints}
-                onAccept={() => {
-                  run(ME, {
-                    type: 'compel.respond',
-                    payload: { compelId: compel.id, accept: true },
-                  });
-                  if (lesson !== 'free') setNotes(compelNotes(true));
-                }}
-                onRefuse={() => {
-                  run(ME, {
-                    type: 'compel.respond',
-                    payload: { compelId: compel.id, accept: false },
-                  });
-                  if (lesson !== 'free') setNotes(compelNotes(false));
-                }}
-              />
-            </div>
-          )}
-        </Presence>
-
-        <Presence show={!!prompt}>
-          {prompt && (
-            <div className={styles.overlay} data-overlay="">
-              <form
-                className={styles.prompt}
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  submitPrompt();
-                }}
-              >
-                <div className={styles.promptHead}>
-                  {prompt.kind === 'aspect'
-                    ? `새 ${term('aspect')} 이름 짓기 · ${term('freeInvoke')} ${prompt.freeInvokes}`
-                    : `${term('boost')} 이름 짓기`}
-                </div>
-                <ul className={styles.promptExplain}>
-                  {prompt.kind === 'aspect' ? (
-                    <>
-                      <li>
-                        방금 만든 유리한 상황이 장면의 새 {term('aspect')}이 된다. 이야기에서
-                        &quot;사실&quot;이 되는 것.
-                      </li>
-                      <li>
-                        카드에 핀 {prompt.freeInvokes}개가 꽂힌다. 핀 하나로 {term('fatePoint')}{' '}
-                        없이 한 번 {term('invoke')}할 수 있다.
-                      </li>
-                      <li>
-                        핀을 다 써도 {term('aspect')}은 남는다. 그다음부턴{' '}
-                        {josa(term('fatePoint'), '을/를')} 내고 쓴다.
-                      </li>
-                    </>
-                  ) : (
-                    <>
-                      <li>
-                        {term('boost')}는 굴림 덕분에 잠깐 생긴 작은 기회. 오래가는 {term('aspect')}
-                        이 아니다.
-                      </li>
-                      <li>
-                        {term('fatePoint')} 없이 딱 한 번 +2를 받을 수 있다. 쓰면 바로 사라진다.
-                      </li>
-                      <li>장면이 바뀌면 없어지므로 바로 다음 굴림에 쓰는 편이 좋다.</li>
-                    </>
-                  )}
-                </ul>
-                <p className={styles.promptHelp}>
-                  {prompt.kind === 'aspect'
-                    ? '장면에 새로 생긴 사실을 짧은 문구로. 예: "연기에 가려진 뒷문"'
-                    : '그 순간의 기회를 짧게. 예: "흔들리는 발판", "연기 사이로 난 틈"'}
-                </p>
-                <input
-                  autoFocus
-                  aria-label={
-                    prompt.kind === 'aspect' ? `새 ${term('aspect')} 이름` : `${term('boost')} 이름`
-                  }
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  maxLength={40}
-                  placeholder={
-                    prompt.kind === 'aspect' ? '예: 연기에 가려진 뒷문' : '예: 흔들리는 발판'
-                  }
-                  className={styles.promptInput}
-                />
-                <div className={styles.promptButtons}>
-                  <button type="button" onClick={() => setPrompt(null)} className={styles.restart}>
-                    건너뛰기
-                  </button>
-                  <button type="submit" className={styles.promptOk} disabled={!draft.trim()}>
-                    붙이기
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-        </Presence>
-      </section>
-
-      <section className={book.book} data-ink="night">
-        <div className={book.running}>
-          <span>세션 1 · 튜토리얼</span>
-          <span className={book.tools}>
-            <select
-              aria-label="주사위 연출"
-              value={diceMode}
-              onChange={(e) => {
-                const m = e.target.value as DiceMode;
-                setDiceMode(m);
-                saveDiceMode(m);
-              }}
-            >
-              {DICE_MODES.map(([v, label]) => (
-                <option key={v} value={v}>
-                  주사위 {label}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              aria-pressed={sfxOn}
-              onClick={() => {
-                setSfxEnabled(!sfxOn);
-                setSfxOn(!sfxOn);
-              }}
-            >
-              효과음 {sfxOn ? '켜짐' : '꺼짐'}
-            </button>
-            <button type="button" onClick={onRestart}>
-              처음부터
-            </button>
-          </span>
-        </div>
-        <div data-tour="party">
-          <MySheet
-            character={me}
-            aspects={state.aspects}
-            image={asset(pick.image)}
-            companions={companions}
-          />
-        </div>
-        <div className={book.text} data-tour="dialogue">
-          <StoryLog lines={lines} variant="book" />
-        </div>
-        {error && <p className={book.error}>{error}</p>}
-      </section>
-      <Dock>
-        <ActionBar
-          character={me}
-          action={action}
-          approach={approach}
-          hideRoll
-          disabled={
-            (busy && !defending) ||
-            !!compel ||
-            !!prompt ||
-            me.takenOut === true ||
-            boss.takenOut === true
-          }
-          canDefend={defending}
-          {...(coach?.focus && showCoach && !guided ? { focus: coach.focus } : {})}
-          {...(guided && tour?.guide ? { guide: tour.guide } : {})}
-          onAction={setAction}
-          onApproach={setApproach}
-          onRoll={onRoll}
-        />
-      </Dock>
+      />
       {guided && tour && <Spotlight open={[...tour.open, '[data-coach]']} ring={tour.ring} />}
     </main>
   );
