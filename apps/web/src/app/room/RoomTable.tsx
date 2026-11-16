@@ -28,20 +28,17 @@ import {
 } from '@fate/rules-engine';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { AspectCard } from '@/components/aspect/AspectCard';
 import { CompelOffer } from '@/components/compel/CompelOffer';
 import { StoryLog } from '@/components/log/StoryLog';
-import { FoePlate } from '@/components/book/FoePlate';
-import { Dock } from '@/components/book/Dock';
 import { isDialogOpen } from '@/components/book/Leaf';
-import { MySheet } from '@/components/book/MySheet';
-import { revealRoll, RollSheet } from '@/components/book/RollSheet';
-import { ActionBar } from '@/components/roll/ActionBar';
 import { DiceTray, PendingDice, savedDiceMode, type DiceMode } from '@/components/roll/DiceTray';
-import { InvokeTray, type InvokeChoice } from '@/components/roll/InvokeTray';
-import { OutcomeBanner } from '@/components/roll/OutcomeBanner';
-import { CheckCard, sumLine } from '@/components/roll/CheckCard';
-import { RollPreview } from '@/components/roll/RollPreview';
+import type { InvokeChoice } from '@/components/roll/InvokeTray';
+import { ActionMenu } from '@/components/theater/ActionMenu';
+import { Duel, type Played } from '@/components/theater/Duel';
+import { Nameplate } from '@/components/theater/Nameplate';
+import { TableView, type Seat } from '@/components/theater/TableView';
+import { consequenceDepth, TraitCard } from '@/components/theater/TraitCard';
+import th from '@/components/theater/theater.module.css';
 import { SceneFade } from '@/components/scene/SceneFade';
 import { OUTCOME_FACES, pickFace, StageCast, type CastMember } from '@/components/scene/StageCast';
 import {
@@ -58,13 +55,11 @@ import { playSfx, sfxEnabled, sfxForEvent, sfxForOutcome } from '@/fx/sfx';
 import { ApiError } from '@/lib/api';
 import { asset } from '@/lib/asset';
 import { Presence } from '@/lib/motion';
-import { describe, ERROR_COPY, JUDGE } from '@/lib/copy';
+import { describe, ERROR_COPY, JUDGE, OUTCOME_COPY } from '@/lib/copy';
 import { josa } from '@/lib/josa';
-import { NARROW, useMedia } from '@/lib/media';
 import type { RemoteRoom } from '@/state/remoteRoom';
 import { ExitRoomDialog } from '../rooms/ExitRoomDialog';
 import { PageNav } from '@/components/nav/PageNav';
-import book from '../tutorial/book.module.css';
 import tryStyles from '../tutorial/try.module.css';
 import { ArtDialog, type ArtOpen } from './ArtDialog';
 import { BringCharacter } from './BringCharacter';
@@ -73,8 +68,8 @@ import { CommandPalette, roomCommands, ShortcutHelp } from './CommandPalette';
 import { DamagePrompt } from './DamagePrompt';
 import { FormatBar, formatShortcut } from '@/components/ui/FormatBar';
 import { GmBar, GmPanel, NarrationInput, SceneStarter, type GmOpen } from './GmConsole';
-import { MobileTabs, type RoomTab } from './MobileTabs';
 import { RoomSettings } from './RoomSettings';
+import rt from './RoomTheater.module.css';
 import styles from './room.module.css';
 import { Trackers } from './Trackers';
 import { ZoneMap } from './ZoneMap';
@@ -113,6 +108,32 @@ const DONE_COPY: Partial<Record<Command['type'], string>> = {
   'zone.remove': '구역 지움',
   'gm.note': '메모 남김',
   'media.attach': '그림 바뀜',
+};
+
+/** 장면 꼬리표 자리 (화면 비율 %): 이야기 중에는 장면 여기저기, 판정 중에는 판정판 둘레 */
+const TAG_SPOTS: ReadonlyArray<readonly [number, number]> = [
+  [40, 46],
+  [45, 17],
+  [57, 31],
+  [36, 28],
+  [52, 52],
+  [62, 12],
+];
+const TAG_SPOTS_ROLL: ReadonlyArray<readonly [number, number]> = [
+  [5, 52],
+  [27, 3],
+  [74, 56],
+  [75, 14],
+  [6, 68],
+  [77, 70],
+];
+
+/** 손패 부채꼴: 가운데는 곧게, 바깥으로 갈수록 기운다 */
+const fanOf = (i: number, n: number) => {
+  const d = i - (n - 1) / 2;
+  if (n <= 1 || Math.abs(d) < 0.6) return th.fan2;
+  if (Math.abs(d) < 1.6) return d < 0 ? th.fan1 : th.fan3;
+  return d < 0 ? th.fanL : th.fanR;
 };
 
 const signed = (n: number) => `${n >= 0 ? '+' : ''}${n}`;
@@ -270,7 +291,6 @@ export function RoomTable({
   const [difficulty, setDifficulty] = useState(2);
   const [targetId, setTargetId] = useState<string>('');
   const [settledKey, setSettledKey] = useState('');
-  const [selectedAspect, setSelectedAspect] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const [diceMode, setDiceMode] = useState<DiceMode>(savedDiceMode);
 
@@ -283,10 +303,6 @@ export function RoomTable({
     rollId && state.rolls[rollId]?.status !== 'cancelled' ? state.rolls[rollId] : undefined;
   const rollKey = roll ? `${roll.id}:${roll.active.animSeed}:${roll.defense?.animSeed ?? ''}` : '';
   const settled = !!roll && settledKey === rollKey;
-  // 좁은 화면: 결과가 나오면 패널이 다시 보이게
-  useEffect(() => {
-    if (settled) revealRoll(document.querySelector('[data-roll-panel]'));
-  }, [settled]);
   const activeChar = roll ? state.characters[roll.active.characterId] : undefined;
   // GM은 NPC 쪽만 대신 고른다. PC는 그 플레이어가 고르고, GM 화면에는 기다림 표시만 뜬다
   const [gmTakeOver, setGmTakeOver] = useState('');
@@ -353,7 +369,6 @@ export function RoomTable({
       toast({ text: '공격할 대상 고르기', tone: 'error', key: 'error' });
       return;
     }
-    setSelectedAspect(null);
     rollSound();
     setRolling({
       name: me.name,
@@ -423,7 +438,6 @@ export function RoomTable({
     paidWith: PaidWith,
   ) => {
     if (!roll || rerolling) return;
-    setSelectedAspect(null);
     if (mode === 'reroll') {
       setRerolling(true);
       rollSound();
@@ -437,7 +451,6 @@ export function RoomTable({
 
   const onDefenseDone = () => {
     if (!roll) return;
-    setSelectedAspect(null);
     void run({ type: 'roll.defense_ready', payload: { rollId: roll.id } });
   };
 
@@ -805,710 +818,612 @@ export function RoomTable({
 
   const overlayOpen = !!(prompt || (compel && state.aspects[compel.aspectId]) || damage || iDefend);
 
-  const stageBg = `linear-gradient(180deg, rgb(12 14 26 / .35), rgb(12 14 26 / .92)), url(${state.scene?.backgroundUrl ?? asset('/try/bg.jpg')})`;
+  // 오른쪽 이름표: 맞서는 상대 → 갈등 차례의 NPC → 첫 NPC (내 캐릭터는 왼쪽에 있으니 뺀다)
+  const foe = [
+    castRight,
+    showRoll ? activeChar : undefined,
+    turnChar?.isNpc ? turnChar : undefined,
+    party.find((c) => c.isNpc && !c.takenOut),
+  ].find((c) => !!c && c.id !== me?.id);
 
-  const foe =
-    castRight ??
-    (turnChar?.isNpc ? turnChar : undefined) ??
-    party.find((c) => c.isNpc && !c.takenOut);
-  const trayOpen =
-    !!roll && settled && roll.status === 'open' && (iRoll || iAdjustDefense) && !overlayOpen;
-  const previewing = !!me && !!action && !!approach && !roll && !rolling;
-  // 좁은 화면: 굴림이 끝나기 전까지 판정 카드와 발동 카드를 바텀 시트로 띄운다
-  const sheetActive = !!rolling || (!!roll && !isFolded && roll.status !== 'final');
+  // ---------- 장면 극장 (design-system.md 32절) ----------
+  const [tableOpen, setTableOpen] = useState(false);
+  const [logOpen, setLogOpen] = useState(false);
+  const [rerollMode, setRerollMode] = useState(false);
+  const sceneArt = state.scene?.backgroundUrl ?? asset('/try/bg.jpg');
+  // 굴리는 중이거나 판정이 펼쳐져 있으면 판정 화면 (장면이 어두워지고 판정판이 내려온다)
+  const rollMode = !!rolling || showRoll;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab' || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+      if (isTyping(e.target) || isDialogOpen() || overlayOpen || palette || help) return;
+      e.preventDefault();
+      setTableOpen((o) => !o);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [overlayOpen, palette, help]);
 
-  // ---------- 좁은 화면: 아래 탭 (무대 · 이야기 · 내 캐릭터) ----------
-  const narrow = useMedia(NARROW);
-  const [tab, setTab] = useState<RoomTab>('stage');
-  // 판정·방어·강요·피해 창은 무대 위에 뜨므로, 떠 있는 동안은 무대에 붙잡아 둔다
-  const stageLocked = sheetActive || overlayOpen;
-  const shownTab: RoomTab = stageLocked ? 'stage' : tab;
-  // 나에게 물어볼 일이 생기면 무대로 데려간다
-  const [lastCall, setLastCall] = useState(myCall);
-  if (myCall !== lastCall) {
-    setLastCall(myCall);
-    if (myCall) setTab('stage');
-  }
-  // 이야기 탭을 떠나 있는 동안 새로 적힌 줄
-  const [seen, setSeen] = useState(lines.length);
-  if ((shownTab === 'story' || !narrow) && seen !== lines.length) setSeen(lines.length);
-  const unread = Math.max(0, lines.length - seen);
+  // 손패: 결과를 조정할 차례인 쪽(공격자 또는 방어자)의 특성
+  const handSide: InvokeSide | null =
+    settled && roll?.status === 'open' && !overlayOpen
+      ? iRoll
+        ? 'active'
+        : iAdjustDefense
+          ? 'defense'
+          : null
+      : null;
+  const handChar =
+    handSide === 'active' ? activeChar : handSide === 'defense' ? defenseChar : undefined;
+  const handFate = handChar ? (handChar.isNpc ? state.gmPool : handChar.fatePoints) : 0;
+  const handMods =
+    handSide && roll
+      ? handSide === 'active'
+        ? roll.active.modifiers
+        : roll.defense?.modifiers
+      : undefined;
+  const ownAspects = (id: string | undefined) =>
+    Object.values(state.aspects).filter(
+      (a) =>
+        !a.hidden &&
+        a.ownerType === 'character' &&
+        a.ownerId === id &&
+        (a.kind === 'high' || a.kind === 'normal' || a.kind === 'trouble'),
+    );
+  const handAspects = handChar ? ownAspects(handChar.id) : [];
+  // 판정 중에는 상대의 특성도 장면에 꼬리표로 붙는다 (운명점을 상대에게 주고 쓸 수 있다)
+  const rival =
+    handSide === 'active' ? defenseChar : handSide === 'defense' ? activeChar : undefined;
+  const tagAspects = [
+    ...sceneAspects,
+    ...hiddenAspects,
+    ...(rollMode ? ownAspects(rival?.id) : []),
+  ];
+
+  const choiceById = new Map(
+    (handSide === 'defense' ? defenseChoices : choices).map((c) => [c.aspect.id, c]),
+  );
+  const playable = (a: Aspect) => {
+    const c = choiceById.get(a.id);
+    if (!handSide || !c || c.blocked) return null;
+    return rerollMode ? (c.reroll ?? null) : (c.bonus ?? null);
+  };
+  const play = (a: Aspect) => {
+    const p = playable(a);
+    if (!p || !handSide) return;
+    void onInvoke(
+      handSide,
+      a.id,
+      rerollMode ? 'reroll' : 'bonus',
+      p.free ? 'free_invoke' : 'fate_point',
+    );
+    setRerollMode(false);
+  };
+
+  // 판정판에 꽂힌 카드: 조정 중인 쪽의 것. 낸 사람이 다시 누르면 빠진다
+  const playedSide: InvokeSide = handSide ?? 'active';
+  const playedChar = playedSide === 'defense' ? defenseChar : activeChar;
+  const played: Played[] = (
+    (playedSide === 'defense' ? roll?.defense?.modifiers : roll?.active.modifiers) ?? []
+  ).map((m, i) => {
+    if (m.source.startsWith('stunt:')) {
+      const st = playedChar?.stunts.find((x) => `stunt:${x.id}` === m.source);
+      return { id: `${m.source}:${i}`, text: st?.text ?? term('stunt'), how: term('stunt') };
+    }
+    const id = m.source.replace(/^aspect:/, '');
+    const a = state.aspects[id] ?? m.restore;
+    return {
+      id,
+      text: a?.text ?? term('aspect'),
+      how:
+        m.paidWith === 'free_invoke'
+          ? a?.kind === 'boost'
+            ? term('boost')
+            : term('freeInvoke')
+          : `${term('fatePoint')} 1`,
+      onRevoke:
+        roll && handSide && m.paidWith
+          ? () =>
+              void run({
+                type: 'invoke.revoke',
+                payload: { rollId: roll.id, side: handSide, aspectId: id },
+              })
+          : undefined,
+    };
+  });
+
+  const artOf = (a: Aspect) => ({
+    portrait:
+      a.ownerType === 'character' ? (state.characters[a.ownerId]?.portraitUrl ?? null) : null,
+    scene: sceneArt,
+  });
+  const ownerName = (a: Aspect) =>
+    a.ownerType === 'character' ? state.characters[a.ownerId]?.name : undefined;
+  const highOf = (id: string) =>
+    Object.values(state.aspects).find(
+      (a) => !a.hidden && a.ownerType === 'character' && a.ownerId === id && a.kind === 'high',
+    )?.text;
+  const seatOf = (c: Character): Seat => ({
+    character: c,
+    image: c.portraitUrl ?? null,
+    player: c.isNpc ? undefined : state.members[c.ownerId ?? '']?.nickname,
+    me: c.id === me?.id,
+    aspects: Object.values(state.aspects).filter(
+      (a) =>
+        !a.hidden &&
+        a.ownerType === 'character' &&
+        a.ownerId === c.id &&
+        (a.kind === 'consequence' || a.kind === 'boost'),
+    ),
+  });
+  const fan = fanOf;
+  const lastLine = lines.at(-1);
+  const colon = lastLine?.kind === 'chat' ? lastLine.text.indexOf(':') : -1;
+  const speaker = lastLine && colon > 0 && colon < 24 ? lastLine.text.slice(0, colon) : 'GM';
 
   return (
     <main
-      className={`${book.shell} ${styles.shell} ${styles.callable}`}
+      ref={stageEl}
+      className={`${th.theater} ${styles.callable}`}
+      data-mode={rollMode ? 'roll' : 'story'}
       data-call={myCall ?? undefined}
-      data-tab={shownTab}
     >
       <Toaster />
-      <section
-        ref={stageEl}
-        className={`${book.stage} ${styles.stage}`}
-        data-roll={(showRoll && !!castRight) || undefined}
-        style={{ backgroundImage: stageBg }}
-      >
-        <SceneFade background={stageBg} />
-        <StageFx fx={stageFx} stage={stageEl} />
-        <div className={styles.cast}>
-          <StageCast
-            {...(castLeft
-              ? {
-                  left: {
-                    character: castLeft,
-                    focus: castRight
-                      ? roll?.status !== 'awaiting_defense'
-                      : castLeft === spot || !partner || talk?.focus !== partner.id,
-                    face:
-                      faceShown && castLeft.id === activeChar?.id
-                        ? pickFace(castLeft, OUTCOME_FACES[outcome])
-                        : null,
-                    portraitFallback: !castLeft.isNpc || talking(castLeft),
-                    ...beatFor(castLeft),
-                  },
-                }
-              : {})}
-            {...(castRight
+      <div className={`${th.bg} ${rt.bg}`} style={{ backgroundImage: `url(${sceneArt})` }}>
+        <SceneFade background={`url(${sceneArt})`} />
+      </div>
+      <StageFx fx={stageFx} stage={stageEl} />
+      <div className={rt.cast}>
+        <StageCast
+          {...(castLeft
+            ? {
+                left: {
+                  character: castLeft,
+                  focus: castRight
+                    ? roll?.status !== 'awaiting_defense'
+                    : castLeft === spot || !partner || talk?.focus !== partner.id,
+                  face:
+                    faceShown && castLeft.id === activeChar?.id
+                      ? pickFace(castLeft, OUTCOME_FACES[outcome])
+                      : null,
+                  portraitFallback: !castLeft.isNpc || talking(castLeft),
+                  ...beatFor(castLeft),
+                },
+              }
+            : {})}
+          {...(castRight
+            ? {
+                right: {
+                  character: castRight,
+                  focus: roll?.status === 'awaiting_defense',
+                  face: faceShown ? pickFace(castRight, OUTCOME_FACES[flip[outcome]]) : null,
+                  hit:
+                    !!faceShown &&
+                    roll?.action === 'attack' &&
+                    (outcome === 'success' || outcome === 'style'),
+                  ...beatFor(castRight),
+                },
+              }
+            : partner
               ? {
                   right: {
-                    character: castRight,
-                    focus: roll?.status === 'awaiting_defense',
-                    face: faceShown ? pickFace(castRight, OUTCOME_FACES[flip[outcome]]) : null,
-                    hit:
-                      !!faceShown &&
-                      roll?.action === 'attack' &&
-                      (outcome === 'success' || outcome === 'style'),
-                    ...beatFor(castRight),
+                    character: partner,
+                    focus: talk?.focus === partner.id,
+                    portraitFallback: true,
+                    ...beatFor(partner),
                   },
                 }
-              : partner
-                ? {
-                    right: {
-                      character: partner,
-                      focus: talk?.focus === partner.id,
-                      portraitFallback: true,
-                      ...beatFor(partner),
-                    },
-                  }
-                : {})}
-          />
-        </div>
-
-        <header className={`${book.chapter} ${styles.chapter}`}>
-          <PageNav tone="stage" fallback="/rooms/" className={book.stageNav} />
-          <p>
-            {state.session ? `세션 ${state.session.number}` : '방'} · {name}
-          </p>
-          <h1 key={state.scene?.id ?? 'none'}>{state.scene?.name ?? '장면을 기다리는 중'}</h1>
-        </header>
-
-        {foe && (
-          <div className={book.foePlate}>
-            <FoePlate
-              character={foe}
-              {...(foe.portraitUrl ? { image: foe.portraitUrl } : {})}
-              compact
-            />
-          </div>
-        )}
-
-        <RollSheet
-          active={sheetActive}
-          resetKey={rollKey || 'pending'}
-          summary={
-            settled && outcome && result && roll ? (
-              <>
-                <b>{JUDGE[outcome].word}</b> · {activeChar?.name} {term(roll.action)} ·{' '}
-                {signed(result.total)}
-              </>
-            ) : (
-              (waitingOn ?? '주사위를 굴리는 중…')
-            )
-          }
-        >
-          <div className={`${book.center} ${styles.center}`}>
-            {!state.scene && <SceneStarter state={state} run={run} pending={pending} isGm={isGm} />}
-            <div className={styles.topStack} data-top-stack="">
-              <Trackers
-                state={state}
-                run={run}
-                isGm={isGm}
-                canControl={canControl}
-                pending={pending}
-              />
-              <ZoneMap
-                state={state}
-                run={run}
-                isGm={isGm}
-                canControl={canControl}
-                pending={pending}
-                // 지도는 무대 위에 켜고 끄는 층: 펼치기 전에는 작은 꼬리표만 남아 스탠딩을 가리지 않는다
-                auto="hidden"
-              />
-            </div>
-
-            {waitingOn && (
-              <div className={styles.waitChip}>
-                <span className={styles.dots} aria-hidden />
-                {waitingOn}
-                {isGm && roll && (
-                  <button type="button" onClick={() => setGmTakeOver(roll.id)}>
-                    대신 고르기
-                  </button>
-                )}
-              </div>
-            )}
-
-            {rolling && (
-              <CheckCard
-                pending
-                panelRef={revealRoll}
-                kind={`${term(rolling.action)} 판정`}
-                me={{ label: rolling.head, dice: <PendingDice mode={diceMode} /> }}
-                opp={
-                  rolling.target !== undefined
-                    ? {
-                        label: `${rolling.target} · ${term('defend')}`,
-                        dice: (
-                          <DiceTray
-                            dice={null}
-                            rollKey="pending"
-                            sealed
-                            tone="op"
-                            mode={diceMode}
-                          />
-                        ),
-                      }
-                    : { difficulty: rolling.difficulty ?? 0 }
-                }
-              />
-            )}
-
-            {roll && !rolling && isFolded && outcome && result && (
-              <button
-                type="button"
-                className={styles.foldedRoll}
-                data-tone={JUDGE[outcome].tone}
-                onClick={() => setFolded('')}
-                title="굴림 결과 펼치기"
-              >
-                <b>{JUDGE[outcome].word}</b>
-                <span className={styles.foldedText}>
-                  {activeChar?.name} · {term(roll.action)} · {term(roll.active.approach)}{' '}
-                  <em>
-                    {result.total >= 0 ? '+' : ''}
-                    {result.total}
-                  </em>
-                </span>
-                <span className={styles.foldedMore}>다시 보기 ▴</span>
-              </button>
-            )}
-
-            {roll && !rolling && !isFolded && (
-              <CheckCard
-                continued={quickKey === roll.id}
-                {...(quickKey === roll.id ? {} : { panelRef: revealRoll })}
-                kind={`${term(roll.action)} 판정`}
-                me={{
-                  label: `${activeChar?.name ?? ''} · ${term(roll.active.approach)} ${signed(roll.active.rating)}`,
-                  dice: rerolling ? (
-                    <PendingDice mode={diceMode} />
-                  ) : (
-                    <DiceTray
-                      dice={roll.active.dice}
-                      rollKey={`${roll.id}:${roll.active.animSeed}`}
-                      sealed={roll.status === 'awaiting_defense'}
-                      mode={diceMode}
-                      quick={quickKey === roll.id}
-                      onSettled={() => setSettledKey(rollKey)}
-                    />
-                  ),
-                  total: roll.active.dice && settled && result ? sideTotal(roll.active) : null,
-                  sum: settled ? sumLine(roll.active) : null,
-                }}
-                opp={
-                  roll.targetId
-                    ? {
-                        label: `${state.characters[roll.targetId]?.name ?? ''} · ${term('defend')}${roll.defense ? ` · ${term(roll.defense.approach)} ${signed(roll.defense.rating)}` : ''}`,
-                        dice: (
-                          <DiceTray
-                            dice={roll.defense?.dice ?? null}
-                            rollKey={`${roll.id}:d:${roll.defense?.animSeed ?? 'x'}`}
-                            sealed={!roll.defense}
-                            tone="op"
-                            mode={diceMode}
-                          />
-                        ),
-                        total: roll.defense?.dice && settled ? sideTotal(roll.defense) : null,
-                        sum: roll.defense && settled ? sumLine(roll.defense) : null,
-                      }
-                    : { difficulty: roll.difficulty ?? 0 }
-                }
-                verdict={
-                  settled &&
-                  outcome &&
-                  result && (
-                    <OutcomeBanner
-                      action={roll.action}
-                      outcome={outcome}
-                      total={result.total}
-                      provisional={roll.status !== 'final' && iRoll}
-                    />
-                  )
-                }
-              >
-                {roll.status === 'awaiting_defense' && (
-                  <p className={tryStyles.waiting}>굴림 완료. 상대를 기다리는 중</p>
-                )}
-                {settled && roll.status === 'open' && iRoll && unusedStunt && (
-                  <button
-                    type="button"
-                    className={tryStyles.stunt}
-                    disabled={pending}
-                    onClick={() =>
-                      void run({
-                        type: 'stunt.apply',
-                        payload: { rollId: roll.id, side: 'active', stuntId: unusedStunt.id },
-                      })
-                    }
-                  >
-                    {term('stunt')} 적용: {unusedStunt.text}
-                  </button>
-                )}
-                {settled && iAdjustDefense && defenseStunt && (
-                  <button
-                    type="button"
-                    className={tryStyles.stunt}
-                    disabled={pending}
-                    onClick={() =>
-                      void run({
-                        type: 'stunt.apply',
-                        payload: { rollId: roll.id, side: 'defense', stuntId: defenseStunt.id },
-                      })
-                    }
-                  >
-                    {term('stunt')} 적용: {defenseStunt.text}
-                  </button>
-                )}
-                {settled && roll.status === 'open' && !iRoll && !iAdjustDefense && (
-                  <p className={tryStyles.waiting}>
-                    {josa(activeChar?.name ?? '', '이/가')} 결과를 정하는 중…
-                  </p>
-                )}
-              </CheckCard>
-            )}
-          </div>
-
-          <div className={book.table}>
-            {[...sceneAspects, ...hiddenAspects].map((a) => (
-              <div
-                key={a.id}
-                className={styles.stageAspect}
-                hidden={trayOpen}
-                data-hidden={a.hidden || undefined}
-              >
-                <AspectCard
-                  aspect={a}
-                  {...(a.ownerType === 'character'
-                    ? { owner: state.characters[a.ownerId]?.name ?? '' }
-                    : {})}
-                  {...(a.hidden ? { note: 'GM에게만 보임' } : {})}
-                />
-                {isGm && (
-                  <div className={styles.aspectTools}>
-                    {a.hidden ? (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          void run({ type: 'aspect.reveal', payload: { aspectId: a.id } })
-                        }
-                      >
-                        공개
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setGmOpen({ tool: 'compel', aspectId: a.id })}
-                      >
-                        {term('compel')}
-                      </button>
-                    )}
-                    {a.kind !== 'consequence' && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          void run({ type: 'aspect.remove', payload: { aspectId: a.id } })
-                        }
-                      >
-                        지우기
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
-            {isGm && state.scene && !trayOpen && (
-              <button
-                type="button"
-                className={styles.addAspect}
-                onClick={() => setGmOpen({ tool: 'aspect' })}
-              >
-                <span className={styles.addLabel}>빈 카드</span>
-                <span className={styles.addText}>+ {term('aspect')} 붙이기</span>
-              </button>
-            )}
-            {roll && settled && roll?.status === 'open' && iRoll && (
-              <div className={book.tray}>
-                {!overlayOpen && !palette && !help && (
-                  <InvokeTray
-                    choices={choices}
-                    fatePoints={activeChar?.isNpc ? state.gmPool : (activeChar?.fatePoints ?? 0)}
-                    selectedId={selectedAspect}
-                    onSelect={setSelectedAspect}
-                    onInvoke={(id, mode, paid) => void onInvoke('active', id, mode, paid)}
-                    onFinalize={() => void onFinalize()}
-                    {...(finalizeWait ? { waiting: finalizeWait } : {})}
-                  />
-                )}
-              </div>
-            )}
-            {roll && settled && iAdjustDefense && (
-              <div className={book.tray}>
-                {!overlayOpen && !palette && !help && (
-                  <InvokeTray
-                    choices={defenseChoices}
-                    fatePoints={defenseChar?.isNpc ? state.gmPool : (defenseChar?.fatePoints ?? 0)}
-                    selectedId={selectedAspect}
-                    onSelect={setSelectedAspect}
-                    onInvoke={(id, mode, paid) => void onInvoke('defense', id, mode, paid)}
-                    onFinalize={onDefenseDone}
-                    finalizeLabel="방어 조정 완료"
-                  />
-                )}
-              </div>
-            )}
-          </div>
-        </RollSheet>
-
-        <Presence show={!!(iDefend && defender && roll)}>
-          {iDefend && defender && roll && (
-            <div className={tryStyles.overlay} data-overlay="">
-              <div
-                className={tryStyles.prompt}
-                role="dialog"
-                aria-label={`${term('defend')} 고르기`}
-              >
-                <div className={tryStyles.promptHead}>
-                  {activeChar?.name}의 {term(roll.action)}! {josa(defender.name, '은/는')} 어떻게
-                  막을까?
-                </div>
-                <p className={tryStyles.promptHelp}>
-                  {term('defend')}에 쓸 {term('approach')} 고르기. 두 결과가 동시에 공개된다.
-                  <br />
-                  <small>키보드 Q W E / A S D</small>
-                </p>
-                <DefendGrid
-                  defender={defender}
-                  pending={pending}
-                  onPick={(a) => {
-                    rollSound();
-                    void run({ type: 'roll.defend', payload: { rollId: roll.id, approach: a } });
-                  }}
-                />
-              </div>
-            </div>
-          )}
-        </Presence>
-
-        <Presence show={!!(compel && state.aspects[compel.aspectId])}>
-          {compel && state.aspects[compel.aspectId] && (
-            <div className={tryStyles.overlay} data-overlay="">
-              <CompelOffer
-                aspect={state.aspects[compel.aspectId] as Aspect}
-                text={compel.text}
-                targetId={compel.targetId}
-                fatePoints={
-                  state.characters[compel.targetId]?.isNpc
-                    ? state.gmPool
-                    : (state.characters[compel.targetId]?.fatePoints ?? 0)
-                }
-                onAccept={() =>
-                  void run({
-                    type: 'compel.respond',
-                    payload: { compelId: compel.id, accept: true },
-                  })
-                }
-                onRefuse={() =>
-                  void run({
-                    type: 'compel.respond',
-                    payload: { compelId: compel.id, accept: false },
-                  })
-                }
-              />
-            </div>
-          )}
-        </Presence>
-
-        <Presence show={!!(damage && !compel)}>
-          {damage && !compel && (
-            <div className={tryStyles.overlay} data-overlay="">
-              <DamagePrompt
-                damage={damage}
-                character={state.characters[damage.targetId]!}
-                run={run}
-                pending={pending}
-              />
-            </div>
-          )}
-        </Presence>
-
-        <Presence show={!!prompt}>
-          {prompt && (
-            <div className={tryStyles.overlay} data-overlay="">
-              <form
-                className={tryStyles.prompt}
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  void submitPrompt();
-                }}
-              >
-                <div className={tryStyles.promptHead}>
-                  {prompt.kind === 'aspect'
-                    ? `새 ${term('aspect')} 이름 짓기 · ${term('freeInvoke')} ${prompt.freeInvokes}`
-                    : `${term('boost')} 이름 짓기`}
-                </div>
-                <p className={tryStyles.promptHelp}>
-                  {prompt.kind === 'aspect'
-                    ? '장면에 새로 생긴 사실을 짧은 문구로'
-                    : '한 번 쓰고 사라지는 순간의 기회'}
-                </p>
-                <input
-                  autoFocus
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Escape') closePrompt();
-                  }}
-                  maxLength={40}
-                  placeholder={
-                    prompt.kind === 'aspect' ? '예: 연기로 가득 찬 복도' : '예: 잠깐 휘청임'
-                  }
-                  className={tryStyles.promptInput}
-                />
-                <div className={tryStyles.promptButtons}>
-                  <button type="button" onClick={() => closePrompt()} className={tryStyles.restart}>
-                    건너뛰기 <kbd aria-hidden>Esc</kbd>
-                  </button>
-                  <button
-                    type="submit"
-                    className={tryStyles.promptOk}
-                    disabled={!draft.trim() || naming}
-                  >
-                    붙이기 <kbd aria-hidden>Enter</kbd>
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-        </Presence>
-      </section>
-
-      <section className={`${book.book} ${styles.book}`} data-ink="night">
-        <div className={`${book.running} ${styles.running}`}>
-          <span className={styles.runHead}>
-            <span className={styles.runTitle} title={name}>
-              {name}
-            </span>
-            {!isGm && (
-              <span className={styles.role}>{role === 'player' ? '플레이어' : '관전'}</span>
-            )}
-            <button
-              type="button"
-              className={styles.invite}
-              onClick={() => {
-                void navigator.clipboard?.writeText(joinUrl);
-                setCopied(true);
-                toast({ text: '초대 링크 복사됨', tone: 'success', key: 'copy' });
-                setTimeout(() => setCopied(false), 1600);
-              }}
-              data-tip="눌러서 초대 링크 복사"
-              aria-label={`초대 코드 ${inviteCode}, 눌러서 초대 링크 복사`}
-            >
-              {copied ? (
-                '복사됨 ✓'
-              ) : (
-                <>
-                  초대 <b>{inviteCode}</b>
-                </>
-              )}
-            </button>
-          </span>
-          <span className={styles.runTools}>
-            <RoomSettings
-              isGm={isGm}
-              diceMode={diceMode}
-              onDiceMode={setDiceMode}
-              sfxOn={sfxOn}
-              onSfx={setSfxOn}
-              onPalette={() => setPalette(true)}
-              onHelp={() => setHelp(true)}
-              onExit={() => setExitOpen(true)}
-            />
-          </span>
-        </div>
-        <div className={styles.part} data-part="tools">
-          {isGm && (
-            <GmBar
-              state={state}
-              run={run}
-              pending={pending}
-              lastUndoable={lastUndoable}
-              onOpen={setGmOpen}
-              onArt={() => setArtOpen({ tab: state.scene ? 'scene' : 'standing' })}
-            />
-          )}
-          <MySheet
-            character={me ?? undefined}
-            aspects={state.aspects}
-            {...(me?.portraitUrl ? { image: me.portraitUrl } : {})}
-            companions={party
-              .filter((c) => c.id !== me?.id)
-              .map((c) => ({
-                character: c,
-                ...(c.portraitUrl ? { image: c.portraitUrl } : {}),
-                note: c.isNpc ? 'NPC' : (state.members[c.ownerId ?? '']?.nickname ?? ''),
-              }))}
-            onPick={(id) =>
-              controllable.some((c) => c.id === id) ? setActingId(id) : setSheetId(id)
-            }
-            pickHint={(id) => {
-              const n = state.characters[id]?.name ?? '';
-              return controllable.some((c) => c.id === id)
-                ? `${josa(n, '으로/로')} 움직이기`
-                : `${n} 시트 보기`;
-            }}
-            {...(me ? { onOpenSheet: () => setSheetId(me.id) } : {})}
-            // 넓은 화면의 책은 이야기에 높이를 내주고 기록지는 한 줄로. 좁은 화면은 "내 캐릭터" 탭에서 다 펼친다
-            compact={isGm || !narrow}
-          />
-          {party.length === 0 && <p className={styles.empty}>아직 테이블에 캐릭터 없음</p>}
-          {role === 'player' && (
-            <BringCharacter
-              run={run}
-              has={controllable.length > 0}
-              brought={new Set(controllable.flatMap((c) => (c.sourceKey ? [c.sourceKey] : [])))}
-            />
-          )}
-        </div>
-        <div className={book.text} data-part="story">
-          <StoryLog
-            variant="book"
-            lines={lines}
-            undone={undone}
-            sending={
-              narrationEcho
-                ? [...sending, { id: -1, text: `GM: ${narrationEcho}`, fx: true }]
-                : sending
-            }
-            {...(isGm
-              ? {
-                  onUndo: (seq: number) =>
-                    void run({ type: 'event.undo', payload: { targetSeq: seq } }),
-                }
               : {})}
+        />
+      </div>
+
+      <header className={th.top}>
+        <PageNav tone="stage" fallback="/rooms/" />
+        <p className={rt.kicker}>
+          {state.session ? `세션 ${state.session.number}` : '방'} · {name}
+        </p>
+        <h1 key={state.scene?.id ?? 'none'}>{state.scene?.name ?? '장면을 기다리는 중'}</h1>
+      </header>
+
+      <div className={th.tools}>
+        {!isGm && <span className={rt.role}>{role === 'player' ? '플레이어' : '관전'}</span>}
+        <button
+          type="button"
+          onClick={() => {
+            void navigator.clipboard?.writeText(joinUrl);
+            setCopied(true);
+            toast({ text: '초대 링크 복사됨', tone: 'success', key: 'copy' });
+            setTimeout(() => setCopied(false), 1600);
+          }}
+          title="눌러서 초대 링크 복사"
+          aria-label={`초대 코드 ${inviteCode}, 눌러서 초대 링크 복사`}
+        >
+          {copied ? '복사됨 ✓' : `초대 ${inviteCode}`}
+        </button>
+        <button type="button" className={th.tableBtn} onClick={() => setTableOpen(true)}>
+          탁자 보기<kbd>Tab</kbd>
+        </button>
+        <span className={rt.settings} data-ink="night">
+          <RoomSettings
+            isGm={isGm}
+            diceMode={diceMode}
+            onDiceMode={setDiceMode}
+            sfxOn={sfxOn}
+            onSfx={setSfxOn}
+            onPalette={() => setPalette(true)}
+            onHelp={() => setHelp(true)}
+            onExit={() => setExitOpen(true)}
           />
-        </div>
-        {role !== 'spectator' && (
-          <div className={styles.composer} data-gm={isGm || undefined} data-part="story">
-            {isGm && (
-              <div className={styles.composeTabs} role="tablist" aria-label="쓸 종류">
-                {(
-                  [
-                    ['narrate', '대사'],
-                    ['chat', '말하기'],
-                  ] as const
-                ).map(([m, label]) => (
-                  <button
-                    key={m}
-                    type="button"
-                    role="tab"
-                    aria-selected={composeMode === m}
-                    title={
-                      m === 'narrate' ? 'GM 대사: 장면 묘사로 책에 기록' : '말하기: 테이블 대화'
-                    }
-                    onClick={() => setComposeMode(m)}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            )}
-            {isGm && (
-              <StageFxMenu
-                run={run}
-                characters={stageCharacters}
-                focusId={talk?.focus ?? castLeft?.id}
-              />
-            )}
-            {isGm && composeMode === 'narrate' ? (
-              <div className={styles.narrate}>
-                <NarrationInput run={run} onEcho={setNarrationEcho} />
-              </div>
-            ) : (
-              <form
-                className={styles.chat}
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const text = chat.trim();
-                  if (!hasVisibleText(text)) return;
-                  setChat('');
-                  // 못 보냈으면 쓴 글을 되살린다 (그 사이 새로 쓴 게 없을 때만)
-                  void sendChat(text).then((ok) => {
-                    if (!ok) setChat((cur) => (cur ? cur : text));
-                  });
-                }}
-              >
-                {voices.length > 0 && (
-                  <select
-                    className={styles.voice}
-                    value={as}
-                    onChange={(e) => setSpeakAs(e.target.value)}
-                    aria-label="말할 사람"
-                    data-tip="NPC로 말하면 무대에 서서 말풍선으로 말한다"
-                  >
-                    <option value="">GM으로</option>
-                    {voices.map((c) => (
-                      <option key={c.id} value={c.name}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                )}
-                <input
-                  ref={chatField}
-                  value={chat}
-                  onChange={(e) => setChat(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (formatShortcut(e, chat, setChat)) return;
-                    if (e.key === 'Escape') e.currentTarget.blur();
-                  }}
-                  maxLength={500}
-                  placeholder={as ? `${josa(as, '으로/로')} 말하기… (Enter)` : '말하기… (Enter)'}
-                  aria-label="채팅"
-                />
-                <FormatBar field={chatField} value={chat} onChange={setChat} gm={isGm} />
-                <button type="submit" disabled={!hasVisibleText(chat)}>
-                  보내기
-                </button>
-              </form>
-            )}
-          </div>
+        </span>
+      </div>
+
+      {/* 테이블에 앉은 캐릭터: 눌러서 그 캐릭터로 움직이거나 시트를 본다 */}
+      <aside className={rt.roster} aria-label="테이블의 캐릭터" data-ink="night">
+        {isGm && (
+          <GmBar
+            state={state}
+            run={run}
+            pending={pending}
+            lastUndoable={lastUndoable}
+            onOpen={setGmOpen}
+            onArt={() => setArtOpen({ tab: state.scene ? 'scene' : 'standing' })}
+          />
         )}
-      </section>
+        <ul>
+          {party.map((c) => {
+            const mine = controllable.some((x) => x.id === c.id);
+            return (
+              <li key={c.id}>
+                <button
+                  type="button"
+                  className={rt.member}
+                  data-me={c.id === me?.id || undefined}
+                  data-npc={c.isNpc || undefined}
+                  data-turn={c.id === turnId || undefined}
+                  data-out={c.takenOut || undefined}
+                  title={mine ? `${josa(c.name, '으로/로')} 움직이기` : `${c.name} 시트 보기`}
+                  onClick={() => (mine && c.id !== me?.id ? setActingId(c.id) : setSheetId(c.id))}
+                >
+                  {c.portraitUrl ? (
+                    <img src={c.portraitUrl} alt="" />
+                  ) : (
+                    <span>{initialOf(c.name)}</span>
+                  )}
+                  {c.name}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+        {party.length === 0 && <p className={rt.empty}>아직 테이블에 캐릭터 없음</p>}
+      </aside>
 
       {me && (
-        <Dock place="stage">
-          <div className={styles.actionWrap}>
-            {controllable.length > 1 && !busyRoll && (
+        <div className={`${th.myPlate} ${rt.lift}`}>
+          <button
+            type="button"
+            className={rt.plateBtn}
+            onClick={() => setSheetId(me.id)}
+            title="내 캐릭터 시트 열기"
+          >
+            <Nameplate character={me} sub={highOf(me.id)} me />
+          </button>
+        </div>
+      )}
+      {foe && (
+        <div className={`${th.foePlate} ${rt.liftFoe}`}>
+          <button
+            type="button"
+            className={rt.plateBtn}
+            onClick={() => setSheetId(foe.id)}
+            title={`${foe.name} 시트 보기`}
+          >
+            <Nameplate character={foe} sub={highOf(foe.id)} />
+          </button>
+        </div>
+      )}
+
+      <div className={rt.center}>
+        {!state.scene && <SceneStarter state={state} run={run} pending={pending} isGm={isGm} />}
+        <div className={rt.topStack} data-top-stack="" hidden={rollMode}>
+          <Trackers state={state} run={run} isGm={isGm} canControl={canControl} pending={pending} />
+          <ZoneMap
+            state={state}
+            run={run}
+            isGm={isGm}
+            canControl={canControl}
+            pending={pending}
+            auto="hidden"
+          />
+        </div>
+        {roll && !rolling && isFolded && outcome && result && (
+          <button
+            type="button"
+            className={styles.foldedRoll}
+            data-tone={JUDGE[outcome].tone}
+            onClick={() => setFolded('')}
+            title="굴림 결과 펼치기"
+          >
+            <b>{JUDGE[outcome].word}</b>
+            <span className={styles.foldedText}>
+              {activeChar?.name} · {term(roll.action)} · {term(roll.active.approach)}{' '}
+              <em>{signed(result.total)}</em>
+            </span>
+            <span className={styles.foldedMore}>다시 보기 ▴</span>
+          </button>
+        )}
+      </div>
+
+      {waitingOn && (
+        <div className={`${styles.waitChip} ${rt.wait}`}>
+          <span className={styles.dots} aria-hidden />
+          {waitingOn}
+          {isGm && roll && (
+            <button type="button" onClick={() => setGmTakeOver(roll.id)}>
+              대신 고르기
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* 장면에 깔린 특성: 장면 여기저기에 붙는다. 판정 중에는 판정판 둘레로 옮겨 간다 */}
+      <div className={th.tags}>
+        {tagAspects.map((a, i) => {
+          const spots = rollMode ? TAG_SPOTS_ROLL : TAG_SPOTS;
+          const spot = spots[i % spots.length]!;
+          const lap = Math.floor(i / spots.length) * 5;
+          const can = !!playable(a);
+          return (
+            <div
+              key={a.id}
+              className={`${th.tag} ${rt.tag}`}
+              style={{ left: `${spot[0] + lap}%`, top: `${spot[1] + lap}%` }}
+              data-hidden={a.hidden || undefined}
+            >
+              <TraitCard
+                aspect={a}
+                art={artOf(a)}
+                owner={ownerName(a)}
+                depth={consequenceDepth(a, state)}
+                size="tag"
+                badge={can ? (rerollMode ? '다시' : '+2') : a.hidden ? 'GM만' : undefined}
+                state={can ? 'can' : undefined}
+                onClick={can ? () => play(a) : undefined}
+              />
+              {isGm && !rollMode && (
+                <div className={rt.aspectTools}>
+                  {a.hidden ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void run({ type: 'aspect.reveal', payload: { aspectId: a.id } })
+                      }
+                    >
+                      공개
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setGmOpen({ tool: 'compel', aspectId: a.id })}
+                    >
+                      {term('compel')}
+                    </button>
+                  )}
+                  {a.kind !== 'consequence' && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void run({ type: 'aspect.remove', payload: { aspectId: a.id } })
+                      }
+                    >
+                      지우기
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {isGm && state.scene && !rollMode && (
+          <button
+            type="button"
+            className={`${th.tag} ${rt.addAspect}`}
+            style={{ left: '24%', top: '58%' }}
+            onClick={() => setGmOpen({ tool: 'aspect' })}
+          >
+            + {term('aspect')} 붙이기
+          </button>
+        )}
+      </div>
+
+      <div className={th.duelSlot}>
+        {rolling && (
+          <Duel
+            kind={`${term(rolling.action)} 판정`}
+            me={{
+              name: rolling.name,
+              note: rolling.head,
+              dice: <PendingDice mode={diceMode} />,
+              total: null,
+            }}
+            opp={
+              rolling.target !== undefined
+                ? {
+                    name: rolling.target,
+                    note: `${term('defend')} 준비 중`,
+                    dice: (
+                      <DiceTray dice={null} rollKey="pending" sealed tone="op" mode={diceMode} />
+                    ),
+                    total: null,
+                  }
+                : { difficulty: rolling.difficulty ?? 0 }
+            }
+            outcome={null}
+            provisional
+            canRaise={false}
+            played={[]}
+          />
+        )}
+        {roll && !rolling && !isFolded && (
+          <Duel
+            kind={`${term(roll.action)} 판정`}
+            me={{
+              name: activeChar?.name ?? '',
+              note: `${term(roll.active.approach)} ${signed(roll.active.rating)}`,
+              dice: rerolling ? (
+                <PendingDice mode={diceMode} />
+              ) : (
+                <DiceTray
+                  dice={roll.active.dice}
+                  rollKey={`${roll.id}:${roll.active.animSeed}`}
+                  sealed={roll.status === 'awaiting_defense'}
+                  mode={diceMode}
+                  quick={quickKey === roll.id}
+                  onSettled={() => setSettledKey(rollKey)}
+                />
+              ),
+              total: roll.active.dice && settled && result ? sideTotal(roll.active) : null,
+            }}
+            opp={
+              roll.targetId
+                ? {
+                    name: state.characters[roll.targetId]?.name ?? '',
+                    note: roll.defense
+                      ? `${term('defend')} · ${term(roll.defense.approach)} ${signed(roll.defense.rating)}`
+                      : `${term('defend')} 준비 중`,
+                    dice: (
+                      <DiceTray
+                        dice={roll.defense?.dice ?? null}
+                        rollKey={`${roll.id}:d:${roll.defense?.animSeed ?? 'x'}`}
+                        sealed={!roll.defense}
+                        tone="op"
+                        mode={diceMode}
+                      />
+                    ),
+                    total: roll.defense?.dice && settled ? sideTotal(roll.defense) : null,
+                  }
+                : { difficulty: roll.difficulty ?? 0 }
+            }
+            outcome={settled && outcome && result ? outcome : null}
+            provisional={roll.status !== 'final'}
+            canRaise={!!handSide}
+            played={played}
+            copy={settled && outcome ? OUTCOME_COPY[roll.action][outcome] : undefined}
+          >
+            {roll.status === 'awaiting_defense' && (
+              <p className={th.waiting}>굴림 완료. 상대를 기다리는 중</p>
+            )}
+            {settled && roll.status === 'open' && iRoll && unusedStunt && (
+              <button
+                type="button"
+                className={th.ghost}
+                disabled={pending}
+                onClick={() =>
+                  void run({
+                    type: 'stunt.apply',
+                    payload: { rollId: roll.id, side: 'active', stuntId: unusedStunt.id },
+                  })
+                }
+              >
+                {term('stunt')} 적용: {unusedStunt.text}
+              </button>
+            )}
+            {settled && iAdjustDefense && defenseStunt && (
+              <button
+                type="button"
+                className={th.ghost}
+                disabled={pending}
+                onClick={() =>
+                  void run({
+                    type: 'stunt.apply',
+                    payload: { rollId: roll.id, side: 'defense', stuntId: defenseStunt.id },
+                  })
+                }
+              >
+                {term('stunt')} 적용: {defenseStunt.text}
+              </button>
+            )}
+            {roll.status === 'final' && settled && (
+              <button type="button" className={th.ghost} onClick={() => setFolded(rollKey)}>
+                이야기로
+              </button>
+            )}
+            {settled && roll.status === 'open' && !iRoll && !iAdjustDefense && (
+              <p className={th.waiting}>
+                {josa(activeChar?.name ?? '', '이/가')} 결과를 정하는 중…
+              </p>
+            )}
+          </Duel>
+        )}
+      </div>
+
+      {/* 손패: 지금 조정하는 캐릭터의 특성. 누르면 판정판에 +2가 꽂힌다 */}
+      <div className={th.hand} data-roll-tray="">
+        {handAspects.map((a, i) => {
+          const can = !!playable(a);
+          const used = !!handMods?.some((m) => m.source === `aspect:${a.id}`);
+          return (
+            <TraitCard
+              key={a.id}
+              aspect={a}
+              art={artOf(a)}
+              badge={can ? (rerollMode ? '다시' : '+2') : undefined}
+              state={can ? 'can' : used ? 'used' : 'off'}
+              onClick={can ? () => play(a) : undefined}
+              className={fan(i, handAspects.length)}
+            />
+          );
+        })}
+      </div>
+      {handChar && (
+        <div className={th.chips}>
+          <div className={th.stack} aria-label={`${term('fatePoint')} ${handFate}`}>
+            {Array.from({ length: Math.max(1, Math.min(handFate, 6)) }, (_, i) => (
+              <i key={i} style={handFate === 0 ? { opacity: 0.2 } : undefined} />
+            ))}
+          </div>
+          <div className={th.chipText}>
+            {handChar.isNpc ? `GM ${term('fatePoint')}` : term('fatePoint')}
+            <b>{handFate}</b>
+          </div>
+          <div className={th.modeSwitch} role="radiogroup" aria-label="카드 쓰는 법">
+            <button type="button" aria-pressed={!rerollMode} onClick={() => setRerollMode(false)}>
+              +2 더하기
+            </button>
+            <button type="button" aria-pressed={rerollMode} onClick={() => setRerollMode(true)}>
+              다시 굴리기
+            </button>
+          </div>
+        </div>
+      )}
+      <div className={th.go}>
+        {settled && roll?.status === 'open' && iRoll && !overlayOpen && (
+          <>
+            {finalizeWait && <p className={th.waiting}>{finalizeWait}</p>}
+            <button
+              type="button"
+              className={th.btn}
+              disabled={!!finalizeWait || finalizing || pending}
+              onClick={() => void onFinalize()}
+            >
+              이대로 확정
+            </button>
+          </>
+        )}
+        {settled && iAdjustDefense && !overlayOpen && (
+          <button type="button" className={th.btn} disabled={pending} onClick={onDefenseDone}>
+            방어 조정 완료
+          </button>
+        )}
+      </div>
+
+      <section
+        className={`${th.dialogue} ${handSide ? '' : rt.keepSay}`}
+        data-log={logOpen || undefined}
+      >
+        {me && !busyRoll && (
+          <div className={rt.picks} data-ink="night">
+            {controllable.length > 1 && (
               <div className={styles.chipRow} role="radiogroup" aria-label="움직일 캐릭터">
                 <span className={styles.chipLabel}>누구로?</span>
                 {controllable
@@ -1536,7 +1451,7 @@ export function RoomTable({
                   ))}
               </div>
             )}
-            {action && !busyRoll && (
+            {action && (
               <div
                 className={styles.chipRow}
                 aria-label={action === 'attack' ? '공격 대상' : '난이도'}
@@ -1605,8 +1520,143 @@ export function RoomTable({
                 })}
               </div>
             )}
-            <ActionBar
+          </div>
+        )}
+        <div className={th.say}>
+          <span className={th.speaker}>{speaker}</span>
+          <div className={`${th.text} ${rt.text}`}>
+            <StoryLog
+              variant="book"
+              lines={lines}
+              undone={undone}
+              sending={
+                narrationEcho
+                  ? [...sending, { id: -1, text: `GM: ${narrationEcho}`, fx: true }]
+                  : sending
+              }
+              {...(isGm
+                ? {
+                    onUndo: (seq: number) =>
+                      void run({ type: 'event.undo', payload: { targetSeq: seq } }),
+                  }
+                : {})}
+            />
+          </div>
+          {role !== 'spectator' && (
+            <div className={`${styles.composer} ${rt.composer}`} data-gm={isGm || undefined}>
+              {isGm && (
+                <div className={styles.composeTabs} role="tablist" aria-label="쓸 종류">
+                  {(
+                    [
+                      ['narrate', '대사'],
+                      ['chat', '말하기'],
+                    ] as const
+                  ).map(([m, label]) => (
+                    <button
+                      key={m}
+                      type="button"
+                      role="tab"
+                      aria-selected={composeMode === m}
+                      title={
+                        m === 'narrate' ? 'GM 대사: 장면 묘사로 책에 기록' : '말하기: 테이블 대화'
+                      }
+                      onClick={() => setComposeMode(m)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {isGm && (
+                <StageFxMenu
+                  run={run}
+                  characters={stageCharacters}
+                  focusId={talk?.focus ?? castLeft?.id}
+                />
+              )}
+              {isGm && composeMode === 'narrate' ? (
+                <div className={styles.narrate}>
+                  <NarrationInput run={run} onEcho={setNarrationEcho} />
+                </div>
+              ) : (
+                <form
+                  className={styles.chat}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const text = chat.trim();
+                    if (!hasVisibleText(text)) return;
+                    setChat('');
+                    // 못 보냈으면 쓴 글을 되살린다 (그 사이 새로 쓴 게 없을 때만)
+                    void sendChat(text).then((ok) => {
+                      if (!ok) setChat((cur) => (cur ? cur : text));
+                    });
+                  }}
+                >
+                  {voices.length > 0 && (
+                    <select
+                      className={styles.voice}
+                      value={as}
+                      onChange={(e) => setSpeakAs(e.target.value)}
+                      aria-label="말할 사람"
+                      title="NPC로 말하면 무대에 서서 말풍선으로 말한다"
+                    >
+                      <option value="">GM으로</option>
+                      {voices.map((c) => (
+                        <option key={c.id} value={c.name}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  <input
+                    ref={chatField}
+                    value={chat}
+                    onChange={(e) => setChat(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (formatShortcut(e, chat, setChat)) return;
+                      if (e.key === 'Escape') e.currentTarget.blur();
+                    }}
+                    maxLength={500}
+                    placeholder={as ? `${josa(as, '으로/로')} 말하기… (Enter)` : '말하기… (Enter)'}
+                    aria-label="채팅"
+                  />
+                  <FormatBar field={chatField} value={chat} onChange={setChat} gm={isGm} />
+                  <button type="submit" disabled={!hasVisibleText(chat)}>
+                    보내기
+                  </button>
+                </form>
+              )}
+            </div>
+          )}
+          <div className={th.sys}>
+            <button type="button" onClick={() => setLogOpen((o) => !o)}>
+              {logOpen ? '이야기 접기' : '지난 이야기'}
+            </button>
+            <button type="button" onClick={() => setTableOpen(true)}>
+              탁자 보기 Tab
+            </button>
+            {me && (
+              <button type="button" onClick={() => setSheetId(me.id)}>
+                내 시트
+              </button>
+            )}
+          </div>
+        </div>
+        <div className={`${th.menu} ${rt.menu}`}>
+          {me ? (
+            <ActionMenu
               character={me}
+              action={action}
+              approach={approach}
+              disabled={
+                !state.scene ||
+                pending ||
+                busyRoll ||
+                !!rolling ||
+                me.takenOut === true ||
+                overlayOpen ||
+                palette
+              }
               // 난이도를 아는 굴림(공격이 아닌 것)은 접근법마다 성공할 가능성을 미리 보여 준다
               {...(action && action !== 'attack'
                 ? {
@@ -1618,52 +1668,176 @@ export function RoomTable({
                       ),
                   }
                 : {})}
-              action={action}
-              approach={approach}
-              disabled={
-                !state.scene ||
-                pending ||
-                busyRoll ||
-                me.takenOut === true ||
-                overlayOpen ||
-                palette
-              }
-              busy={!!rolling}
-              hideRoll
-              layout="strip"
-              onAction={pickAction}
+              onAction={(a) => {
+                if (a) pickAction(a);
+                else setAction(null);
+                setApproach(null);
+              }}
               onApproach={setApproach}
               onRoll={() => void onRoll()}
             />
-          </div>
-        </Dock>
-      )}
-
-      {previewing && (
-        <div className={styles.previewSlot}>
-          <RollPreview
-            name={me.name}
-            action={action}
-            approach={approach}
-            rating={me.approaches[approach]}
-            stunt={stuntBonuses(me, action, approach).length * 2}
-            difficulty={action === 'attack' ? null : difficulty}
-            {...(action === 'attack' && targetId
-              ? { opponent: state.characters[targetId]?.name ?? '상대' }
-              : {})}
-            canInvoke
-            disabled={
-              pending ||
-              busyRoll ||
-              me.takenOut === true ||
-              overlayOpen ||
-              palette ||
-              (action === 'attack' && !targetId)
-            }
-            onRoll={() => void onRoll()}
-          />
+          ) : (
+            <p className={rt.watch}>
+              {role === 'spectator'
+                ? '관전 중. 이야기를 함께 본다'
+                : '캐릭터를 데려오면 움직일 수 있다'}
+            </p>
+          )}
+          {role === 'player' && (
+            <BringCharacter
+              run={run}
+              has={controllable.length > 0}
+              brought={new Set(controllable.flatMap((c) => (c.sourceKey ? [c.sourceKey] : [])))}
+            />
+          )}
         </div>
-      )}
+      </section>
+
+      <Presence show={!!(iDefend && defender && roll)}>
+        {iDefend && defender && roll && (
+          <div className={tryStyles.overlay} data-overlay="">
+            <div className={tryStyles.prompt} role="dialog" aria-label={`${term('defend')} 고르기`}>
+              <div className={tryStyles.promptHead}>
+                {activeChar?.name}의 {term(roll.action)}! {josa(defender.name, '은/는')} 어떻게
+                막을까?
+              </div>
+              <p className={tryStyles.promptHelp}>
+                {term('defend')}에 쓸 {term('approach')} 고르기. 두 결과가 동시에 공개된다.
+                <br />
+                <small>키보드 Q W E / A S D</small>
+              </p>
+              <DefendGrid
+                defender={defender}
+                pending={pending}
+                onPick={(a) => {
+                  rollSound();
+                  void run({ type: 'roll.defend', payload: { rollId: roll.id, approach: a } });
+                }}
+              />
+            </div>
+          </div>
+        )}
+      </Presence>
+
+      <Presence show={!!(compel && state.aspects[compel.aspectId])}>
+        {compel && state.aspects[compel.aspectId] && (
+          <div className={tryStyles.overlay} data-overlay="">
+            <CompelOffer
+              aspect={state.aspects[compel.aspectId] as Aspect}
+              text={compel.text}
+              targetId={compel.targetId}
+              fatePoints={
+                state.characters[compel.targetId]?.isNpc
+                  ? state.gmPool
+                  : (state.characters[compel.targetId]?.fatePoints ?? 0)
+              }
+              onAccept={() =>
+                void run({
+                  type: 'compel.respond',
+                  payload: { compelId: compel.id, accept: true },
+                })
+              }
+              onRefuse={() =>
+                void run({
+                  type: 'compel.respond',
+                  payload: { compelId: compel.id, accept: false },
+                })
+              }
+            />
+          </div>
+        )}
+      </Presence>
+
+      <Presence show={!!(damage && !compel)}>
+        {damage && !compel && (
+          <div className={tryStyles.overlay} data-overlay="">
+            <DamagePrompt
+              damage={damage}
+              character={state.characters[damage.targetId]!}
+              run={run}
+              pending={pending}
+            />
+          </div>
+        )}
+      </Presence>
+
+      <Presence show={!!prompt}>
+        {prompt && (
+          <div className={tryStyles.overlay} data-overlay="">
+            <form
+              className={tryStyles.prompt}
+              onSubmit={(e) => {
+                e.preventDefault();
+                void submitPrompt();
+              }}
+            >
+              <div className={tryStyles.promptHead}>
+                {prompt.kind === 'aspect'
+                  ? `새 ${term('aspect')} 이름 짓기 · ${term('freeInvoke')} ${prompt.freeInvokes}`
+                  : `${term('boost')} 이름 짓기`}
+              </div>
+              <p className={tryStyles.promptHelp}>
+                {prompt.kind === 'aspect'
+                  ? '장면에 새로 생긴 사실을 짧은 문구로'
+                  : '한 번 쓰고 사라지는 순간의 기회'}
+              </p>
+              <input
+                autoFocus
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') closePrompt();
+                }}
+                maxLength={40}
+                placeholder={
+                  prompt.kind === 'aspect' ? '예: 연기로 가득 찬 복도' : '예: 잠깐 휘청임'
+                }
+                className={tryStyles.promptInput}
+              />
+              <div className={tryStyles.promptButtons}>
+                <button type="button" onClick={() => closePrompt()} className={tryStyles.restart}>
+                  건너뛰기 <kbd aria-hidden>Esc</kbd>
+                </button>
+                <button
+                  type="submit"
+                  className={tryStyles.promptOk}
+                  disabled={!draft.trim() || naming}
+                >
+                  붙이기 <kbd aria-hidden>Enter</kbd>
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+      </Presence>
+
+      <TableView
+        open={tableOpen}
+        onClose={() => setTableOpen(false)}
+        scene={{
+          name: state.scene?.name ?? '장면 없음',
+          image: sceneArt,
+          note:
+            roll && roll.status !== 'final'
+              ? `${activeChar?.name ?? ''}의 ${term(roll.action)} 판정 중`
+              : undefined,
+        }}
+        sceneAspects={[...sceneAspects, ...hiddenAspects].filter(
+          (a) => a.ownerType !== 'character',
+        )}
+        foes={party.filter((c) => c.isNpc).map(seatOf)}
+        seats={party.filter((c) => !c.isNpc).map(seatOf)}
+        gmPool={state.gmPool}
+        card={(a) => (
+          <TraitCard
+            aspect={a}
+            art={artOf(a)}
+            owner={ownerName(a)}
+            depth={consequenceDepth(a, state)}
+            size="small"
+          />
+        )}
+      />
 
       {isGm && gmOpen && (
         <GmPanel
@@ -1714,7 +1888,6 @@ export function RoomTable({
           onDone={() => router.replace('/rooms/')}
         />
       )}
-      <MobileTabs tab={shownTab} onTab={setTab} unread={unread} isGm={isGm} locked={stageLocked} />
       {palette && <CommandPalette build={paletteEntries} onClose={() => setPalette(false)} />}
       {help && <ShortcutHelp isGm={isGm} onClose={() => setHelp(false)} />}
     </main>
