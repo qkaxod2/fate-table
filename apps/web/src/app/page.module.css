@@ -1,373 +1,222 @@
 /*
- * 랜딩 (design-system.md 27절). 왼쪽은 튜토리얼 첫 장면 그림과 규칙 세 줄,
- * 오른쪽은 제목·튜토리얼·직접 시작하기. 장식(기울기·압정·괘선·손글씨)은 쓰지 않는다.
+ * 타이틀 화면 (design-system.md 31절).
+ * 장면이 화면 전체를 채우고, 제목과 메뉴는 그림 위 왼쪽 아래에 글자로만 놓인다.
+ * 레퍼런스: Alchemy의 타이틀 화면, 게임 메인 메뉴.
  */
-.desk {
+.title {
   position: relative;
+  display: grid;
+  grid-template-rows: 1fr auto;
   min-height: 100dvh;
+  overflow: hidden;
   background: var(--table);
   color: var(--on-table);
   isolation: isolate;
 }
 
-/*
- * 표지 그림이 화면 전체를 덮고(장면이 주인공), 읽을 것은 오른쪽에 놓인 종이 한 장이다.
- * design-system.md 30절. 레퍼런스: Alchemy(장면 우선), Inscryption(탁자 위 물건).
- */
-.spread {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(360px, 460px);
-  align-items: center;
-  gap: clamp(16px, 3vw, 48px);
-  min-height: 100dvh;
-  padding: clamp(20px, 5vh, 56px) clamp(20px, 4vw, 64px);
-}
-
-/* ---------- 표지 ---------- */
-.cover {
+/* ---------- 장면 ---------- */
+.scene {
   position: absolute;
   inset: 0;
   z-index: -1;
-  overflow: hidden;
-  background: var(--table);
-  isolation: isolate;
 }
 
-.cover::after {
+.scene::after {
   content: '';
   position: absolute;
   inset: 0;
-  z-index: 3;
   background:
-    linear-gradient(90deg, transparent 35%, rgb(25 24 22 / 0.55) 62%, rgb(25 24 22 / 0.92) 100%),
-    linear-gradient(
-      180deg,
-      rgb(25 24 22 / 0.2),
-      transparent 30%,
-      transparent 60%,
-      rgb(25 24 22 / 0.9)
-    );
-  pointer-events: none;
+    linear-gradient(90deg, rgb(25 24 22 / 0.94) 0%, rgb(25 24 22 / 0.7) 32%, transparent 62%),
+    linear-gradient(0deg, rgb(25 24 22 / 0.9), transparent 40%);
 }
 
-.coverArt {
+.bg {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 30% center;
-  filter: saturate(0.85) brightness(0.8);
+  object-position: 60% center;
+  filter: saturate(0.85) brightness(0.75);
 }
 
-.coverHero {
+.cast {
   position: absolute;
   bottom: 0;
-  z-index: 1;
-  height: 78%;
   max-width: none;
-  mask-image: linear-gradient(180deg, #000 75%, transparent);
+  mask-image:
+    linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent),
+    linear-gradient(180deg, #000 78%, transparent);
+  mask-composite: intersect;
 }
 
-.h1 {
-  left: 4%;
-  height: 66%;
-  filter: brightness(0.82);
+.knight {
+  right: 12%;
+  height: 96%;
 }
 
-.h2 {
-  left: 38%;
-  height: 68%;
-  filter: brightness(0.82);
+.alch {
+  right: -2%;
+  height: 74%;
+  filter: brightness(0.7);
 }
 
-.h3 {
-  left: 30%;
-  translate: -50% 0;
-  height: 92%;
+.scout {
+  right: 34%;
+  height: 72%;
+  filter: brightness(0.6);
 }
 
-/* 규칙 세 줄: 그림 아래쪽 어두운 띠 위에 나란히 */
-.ruleCards {
-  position: absolute;
-  right: calc(460px + clamp(16px, 3vw, 48px) + clamp(20px, 4vw, 64px));
-  bottom: clamp(20px, 5vh, 48px);
-  left: clamp(20px, 4vw, 64px);
-  z-index: 4;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
+/* ---------- 제목과 메뉴 ---------- */
+.front {
+  align-self: end;
+  width: min(520px, 100%);
+  padding: 0 clamp(20px, 6vw, 88px) clamp(16px, 4vh, 40px);
+}
+
+.name {
   margin: 0;
-  padding: 16px 0 0;
-  border-top: 1px solid var(--table-line-hi);
-  list-style: none;
-}
-
-.ruleCards li {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  color: var(--stage-ink);
-}
-
-.ruleLabel {
-  color: var(--brass-hi);
-  font: 600 12px / 1.4 var(--f-ui);
-  letter-spacing: var(--label-track);
-}
-
-.ruleText {
-  font: 600 var(--fs-sm) / 1.45 var(--f-ui);
-}
-
-.ruleNote {
-  color: var(--on-table-2);
-  font: 400 12px / 1.5 var(--f-ui);
-}
-
-/* ---------- 오른쪽 ---------- */
-.titlePage {
-  grid-column: 2;
-  display: flex;
-  flex-direction: column;
-  max-height: calc(100dvh - 2 * clamp(20px, 5vh, 56px));
-  overflow-y: auto;
-  padding: 36px 32px 24px;
-  border-radius: var(--r-card);
-  background: var(--card);
-  color: var(--ink-1);
-  box-shadow: var(--sh-object);
-  animation: lay-down var(--dur-scene) var(--ease-out) both;
-}
-
-/* 종이를 탁자에 내려놓는 한 번의 움직임 */
-@keyframes lay-down {
-  from {
-    opacity: 0;
-    translate: 0 12px;
-  }
-}
-
-.title {
-  margin: 0;
-  font: 800 clamp(38px, 3.6vw, 52px) / 1.08 var(--f-ui);
-  letter-spacing: -0.035em;
+  font: 800 clamp(48px, 6.4vw, 92px) / 0.98 var(--f-head);
+  letter-spacing: -0.05em;
+  text-shadow: 0 4px 30px rgb(0 0 0 / 0.6);
 }
 
 .lead {
-  margin: 16px 0 0;
-  max-width: 30em;
-  color: var(--ink-2);
-  font: 400 var(--fs-md) / 1.7 var(--f-book);
-  text-wrap: pretty;
+  margin: 18px 0 0;
+  max-width: 26em;
+  color: var(--on-table-2);
+  font: 400 var(--fs-md) / 1.7 var(--f-story);
 }
 
-.start {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 16px;
-  margin: 28px 0 0;
-}
-
-/* 1순위 버튼 */
-.primary {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 24px;
-  border-radius: var(--r-ctl);
-  background: var(--seal);
-  color: var(--seal-ink);
-  font: 600 var(--fs-md) / 1.2 var(--f-ui);
-  text-decoration: none;
-}
-
-.primary:hover {
-  background: var(--seal-hi);
-}
-
-.startNote {
-  color: var(--ink-3);
-  font: 500 var(--fs-sm) / 1.4 var(--f-ui);
-}
-
-/* ---------- 직접 시작하기 ---------- */
-.contents {
-  margin-top: 36px;
-}
-
-.contentsHead,
-.recent h2 {
-  margin: 0 0 6px;
-  color: var(--ink-2);
-  font: 600 var(--fs-sm) / 1.4 var(--f-ui);
-  letter-spacing: var(--label-track);
-}
-
-.contents ol {
-  margin: 0;
+.menu ul {
+  margin: 36px 0 0;
   padding: 0;
   list-style: none;
-  border-top: 1px solid var(--paper-edge);
 }
 
-.contents li {
-  border-bottom: 1px solid var(--paper-edge);
-}
-
-.entry {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 16px;
-  padding: 12px 4px;
-  color: var(--ink-1);
-  text-decoration: none;
-}
-
-.entryText {
+.item {
   display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.entryText strong {
-  font: 600 var(--fs-md) / 1.4 var(--f-ui);
-}
-
-.entryText span {
-  color: var(--ink-2);
-  font: 400 var(--fs-sm) / 1.5 var(--f-ui);
-}
-
-.entry:hover .entryText strong,
-.entry:focus-visible .entryText strong {
-  color: var(--seal);
-}
-
-/* 내 방 · 내 그림: 목록보다 한 단계 낮은 두 칸짜리 링크 */
-.shelf {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.tab {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-height: 56px;
-  padding: 10px 14px;
-  border: 1px solid var(--paper-edge);
-  border-radius: var(--r-ctl);
-  background: var(--card);
-  color: var(--ink-1);
+  align-items: baseline;
+  gap: 14px;
+  padding: 7px 0;
+  color: var(--on-table-2);
   text-decoration: none;
   transition:
-    border-color var(--dur-hover) var(--ease-out),
+    color var(--dur-hover) var(--ease-out),
     translate var(--dur-hover) var(--ease-out);
 }
 
-.tab strong {
-  font: 600 var(--fs-sm) / 1.4 var(--f-ui);
+.label {
+  font: 700 22px / 1.3 var(--f-ui);
+  letter-spacing: -0.02em;
 }
 
-.tab span {
-  color: var(--ink-2);
-  font: 400 var(--fs-xs) / 1.45 var(--f-ui);
+.note {
+  color: var(--on-table-3);
+  font: 400 var(--fs-sm) / 1.4 var(--f-ui);
+  opacity: 0;
+  transition: opacity var(--dur-hover) var(--ease-out);
 }
 
-.tab:hover,
-.tab:focus-visible {
-  border-color: var(--ink-3);
+/* 첫 메뉴(튜토리얼)는 크게, 진홍 밑줄 하나 */
+.item[data-main] .label {
+  color: var(--on-table);
+  font-size: 30px;
+  text-decoration: underline;
+  text-decoration-color: var(--seal-on-table);
+  text-decoration-thickness: 3px;
+  text-underline-offset: 8px;
 }
 
-.tab:hover strong,
-.tab:focus-visible strong {
-  color: var(--seal);
+.item[data-main] .note {
+  opacity: 1;
 }
 
-.recent {
-  margin-top: 28px;
+.item:hover,
+.item:focus-visible {
+  color: var(--on-table);
+  translate: 6px 0;
 }
 
-.recent:empty {
-  display: none;
+.item:hover .note,
+.item:focus-visible .note {
+  opacity: 1;
+}
+
+.shelf {
+  display: flex;
+  gap: 20px;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--table-line);
+}
+
+.shelf a {
+  color: var(--on-table-3);
+  font: 500 var(--fs-sm) / 1.4 var(--f-ui);
+  text-decoration: none;
+}
+
+.shelf a:hover,
+.shelf a:focus-visible {
+  color: var(--on-table);
 }
 
 .colophon {
-  margin: auto 0 0;
-  padding-top: 24px;
-  color: var(--ink-3);
+  margin: 0;
+  padding: 0 clamp(20px, 6vw, 88px) 18px;
+  color: var(--on-table-3);
   font: 400 var(--fs-xs) / 1.6 var(--f-ui);
 }
 
-/* ---------- 좁은 화면: 그림은 위쪽 띠, 아래로 이어진다 ---------- */
-@media (max-width: 900px) {
-  .spread {
-    grid-template-columns: 1fr;
-    align-items: start;
-    gap: 0;
-    padding: 0;
+/* ---------- 휴대폰: 그림은 위, 제목과 메뉴는 아래 ---------- */
+@media (max-width: 760px) {
+  .scene {
+    bottom: auto;
+    height: 58dvh;
   }
-  .cover {
-    position: relative;
-    inset: auto;
-    z-index: 0;
-    height: 280px;
+  .scene::after {
+    background: linear-gradient(0deg, var(--table) 2%, transparent 55%);
   }
-  .cover::after {
-    background: linear-gradient(180deg, rgb(25 24 22 / 0.15), transparent 40%, var(--table));
-  }
-  .coverArt {
+  .bg {
     object-position: 40% center;
   }
-  .h1 {
-    left: -10%;
+  .knight {
+    right: 18%;
+    height: 100%;
   }
-  .h2 {
-    left: auto;
-    right: -10%;
+  .scout {
+    right: auto;
+    left: -18%;
+    height: 80%;
   }
-  .h3 {
-    left: 50%;
+  .alch {
+    right: -22%;
+    height: 80%;
   }
-  .h1,
-  .h2 {
-    height: 82%;
+  .front {
+    padding-top: 44dvh;
   }
-  .h3 {
-    height: 96%;
+  .label {
+    font-size: 20px;
   }
-  .ruleCards {
+  .item[data-main] .label {
+    font-size: 26px;
+  }
+  .note {
     display: none;
   }
-  .titlePage {
-    grid-column: 1;
-    max-height: none;
-    overflow: visible;
-    margin: -40px 12px 16px;
-    padding: 24px 18px;
+  .item[data-main] .note {
+    display: inline;
   }
-  .title {
-    font-size: 36px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item {
+    transition: color var(--dur-hover) var(--ease-out);
   }
-  .start {
-    margin-top: 20px;
-  }
-  .primary {
-    justify-content: center;
-    width: 100%;
-  }
-  .startNote {
-    width: 100%;
-    text-align: center;
-  }
-  .contents {
-    margin-top: 28px;
+  .item:hover,
+  .item:focus-visible {
+    translate: none;
   }
 }
