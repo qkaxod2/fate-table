@@ -99,6 +99,8 @@ export function sfxForEvent(e: RoomEvent): SfxName | null {
       return 'dice-roll';
     case 'invoke.applied':
       return e.payload.mode === 'reroll' ? 'dice-roll' : 'token-flip';
+    case 'invoke.revoked':
+      return 'token-flip';
     case 'compel.offered':
       return 'compel-card';
     case 'fate.adjusted':

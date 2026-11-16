@@ -451,6 +451,41 @@ const resolvers: Resolvers = {
     }
     return { events };
   },
+  'invoke.revoke': (s, p, a) => {
+    const r = openRoll(s, p.rollId);
+    if (p.side === 'defense') defenseStillAdjusting(r);
+    const sideState = need(p.side === 'active' ? r.active : r.defense, 'side');
+    controlled(s, a, sideState.characterId);
+    // 가장 나중에 낸 같은 특성의 +2를 뺀다 (다시 굴리기는 되돌릴 수 없다)
+    const mod = [...sideState.modifiers]
+      .reverse()
+      .find((m) => m.source === `aspect:${p.aspectId}` && m.paidWith);
+    if (!mod?.paidWith || !mod.payerId) throw new CommandError('NOT_FOUND', 'no such invoke');
+    const events: NewEvent[] = [
+      ev('invoke.revoked', a, {
+        rollId: r.id,
+        side: p.side,
+        aspectId: p.aspectId,
+        paidWith: mod.paidWith,
+        payerId: mod.payerId,
+        ...(mod.restore ? { restore: mod.restore } : {}),
+      }),
+    ];
+    // 상대 특성을 운명점으로 썼을 때 상대가 받은 운명점도 돌려받는다
+    const asp = s.aspects[p.aspectId] ?? mod.restore;
+    const opponentId =
+      p.side === 'active' ? (r.defense?.characterId ?? r.targetId) : r.active.characterId;
+    if (
+      mod.paidWith === 'fate_point' &&
+      asp?.ownerType === 'character' &&
+      asp.ownerId === opponentId
+    ) {
+      events.push(
+        ev('fate.adjusted', a, { target: asp.ownerId, delta: -1, reason: 'invoke_revoked' }),
+      );
+    }
+    return { events };
+  },
   'stunt.apply': (s, p, a) => {
     const r = openRoll(s, p.rollId);
     if (p.side === 'defense') defenseStillAdjusting(r);

@@ -106,6 +106,8 @@ export const CommandSchema = z.discriminatedUnion('type', [
     mode: z.enum(['bonus', 'reroll']),
     paidWith: z.enum(['fate_point', 'free_invoke']),
   }),
+  /** 확정 전에 +2로 낸 특성을 다시 뺀다. 운명점·무료 발동·부스트를 돌려받는다 */
+  cmd('invoke.revoke', { rollId: id, side: side.default('active'), aspectId: id }),
   cmd('stunt.apply', { rollId: id, side: side.default('active'), stuntId: id }),
   cmd('roll.defense_ready', { rollId: id }),
   cmd('roll.finalize', { rollId: id, reduceForBoost: z.boolean().default(false) }),

@@ -83,6 +83,15 @@ export interface EventPayloads {
     newDice?: Dice;
     newAnimSeed?: number;
   };
+  'invoke.revoked': {
+    rollId: string;
+    side: InvokeSide;
+    aspectId: string;
+    paidWith: PaidWith;
+    payerId: string;
+    /** 부스트를 되살릴 때 원래 모습 */
+    restore?: Aspect;
+  };
   'stunt.applied': { rollId: string; side: InvokeSide; stuntId: string; value: number };
   /** 방어자가 조정을 마쳤다. 이 뒤에 공격자가 확정할 수 있다 */
   'roll.defense_ready': { rollId: string };
@@ -97,7 +106,7 @@ export interface EventPayloads {
   'fate.adjusted': {
     target: string; // characterId 또는 'gm_pool'
     delta: number;
-    reason: 'manual' | 'concede' | 'compel' | 'refresh' | 'invoke_against';
+    reason: 'manual' | 'concede' | 'compel' | 'refresh' | 'invoke_against' | 'invoke_revoked';
   };
   'compel.offered': { compelId: string; aspectId: string; targetId: string; text: string };
   'compel.accepted': { compelId: string };

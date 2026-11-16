@@ -82,6 +82,10 @@ export function describe(e: RoomEvent, state: RoomState): LogLine | null {
         e.payload.paidWith === 'free_invoke' ? term('freeInvoke') : `${term('fatePoint')} 1`;
       return line('fate', `「${a?.text ?? '특성'}」 ${term('invoke')} (${how}, ${paid})`);
     }
+    case 'invoke.revoked': {
+      const a = state.aspects[e.payload.aspectId] ?? e.payload.restore;
+      return line('fate', `「${a?.text ?? '특성'}」 ${term('invoke')} 취소`);
+    }
     case 'stunt.applied':
       return line('roll', `${term('stunt')} 적용 +${e.payload.value}`);
     case 'roll.defense_ready': {

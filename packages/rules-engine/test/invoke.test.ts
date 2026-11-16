@@ -111,7 +111,7 @@ describe('invoke through the engine (#12)', () => {
     expect(t.state.aspects[boostId]).toBeUndefined();
     expect(t.state.characters.a!.fatePoints).toBe(2);
     expect(t.state.rolls[rollId]!.active.modifiers).toEqual([
-      { source: `aspect:${boostId}`, value: 2 },
+      expect.objectContaining({ source: `aspect:${boostId}`, value: 2 }),
     ]);
   });
 
