@@ -113,9 +113,16 @@ export function BringCharacter({ run, has, brought }: Props) {
           );
         })}
       </ul>
-      <Link href={`/create/?room=${encodeURIComponent(roomId)}`} className={styles.link}>
-        새 캐릭터 만들기 →
-      </Link>
+      <p className={styles.bringLinks}>
+        <Link href={`/create/?room=${encodeURIComponent(roomId)}`} className={styles.link}>
+          새 캐릭터 만들기
+        </Link>
+        {drafts.length > 0 && (
+          <Link href="/characters/" className={styles.link}>
+            저장한 시트 고치기
+          </Link>
+        )}
+      </p>
     </section>
   );
 }

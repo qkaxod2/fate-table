@@ -1,0 +1,124 @@
+/*
+ * 내 캐릭터: 로비 종이(lobby.module.css) 위에 저장한 시트를 두 단으로 늘어놓는다.
+ * 시트 카드는 캐릭터 만들기의 미리보기와 같은 것(create/Sheet)이고, 아래 줄에 할 일만 붙인다.
+ */
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-2) var(--s-4);
+  border-bottom: 1px solid var(--paper-edge);
+}
+
+.head h1 {
+  border-bottom: 0;
+}
+
+.create {
+  margin-bottom: 12px;
+  padding: 9px 16px;
+  border-radius: var(--r-ctl);
+  background: var(--seal);
+  color: var(--seal-ink);
+  font: 600 var(--fs-sm) / 1.2 var(--f-ui);
+  text-decoration: none;
+}
+
+.create:hover,
+.create:focus-visible {
+  background: var(--seal-hi);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap: var(--s-5) var(--s-4);
+  margin: 0 0 var(--s-4);
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.item > :first-child {
+  flex: 1;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px var(--s-3);
+  min-height: 34px;
+}
+
+.edit {
+  padding: 6px 14px;
+  border: 1px solid var(--ink-3);
+  border-radius: 999px;
+  color: var(--ink-1);
+  font: 600 var(--fs-sm) / 1.3 var(--f-ui);
+  text-decoration: none;
+}
+
+.edit:hover,
+.edit:focus-visible {
+  border-color: var(--seal);
+  color: var(--seal);
+}
+
+.quiet {
+  padding: 4px 2px;
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  font: 500 var(--fs-sm) / 1.4 var(--f-ui);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.quiet:hover,
+.quiet:focus-visible {
+  color: var(--ink-1);
+}
+
+.quiet:disabled {
+  color: var(--faint);
+  cursor: not-allowed;
+}
+
+.date {
+  margin-left: auto;
+  color: var(--ink-3);
+  font: 400 var(--fs-xs) / 1.4 var(--f-ui);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 지우기 확인: 같은 자리에서 한 번 더 */
+.warn {
+  flex-basis: 100%;
+  color: var(--danger);
+  font: 500 var(--fs-sm) / 1.5 var(--f-ui);
+}
+
+.danger {
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--danger);
+  color: #fff;
+  font: 600 var(--fs-sm) / 1.3 var(--f-ui);
+  cursor: pointer;
+}
+
+.danger:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}

@@ -28,6 +28,7 @@ const CONTENTS = [
 /** 해 본 사람이 돌아갈 곳 */
 const SHELF = [
   { href: '/rooms/', title: '내 방', desc: '들어갔던 방 다시 열기' },
+  { href: '/characters/', title: '내 캐릭터', desc: '저장한 캐릭터시트 고치기' },
   { href: '/gallery/', title: '내 그림', desc: '방에서 그린 그림 모음' },
 ];
 

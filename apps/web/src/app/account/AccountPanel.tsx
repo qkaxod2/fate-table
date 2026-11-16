@@ -308,7 +308,8 @@ function Profile({
 
       <div className={styles.links}>
         <Link href="/rooms/">내 방</Link>
-        <Link href="/create/">캐릭터 만들기</Link>
+        <Link href="/characters/">내 캐릭터</Link>
+        <Link href="/gallery/">내 그림</Link>
         <button
           type="button"
           className={own.signOut}

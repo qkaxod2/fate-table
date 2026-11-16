@@ -826,6 +826,13 @@
   font-size: var(--fs-sm);
 }
 
+.bringLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px var(--s-4);
+  margin: var(--s-2) 0 0;
+}
+
 /* ===================== 행동 자리 (Dock 안) ===================== */
 .actionWrap {
   display: flex;

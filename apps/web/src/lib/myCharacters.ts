@@ -53,6 +53,16 @@ export function uploadLocalCharacters(sb: SupabaseClient): Promise<void> {
   return pushCharacters(sb, loadMyCharacters());
 }
 
+/** 같은 키가 둘이면 나중에 저장한 쪽을 남긴다 (고친 직후 서버에 아직 옛 판이 있을 수 있다) */
+export function mergeCharacters(...lists: CharacterDraft[][]): CharacterDraft[] {
+  const byKey = new Map<string, CharacterDraft>();
+  for (const c of lists.flat()) {
+    const had = byKey.get(c.key);
+    if (!had || had.savedAt < c.savedAt) byKey.set(c.key, c);
+  }
+  return [...byKey.values()].sort((a, b) => b.savedAt.localeCompare(a.savedAt));
+}
+
 /** 계정 보관함과 이 브라우저의 캐릭터를 합친 목록 (최근 저장 순) */
 export async function listMyCharacters(): Promise<CharacterDraft[]> {
   const local = loadMyCharacters();
@@ -64,8 +74,42 @@ export async function listMyCharacters(): Promise<CharacterDraft[]> {
     .order('saved_at', { ascending: false })
     .limit(50);
   if (error) return local;
-  const byKey = new Map<string, CharacterDraft>();
-  for (const c of [...data.map((r) => r.data as CharacterDraft), ...local])
-    if (!byKey.has(c.key)) byKey.set(c.key, c);
-  return [...byKey.values()].sort((a, b) => b.savedAt.localeCompare(a.savedAt));
+  return mergeCharacters(
+    data.map((r) => r.data as CharacterDraft),
+    local,
+  );
+}
+
+/** 저장한 캐릭터 하나 (계정 보관함 포함) */
+export async function findMyCharacter(key: string): Promise<CharacterDraft | null> {
+  return (await listMyCharacters()).find((c) => c.key === key) ?? null;
+}
+
+/**
+ * 저장한 캐릭터를 지운다. 계정 보관함에서 먼저 지우고, 거기서 실패하면 이 브라우저의 것도
+ * 남겨 둔다 (한쪽만 지우면 다음 목록에서 다시 살아난다).
+ */
+export async function deleteMyCharacter(key: string): Promise<void> {
+  const sb = getSupabase();
+  if (sb && (await sessionUser(sb))) {
+    const { error } = await sb.from('saved_characters').delete().eq('key', key);
+    if (error) throw error;
+  }
+  try {
+    localStorage.setItem(KEY, JSON.stringify(loadMyCharacters().filter((x) => x.key !== key)));
+  } catch {
+    // 저장소를 못 쓰는 환경
+  }
+}
+
+/** 같은 내용을 새 키로 저장한다. 같은 캐릭터를 조금 바꾼 판을 만들 때 */
+export function copyMyCharacter(c: CharacterDraft): CharacterDraft {
+  const copy: CharacterDraft = {
+    ...c,
+    key: crypto.randomUUID(),
+    name: `${c.name} 사본`.slice(0, 40),
+    savedAt: new Date().toISOString(),
+  };
+  saveMyCharacter(copy);
+  return copy;
 }
