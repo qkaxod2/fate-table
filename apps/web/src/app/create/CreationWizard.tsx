@@ -14,12 +14,13 @@ import Link from 'next/link';
 import { PageNav } from '@/components/nav/PageNav';
 import { useHistoryStep } from '@/components/nav/useHistoryStep';
 import { useRouter } from 'next/navigation';
-import { useState, useSyncExternalStore } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { PortraitStudio } from '@/components/media/PortraitStudio';
 import { josa } from '@/lib/josa';
 import { roomHref } from '@/lib/lobby';
-import { saveMyCharacter } from '@/lib/myCharacters';
+import { type CharacterDraft, findMyCharacter, saveMyCharacter } from '@/lib/myCharacters';
 import styles from './create.module.css';
+import { draftToForm, emptyRatings, Sheet, type Ratings, type StuntDraft } from './Sheet';
 
 const STEPS = ['컨셉', term('approach'), term('stunt'), '초상화', '완성'] as const;
 const SPREAD = [3, 2, 2, 1, 1, 0];
@@ -32,16 +33,6 @@ const EXTRA_HELP = [
   '다른 사람과의 관계나 지나온 일. 누구에게 빚을 졌는지, 누구와 원수인지 등. 비워 두고 게임하면서 채워도 된다.',
 ];
 const EXTRA_EXAMPLE = ['예: 아버지가 남긴 낡은 방패', '예: 세라에게는 목숨을 빚졌다'];
-
-type Ratings = Record<Approach, number | null>;
-
-interface StuntDraft {
-  text: string;
-  approach: Approach;
-  action: Action;
-}
-
-const emptyRatings = (): Ratings => Object.fromEntries(APPROACHES.map((a) => [a, null])) as Ratings;
 
 const noSubscribe = () => () => {};
 
@@ -87,12 +78,45 @@ export function CreationWizard() {
     () => new URLSearchParams(location.search).get('room'),
     () => null,
   );
+  /** 내 캐릭터에서 고치러 왔다면 그 캐릭터의 키 (?edit=key). 같은 키로 덮어 저장한다 */
+  const editKey = useSyncExternalStore(
+    noSubscribe,
+    () => new URLSearchParams(location.search).get('edit'),
+    () => null,
+  );
+  const [editing, setEditing] = useState<CharacterDraft | null>(null);
+  const [editMissing, setEditMissing] = useState(false);
+  useEffect(() => {
+    if (!editKey) return;
+    let alive = true;
+    void findMyCharacter(editKey).then((d) => {
+      if (!alive) return;
+      if (!d) {
+        setEditMissing(true);
+        return;
+      }
+      const f = draftToForm(d);
+      setName(f.name);
+      setHigh(f.high);
+      setTrouble(f.trouble);
+      setExtra(f.extra);
+      setRatings(f.ratings);
+      setStunts(f.stunts);
+      setPortrait(f.portrait);
+      setEditing(d);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [editKey]);
 
   const left = remaining(ratings);
   const conceptOk = name.trim() && high.trim() && trouble.trim();
   const ratingsOk = left.length === 0;
   const stuntsOk = stunts.every((s) => s.text.trim());
   const canNext = [conceptOk, ratingsOk, stuntsOk, true, false][step];
+  /** 고칠 때는 다 채워져 있으니 아무 단계로나 건너뛸 수 있다 */
+  const canJump = editing !== null && !saved && conceptOk && ratingsOk && stuntsOk;
 
   function rate(a: Approach, v: number) {
     setRatings((r) => {
@@ -114,7 +138,7 @@ export function CreationWizard() {
       kind: 'bonus',
       bonus: { approach: s.approach, action: s.action, value: 2 },
     }));
-    const key = crypto.randomUUID();
+    const key = editing?.key ?? crypto.randomUUID();
     saveMyCharacter({
       key,
       name: name.trim(),
@@ -132,6 +156,26 @@ export function CreationWizard() {
     if (fromRoom) router.push(`${roomHref(fromRoom)}&bring=${encodeURIComponent(key)}`);
   }
 
+  if (editKey && !editing)
+    return (
+      <main className={styles.main}>
+        <header className={styles.top}>
+          <PageNav fallback="/characters/" />
+          <h1 className={styles.title}>캐릭터 고치기</h1>
+        </header>
+        {editMissing ? (
+          <p className={styles.lead}>
+            고칠 캐릭터를 찾지 못함. 지웠거나 다른 기기·계정에 저장한 캐릭터일 수 있다.{' '}
+            <Link href="/characters/">내 캐릭터</Link>에서 다시 고르기
+          </p>
+        ) : (
+          <p className={styles.lead} role="status">
+            캐릭터 불러오는 중…
+          </p>
+        )}
+      </main>
+    );
+
   return (
     <main className={styles.main}>
       <header className={styles.top}>
@@ -146,9 +190,9 @@ export function CreationWizard() {
             </Link>
           </nav>
         ) : (
-          <PageNav />
+          <PageNav fallback={editKey ? '/characters/' : '/'} />
         )}
-        <h1 className={styles.title}>캐릭터 만들기</h1>
+        <h1 className={styles.title}>{editKey ? '캐릭터 고치기' : '캐릭터 만들기'}</h1>
         <ol className={styles.steps} aria-label="단계">
           {STEPS.map((s, i) => {
             const state = i < step ? 'done' : i === step ? 'now' : 'todo';
@@ -163,7 +207,7 @@ export function CreationWizard() {
             return (
               <li key={s} data-state={state} aria-current={state === 'now' ? 'step' : undefined}>
                 {/* 지나온 단계는 눌러서 돌아가 고칠 수 있다 */}
-                {state === 'done' && step < STEPS.length - 1 ? (
+                {(state === 'done' && step < STEPS.length - 1) || (canJump && state !== 'now') ? (
                   <button type="button" className={styles.stepBtn} onClick={() => go(i)}>
                     {label}
                   </button>
@@ -382,15 +426,22 @@ export function CreationWizard() {
                     <p className={styles.ok} role="status">
                       {fromRoom
                         ? '저장됨. 방으로 돌아가는 중…'
-                        : '이 브라우저에 저장됨. 방에 들어가면 바로 불러올 수 있다.'}
+                        : editing
+                          ? '고친 내용 저장됨. 이미 방에 데려간 캐릭터는 그대로 남는다.'
+                          : '내 캐릭터에 저장됨. 방에 들어가면 바로 불러올 수 있다.'}
                     </p>
                   ) : (
                     <button type="button" className={styles.primary} onClick={save}>
-                      {fromRoom ? '저장하고 방으로 돌아가기' : '저장하기'}
+                      {fromRoom
+                        ? '저장하고 방으로 돌아가기'
+                        : editing
+                          ? '고친 내용 저장'
+                          : '저장하기'}
                     </button>
                   )}
                   {saved && !fromRoom && (
                     <p className={styles.next}>
+                      <Link href="/characters/">내 캐릭터</Link>
                       <Link href="/rooms/new/">방 만들기</Link>
                       <Link href="/join/">초대 코드로 참가</Link>
                     </p>
@@ -494,116 +545,6 @@ function Allocation({ ratings }: { ratings: Ratings }) {
           ? `남은 값 ${left.map((v) => `+${v}`).join(' ')}`
           : `다 나눔. 바꾸려면 숫자를 한 번 더 눌러 비우기`}
       </p>
-    </div>
-  );
-}
-
-/**
- * 캐릭터 기록지: 초상 + 이름 + 특성 인덱스 카드 + 접근법 + 특기.
- * 만드는 동안에는 오른쪽 미리보기로, 완성 화면에서는 크게(full) 쓴다.
- */
-function Sheet({
-  name,
-  high,
-  trouble,
-  extra,
-  ratings,
-  stunts,
-  portrait,
-  full = false,
-}: {
-  name: string;
-  high: string;
-  trouble: string;
-  extra: string[];
-  ratings: Ratings;
-  stunts: StuntDraft[];
-  portrait: string | undefined;
-  full?: boolean;
-}) {
-  const cards: {
-    kind: 'high' | 'trouble' | 'normal';
-    label: string;
-    text: string;
-    hint: string;
-  }[] = [
-    { kind: 'high', label: term('high'), text: high, hint: '어떤 사람인지 한 줄로' },
-    { kind: 'trouble', label: term('trouble'), text: trouble, hint: '자꾸 곤란해지는 점' },
-    ...extra
-      .map((t, i) => ({
-        kind: 'normal' as const,
-        label: term('aspect'),
-        text: t,
-        hint: i === 0 ? '하나 더 (선택)' : '관계나 지난 일 (선택)',
-      }))
-      .filter((c) => (full ? c.text.trim() : true)),
-  ];
-  const refresh = refreshFor(stunts.length);
-  return (
-    <div className={styles.sheetCard} data-full={full || undefined}>
-      <div className={styles.sheetTop}>
-        <div className={styles.photo} data-none={!portrait || undefined}>
-          {portrait ? (
-            <img src={portrait} alt={`${name} 초상화`} className={styles.portrait} />
-          ) : (
-            <div className={styles.noPortrait}>{full ? '초상화 없음' : '초상화'}</div>
-          )}
-        </div>
-        <div className={styles.who}>
-          {full ? (
-            <h2 className={styles.name}>{name}</h2>
-          ) : (
-            <p className={styles.name} data-empty={!name.trim() || undefined}>
-              {name.trim() || '이름'}
-            </p>
-          )}
-          <p className={styles.refresh}>
-            {term('fatePoint')} <span aria-hidden>{'◆'.repeat(refresh)}</span>
-            <small>
-              {term('refresh')} {refresh}
-            </small>
-          </p>
-        </div>
-      </div>
-
-      <ul className={styles.aspects}>
-        {cards.map((c, i) => (
-          <li key={i} className={styles.index} data-kind={c.kind}>
-            <span className={styles.indexLabel}>{c.label}</span>
-            <span className={styles.indexText} data-empty={!c.text.trim() || undefined}>
-              {c.text.trim() || c.hint}
-            </span>
-          </li>
-        ))}
-      </ul>
-
-      <ul className={styles.ratingList} aria-label={term('approach')}>
-        {APPROACHES.map((a) => {
-          const v = ratings[a];
-          return (
-            <li key={a} data-empty={v === null || undefined}>
-              <span>{term(a)}</span>
-              <span className={styles.pips} aria-hidden>
-                {[1, 2, 3].map((n) => (
-                  <i key={n} data-on={v !== null && n <= v ? '' : undefined} />
-                ))}
-              </span>
-              <b>{v === null ? '–' : `+${v}`}</b>
-            </li>
-          );
-        })}
-      </ul>
-
-      {stunts.length > 0 && (
-        <ul className={styles.stuntList}>
-          {stunts.map((s, i) => (
-            <li key={i}>
-              <b>{s.text.trim() || `${term('stunt')} ${i + 1}`}</b>{' '}
-              {josa(term(s.approach), '으로/로')} {term(s.action)}할 때 +2
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   );
 }

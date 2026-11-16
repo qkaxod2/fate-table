@@ -229,7 +229,7 @@
 /* 내 방 · 내 그림: 목록보다 한 단계 낮은 두 칸짜리 링크 */
 .shelf {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
   gap: 10px;
   margin-top: 16px;
 }
