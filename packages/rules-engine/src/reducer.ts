@@ -242,9 +242,32 @@ const handlers: Handlers = {
             paidWith: p.paidWith,
             ...(p.newDice ? { newDice: p.newDice } : {}),
           });
-          if (p.newAnimSeed === undefined) return rolled;
           const key = p.side === 'active' ? 'active' : 'defense';
-          return { ...rolled, [key]: { ...rolled[key]!, animSeed: p.newAnimSeed } };
+          const sd = rolled[key]!;
+          // +2에는 무엇으로 냈는지 적어 둔다 (다시 뺄 때 돌려주려고)
+          const mods =
+            p.mode === 'bonus'
+              ? sd.modifiers.map((m, i) =>
+                  i === sd.modifiers.length - 1
+                    ? {
+                        ...m,
+                        paidWith: p.paidWith,
+                        payerId: p.payerId,
+                        ...(a.kind === 'boost' && p.paidWith === 'free_invoke'
+                          ? { restore: a }
+                          : {}),
+                      }
+                    : m,
+                )
+              : sd.modifiers;
+          return {
+            ...rolled,
+            [key]: {
+              ...sd,
+              modifiers: mods,
+              ...(p.newAnimSeed === undefined ? {} : { animSeed: p.newAnimSeed }),
+            },
+          };
         })(),
       },
     };
@@ -261,6 +284,43 @@ const handlers: Handlers = {
     return next;
   },
 
+  'invoke.revoked': (s, p) => {
+    const r = s.rolls[p.rollId];
+    if (!r) return s;
+    const key = p.side === 'active' ? 'active' : 'defense';
+    const sd = r[key];
+    if (!sd) return s;
+    const at = sd.modifiers.map((m) => m.source).lastIndexOf(`aspect:${p.aspectId}`);
+    if (at < 0) return s;
+    const paid = p.paidWith === 'fate_point';
+    const pi = paid ? sd.paidInvokes.lastIndexOf(p.aspectId) : -1;
+    const base = p.side === 'active' ? reopenDefense(r) : r;
+    let next: RoomState = {
+      ...s,
+      rolls: {
+        ...s.rolls,
+        [r.id]: {
+          ...base,
+          [key]: {
+            ...sd,
+            modifiers: sd.modifiers.filter((_, i) => i !== at),
+            paidInvokes: pi < 0 ? sd.paidInvokes : sd.paidInvokes.filter((_, i) => i !== pi),
+          },
+        },
+      },
+    };
+    if (paid) return adjustFate(next, p.payerId, 1);
+    const a = next.aspects[p.aspectId];
+    if (a) {
+      next = {
+        ...next,
+        aspects: { ...next.aspects, [a.id]: { ...a, freeInvokes: a.freeInvokes + 1 } },
+      };
+    } else if (p.restore) {
+      next = { ...next, aspects: { ...next.aspects, [p.restore.id]: p.restore } };
+    }
+    return next;
+  },
   'stunt.applied': (s, p) => {
     const r = s.rolls[p.rollId];
     if (!r) return s;

@@ -1,0 +1,319 @@
+/* 탁자 보기: 장면 위에 펼치는 펠트 탁자 */
+.layer {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+}
+
+.layer[data-open] {
+  pointer-events: auto;
+}
+
+.dim {
+  position: absolute;
+  inset: 0;
+  background: rgb(14 13 12 / 0.55);
+  opacity: 0;
+  backdrop-filter: blur(6px);
+  transition: opacity 0.4s var(--ease-out);
+}
+
+.layer[data-open] .dim {
+  opacity: 1;
+}
+
+.felt {
+  position: absolute;
+  inset: 24px 24px 24px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 18px;
+  padding: 20px 32px 26px;
+  overflow: auto;
+  border-radius: 26px;
+  background: radial-gradient(70% 60% at 50% 40%, #2a2723, #1c1a17 75%);
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.06),
+    0 30px 80px -20px #000;
+  color: var(--on-table);
+  opacity: 0;
+  scale: 0.96;
+  translate: 0 30px;
+  transition:
+    opacity 0.4s var(--ease-out),
+    scale 0.55s var(--ease-out),
+    translate 0.55s var(--ease-out);
+}
+
+.layer[data-open] .felt {
+  opacity: 1;
+  scale: 1;
+  translate: 0 0;
+}
+
+/* 카드는 하나씩 떨어지듯 놓인다 */
+.drop {
+  opacity: 0;
+  translate: 0 18px;
+  transition:
+    opacity 0.4s var(--ease-out),
+    translate 0.5s var(--ease-out);
+}
+
+.layer[data-open] .drop {
+  opacity: 1;
+  translate: 0 0;
+}
+
+.layer[data-open] .drop:nth-child(2) {
+  transition-delay: 0.05s;
+}
+.layer[data-open] .drop:nth-child(3) {
+  transition-delay: 0.1s;
+}
+.layer[data-open] .drop:nth-child(4) {
+  transition-delay: 0.15s;
+}
+.layer[data-open] .drop:nth-child(n + 5) {
+  transition-delay: 0.2s;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.head h2 {
+  margin: 0;
+  font: 800 22px var(--f-ui);
+}
+
+.pool {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--on-table-3);
+  font: 600 13px var(--f-ui);
+}
+
+.pool i {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--brass-hi), var(--brass) 60%, #7a5c25);
+}
+
+.pool em {
+  font-style: normal;
+}
+
+.close {
+  margin-left: auto;
+  padding: 6px 12px;
+  border: 1px solid var(--table-line);
+  border-radius: 999px;
+  background: none;
+  color: var(--on-table-2);
+  font: 600 13px var(--f-ui);
+  cursor: pointer;
+}
+
+.close kbd {
+  opacity: 0.7;
+  font: inherit;
+}
+
+.top {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 32px;
+  align-items: start;
+}
+
+.sceneSide {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+}
+
+/* 장면 특성: 장면 카드 왼쪽에 겹쳐 흩어 놓는다 (한 줄로 세우지 않는다) */
+.scatter {
+  display: flex;
+  flex-wrap: wrap;
+  max-width: 340px;
+  padding-top: 20px;
+}
+
+.scatter .drop:nth-child(odd) {
+  margin: 0 -26px 0 0;
+}
+
+.scatter .drop:nth-child(even) {
+  margin: 56px -26px 0 0;
+}
+
+.scatter .drop:nth-child(n + 3) {
+  margin-top: -90px;
+}
+
+.scene {
+  position: relative;
+  z-index: 0;
+  flex: 1;
+  max-width: 560px;
+  min-width: 280px;
+  margin: 0 0 0 30px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--ink-1);
+  box-shadow: var(--sh-object);
+}
+
+.scene img {
+  display: block;
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  object-position: center 60%;
+}
+
+.scene figcaption {
+  display: grid;
+  padding: 12px 16px 14px;
+}
+
+.scene b {
+  font: 800 21px var(--f-ui);
+}
+
+.scene small {
+  color: var(--ink-3);
+  font: 500 13px var(--f-ui);
+}
+
+.foes {
+  display: grid;
+  gap: 18px;
+}
+
+.foe {
+  display: grid;
+  justify-items: end;
+}
+
+.foeCard,
+.seatCard {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--card);
+  box-shadow: var(--sh-object);
+}
+
+.foeCard {
+  width: 230px;
+}
+
+.foeCard img {
+  display: block;
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+  object-position: center top;
+}
+
+.foeCard > section,
+.seatCard > section {
+  box-shadow: none;
+}
+
+.foeCard[data-out] img {
+  filter: grayscale(1);
+}
+
+/* 주인 아래로 비죽 나오게 겹쳐 놓는 카드 */
+.tucked {
+  display: flex;
+  margin-top: -24px;
+  padding-right: 44px;
+}
+
+.tucked .drop {
+  margin-right: -44px;
+}
+
+.tucked .drop:nth-child(even) {
+  margin-top: 26px;
+}
+
+.seats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  gap: 24px;
+  align-items: end;
+}
+
+.seat {
+  display: grid;
+  justify-items: center;
+}
+
+.seat .tucked {
+  z-index: 1;
+  margin: 0 0 -70px;
+  padding: 0 0 0 60px;
+}
+
+.seatCard {
+  display: grid;
+  grid-template-columns: 72px auto;
+  align-items: center;
+  min-width: 280px;
+}
+
+.seatCard img {
+  width: 72px;
+  height: 100%;
+  min-height: 92px;
+  object-fit: cover;
+  object-position: center top;
+}
+
+.seat[data-me] .seatCard {
+  outline: 2px solid var(--seal-on-table);
+  outline-offset: 3px;
+}
+
+@media (max-width: 760px) {
+  .felt {
+    inset: 8px;
+    padding: 16px;
+  }
+  .top {
+    grid-template-columns: 1fr;
+  }
+  .sceneSide {
+    flex-direction: column-reverse;
+  }
+  .scene {
+    margin: 0;
+  }
+  .scatter {
+    max-width: none;
+    padding: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .felt,
+  .drop {
+    scale: 1;
+    translate: none;
+  }
+}

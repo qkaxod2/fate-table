@@ -1,0 +1,90 @@
+.plate {
+  display: grid;
+  gap: 2px;
+  padding: 8px 14px 10px;
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--ink-1);
+  box-shadow: var(--sh-object);
+}
+
+.plate[data-me] {
+  box-shadow:
+    inset 0 3px 0 var(--seal),
+    var(--sh-object);
+}
+
+.plate[data-out] {
+  opacity: 0.6;
+}
+
+.name {
+  font: 800 18px / 1.2 var(--f-ui);
+}
+
+.sub {
+  max-width: 18em;
+  overflow: hidden;
+  color: var(--ink-3);
+  font: 500 12px / 1.3 var(--f-ui);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.coins {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.coins i {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--brass-hi), var(--brass) 60%, #7a5c25);
+  box-shadow: 0 1.5px 0 #5c4519;
+}
+
+.coins em {
+  color: var(--ink-3);
+  font: 700 12px var(--f-ui);
+  font-style: normal;
+}
+
+.boxes,
+.cons {
+  display: flex;
+  gap: 3px;
+}
+
+.boxes span,
+.cons span {
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 3px;
+  border: 1.5px solid var(--ink-3);
+  border-radius: 3px;
+  color: var(--ink-3);
+  font: 600 10px var(--f-ui);
+}
+
+.cons span {
+  border-style: dashed;
+}
+
+.boxes span[data-used],
+.cons span[data-used] {
+  border-color: var(--seal);
+  border-style: solid;
+  background: var(--seal);
+  color: #fff;
+}

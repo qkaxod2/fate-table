@@ -1,0 +1,647 @@
+/*
+ * 장면 극장 (design-system.md 32절).
+ * 이야기: 그림이 화면 전체, 인물이 양쪽에 서고, 아래 대사창 하나.
+ * 판정: 장면이 어두워지고 대사창이 내려가며, 가운데 판정판과 아래 손패가 올라온다.
+ * 탁자 보기: Tab으로 장면 위에 펠트 탁자를 펼친다 (TableView).
+ */
+.theater {
+  --e: var(--ease-out);
+  --d: 0.7s;
+  position: relative;
+  height: 100dvh;
+  min-height: 600px;
+  overflow: hidden;
+  background: var(--table);
+  color: var(--on-table);
+  isolation: isolate;
+}
+
+.bg {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background: center / cover no-repeat;
+  filter: brightness(0.62) saturate(0.85);
+  transition: filter var(--d) var(--e);
+}
+
+.bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgb(20 19 17 / 0.55),
+    transparent 22%,
+    transparent 52%,
+    rgb(20 19 17 / 0.96) 80%
+  );
+}
+
+.theater[data-mode='roll'] .bg {
+  filter: brightness(0.32) saturate(0.6);
+}
+
+/* ---------- 인물 ---------- */
+.cast {
+  position: absolute;
+  bottom: 190px;
+  z-index: -1;
+  height: min(80dvh, 760px);
+  max-width: none;
+  mask-image:
+    linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent),
+    linear-gradient(180deg, #000 72%, transparent);
+  mask-composite: intersect;
+  transform-origin: bottom center;
+  transition:
+    translate var(--d) var(--e),
+    scale var(--d) var(--e),
+    filter var(--d) var(--e),
+    opacity 0.5s var(--e);
+}
+
+.hero {
+  left: max(2vw, 20px);
+}
+
+.hero[data-focus] {
+  filter: brightness(1.08);
+}
+
+.foe {
+  right: max(2vw, 20px);
+  height: min(76dvh, 720px);
+  filter: brightness(0.86);
+}
+
+.foe[data-hit] {
+  animation: hit 0.5s var(--ease-out);
+}
+
+.foe[data-out] {
+  opacity: 0;
+  translate: 40px 30px;
+}
+
+@keyframes hit {
+  25% {
+    translate: 14px 0;
+    filter: brightness(1.6) saturate(0.4);
+  }
+}
+
+.theater[data-mode='roll'] .hero {
+  translate: -6vw -70px;
+  scale: 0.86;
+  filter: brightness(0.75);
+}
+
+.theater[data-mode='roll'] .foe {
+  translate: 5vw -50px;
+  scale: 0.9;
+}
+
+/* ---------- 위 ---------- */
+.top {
+  position: absolute;
+  top: 18px;
+  left: 28px;
+  z-index: 5;
+  display: grid;
+  gap: 2px;
+}
+
+.top h1 {
+  margin: 0;
+  font: 800 30px / 1.2 var(--f-head);
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 14px #000;
+}
+
+.tools {
+  position: absolute;
+  top: 18px;
+  right: 24px;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.tools :is(button, select) {
+  padding: 6px 12px;
+  border: 1px solid var(--table-line);
+  border-radius: 999px;
+  background: rgb(20 19 17 / 0.6);
+  color: var(--on-table-2);
+  font: 600 12.5px var(--f-ui);
+  cursor: pointer;
+}
+
+.tools :is(button, select):hover {
+  color: var(--on-table);
+  border-color: var(--table-line-hi);
+}
+
+.tools .tableBtn {
+  color: var(--on-table);
+}
+
+.tools kbd {
+  margin-left: 6px;
+  opacity: 0.6;
+  font: inherit;
+}
+
+/* ---------- 이름표 ---------- */
+.myPlate,
+.foePlate {
+  position: absolute;
+  bottom: 236px;
+  z-index: 3;
+  transition:
+    translate var(--d) var(--e),
+    opacity 0.4s var(--e);
+}
+
+.myPlate {
+  left: max(6vw, 40px);
+}
+
+.foePlate {
+  right: max(6vw, 40px);
+}
+
+.theater[data-mode='roll'] .myPlate {
+  translate: -2vw calc(-1 * (100dvh - 236px - 230px));
+}
+
+.theater[data-mode='roll'] .foePlate {
+  translate: 0 calc(-1 * (100dvh - 236px - 190px));
+}
+
+/* ---------- 장면 꼬리표: 장면 여기저기에 붙는다 ---------- */
+.tags {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.tag {
+  position: absolute;
+  pointer-events: auto;
+  transition:
+    left var(--d) var(--e),
+    top var(--d) var(--e),
+    opacity 0.4s var(--e);
+}
+
+.tag::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -16px;
+  width: 8px;
+  height: 8px;
+  translate: 0 -50%;
+  border-radius: 50%;
+  background: var(--brass-hi);
+  box-shadow: 0 0 0 3px rgb(0 0 0 / 0.3);
+}
+
+/* ---------- 판정 ---------- */
+.duelSlot {
+  position: absolute;
+  top: 84px;
+  left: 50%;
+  z-index: 6;
+  translate: -50% 0;
+  opacity: 0;
+  scale: 0.92;
+  pointer-events: none;
+  transition:
+    opacity 0.45s var(--e),
+    scale var(--d) var(--e);
+}
+
+.theater[data-mode='roll'] .duelSlot {
+  opacity: 1;
+  scale: 1;
+  pointer-events: auto;
+}
+
+.intent {
+  position: absolute;
+  top: 210px;
+  right: max(6vw, 40px);
+  z-index: 4;
+  padding: 8px 12px;
+  border: 1px solid var(--table-line);
+  border-radius: 6px;
+  background: rgb(20 19 17 / 0.75);
+  color: var(--on-table-2);
+  font: 600 12.5px / 1.4 var(--f-ui);
+}
+
+.intent b {
+  display: block;
+  color: var(--on-table);
+  font: 800 17px var(--f-ui);
+}
+
+.hand {
+  position: absolute;
+  bottom: -14px;
+  left: 50%;
+  z-index: 7;
+  display: flex;
+  align-items: flex-end;
+  translate: -50% 360px;
+  transition: translate var(--d) var(--e);
+}
+
+.theater[data-mode='roll'] .hand {
+  translate: -50% 0;
+}
+
+.hand > * {
+  margin: 0 -12px;
+  transform-origin: bottom center;
+}
+
+.hand > *:hover,
+.hand > *:focus-visible {
+  z-index: 2;
+  translate: 0 -40px;
+}
+
+.fan1 {
+  rotate: -5deg;
+  translate: 0 20px;
+}
+.fan2 {
+  rotate: 0deg;
+}
+.fan3 {
+  rotate: 5deg;
+  translate: 0 20px;
+}
+.fanL {
+  rotate: -9deg;
+  translate: 0 46px;
+}
+.fanR {
+  rotate: 9deg;
+  translate: 0 46px;
+}
+
+.chips {
+  position: absolute;
+  bottom: 34px;
+  left: 32px;
+  z-index: 7;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  translate: -320px 0;
+  transition: translate var(--d) var(--e);
+}
+
+.theater[data-mode='roll'] .chips {
+  translate: 0 0;
+}
+
+.stack {
+  display: grid;
+}
+
+.stack i {
+  width: 40px;
+  height: 40px;
+  margin-top: -31px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--brass-hi), var(--brass) 60%, #7a5c25);
+  box-shadow: 0 2px 0 #5c4519;
+}
+
+.stack i:first-child {
+  margin-top: 0;
+}
+
+.chipText {
+  color: var(--on-table-2);
+  font: 600 13px var(--f-ui);
+}
+
+.chipText b {
+  display: block;
+  color: var(--on-table);
+  font: 800 22px var(--f-ui);
+}
+
+.modeSwitch {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-left: 6px;
+}
+
+.modeSwitch button {
+  padding: 4px 10px;
+  border: 1px solid var(--table-line);
+  border-radius: 999px;
+  background: none;
+  color: var(--on-table-3);
+  font: 600 12px var(--f-ui);
+  cursor: pointer;
+}
+
+.modeSwitch button[aria-pressed='true'] {
+  border-color: var(--brass-hi);
+  color: var(--brass-hi);
+}
+
+.go {
+  position: absolute;
+  right: 32px;
+  bottom: 40px;
+  z-index: 7;
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+  translate: 340px 0;
+  transition: translate var(--d) var(--e);
+}
+
+.theater[data-mode='roll'] .go {
+  translate: 0 0;
+}
+
+.btn {
+  padding: 13px 26px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--seal);
+  color: #fff;
+  font: 800 17px var(--f-ui);
+  cursor: pointer;
+}
+
+.btn:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.ghost {
+  padding: 9px 16px;
+  border: 1px solid var(--table-line);
+  border-radius: 7px;
+  background: rgb(20 19 17 / 0.6);
+  color: var(--on-table-2);
+  font: 600 13.5px var(--f-ui);
+  cursor: pointer;
+}
+
+.waiting {
+  margin: 0;
+  color: var(--on-table-3);
+  font: 500 13px var(--f-ui);
+}
+
+/* ---------- 대사창 ---------- */
+.dialogue {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  z-index: 8;
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  width: min(1180px, calc(100vw - 48px));
+  translate: -50% 0;
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--ink-1);
+  box-shadow: var(--sh-object);
+  transition:
+    translate var(--d) var(--e),
+    opacity 0.5s var(--e);
+}
+
+.theater[data-mode='roll'] .dialogue {
+  translate: -50% calc(100% + 60px);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.say {
+  position: relative;
+  min-width: 0;
+  padding: 24px 30px 14px;
+}
+
+.speaker {
+  position: absolute;
+  top: -15px;
+  left: 26px;
+  padding: 4px 14px;
+  border-radius: 3px;
+  background: var(--seal);
+  color: #fff;
+  font: 700 14px var(--f-ui);
+}
+
+.text {
+  height: 132px;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.dialogue[data-log] .text {
+  height: min(52dvh, 460px);
+}
+
+.sys {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+  color: var(--ink-3);
+  font: 500 12.5px var(--f-ui);
+}
+
+.sys button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.sys button:hover {
+  color: var(--ink-1);
+}
+
+.sys .error {
+  color: var(--seal);
+}
+
+.menu {
+  border-left: 1px solid var(--edge);
+}
+
+.coachSlot {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+}
+
+.coachSlot > * {
+  pointer-events: auto;
+}
+
+/* ---------- 휴대폰: 그림은 위, 대사창은 아래, 손패는 가로로 넘긴다 ---------- */
+@media (max-width: 760px) {
+  .theater {
+    min-height: 0;
+  }
+  .cast {
+    bottom: 46dvh;
+    height: 46dvh;
+  }
+  .hero {
+    left: -6vw;
+  }
+  .foe {
+    right: -10vw;
+    height: 42dvh;
+  }
+  .top {
+    top: 10px;
+    left: 14px;
+  }
+  .top h1 {
+    font-size: 20px;
+  }
+  .tools {
+    top: 10px;
+    right: 10px;
+  }
+  .tools > :not(.tableBtn) {
+    display: none;
+  }
+  .myPlate,
+  .foePlate {
+    bottom: calc(46dvh + 8px);
+    scale: 0.82;
+  }
+  .myPlate {
+    left: 4px;
+    transform-origin: left bottom;
+  }
+  .foePlate {
+    right: 4px;
+    transform-origin: right bottom;
+  }
+  .theater[data-mode='roll'] .myPlate,
+  .theater[data-mode='roll'] .foePlate {
+    translate: 0 0;
+    opacity: 0;
+  }
+  .dialogue {
+    bottom: 0;
+    grid-template-columns: 1fr;
+    width: 100%;
+    max-height: 46dvh;
+    overflow: auto;
+    border-radius: 12px 12px 0 0;
+  }
+  .say {
+    padding: 22px 16px 8px;
+  }
+  .text {
+    height: 96px;
+  }
+  .menu {
+    border-top: 1px solid var(--edge);
+    border-left: 0;
+  }
+  .duelSlot {
+    top: 54px;
+    scale: 0.85;
+  }
+  .theater[data-mode='roll'] .duelSlot {
+    scale: 0.85;
+    transform-origin: top center;
+  }
+  .intent {
+    display: none;
+  }
+  /* 꼬리표: 이야기 중에는 오른쪽 위에 쌓고, 판정 중에는 손패 위 한 줄로 넘긴다 */
+  .tags {
+    inset: 54px 10px auto auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+  }
+  .tag {
+    position: static;
+  }
+  .tag::before {
+    display: none;
+  }
+  .theater[data-mode='roll'] .tags {
+    inset: auto 0 290px 0;
+    z-index: 8;
+    flex-direction: row;
+    align-items: center;
+    overflow-x: auto;
+    padding: 0 12px;
+  }
+  .hand {
+    left: 0;
+    right: 0;
+    bottom: 64px;
+    overflow-x: auto;
+    padding: 30px 16px 0;
+    translate: 0 360px;
+    scale: 0.72;
+    transform-origin: bottom left;
+    width: calc(100% / 0.72);
+  }
+  .theater[data-mode='roll'] .hand {
+    translate: 0 0;
+  }
+  .hand > * {
+    margin: 0 4px;
+    rotate: none;
+    translate: none;
+  }
+  .chips {
+    bottom: 12px;
+    left: 12px;
+  }
+  .stack i {
+    width: 28px;
+    height: 28px;
+    margin-top: -22px;
+  }
+  .go {
+    bottom: 12px;
+    right: 12px;
+  }
+  .btn {
+    padding: 10px 18px;
+    font-size: 15px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theater {
+    --d: 0.01s;
+  }
+}

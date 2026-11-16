@@ -479,9 +479,24 @@ var handlers = {
             paidWith: p.paidWith,
             ...p.newDice ? { newDice: p.newDice } : {}
           });
-          if (p.newAnimSeed === void 0) return rolled;
           const key = p.side === "active" ? "active" : "defense";
-          return { ...rolled, [key]: { ...rolled[key], animSeed: p.newAnimSeed } };
+          const sd = rolled[key];
+          const mods = p.mode === "bonus" ? sd.modifiers.map(
+            (m, i) => i === sd.modifiers.length - 1 ? {
+              ...m,
+              paidWith: p.paidWith,
+              payerId: p.payerId,
+              ...a.kind === "boost" && p.paidWith === "free_invoke" ? { restore: a } : {}
+            } : m
+          ) : sd.modifiers;
+          return {
+            ...rolled,
+            [key]: {
+              ...sd,
+              modifiers: mods,
+              ...p.newAnimSeed === void 0 ? {} : { animSeed: p.newAnimSeed }
+            }
+          };
         })()
       }
     };
@@ -494,6 +509,43 @@ var handlers = {
         ...next,
         aspects: { ...next.aspects, [a.id]: { ...a, freeInvokes: a.freeInvokes - 1 } }
       };
+    }
+    return next;
+  },
+  "invoke.revoked": (s, p) => {
+    const r = s.rolls[p.rollId];
+    if (!r) return s;
+    const key = p.side === "active" ? "active" : "defense";
+    const sd = r[key];
+    if (!sd) return s;
+    const at = sd.modifiers.map((m) => m.source).lastIndexOf(`aspect:${p.aspectId}`);
+    if (at < 0) return s;
+    const paid = p.paidWith === "fate_point";
+    const pi = paid ? sd.paidInvokes.lastIndexOf(p.aspectId) : -1;
+    const base = p.side === "active" ? reopenDefense(r) : r;
+    let next = {
+      ...s,
+      rolls: {
+        ...s.rolls,
+        [r.id]: {
+          ...base,
+          [key]: {
+            ...sd,
+            modifiers: sd.modifiers.filter((_, i) => i !== at),
+            paidInvokes: pi < 0 ? sd.paidInvokes : sd.paidInvokes.filter((_, i) => i !== pi)
+          }
+        }
+      }
+    };
+    if (paid) return adjustFate(next, p.payerId, 1);
+    const a = next.aspects[p.aspectId];
+    if (a) {
+      next = {
+        ...next,
+        aspects: { ...next.aspects, [a.id]: { ...a, freeInvokes: a.freeInvokes + 1 } }
+      };
+    } else if (p.restore) {
+      next = { ...next, aspects: { ...next.aspects, [p.restore.id]: p.restore } };
     }
     return next;
   },
@@ -20618,6 +20670,8 @@ var CommandSchema = external_exports.discriminatedUnion("type", [
     mode: external_exports.enum(["bonus", "reroll"]),
     paidWith: external_exports.enum(["fate_point", "free_invoke"])
   }),
+  /** 확정 전에 +2로 낸 특성을 다시 뺀다. 운명점·무료 발동·부스트를 돌려받는다 */
+  cmd("invoke.revoke", { rollId: id, side: side.default("active"), aspectId: id }),
   cmd("stunt.apply", { rollId: id, side: side.default("active"), stuntId: id }),
   cmd("roll.defense_ready", { rollId: id }),
   cmd("roll.finalize", { rollId: id, reduceForBoost: external_exports.boolean().default(false) }),
@@ -21094,6 +21148,32 @@ var resolvers = {
     if (p.paidWith === "fate_point" && asp.ownerType === "character" && asp.ownerId === opponentId) {
       events.push(
         ev("fate.adjusted", a, { target: asp.ownerId, delta: 1, reason: "invoke_against" })
+      );
+    }
+    return { events };
+  },
+  "invoke.revoke": (s, p, a) => {
+    const r = openRoll(s, p.rollId);
+    if (p.side === "defense") defenseStillAdjusting(r);
+    const sideState = need(p.side === "active" ? r.active : r.defense, "side");
+    controlled(s, a, sideState.characterId);
+    const mod = [...sideState.modifiers].reverse().find((m) => m.source === `aspect:${p.aspectId}` && m.paidWith);
+    if (!mod?.paidWith || !mod.payerId) throw new CommandError("NOT_FOUND", "no such invoke");
+    const events = [
+      ev("invoke.revoked", a, {
+        rollId: r.id,
+        side: p.side,
+        aspectId: p.aspectId,
+        paidWith: mod.paidWith,
+        payerId: mod.payerId,
+        ...mod.restore ? { restore: mod.restore } : {}
+      })
+    ];
+    const asp = s.aspects[p.aspectId] ?? mod.restore;
+    const opponentId = p.side === "active" ? r.defense?.characterId ?? r.targetId : r.active.characterId;
+    if (mod.paidWith === "fate_point" && asp?.ownerType === "character" && asp.ownerId === opponentId) {
+      events.push(
+        ev("fate.adjusted", a, { target: asp.ownerId, delta: -1, reason: "invoke_revoked" })
       );
     }
     return { events };

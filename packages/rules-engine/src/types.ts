@@ -81,6 +81,11 @@ export interface Aspect {
 export interface Modifier {
   source: string;
   value: number;
+  /** 특성 발동(+2)으로 붙은 보정이면 무엇으로 냈는지. 낸 카드를 다시 뺄 때 돌려준다 */
+  paidWith?: 'fate_point' | 'free_invoke';
+  payerId?: string;
+  /** 부스트는 쓰면 사라지므로, 다시 빼면 되살릴 원래 모습 */
+  restore?: Aspect;
 }
 
 export interface RollSide {
