@@ -1,0 +1,245 @@
+/*
+ * 장면 분위기 층 (design-system.md 33절): 인물(-1) 위, 꼬리표(2) 아래.
+ * z-index를 주지 않는다. 쌓임 맥락을 만들면 곱하기·스크린 섞기가 뒤의 그림과 섞이지 않는다
+ */
+.root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.root > * {
+  position: absolute;
+  inset: 0;
+}
+
+/* ---------- 시간: 뒤를 보정(grade)하고 색을 곱해 덮는다 ---------- */
+.grade {
+  animation: fade-in 1.4s var(--ease-out) both;
+}
+
+.root[data-time='dawn'] .grade {
+  backdrop-filter: saturate(0.85) brightness(1.05);
+}
+.root[data-time='dusk'] .grade {
+  backdrop-filter: saturate(1.15) sepia(0.25);
+}
+.root[data-time='night'] .grade {
+  backdrop-filter: brightness(0.72) saturate(0.5);
+}
+
+.tint {
+  mix-blend-mode: multiply;
+  animation: fade-in 1.4s var(--ease-out) both;
+}
+
+.tint::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: screen;
+}
+
+.root[data-time='dawn'] .tint {
+  background: linear-gradient(180deg, #c9bce6, #f6d2ca 55%, #dde3f2);
+  opacity: 0.5;
+}
+.root[data-time='dawn'] .tint::after {
+  background: radial-gradient(60% 40% at 30% 55%, rgb(255 200 210 / 0.35), transparent 70%);
+}
+
+.root[data-time='dusk'] .tint {
+  background: linear-gradient(180deg, #ffb27a 0%, #ec8f7e 45%, #9a6a8a 100%);
+  opacity: 0.6;
+}
+.root[data-time='dusk'] .tint::after {
+  background: radial-gradient(50% 35% at 72% 42%, rgb(255 160 70 / 0.45), transparent 70%);
+}
+
+.root[data-time='night'] .tint {
+  background: linear-gradient(180deg, #5468b0, #7286c4 55%, #56608a);
+  opacity: 0.75;
+}
+.root[data-time='night'] .tint::after {
+  background: radial-gradient(40% 30% at 78% 12%, rgb(170 200 255 / 0.22), transparent 70%);
+}
+
+/* ---------- 화재: 아래에서 올라오는 붉은 빛, 위는 그을음 ---------- */
+.fire {
+  background: linear-gradient(
+    0deg,
+    rgb(255 110 30 / 0.6),
+    rgb(255 80 20 / 0.18) 38%,
+    transparent 62%
+  );
+  mix-blend-mode: screen;
+  animation: flicker 2.6s ease-in-out infinite;
+}
+
+.fire::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgb(40 18 12 / 0.55), transparent 45%);
+  mix-blend-mode: multiply;
+}
+
+@keyframes flicker {
+  0%,
+  100% {
+    opacity: 0.85;
+  }
+  20% {
+    opacity: 1;
+  }
+  45% {
+    opacity: 0.7;
+  }
+  70% {
+    opacity: 0.95;
+  }
+}
+
+/* ---------- 황사: 누렇게 바랜 공기와 흐르는 흙먼지 ---------- */
+.dust {
+  background: linear-gradient(180deg, rgb(214 170 100 / 0.22), rgb(190 140 70 / 0.32));
+}
+
+.dust::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgb(220 170 90 / 0.5);
+  mix-blend-mode: multiply;
+}
+
+.dust i {
+  position: absolute;
+  inset: -10% -60%;
+  background:
+    radial-gradient(30% 22% at 20% 40%, rgb(225 190 130 / 0.5), transparent 70%),
+    radial-gradient(35% 25% at 55% 70%, rgb(210 170 110 / 0.45), transparent 70%),
+    radial-gradient(28% 20% at 85% 35%, rgb(225 190 130 / 0.45), transparent 70%);
+  filter: blur(18px);
+  animation: drift 26s linear infinite;
+}
+
+/* ---------- 안개: 두 겹이 서로 다른 빠르기로 흐른다 ---------- */
+.fog {
+  background: linear-gradient(180deg, rgb(215 222 230 / 0.18), rgb(215 222 230 / 0.5) 85%);
+}
+
+.fog i {
+  position: absolute;
+  inset: 10% -60% -10%;
+  background:
+    radial-gradient(30% 20% at 15% 60%, rgb(230 235 240 / 0.6), transparent 70%),
+    radial-gradient(35% 24% at 50% 78%, rgb(230 235 240 / 0.55), transparent 70%),
+    radial-gradient(28% 18% at 82% 58%, rgb(230 235 240 / 0.55), transparent 70%);
+  filter: blur(24px);
+  animation: drift 70s linear infinite alternate;
+}
+
+.fog i + i {
+  inset: 25% -60% -20%;
+  opacity: 0.8;
+  animation-duration: 45s;
+  animation-direction: alternate-reverse;
+}
+
+@keyframes drift {
+  from {
+    translate: -18% 0;
+  }
+  to {
+    translate: 18% 0;
+  }
+}
+
+/* ---------- 날씨 ---------- */
+.canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.root[data-weather='rain'],
+.root[data-weather='storm'] {
+  background: rgb(30 40 60 / 0.25);
+}
+
+.root[data-weather='storm'] {
+  background: rgb(18 24 40 / 0.42);
+}
+
+.root[data-weather='snow'] {
+  background: linear-gradient(180deg, rgb(225 232 245 / 0.12), rgb(240 245 255 / 0.28));
+}
+
+.flash {
+  background: rgb(235 240 255);
+  mix-blend-mode: screen;
+  animation: flash 0.7s ease-out both;
+}
+
+@keyframes flash {
+  0% {
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.75;
+  }
+  18% {
+    opacity: 0.1;
+  }
+  28% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ---------- 프레임: 가장자리를 눌러 분위기를 잡는다 ---------- */
+.frame {
+  --edge: rgb(0 0 0 / 0.5);
+  background: radial-gradient(ellipse 75% 70% at 50% 45%, transparent 55%, var(--edge) 100%);
+  opacity: 0;
+  transition: opacity 1.2s var(--ease-out);
+}
+
+.root:is([data-time='night'], [data-weather='storm'], [data-fog], [data-dust], [data-fire]) .frame {
+  opacity: 1;
+}
+
+.root[data-fire] .frame {
+  --edge: rgb(60 12 4 / 0.6);
+}
+
+.root[data-dust] .frame {
+  --edge: rgb(90 60 20 / 0.55);
+}
+
+.root[data-fog] .frame {
+  --edge: rgb(200 208 216 / 0.45);
+}
+
+.root[data-time='night'] .frame,
+.root[data-weather='storm'] .frame {
+  --edge: rgb(4 6 18 / 0.7);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fire,
+  .dust i,
+  .fog i,
+  .tint {
+    animation: none;
+  }
+}

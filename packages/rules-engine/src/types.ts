@@ -14,6 +14,33 @@ export type Role = 'gm' | 'player' | 'spectator';
 /** GM의 무대 연출 (화면 효과일 뿐 상태는 바꾸지 않는다) */
 export const STAGE_FX = ['shake', 'flash', 'dark', 'tremble', 'hit'] as const;
 export type StageFxKind = (typeof STAGE_FX)[number];
+
+/** 범용 기본 배경 (그림은 웹의 public/backdrops/<id>.webp) */
+export const BACKDROPS = [
+  'forest',
+  'village',
+  'tavern',
+  'castle',
+  'dungeon',
+  'harbor',
+  'plains',
+  'mountain',
+  'ruins',
+  'alley',
+] as const;
+export type Backdrop = (typeof BACKDROPS)[number];
+/** 장면 분위기: 시간 · 날씨 · 상태 (그림 위에 필터 · 프레임 · 애니메이션으로 그린다) */
+export const SCENE_TIMES = ['day', 'dawn', 'dusk', 'night'] as const;
+export const SCENE_WEATHERS = ['clear', 'rain', 'storm', 'snow'] as const;
+export const SCENE_CONDITIONS = ['fire', 'dust', 'fog'] as const;
+export type SceneTime = (typeof SCENE_TIMES)[number];
+export type SceneWeather = (typeof SCENE_WEATHERS)[number];
+export type SceneCondition = (typeof SCENE_CONDITIONS)[number];
+export interface Ambience {
+  time: SceneTime;
+  weather: SceneWeather;
+  conditions: SceneCondition[];
+}
 export type Visibility = 'public' | 'gm' | 'owner';
 
 export const CONSEQUENCE_VALUE: Record<ConsequenceSlot, number> = {
@@ -130,6 +157,9 @@ export interface Scene {
   zones: Record<string, Zone>;
   backgroundAssetId?: string;
   backgroundUrl?: string;
+  /** 기본 배경. 그린 배경(backgroundUrl)과는 나중에 정한 쪽만 남는다 */
+  backdrop?: Backdrop;
+  ambience?: Ambience;
 }
 
 export interface Compel {

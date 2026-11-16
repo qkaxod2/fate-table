@@ -95,6 +95,7 @@ const GM_ONLY: ReadonlySet<CommandType> = new Set<CommandType>([
   'session.end',
   'scene.start',
   'scene.end',
+  'scene.mood',
   'milestone.grant',
   'aspect.reveal',
   'fate.adjust',
@@ -242,6 +243,27 @@ const resolvers: Resolvers = {
     return { events };
   },
   'scene.end': (s, _p, a) => one(ev('scene.ended', a, { sceneId: need(s.scene, 'scene').id })),
+  'scene.mood': (s, p, a) => {
+    const scene = s.scene;
+    if (!scene) throw new CommandError('NO_ACTIVE_SCENE');
+    const was = scene.ambience ?? { time: 'day', weather: 'clear', conditions: [] };
+    const touched = p.time !== undefined || p.weather !== undefined || p.conditions !== undefined;
+    return one(
+      ev('scene.mood_set', a, {
+        sceneId: scene.id,
+        ...(p.backdrop !== undefined ? { backdrop: p.backdrop } : {}),
+        ...(touched
+          ? {
+              ambience: {
+                time: p.time ?? was.time,
+                weather: p.weather ?? was.weather,
+                conditions: [...new Set(p.conditions ?? was.conditions)],
+              },
+            }
+          : {}),
+      }),
+    );
+  },
 
   'character.create': (s, p, a, ctx) => {
     if (a.role === 'spectator') throw new CommandError('FORBIDDEN_ROLE');

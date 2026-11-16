@@ -1,7 +1,9 @@
 import type {
   Action,
+  Ambience,
   Approach,
   Aspect,
+  Backdrop,
   Character,
   ConsequenceSlot,
   Dice,
@@ -41,6 +43,8 @@ export interface EventPayloads {
     backgroundAssetId?: string;
   };
   'scene.ended': { sceneId: string };
+  /** 장면의 기본 배경(null이면 뺌)과 분위기. 빠진 것은 그대로 */
+  'scene.mood_set': { sceneId: string; backdrop?: Backdrop | null; ambience?: Ambience };
 
   'character.created': { character: Character };
   'character.updated': {

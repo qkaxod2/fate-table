@@ -49,6 +49,9 @@ import {
   type StageFxKind,
 } from '@/components/scene/stageBeat';
 import { StageFx } from '@/components/scene/StageFx';
+import { MoodPanel } from '@/components/ambience/MoodPanel';
+import { SceneAmbience } from '@/components/ambience/SceneAmbience';
+import { sceneImage } from '@/lib/ambience';
 import { StageFxMenu } from './StageFxMenu';
 import { toast, Toaster } from '@/components/ui/Toast';
 import { playSfx, sfxEnabled, sfxForEvent, sfxForOutcome } from '@/fx/sfx';
@@ -108,6 +111,7 @@ const DONE_COPY: Partial<Record<Command['type'], string>> = {
   'zone.remove': '구역 지움',
   'gm.note': '메모 남김',
   'media.attach': '그림 바뀜',
+  'scene.mood': '분위기 바뀜',
 };
 
 /** 장면 꼬리표 자리 (화면 비율 %): 이야기 중에는 장면 여기저기, 판정 중에는 판정판 둘레 */
@@ -830,7 +834,8 @@ export function RoomTable({
   const [tableOpen, setTableOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
   const [rerollMode, setRerollMode] = useState(false);
-  const sceneArt = state.scene?.backgroundUrl ?? asset('/try/bg.jpg');
+  const sceneArt = sceneImage(state.scene);
+  const [moodOpen, setMoodOpen] = useState(false);
   // 굴리는 중이거나 판정이 펼쳐져 있으면 판정 화면 (장면이 어두워지고 판정판이 내려온다)
   const rollMode = !!rolling || showRoll;
   useEffect(() => {
@@ -1017,6 +1022,8 @@ export function RoomTable({
         />
       </div>
 
+      <SceneAmbience ambience={state.scene?.ambience} />
+
       <header className={th.top}>
         <PageNav tone="stage" fallback="/rooms/" />
         <p className={rt.kicker}>
@@ -1040,6 +1047,16 @@ export function RoomTable({
         >
           {copied ? '복사됨 ✓' : `초대 ${inviteCode}`}
         </button>
+        {isGm && state.scene && (
+          <button
+            type="button"
+            aria-pressed={moodOpen}
+            onClick={() => setMoodOpen((o) => !o)}
+            title="기본 배경과 시간 · 날씨 · 상태 고르기"
+          >
+            배경 · 분위기
+          </button>
+        )}
         <button type="button" className={th.tableBtn} onClick={() => setTableOpen(true)}>
           탁자 보기<kbd>Tab</kbd>
         </button>
@@ -1810,6 +1827,10 @@ export function RoomTable({
           </div>
         )}
       </Presence>
+
+      {isGm && moodOpen && state.scene && (
+        <MoodPanel scene={state.scene} run={run} onClose={() => setMoodOpen(false)} />
+      )}
 
       <TableView
         open={tableOpen}
