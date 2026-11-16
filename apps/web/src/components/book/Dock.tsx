@@ -32,7 +32,7 @@ export function Dock({
     };
   }, []);
   return (
-    <div ref={ref} className={styles.dock} data-actions-dock="" data-place={place}>
+    <div ref={ref} className={styles.dock} data-actions-dock="" data-place={place} data-ink="night">
       {children}
     </div>
   );

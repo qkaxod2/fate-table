@@ -256,7 +256,7 @@ function Picker({ onPick }: { onPick: (s: SampleCharacter) => void }) {
   return (
     <main className={styles.picker} data-chosen={chosen ? '' : undefined}>
       <div className={styles.pickNav}>
-        <PageNav />
+        <PageNav tone="stage" />
       </div>
       <header className={styles.pickHead}>
         <h1 className={styles.pickTitle}>누구로 플레이할지 고르기</h1>
@@ -1719,7 +1719,7 @@ function Table({
         </Presence>
       </section>
 
-      <section className={book.book}>
+      <section className={book.book} data-ink="night">
         <div className={book.running}>
           <span>세션 1 · 튜토리얼</span>
           <span className={book.tools}>

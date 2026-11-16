@@ -13,7 +13,7 @@
 .head {
   align-self: flex-start;
   padding: 3px 12px 3px 10px;
-  border-left: 3px solid var(--seal);
+  border-left: 1px solid var(--seal);
   border-radius: 3px;
   background: var(--card);
   color: var(--ink-2);

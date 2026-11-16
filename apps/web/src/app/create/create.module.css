@@ -6,8 +6,8 @@
 .main {
   min-height: 100dvh;
   padding: var(--s-5) var(--s-4) var(--s-6);
-  background: var(--paper-grain), var(--night);
-  color: var(--ink-1);
+  background: var(--lamp), var(--table);
+  color: var(--on-table);
 }
 
 .top,
@@ -21,26 +21,28 @@
   display: inline-flex;
   align-items: baseline;
   gap: 6px;
-  color: var(--ink-3);
+  color: var(--on-table-3);
   font: 500 var(--fs-sm) / 1.4 var(--f-ui);
 }
 
 .back {
-  color: var(--ink-3);
+  color: var(--on-table-3);
   font: 500 var(--fs-sm) / 1.4 var(--f-ui);
   text-decoration: none;
 }
 
 .back:hover,
 .back:focus-visible {
-  color: var(--seal);
+  color: var(--seal-on-table);
 }
 
 .title {
-  margin: 10px 0 0;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--paper-edge);
-  font: 800 clamp(28px, 4.4vw, 40px) / 1.2 var(--f-head);
+  margin: 12px 0 0;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--table-line);
+  color: var(--on-table);
+  font: 800 clamp(32px, 4.4vw, 48px) / 1.1 var(--f-head);
+  letter-spacing: -0.03em;
 }
 
 /* ---------- 단계: 책의 차례 한 줄 ---------- */
@@ -58,7 +60,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--ink-3);
+  color: var(--on-table-3);
   font: 500 var(--fs-sm) / 1.4 var(--f-ui);
 }
 
@@ -67,16 +69,16 @@
   content: '';
   width: 22px;
   margin-right: 2px;
-  border-top: 1px solid var(--line-hi);
+  border-top: 1px solid var(--table-line-hi);
 }
 
 .steps li[data-state='now'] {
-  color: var(--ink-1);
+  color: var(--on-table);
   font-weight: 700;
 }
 
 .steps li[data-state='done'] {
-  color: var(--ink-2);
+  color: var(--on-table-2);
 }
 
 .stepBtn {
@@ -92,7 +94,7 @@
 }
 
 .stepBtn:hover {
-  color: var(--seal);
+  color: var(--seal-on-table);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -116,8 +118,8 @@
 }
 
 .steps li[data-state='done'] .stepNo {
-  border-color: var(--seal);
-  color: var(--seal);
+  border-color: var(--seal-on-table);
+  color: var(--seal-on-table);
   font-family: var(--f-ui);
 }
 
@@ -141,11 +143,11 @@
 
 .card {
   min-width: 0;
-  padding: 28px;
-  border: 1px solid var(--paper-edge);
-  border-radius: 12px;
+  padding: 32px;
+  border-radius: var(--r-card);
   background: var(--card);
-  box-shadow: 0 24px 48px -32px color-mix(in srgb, var(--shade) 45%, transparent);
+  color: var(--ink-1);
+  box-shadow: var(--sh-object);
 }
 
 .form {
@@ -416,6 +418,30 @@
   cursor: not-allowed;
 }
 
+/* 아래 이전·다음 줄은 종이 밖, 탁자 위에 놓인다 */
+.nav .ghost {
+  border-color: var(--table-line-hi);
+  background: transparent;
+  color: var(--on-table);
+}
+
+.nav .ghost:not(:disabled):hover {
+  border-color: var(--on-table-2);
+  background: var(--table-3);
+  color: var(--on-table);
+}
+
+.nav .primary:disabled {
+  background: var(--table-3);
+  color: var(--on-table-3);
+  box-shadow: none;
+}
+
+.nav .ghost:disabled {
+  border-color: var(--table-line);
+  color: var(--on-table-3);
+}
+
 .ghost:disabled {
   border-color: var(--line);
   color: var(--faint);
@@ -430,7 +456,7 @@
 
 .previewHead {
   margin: 0 0 8px;
-  color: var(--ink-2);
+  color: var(--on-table-2);
   font: 600 var(--fs-sm) / 1.4 var(--f-ui);
   letter-spacing: var(--label-track);
 }
@@ -440,11 +466,10 @@
   flex-direction: column;
   gap: 14px;
   padding: 16px;
-  border-radius: 4px;
-  background: var(--paper-grain), var(--card);
-  box-shadow:
-    0 1px 0 var(--paper-edge),
-    0 22px 36px -22px color-mix(in srgb, var(--shade) 60%, transparent);
+  border-radius: var(--r-card);
+  background: var(--card);
+  color: var(--ink-1);
+  box-shadow: var(--sh-object);
 }
 
 .sheetTop {
@@ -531,7 +556,7 @@
   flex-direction: column;
   padding: 6px 10px 2px;
   border-top: 2px solid var(--rule-red);
-  border-left: 4px solid var(--ink-3);
+  border-left: 1px solid var(--ink-3);
   background: var(--plate);
   box-shadow: 0 1px 0 var(--paper-edge);
 }
@@ -687,7 +712,7 @@
 .ok {
   margin: 0;
   padding: 8px 12px;
-  border-left: 3px solid var(--seal);
+  border-left: 1px solid var(--seal);
   background: var(--paper);
   color: var(--ink-1);
   font: 500 var(--fs-sm) / 1.5 var(--f-ui);
@@ -744,7 +769,7 @@
     z-index: 5;
     margin-inline: calc(-1 * var(--s-4));
     padding: var(--s-5) var(--s-4) calc(var(--s-3) + env(safe-area-inset-bottom));
-    background: linear-gradient(transparent, var(--night) 45%);
+    background: linear-gradient(transparent, var(--table) 45%);
   }
 }
 

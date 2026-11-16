@@ -1,9 +1,12 @@
-/* ---------- 캐릭터 고르기: 책의 "등장인물" 쪽 ---------- */
+/*
+ * ---------- 캐릭터 고르기: 탁자 위에 세 사람의 카드를 늘어놓는다 ----------
+ * 레퍼런스: Slay the Spire·Balatro의 캐릭터 선택. 초상이 주인공이고, 글은 그 아래 종이에.
+ */
 .picker {
   min-height: 100dvh;
   padding: clamp(32px, 6vh, 64px) 16px 48px;
-  background: var(--paper-grain), var(--paper);
-  color: var(--ink-1);
+  background: var(--lamp), var(--table);
+  color: var(--on-table);
 }
 
 /* 왼쪽 위 길잡이(뒤로 · 로비): 카드 줄과 같은 폭 안에 */
@@ -21,15 +24,15 @@
 /* 쪽 제목 아래 가는 두 줄 (책의 장 표제) */
 .pickTitle {
   margin: 0;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--paper-edge);
-  font: 800 clamp(28px, 4.6vw, 44px) / 1.2 var(--f-head);
+  color: var(--on-table);
+  font: 800 clamp(32px, 5vw, 52px) / 1.1 var(--f-head);
+  letter-spacing: -0.03em;
   word-break: keep-all;
 }
 
 .pickLead {
   margin: 14px 0 0;
-  color: var(--ink-2);
+  color: var(--on-table-2);
   font: 400 var(--fs-md) / 1.65 var(--f-book);
   word-break: keep-all;
 }
@@ -54,17 +57,16 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  padding: 12px 12px 16px;
-  border: 1px solid var(--paper-edge);
-  border-radius: 4px;
-  background: var(--paper-grain), var(--card);
+  overflow: hidden;
+  padding: 0 0 18px;
+  border: 0;
+  border-radius: var(--r-card);
+  background: var(--card);
   color: var(--ink-1);
   font: inherit;
   text-align: left;
   cursor: pointer;
-  box-shadow:
-    0 1px 0 var(--paper-edge),
-    0 14px 28px -18px color-mix(in srgb, var(--shade) 60%, transparent);
+  box-shadow: var(--sh-object);
   transition:
     transform var(--dur-enter) var(--ease-out),
     box-shadow var(--dur-enter) var(--ease-out),
@@ -74,11 +76,15 @@
 
 .pickCard:hover,
 .pickCard:focus-visible {
-  transform: translateY(-6px);
-  border-color: var(--ink-3);
+  transform: translateY(-8px);
   box-shadow:
-    0 1px 0 var(--paper-edge),
-    0 24px 36px -18px color-mix(in srgb, var(--shade) 65%, transparent);
+    0 1px 0 rgb(0 0 0 / 0.25),
+    0 30px 44px -18px rgb(0 0 0 / 0.85);
+}
+
+/* 고른 카드를 빼고 나머지는 한 발 물러선다 */
+.pickGrid:has(.pickCard:hover) .pickCard:not(:hover) {
+  filter: brightness(0.82);
 }
 
 /* 초상: 액자 안의 그림, 위에 테이프 한 조각 */
@@ -86,14 +92,13 @@
   position: relative;
   display: block;
   overflow: hidden;
-  border: 1px solid var(--paper-edge);
-  background: linear-gradient(180deg, var(--paper-2), var(--paper));
+  background: var(--table-3);
 }
 
 .pickImg {
   display: block;
   width: 100%;
-  aspect-ratio: 5 / 4;
+  aspect-ratio: 4 / 5;
   object-fit: cover;
   object-position: center 8%;
 }
@@ -114,11 +119,12 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  padding: 12px 4px 0;
+  padding: 16px 18px 0;
 }
 
 .pickName {
-  font: 800 26px / 1.2 var(--f-head);
+  font: 800 30px / 1.1 var(--f-head);
+  letter-spacing: -0.03em;
 }
 
 .pickBlurb {
@@ -130,10 +136,9 @@
 /* 핵심 컨셉·약점: 파란 가로줄 위 손글씨 (특성 카드 문법) */
 .pickIndex {
   display: grid;
-  margin: 12px 0 0;
-  padding: 6px 10px 4px;
-  border-top: 2px solid var(--rule-red);
-  background: var(--plate);
+  margin: 14px 0 0;
+  padding: 10px 0 0;
+  border-top: 1px solid var(--paper-edge);
 }
 
 .pickLabel {
@@ -191,7 +196,7 @@
   .pickCard {
     flex-direction: row;
     gap: 12px;
-    padding: 10px;
+    padding: 0 12px 0 0;
   }
   .pickPhoto {
     flex: 0 0 34%;
@@ -203,7 +208,7 @@
     object-position: center 6%;
   }
   .pickInfo {
-    padding: 2px 0 0;
+    padding: 12px 0;
   }
   .pickName {
     font-size: 22px;
@@ -927,7 +932,7 @@
 .promptExplain {
   margin: 0;
   padding: var(--s-2) var(--s-3) var(--s-2) calc(var(--s-3) + 1em);
-  border-left: 3px solid var(--seal);
+  border-left: 1px solid var(--seal);
   background: var(--paper);
   color: var(--ink-1);
   font: 400 14px/1.6 var(--f-book);

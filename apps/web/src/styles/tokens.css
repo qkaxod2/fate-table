@@ -1,50 +1,67 @@
 /*
- * 디자인 토큰 (design-system.md 28절 "강철과 진홍").
- * 색은 튜토리얼 그림에서 가져왔다: 바탕은 하윤의 갑옷 회색, 강조는 망토의 진홍, 운명점은 칼자루의 놋쇠.
+ * 디자인 토큰 (design-system.md 30절 "밤의 탁자").
+ * 레퍼런스(design-references/references-20.md)에서 가져온 원칙:
+ *  - 판이 주인공이고 바탕은 어두운 탁자다 (Owlbear Rodeo, Foundry).
+ *  - 읽을 것은 탁자 위에 놓인 밝은 물건이다: 카드, 기록지, 쪽지 (Inscryption, Balatro).
+ *  - 이야기는 조판된 글로 읽힌다 (Disco Elysium, Pentiment).
+ * 탁자(--table*) 위 글자는 --on-table*, 종이(--card, --paper) 위 글자는 --ink-*.
  * 옛 이름(--paper, --seal, --gold, --ink …)은 그대로 두고 값만 바꿨다.
- * --seal·--gold는 진홍 강조색이고, --ink는 그 위에 얹는 밝은 글자다. 본문 글자는 --fg(= --ink-1).
  */
 :root {
   color-scheme: light;
 
+  /* 탁자: 페이지 바탕. 남색·보라 대신 불 꺼진 방의 따뜻한 숯색 */
+  --table: #191816;
+  --table-2: #211f1c;
+  --table-3: #2b2925;
+  --table-line: rgb(236 232 222 / 0.12);
+  --table-line-hi: rgb(236 232 222 / 0.24);
+  --on-table: #ece9e1;
+  --on-table-2: #bdb8ad;
+  --on-table-3: #8f8a7f;
+  /* 탁자 위를 비추는 등불 하나. 장식 빛 번짐이 아니라 화면 위쪽이 조금 밝은 정도 */
+  --lamp: radial-gradient(120% 70% at 50% -10%, rgb(255 226 180 / 0.07), transparent 70%);
+  /* 탁자 위에서 읽히는 진홍 (글자·밑줄용). 면은 --seal */
+  --seal-on-table: #e27a83;
+
   /* surface */
-  --night: #d9dce1;
-  --bg: #e4e6ea;
-  --panel: #f5f6f7;
-  --panel-s: #eceef1;
-  --plate: #ffffff;
-  --line: #c3c7cf;
-  --line-hi: #a2a7b2;
-  --fg: #1c1e25;
-  --muted: #474b57;
-  --faint: #626774;
+  --night: var(--table);
+  --bg: var(--table);
+  --panel: #f4f2ed;
+  --panel-s: #e9e6df;
+  --plate: #fcfbf8;
+  --line: #cdc9bf;
+  --line-hi: #a8a397;
+  --fg: #1d1c19;
+  --muted: #4a4741;
+  --faint: #67635b;
   --ink: #ffffff;
 
   /*
    * 무대와 책 (design-system.md 20절). 읽는 것은 모두 종이 위에 둔다.
    * 종이·먹·주홍(봉인)·놋쇠(운명점) 네 가지가 기본이고, 판정 4색은 판정 연출 안에서만 쓴다.
    */
-  --paper: #e4e6ea;
-  --paper-2: #d6d9df;
-  --paper-edge: #c9cdd4;
-  --card: #f7f7f8;
-  --ink-1: #1c1e25;
-  --ink-2: #474b57;
-  --ink-3: #626774;
-  --seal: #8f2634;
-  --seal-hi: #a8323f;
+  --paper: #e8e5de;
+  --paper-2: #dcd8cf;
+  --paper-edge: #cbc6bb;
+  --card: #f4f2ed;
+  --ink-1: #1d1c19;
+  --ink-2: #4a4741;
+  --ink-3: #67635b;
+  --seal: #9b2a36;
+  --seal-hi: #b23745;
   --seal-ink: #ffffff;
   --seal-tint: color-mix(in srgb, var(--seal) 9%, var(--card));
-  --brass: #b08a45;
+  --brass: #b8914a;
   --brass-hi: #e2c27e;
   --brass-ink: #6e5520;
   /* 그림자·어둠의 바탕색 (rgb 값만 섞어 쓴다) */
-  --shade: #161820;
+  --shade: #0e0d0b;
   --rule-blue: var(--paper-edge);
   --rule-red: var(--paper-edge);
   /* 손글씨·인덱스 카드 장식은 걷어냈다(27절). 옛 이름은 남기고 값만 평범한 먹·선으로 둔다. */
   --pen: var(--ink-1);
-  --stage-ink: #eef0f3;
+  --stage-ink: #ece9e1;
   /*
    * 글꼴은 둘만 쓴다: 화면 전체는 IBM Plex Sans KR, 이야기 본문만 Noto Serif KR.
    * 제목·책 본문·손글씨·숫자용 이름은 옛 코드가 읽으니 남겨 두고 같은 글꼴을 가리킨다.
@@ -57,10 +74,10 @@
   --paper-grain: none;
 
   /* accents */
-  --gold: #8f2634;
-  --gold-hi: #a8323f;
+  --gold: #9b2a36;
+  --gold-hi: #b23745;
   --rule: color-mix(in srgb, var(--seal) 32%, transparent);
-  --hi: #8f2634;
+  --hi: #9b2a36;
   --danger: #b3261e;
 
   /* fate token */
@@ -90,13 +107,13 @@
    * 내 주사위는 상아에 먹 눈, 상대 주사위는 먹에 상아 눈. 색 대신 명암으로 편을 가른다.
    * 눈 바뀜 모드는 같은 색으로 종이에 찍힌 도장처럼 그린다.
    */
-  --dice-body: #f2f3f5;
+  --dice-body: #f4f2ed;
   --dice-edge: #2a2d36;
   --dice-pip: #1c1e25;
   --dice-body-op: #2a2d36;
   --dice-edge-op: #101116;
   --dice-pip-op: #eef0f3;
-  --dice-table: #d6d9df;
+  --dice-table: #dcd8cf;
 
   /* type */
   --f-ui: 'IBM Plex Sans KR', system-ui, sans-serif;
@@ -126,20 +143,22 @@
   --s-4: 16px;
   --s-5: 24px;
   --s-6: 32px;
-  --r-card: 10px;
+  --r-card: 6px;
   --r-ctl: 10px;
-  --shadow-panel: 0 1px 0 var(--paper-edge), 0 12px 28px -14px rgb(22 24 32 / 0.4);
+  --shadow-panel: 0 1px 0 var(--paper-edge), 0 14px 30px -16px rgb(0 0 0 / 0.6);
 
   /*
    * 면 재질 (19절). 무대 위에 붙어 있는 패널(파티·기록·대사창)은 모두 같은 반투명 흐림 재질,
    * 떠 있는 창(굴림 패널·모달)은 불투명. 종이(--paper)는 "지금 낼 수 있는 카드"에만 쓴다.
    */
-  --surface-1: rgb(247 247 248 / 0.94);
-  --surface-2: #eef0f2;
-  --edge: rgb(28 30 37 / 0.14);
+  --surface-1: rgb(244 242 237 / 0.96);
+  --surface-2: #ece9e2;
+  --edge: rgb(29 28 25 / 0.14);
   --r-panel: 14px;
   --blur: blur(12px) saturate(1.2);
-  --sh-float: 0 24px 60px -20px rgb(22 24 32 / 0.5);
+  --sh-float: 0 28px 60px -22px rgb(0 0 0 / 0.7);
+  /* 탁자 위 물건(카드·기록지)의 그림자: 위에서 비추는 등불 하나 */
+  --sh-object: 0 1px 0 rgb(0 0 0 / 0.25), 0 18px 36px -18px rgb(0 0 0 / 0.75);
   --r-token: 999px;
   --dur-fast: 120ms;
   --dur-dice: 600ms;
@@ -163,8 +182,49 @@
   --stagger: 40ms;
 }
 
+/*
+ * 어두운 면 (design-system.md 30절). 책(이야기 칼럼)과 행동 띠처럼 탁자 쪽에 붙은 면은
+ * 안쪽 컴포넌트가 읽는 종이 토큰(--paper, --card, --ink-*)의 값만 바꿔 한 번에 어둡게 만든다.
+ * 레퍼런스: Disco Elysium의 대화 칼럼. 무대 위 물건(특성 카드·판정 카드·이름표)은 그대로 종이다.
+ * 진홍은 어두운 바탕에서 읽히도록 밝히고, 그 위 글자는 먹으로 바꾼다.
+ */
+[data-ink='night'] {
+  --paper: var(--table-2);
+  --paper-2: var(--table-3);
+  --paper-edge: var(--table-line-hi);
+  --card: var(--table-3);
+  --plate: #34312c;
+  --panel: var(--table-3);
+  --panel-s: var(--table-2);
+  --surface-1: rgb(43 41 37 / 0.96);
+  --surface-2: var(--table-3);
+  --edge: var(--table-line-hi);
+  --line: var(--table-line-hi);
+  --line-hi: rgb(236 232 222 / 0.36);
+  --fg: var(--on-table);
+  --ink-1: var(--on-table);
+  --ink-2: var(--on-table-2);
+  --ink-3: var(--on-table-3);
+  --muted: var(--on-table-2);
+  --faint: var(--on-table-3);
+  --pen: var(--on-table);
+  --seal: var(--seal-on-table);
+  --seal-hi: #ec9098;
+  --seal-ink: var(--table);
+  --gold: var(--seal-on-table);
+  --gold-hi: #ec9098;
+  --hi: var(--seal-on-table);
+  --danger: #ef7d72;
+  --brass-ink: var(--brass-hi);
+  --rule: color-mix(in srgb, var(--seal-on-table) 32%, transparent);
+  --label-color: var(--seal-on-table);
+  --shadow-panel: 0 1px 0 rgb(0 0 0 / 0.3);
+  color-scheme: dark;
+  color: var(--ink-1);
+}
+
 [data-genre='fantasy'] {
-  --paper: #e2e3e6;
+  --paper: #e8e5de;
 }
 
 @media (prefers-reduced-motion: reduce) {

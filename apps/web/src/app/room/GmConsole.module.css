@@ -12,7 +12,7 @@
   min-height: 40px;
   padding: 4px 6px 4px 4px;
   border: 1px solid var(--paper-edge);
-  border-left: 3px solid var(--seal);
+  border-left: 1px solid var(--seal);
   border-radius: 8px;
   background: var(--card);
   color: var(--ink-1);
@@ -375,7 +375,7 @@
   justify-content: space-between;
   gap: var(--s-2);
   padding: 10px 14px;
-  border-left: 3px solid var(--seal);
+  border-left: 1px solid var(--seal);
   border-radius: 4px;
   background: var(--paper);
   font: 400 15px var(--f-book);

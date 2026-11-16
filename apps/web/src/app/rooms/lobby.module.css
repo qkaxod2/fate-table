@@ -1,24 +1,31 @@
 /*
- * 로비 화면들(내 방·방 만들기·참가·계정·내 그림): 가운데 카드 한 장.
- * 랜딩 오른쪽과 같은 문법: 밝은 면 위 먹 글자, 누를 것은 주홍.
+ * 로비 화면들(내 방·방 만들기·참가·계정·내 그림): 어두운 탁자 위에 놓인 종이 한 장.
+ * 랜딩 오른쪽과 같은 문법: 종이 위 먹 글자, 누를 것은 진홍 (design-system.md 30절).
  */
 .main {
   display: grid;
   place-items: center;
   min-height: 100dvh;
   padding: var(--s-5) var(--s-4);
-  background: var(--paper-grain), var(--night);
+  background: var(--lamp), var(--table);
 }
 
 .card {
   position: relative;
-  width: min(460px, 100%);
-  padding: 28px 28px 32px;
-  border: 1px solid var(--paper-edge);
-  border-radius: 12px;
+  width: min(500px, 100%);
+  padding: 32px 32px 36px;
+  border-radius: var(--r-card);
   background: var(--card);
   color: var(--ink-1);
-  box-shadow: 0 24px 48px -32px color-mix(in srgb, var(--shade) 45%, transparent);
+  box-shadow: var(--sh-object);
+  animation: lay-down var(--dur-scene) var(--ease-out) both;
+}
+
+@keyframes lay-down {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
 }
 
 .back {
@@ -32,12 +39,11 @@
   color: var(--seal);
 }
 
-/* 쪽 표제: 함렛 + 아래 겹줄 */
+/* 쪽 표제: 크기와 굵기만으로 위계를 만든다 (iA Writer) */
 .title {
-  margin: 12px 0 0;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--paper-edge);
-  font: 800 var(--fs-2xl) / 1.2 var(--f-head);
+  margin: 14px 0 0;
+  font: 800 36px / 1.12 var(--f-head);
+  letter-spacing: -0.03em;
 }
 
 .lead {
@@ -124,7 +130,7 @@
 .error {
   margin: 0;
   padding: 6px 10px;
-  border-left: 3px solid var(--danger);
+  border-left: 1px solid var(--danger);
   background: rgb(179 38 30 / 0.07);
   color: var(--danger);
   font: 500 var(--fs-sm) / 1.55 var(--f-ui);

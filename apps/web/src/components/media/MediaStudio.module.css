@@ -75,7 +75,7 @@
 .summary {
   margin: 0;
   padding: var(--s-2) var(--s-3);
-  border-left: 3px solid var(--ink-3);
+  border-left: 1px solid var(--ink-3);
   background: var(--paper);
   font-family: var(--f-book);
   font-size: var(--fs-sm);
