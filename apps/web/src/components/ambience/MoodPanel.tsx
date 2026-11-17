@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  BACKDROPS,
   SCENE_CONDITIONS,
   SCENE_TIMES,
   SCENE_WEATHERS,
@@ -9,8 +8,9 @@ import {
   type RoomEvent,
   type Scene,
 } from '@fate/rules-engine';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
+  BACKDROP_GENRES,
   BACKDROP_LABELS,
   backdropUrl,
   CONDITION_LABELS,
@@ -37,6 +37,12 @@ export function MoodPanel({
 }) {
   const amb = scene.ambience ?? { time: 'day', weather: 'clear', conditions: [] };
   const set = (payload: Mood) => void run({ type: 'scene.mood', payload });
+  const [genre, setGenre] = useState(
+    () =>
+      BACKDROP_GENRES.find((g) => scene.backdrop && g.items.includes(scene.backdrop))?.id ??
+      BACKDROP_GENRES[0]!.id,
+  );
+  const items = BACKDROP_GENRES.find((g) => g.id === genre)?.items ?? [];
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
@@ -52,9 +58,24 @@ export function MoodPanel({
         </button>
       </header>
 
-      <h3 className={styles.label}>기본 배경</h3>
+      <div className={styles.genreRow}>
+        <h3 className={styles.label}>기본 배경</h3>
+        <div className={styles.genres} role="tablist" aria-label="배경 묶음">
+          {BACKDROP_GENRES.map((g) => (
+            <button
+              key={g.id}
+              type="button"
+              role="tab"
+              aria-selected={genre === g.id}
+              onClick={() => setGenre(g.id)}
+            >
+              {g.label}
+            </button>
+          ))}
+        </div>
+      </div>
       <div className={styles.backdrops} role="radiogroup" aria-label="기본 배경">
-        {BACKDROPS.map((b) => (
+        {items.map((b) => (
           <button
             key={b}
             type="button"

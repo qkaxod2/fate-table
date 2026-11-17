@@ -55,6 +55,33 @@
   font: 600 12px var(--f-ui);
 }
 
+.genreRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.genres {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.genres button {
+  padding: 2px 8px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--on-table-3);
+  font: 700 12.5px var(--f-ui);
+  cursor: pointer;
+}
+
+.genres button[aria-selected='true'] {
+  border-bottom-color: var(--seal-on-table);
+  color: var(--on-table);
+}
+
 .backdrops {
   display: grid;
   grid-template-columns: repeat(5, 1fr);

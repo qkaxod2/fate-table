@@ -11,6 +11,18 @@ var ACTIONS = ["overcome", "create_advantage", "attack", "defend"];
 var CONSEQUENCE_SLOTS = ["mild", "moderate", "severe"];
 var STAGE_FX = ["shake", "flash", "dark", "tremble", "hit"];
 var BACKDROPS = [
+  // 현대
+  "classroom",
+  "office",
+  "cafe",
+  "store",
+  "street",
+  "residential",
+  "subway",
+  "park",
+  "rooftop",
+  "apartment",
+  // 판타지
   "forest",
   "village",
   "tavern",
