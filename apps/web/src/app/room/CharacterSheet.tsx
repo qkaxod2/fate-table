@@ -20,6 +20,7 @@ import { FatePointToken } from '@/components/fate/FatePointToken';
 import { Leaf } from '@/components/book/Leaf';
 import styles from './CharacterSheet.module.css';
 import { josa } from '@/lib/josa';
+import { playSfx } from '@/fx/sfx';
 
 interface Props {
   character: Character;
@@ -245,14 +246,20 @@ export function CharacterSheet({
                 <span className={styles.stepper}>
                   <button
                     type="button"
-                    onClick={() => setDraft({ ...draft, [a]: Math.max(0, draft[a] - 1) })}
+                    onClick={() => {
+                      playSfx('paper-tap', undefined, 0.9);
+                      setDraft({ ...draft, [a]: Math.max(0, draft[a] - 1) });
+                    }}
                   >
                     −
                   </button>
                   <b>{draft[a]}</b>
                   <button
                     type="button"
-                    onClick={() => setDraft({ ...draft, [a]: Math.min(5, draft[a] + 1) })}
+                    onClick={() => {
+                      playSfx('paper-tap', undefined, 1.1);
+                      setDraft({ ...draft, [a]: Math.min(5, draft[a] + 1) });
+                    }}
                   >
                     +
                   </button>

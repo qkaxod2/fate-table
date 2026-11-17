@@ -118,6 +118,33 @@
   color: var(--seal);
 }
 
+/* 소리: 이름이 길어 세 칸씩 */
+.cues {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+.cues button {
+  height: 30px;
+  padding: 0 4px;
+  border: 1px solid var(--paper-edge);
+  border-radius: 8px;
+  background: none;
+  color: var(--ink-1);
+  font: 600 12px var(--f-ui);
+  cursor: pointer;
+  transition:
+    background var(--dur-hover) var(--ease),
+    border-color var(--dur-hover) var(--ease),
+    var(--press);
+}
+
+.cues button:hover {
+  border-color: var(--seal);
+  background: color-mix(in srgb, var(--seal) 10%, transparent);
+}
+
 /* 좁은 화면: 단추는 번개 그림만, 쪽지는 화면 폭에 맞춰 입력 줄 위에 */
 @media (max-width: 600px) {
   .trigger {

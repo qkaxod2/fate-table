@@ -2,6 +2,12 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { DICE_MODES, saveDiceMode, type DiceMode } from '@/components/roll/DiceTray';
+import {
+  ambienceEnabled,
+  ambienceVolume,
+  setAmbienceEnabled,
+  setAmbienceVolume,
+} from '@/fx/ambience';
 import { playSfx, setSfxEnabled, setSfxVolume, sfxVolume } from '@/fx/sfx';
 import styles from './RoomSettings.module.css';
 
@@ -11,7 +17,7 @@ export const IS_MAC =
 
 /**
  * 머리글의 "설정" 한 단추 안에 화면 설정과 나가기를 모은다.
- * 주사위 연출 · 효과음 · 명령 창 · 단축키, 그리고 맨 아래 따로 떨어진 나가기(GM은 방 지우기).
+ * 주사위 연출 · 소리(효과음 · 장면 배경음) · 명령 창 · 단축키, 그리고 맨 아래 따로 떨어진 나가기(GM은 방 지우기).
  * 되돌릴 수 없는 방 지우기가 도구 바로 옆에 놓이지 않게 한다.
  */
 export function RoomSettings({
@@ -35,6 +41,8 @@ export function RoomSettings({
 }) {
   const [open, setOpen] = useState(false);
   const [volume, setVolume] = useState(sfxVolume);
+  const [ambOn, setAmbOn] = useState(ambienceEnabled);
+  const [ambVol, setAmbVol] = useState(ambienceVolume);
   const wrap = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -98,7 +106,7 @@ export function RoomSettings({
             </select>
           </label>
           <label className={styles.row}>
-            <span>효과음</span>
+            <span>소리</span>
             <input
               type="checkbox"
               role="switch"
@@ -111,28 +119,63 @@ export function RoomSettings({
             />
           </label>
           {sfxOn && (
-            <label className={styles.row}>
-              <span>크기</span>
-              <input
-                type="range"
-                className={styles.volume}
-                min={0}
-                max={100}
-                step={5}
-                value={Math.round(volume * 100)}
-                aria-valuetext={`${Math.round(volume * 100)}%`}
-                onChange={(e) => {
-                  const v = Number(e.target.value) / 100;
-                  setVolume(v);
-                  setSfxVolume(v);
-                }}
-                // 손을 떼면 그 크기로 한 번 들려준다
-                onPointerUp={() => playSfx('token-flip')}
-                onKeyUp={(e) => {
-                  if (e.key.startsWith('Arrow')) playSfx('token-flip');
-                }}
-              />
-            </label>
+            <>
+              <label className={styles.row} data-sub="">
+                <span>효과음 크기</span>
+                <input
+                  type="range"
+                  className={styles.volume}
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={Math.round(volume * 100)}
+                  aria-valuetext={`${Math.round(volume * 100)}%`}
+                  onChange={(e) => {
+                    const v = Number(e.target.value) / 100;
+                    setVolume(v);
+                    setSfxVolume(v);
+                  }}
+                  // 손을 떼면 그 크기로 한 번 들려준다
+                  onPointerUp={() => playSfx('token-flip')}
+                  onKeyUp={(e) => {
+                    if (e.key.startsWith('Arrow')) playSfx('token-flip');
+                  }}
+                />
+              </label>
+              <label className={styles.row} data-sub="">
+                <span>장면 배경음</span>
+                <input
+                  type="checkbox"
+                  role="switch"
+                  className={styles.switch}
+                  checked={ambOn}
+                  onChange={(e) => {
+                    setAmbienceEnabled(e.target.checked);
+                    setAmbOn(e.target.checked);
+                  }}
+                />
+              </label>
+              {ambOn && (
+                <label className={styles.row} data-sub="">
+                  <span>배경음 크기</span>
+                  <input
+                    type="range"
+                    className={styles.volume}
+                    min={0}
+                    max={100}
+                    step={5}
+                    value={Math.round(ambVol * 100)}
+                    aria-valuetext={`${Math.round(ambVol * 100)}%`}
+                    // 배경음은 계속 깔려 있으니 움직이는 대로 바로 들린다
+                    onChange={(e) => {
+                      const v = Number(e.target.value) / 100;
+                      setAmbVol(v);
+                      setAmbienceVolume(v);
+                    }}
+                  />
+                </label>
+              )}
+            </>
           )}
           <button type="button" className={styles.row} onClick={then(onPalette)}>
             <span>명령 창</span>

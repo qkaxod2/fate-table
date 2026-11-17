@@ -37,6 +37,7 @@ import { Nameplate } from '@/components/theater/Nameplate';
 import { TableView } from '@/components/theater/TableView';
 import { consequenceDepth, TraitCard } from '@/components/theater/TraitCard';
 import th from '@/components/theater/theater.module.css';
+import { tagKey, useDealt } from '@/components/theater/useDealt';
 import { useDialogueTop } from '@/components/theater/useDialogueTop';
 import { DICE_MODES, DiceTray, saveDiceMode, type DiceMode } from '@/components/roll/DiceTray';
 import type { InvokeChoice } from '@/components/roll/InvokeTray';
@@ -46,7 +47,8 @@ import { SceneAmbience } from '@/components/ambience/SceneAmbience';
 import { PageNav } from '@/components/nav/PageNav';
 import { useHistoryStep } from '@/components/nav/useHistoryStep';
 import { BOSS, SAMPLE_CHARACTERS, SCENE, type SampleCharacter } from '@/content/oneshot';
-import { playSfx, setSfxEnabled, sfxEnabled, sfxForEvent, sfxForOutcome } from '@/fx/sfx';
+import { useSceneAmbience } from '@/fx/ambience';
+import { playSfx, setSfxEnabled, sfxEnabled, sfxForEvents, sfxForOutcome } from '@/fx/sfx';
 import { asset } from '@/lib/asset';
 import { Presence, reducedMotion } from '@/lib/motion';
 import { Typewriter } from '@/components/ui/Typewriter';
@@ -377,6 +379,8 @@ function Table({
   const [explained, setExplained] = useState<string | null>(null);
   // 캐릭터를 고른 뒤에만 그려지는 화면이라 처음부터 브라우저 설정을 읽어도 된다
   const [sfxOn, setSfxOn] = useState(sfxEnabled);
+  // 장소·날씨·불길에 맞는 배경음이 낮게 깔린다 (설정에서 끄거나 줄인다)
+  useSceneAmbience(state.scene);
 
   // 새 이벤트마다 어울리는 효과음 (한 번에 같은 소리는 한 번만)
   const heard = useRef(-1);
@@ -386,14 +390,9 @@ function Table({
       heard.current = last;
       return;
     }
-    const names = new Set(
-      events
-        .filter((e) => e.seq > heard.current)
-        .map(sfxForEvent)
-        .filter((n) => n !== null),
-    );
+    const sounds = sfxForEvents(events.filter((e) => e.seq > heard.current));
     heard.current = last;
-    names.forEach((n) => playSfx(n));
+    sounds.forEach(([n, v]) => playSfx(n, v));
   }, [events]);
 
   const roll: RollState | undefined = rollId ? state.rolls[rollId] : undefined;
@@ -833,6 +832,7 @@ function Table({
     (a) =>
       !a.hidden && (a.ownerType !== 'character' || a.kind === 'boost' || a.kind === 'consequence'),
   );
+  const dealt = useDealt(sceneAspects, events);
   const lines = events.map((e) => describe(e, state)).filter((l) => l !== null);
 
   const myOutcomeNow =
@@ -1568,7 +1568,7 @@ function Table({
             setSfxOn(!sfxOn);
           }}
         >
-          효과음 {sfxOn ? '켜짐' : '꺼짐'}
+          소리 {sfxOn ? '켜짐' : '꺼짐'}
         </button>
         <button type="button" onClick={onRestart}>
           처음부터
@@ -1593,7 +1593,12 @@ function Table({
           const spot = (rollMode ? TAG_SPOTS_ROLL : TAG_SPOTS)[i % TAG_SPOTS.length]!;
           const can = !!playable(a);
           return (
-            <div key={a.id} className={th.tag} style={{ left: `${spot[0]}%`, top: `${spot[1]}%` }}>
+            <div
+              key={tagKey(a)}
+              className={th.tag}
+              style={{ left: `${spot[0]}%`, top: `${spot[1]}%` }}
+              data-enter={dealt(a)}
+            >
               <TraitCard
                 aspect={a}
                 art={artOf(a)}
