@@ -97,9 +97,7 @@ export function MilestonePicker({
         submit();
       }}
     >
-      <div className={styles.promptHead}>
-        작은 {term('milestone')} · 혜택 하나 고르기
-      </div>
+      <div className={styles.promptHead}>작은 {term('milestone')} · 혜택 하나 고르기</div>
       <p className={styles.promptHelp}>
         세션을 마친 {josa(character.name, '은/는')} 조금 달라질 수 있다. 넷 중 하나만 고른다.
       </p>

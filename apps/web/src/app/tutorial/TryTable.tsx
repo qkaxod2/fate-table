@@ -247,7 +247,10 @@ function setupRoom(pick: SampleCharacter): LocalRoom {
   }
   room.run(GM, { type: 'session.start', payload: { title: '튜토리얼' } });
   // 이야기는 해 질 녘 마을에서 시작한다. 여는 서술은 첫 이야기 박자가 올린다
-  room.run(GM, { type: 'scene.start', payload: { name: VILLAGE.name, aspects: [...VILLAGE.aspects] } });
+  room.run(GM, {
+    type: 'scene.start',
+    payload: { name: VILLAGE.name, aspects: [...VILLAGE.aspects] },
+  });
   room.run(GM, { type: 'scene.mood', payload: { backdrop: 'village', time: 'dusk' } });
   return room;
 }
@@ -307,8 +310,8 @@ function Picker({ onPick }: { onPick: (s: SampleCharacter) => void }) {
         <h1 className={styles.pickTitle}>누구로 플레이할지 고르기</h1>
         <p className={styles.pickLead}>
           해 질 녘 &lsquo;{VILLAGE.name}&rsquo;의 곡물 창고에 불이 났다. 한 명을 고르면 남은 둘은
-          동료로 함께 간다. 같이 도적 두목을 막고, 세션을 마치며 첫 {term('milestone')}까지
-          받는다. 규칙은 몰라도 된다.
+          동료로 함께 간다. 같이 도적 두목을 막고, 세션을 마치며 첫 {term('milestone')}까지 받는다.
+          규칙은 몰라도 된다.
         </p>
       </header>
       <ol className={styles.pickGrid} aria-label="등장인물">
@@ -865,7 +868,10 @@ function Table({
   const npcAttack = (
     who: SampleCharacter,
     shifts: number,
-    opts: { invoke?: string | null; absorb?: { slot: 'mild' | 'moderate' | 'severe'; text: string } },
+    opts: {
+      invoke?: string | null;
+      absorb?: { slot: 'mild' | 'moderate' | 'severe'; text: string };
+    },
   ): string | null => {
     const snap = room.getSnapshot().state;
     const id = findId(snap, who.name);
@@ -874,7 +880,8 @@ function Table({
     if (b.takenOut) return null;
     const approach = attackApproach(who);
     const stunts = stuntBonuses(c, 'attack', approach);
-    const inv = opts.invoke && (snap.aspects[opts.invoke]?.freeInvokes ?? 0) > 0 ? opts.invoke : null;
+    const inv =
+      opts.invoke && (snap.aspects[opts.invoke]?.freeInvokes ?? 0) > 0 ? opts.invoke : null;
     room.forceDice(
       b.approaches.quick + shifts - c.approaches[approach] - stunts.length * 2 - (inv ? 2 : 0),
     );
@@ -892,7 +899,13 @@ function Table({
     if (inv)
       run(GM, {
         type: 'invoke.apply',
-        payload: { rollId: rid, side: 'active', aspectId: inv, mode: 'bonus', paidWith: 'free_invoke' },
+        payload: {
+          rollId: rid,
+          side: 'active',
+          aspectId: inv,
+          mode: 'bonus',
+          paidWith: 'free_invoke',
+        },
       });
     run(GM, { type: 'roll.defense_ready', payload: { rollId: rid } });
     run(GM, { type: 'roll.finalize', payload: { rollId: rid, reduceForBoost: false } });
@@ -906,13 +919,21 @@ function Table({
         ? { stressBox: null, consequences: [opts.absorb.slot] as const }
         : undefined;
       const plan =
-        wanted && isValidAbsorb(pending.shifts, target, { ...wanted, consequences: [...wanted.consequences] })
+        wanted &&
+        isValidAbsorb(pending.shifts, target, { ...wanted, consequences: [...wanted.consequences] })
           ? { stressBox: null, consequences: [opts.absorb!] }
           : (() => {
               const p = absorbOptions(pending.shifts, target)[0];
-              const NAMES = { mild: '그을린 소매', moderate: '깊게 베인 어깨', severe: '부러진 갈비뼈' };
+              const NAMES = {
+                mild: '그을린 소매',
+                moderate: '깊게 베인 어깨',
+                severe: '부러진 갈비뼈',
+              };
               return p
-                ? { stressBox: p.stressBox, consequences: p.consequences.map((slot) => ({ slot, text: NAMES[slot] })) }
+                ? {
+                    stressBox: p.stressBox,
+                    consequences: p.consequences.map((slot) => ({ slot, text: NAMES[slot] })),
+                  }
                 : null;
             })();
       run(GM, {
@@ -932,7 +953,10 @@ function Table({
     );
 
   const enterFeast = () => {
-    room.run(GM, { type: 'scene.start', payload: { name: FEAST.name, aspects: [...FEAST.aspects] } });
+    room.run(GM, {
+      type: 'scene.start',
+      payload: { name: FEAST.name, aspects: [...FEAST.aspects] },
+    });
     room.run(GM, { type: 'scene.mood', payload: { backdrop: 'tavern', time: 'night' } });
   };
 
@@ -1003,7 +1027,9 @@ function Table({
       open: ['[data-tour="party"]'],
       ring: '[data-tour="party"]',
     }),
-    gmSays(`${josa(P, '이/가')} 동료들과 창고로 달려가는 사이, 바람이 연기를 마을 쪽으로 밀어붙인다.`),
+    gmSays(
+      `${josa(P, '이/가')} 동료들과 창고로 달려가는 사이, 바람이 연기를 마을 쪽으로 밀어붙인다.`,
+    ),
     { kind: 'do', run: () => enterGranary(room), wait: 700 },
     gmSays(
       '창고 문은 부서져 있다. 곡물 더미 사이로 불길이 치솟고, 도적들이 자루를 나른다. 다락 위에는 도끼를 어깨에 걸친 도적 두목. 마을 경비대와 한바탕 싸운 뒤라 숨을 몰아쉬고 있다.',
@@ -1104,7 +1130,9 @@ function Table({
           );
           return {
             chapter: '3장 · 함께 싸우기',
-            title: used ? `${josa(mateA.name, '이/가')} 내 ${term('aspect')}의 핀을 썼다` : `${mateA.name}의 ${term('attack')}`,
+            title: used
+              ? `${josa(mateA.name, '이/가')} 내 ${term('aspect')}의 핀을 썼다`
+              : `${mateA.name}의 ${term('attack')}`,
             body: used
               ? `${josa(mateA.name, '은/는')} 내가 만든 ${josa(term('aspect'), '을/를')} ${term('freeInvoke')}해 +2를 받고, 두목에게 ${josa(term('severe'), '을/를')} 남겼다. ${josa(term('create_advantage'), '은/는')} 이렇게 동료의 공격을 받쳐 준다.`
               : `${josa(mateA.name, '은/는')} 두목에게 ${josa(term('severe'), '을/를')} 남겼다. 내가 ${josa(term('aspect'), '을/를')} 붙였다면 동료가 그 핀으로 +2를 받았을 것이다.`,
@@ -1188,7 +1216,9 @@ function Table({
       example: '이제 불타는 창고가 아니라 마을 광장이다.',
       open: ['[data-tour="aspects"]'],
     }),
-    gmSays('그날 밤, 마을 광장에 모닥불이 피어오른다. 지켜 낸 곡식으로 구운 빵 냄새가 골목마다 번진다.'),
+    gmSays(
+      '그날 밤, 마을 광장에 모닥불이 피어오른다. 지켜 낸 곡식으로 구운 빵 냄새가 골목마다 번진다.',
+    ),
     says(ELDER, '겨울 양식을 지켜 주셨소. 오늘 밤만큼은 마을이 다 대접하겠소!'),
     says(mateA.name, voiceA.feast(P)),
     says(mateB.name, voiceB.feast(P)),
@@ -1203,7 +1233,11 @@ function Table({
     setMilestoneOpen(false);
     let what = '이번엔 아무것도 바꾸지 않았다. 이정표는 미뤄 두지 않고 그 자리에서 쓰거나 넘긴다.';
     if (choice?.kind === 'swap') {
-      const next = { ...me.approaches, [choice.a]: me.approaches[choice.b], [choice.b]: me.approaches[choice.a] };
+      const next = {
+        ...me.approaches,
+        [choice.a]: me.approaches[choice.b],
+        [choice.b]: me.approaches[choice.a],
+      };
       run(ME, { type: 'character.update', payload: { id: meId, patch: { approaches: next } } });
       what = `${term(choice.a)} ${sign(me.approaches[choice.a])} ↔ ${term(choice.b)} ${sign(me.approaches[choice.b])}. 숫자 합은 그대로, 잘하는 방식만 바뀌었다.`;
     }
@@ -1250,7 +1284,11 @@ function Table({
           label: '다음 세션 열기',
         };
       }),
-      { kind: 'do', run: () => run(GM, { type: 'session.start', payload: { title: '두 번째 세션' } }), wait: 600 },
+      {
+        kind: 'do',
+        run: () => run(GM, { type: 'session.start', payload: { title: '두 번째 세션' } }),
+        wait: 600,
+      },
       { kind: 'end' },
     ]);
   };
@@ -1361,7 +1399,11 @@ function Table({
     if (boss.takenOut) {
       if (milestoneOpen || finished) return;
       const granted = !!room.getSnapshot().state.characters[meId]!.milestone;
-      setBeats(granted ? [{ kind: 'milestone' }] : [{ kind: 'do', run: closeSession }, { kind: 'milestone' }]);
+      setBeats(
+        granted
+          ? [{ kind: 'milestone' }]
+          : [{ kind: 'do', run: closeSession }, { kind: 'milestone' }],
+      );
       return;
     }
     setBeats([]);
@@ -2246,7 +2288,11 @@ function Table({
         <Presence show={showCoach}>
           {coach && showCoach && (
             <CoachMark
-              key={coach.clear ? 'clear' : `${lesson}:${coach.chapter ?? ''}:${coach.step}:${coach.title}`}
+              key={
+                coach.clear
+                  ? 'clear'
+                  : `${lesson}:${coach.chapter ?? ''}:${coach.step}:${coach.title}`
+              }
               coach={coach}
               hideLabel={guided ? '튜토리얼 건너뛰기' : '안내 숨기기'}
               anchor={
