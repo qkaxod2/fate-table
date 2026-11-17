@@ -59,6 +59,16 @@ describe('장면 배경음', () => {
     expect(ambLayers(null)).toEqual([]);
   });
 
+  it('GM이 고른 소리가 자동보다 앞서고, 끄면 날씨 소리까지 모두 멈춘다', () => {
+    const rainy: Ambience = { time: 'day', weather: 'rain', conditions: [] };
+    expect(ambLayers(scene({ backdrop: 'forest', ambience: rainy, sound: 'tavern' }))).toEqual([
+      'tavern',
+      'rain',
+    ]);
+    expect(ambLayers(scene({ backgroundUrl: 'x.png', sound: 'harbor' }))).toEqual(['harbor']);
+    expect(ambLayers(scene({ backdrop: 'forest', ambience: rainy, sound: 'none' }))).toEqual([]);
+  });
+
   it('모든 배경음 파일이 있다', () => {
     for (const n of [
       'indoor',

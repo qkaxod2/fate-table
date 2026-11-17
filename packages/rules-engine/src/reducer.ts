@@ -117,6 +117,8 @@ const handlers: Handlers = {
       if (p.backdrop) scene.backdrop = p.backdrop;
     }
     if (p.ambience) scene.ambience = p.ambience;
+    if (p.sound === null) delete scene.sound;
+    else if (p.sound) scene.sound = p.sound;
     return { ...s, scene };
   },
 

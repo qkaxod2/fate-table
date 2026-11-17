@@ -1,4 +1,11 @@
-import type { Backdrop, Scene, SceneCondition, SceneTime, SceneWeather } from '@fate/rules-engine';
+import type {
+  Backdrop,
+  Scene,
+  SceneCondition,
+  SceneSound,
+  SceneTime,
+  SceneWeather,
+} from '@fate/rules-engine';
 import { asset } from './asset';
 
 /** 범용 기본 배경 이름 (design-system.md 33절) */
@@ -73,6 +80,20 @@ export const WEATHER_LABELS: Record<SceneWeather, string> = {
   rain: '비',
   storm: '폭풍',
   snow: '눈',
+};
+
+/** 장면 배경음의 바닥 소리 이름 */
+export const SOUND_LABELS: Record<Exclude<SceneSound, 'none'>, string> = {
+  indoor: '실내 (시계 소리)',
+  cafe: '카페 웅성임',
+  city: '도시 소음',
+  birds: '새소리',
+  night: '밤 풀벌레',
+  tavern: '선술집 웅성임',
+  hall: '돌로 된 큰 방',
+  dungeon: '지하 물방울',
+  harbor: '파도와 갈매기',
+  wind: '바람',
 };
 
 export const CONDITION_LABELS: Record<SceneCondition, string> = {

@@ -53,4 +53,21 @@ describe('scene.mood', () => {
       code: 'NO_ACTIVE_SCENE',
     });
   });
+
+  it('GM can pick the background sound, turn it off, or go back to auto', () => {
+    const t = table();
+    t.run(GM, { type: 'scene.mood', payload: { backdrop: 'forest', time: 'night' } });
+    t.run(GM, { type: 'scene.mood', payload: { sound: 'tavern' } });
+    expect(t.state.scene!.sound).toBe('tavern');
+    // 소리만 바꿔도 배경과 분위기는 그대로
+    expect(t.state.scene!.backdrop).toBe('forest');
+    expect(t.state.scene!.ambience?.time).toBe('night');
+    t.run(GM, { type: 'scene.mood', payload: { sound: 'none' } });
+    expect(t.state.scene!.sound).toBe('none');
+    t.run(GM, { type: 'scene.mood', payload: { sound: null } });
+    expect(t.state.scene!.sound).toBeUndefined();
+    expect(
+      validate(t.state, { type: 'scene.mood', payload: { sound: 'opera' as never } }, GM),
+    ).toBeTruthy();
+  });
 });
