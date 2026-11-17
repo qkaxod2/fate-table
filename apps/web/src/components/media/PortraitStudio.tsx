@@ -13,6 +13,7 @@ import { asset } from '@/lib/asset';
 import { useMyImages, type ShownImage } from '@/lib/myImages';
 import { PortraitError, generatePortrait, portraitAvailable } from '@/lib/portraitApi';
 import { MyGallery } from './MyGallery';
+import { UploadImage } from './UploadImage';
 import styles from './PortraitStudio.module.css';
 
 const REUSE = ['portrait', 'npc'] as const;
@@ -89,9 +90,22 @@ export function PortraitStudio({ value, onChange }: Props) {
 
   return (
     <div className={styles.studio}>
+      <section className={styles.block} aria-labelledby="ps-upload">
+        <h3 id="ps-upload" className={styles.h}>
+          가진 그림이 있다면
+        </h3>
+        <UploadImage
+          hint="직접 그렸거나 받아 둔 그림. PNG · JPG · WEBP, 긴 변 1024px로 줄여서 올린다."
+          onUploaded={(url) => {
+            setCandidates((c) => [{ url, seed: 0, presetId: '' }, ...c].slice(0, 8));
+            onChange(url);
+          }}
+        />
+      </section>
+
       <section className={styles.block} aria-labelledby="ps-style">
         <h3 id="ps-style" className={styles.h}>
-          화풍
+          새로 그린다면: 화풍
         </h3>
         <div className={styles.presets} role="radiogroup" aria-labelledby="ps-style">
           {PORTRAIT_PRESETS.map((p) => (
@@ -215,7 +229,10 @@ export function PortraitStudio({ value, onChange }: Props) {
                 aria-pressed={c.url === value}
                 onClick={() => onChange(c.url)}
               >
-                <img src={c.url} alt={`${findPreset(c.presetId)?.name ?? ''} 후보`} />
+                <img
+                  src={c.url}
+                  alt={c.presetId ? `${findPreset(c.presetId)?.name ?? ''} 후보` : '올린 그림'}
+                />
               </button>
             ))}
           </div>

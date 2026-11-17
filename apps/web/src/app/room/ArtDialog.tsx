@@ -4,6 +4,7 @@ import { EXPRESSIONS, findPreset } from '@fate/portrait';
 import type { Character, Command, RoomEvent, RoomState } from '@fate/rules-engine';
 import { useState } from 'react';
 import { MediaStudio, type Drawn } from '@/components/media/MediaStudio';
+import { UploadImage } from '@/components/media/UploadImage';
 import { toast } from '@/components/ui/Toast';
 import { PortraitError, generateImage } from '@/lib/portraitApi';
 import styles from './ArtDialog.module.css';
@@ -168,6 +169,20 @@ export function ArtDialog({
       )}
 
       {tab === 'face' && c && <FacePanel c={c} run={run} attach={attach} />}
+
+      {tab === 'portrait' && c && (
+        <UploadImage
+          key={`upload:${c.id}`}
+          label="내 그림을 초상화로"
+          hint="그리는 대신 가진 그림을 쓴다. PNG · JPG · WEBP, 긴 변 1024px로 줄여서 올린다."
+          onUploaded={(url) =>
+            attach(
+              { type: 'media.attach', payload: { kind: 'portrait', target: c.id, url } },
+              `${c.name} 초상화 바뀜`,
+            )
+          }
+        />
+      )}
 
       {tab === 'portrait' && c && (
         <MediaStudio

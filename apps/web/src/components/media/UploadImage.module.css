@@ -1,0 +1,52 @@
+/* 내 그림 올리기: 점선 테두리 한 줄. 끌어다 놓으면 주홍으로 */
+.drop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-3);
+  padding: var(--s-3);
+  border: 1px dashed var(--line-hi);
+  border-radius: 6px;
+  transition:
+    border-color var(--dur-hover) var(--ease-out),
+    background-color var(--dur-hover) var(--ease-out);
+}
+
+.drop[data-over] {
+  border-color: var(--seal);
+  background: var(--seal-tint);
+}
+
+.pick {
+  min-height: 40px;
+  padding: 0 var(--s-4);
+  border: 1px solid var(--ink-3);
+  border-radius: var(--r-token);
+  background: transparent;
+  color: var(--ink-1);
+  font: 600 var(--fs-sm) var(--f-ui);
+  cursor: pointer;
+}
+
+.pick:not(:disabled):hover {
+  border-color: var(--seal);
+  color: var(--seal);
+}
+
+.pick:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.hint {
+  flex: 1 1 200px;
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+}
+
+.bad {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--fs-sm);
+}
