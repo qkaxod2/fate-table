@@ -1,6 +1,7 @@
 import type {
   Action,
   Ambience,
+  SceneSound,
   Approach,
   Aspect,
   Backdrop,
@@ -44,7 +45,13 @@ export interface EventPayloads {
   };
   'scene.ended': { sceneId: string };
   /** 장면의 기본 배경(null이면 뺌)과 분위기. 빠진 것은 그대로 */
-  'scene.mood_set': { sceneId: string; backdrop?: Backdrop | null; ambience?: Ambience };
+  'scene.mood_set': {
+    sceneId: string;
+    backdrop?: Backdrop | null;
+    ambience?: Ambience;
+    /** 배경음 (null이면 자동으로 돌아감) */
+    sound?: SceneSound | null;
+  };
 
   'character.created': { character: Character };
   'character.updated': {

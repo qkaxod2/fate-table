@@ -5,6 +5,7 @@ import {
   BACKDROPS,
   CONSEQUENCE_SLOTS,
   SCENE_CONDITIONS,
+  SCENE_SOUNDS,
   SCENE_TIMES,
   SCENE_WEATHERS,
   STAGE_FX,
@@ -67,6 +68,7 @@ export const CommandSchema = z.discriminatedUnion('type', [
     time: z.enum(SCENE_TIMES).optional(),
     weather: z.enum(SCENE_WEATHERS).optional(),
     conditions: z.array(z.enum(SCENE_CONDITIONS)).max(SCENE_CONDITIONS.length).optional(),
+    sound: z.enum(SCENE_SOUNDS).nullable().optional(),
   }),
 
   cmd('character.create', {

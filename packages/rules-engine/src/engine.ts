@@ -252,6 +252,7 @@ const resolvers: Resolvers = {
       ev('scene.mood_set', a, {
         sceneId: scene.id,
         ...(p.backdrop !== undefined ? { backdrop: p.backdrop } : {}),
+        ...(p.sound !== undefined ? { sound: p.sound } : {}),
         ...(touched
           ? {
               ambience: {

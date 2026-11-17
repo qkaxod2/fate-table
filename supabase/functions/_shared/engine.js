@@ -37,6 +37,19 @@ var BACKDROPS = [
 var SCENE_TIMES = ["day", "dawn", "dusk", "night"];
 var SCENE_WEATHERS = ["clear", "rain", "storm", "snow"];
 var SCENE_CONDITIONS = ["fire", "dust", "fog"];
+var SCENE_SOUNDS = [
+  "indoor",
+  "cafe",
+  "city",
+  "birds",
+  "night",
+  "tavern",
+  "hall",
+  "dungeon",
+  "harbor",
+  "wind",
+  "none"
+];
 var CONSEQUENCE_VALUE = {
   mild: 2,
   moderate: 4,
@@ -390,6 +403,8 @@ var handlers = {
       if (p.backdrop) scene.backdrop = p.backdrop;
     }
     if (p.ambience) scene.ambience = p.ambience;
+    if (p.sound === null) delete scene.sound;
+    else if (p.sound) scene.sound = p.sound;
     return { ...s, scene };
   },
   "scene.ended": (s, p) => {
@@ -20664,7 +20679,8 @@ var CommandSchema = external_exports.discriminatedUnion("type", [
     backdrop: external_exports.enum(BACKDROPS).nullable().optional(),
     time: external_exports.enum(SCENE_TIMES).optional(),
     weather: external_exports.enum(SCENE_WEATHERS).optional(),
-    conditions: external_exports.array(external_exports.enum(SCENE_CONDITIONS)).max(SCENE_CONDITIONS.length).optional()
+    conditions: external_exports.array(external_exports.enum(SCENE_CONDITIONS)).max(SCENE_CONDITIONS.length).optional(),
+    sound: external_exports.enum(SCENE_SOUNDS).nullable().optional()
   }),
   cmd("character.create", {
     name: text,
@@ -21016,6 +21032,7 @@ var resolvers = {
       ev("scene.mood_set", a, {
         sceneId: scene.id,
         ...p.backdrop !== void 0 ? { backdrop: p.backdrop } : {},
+        ...p.sound !== void 0 ? { sound: p.sound } : {},
         ...touched ? {
           ambience: {
             time: p.time ?? was.time,
@@ -21554,6 +21571,7 @@ export {
   MAX_STUNTS,
   RICH_TAGS,
   SCENE_CONDITIONS,
+  SCENE_SOUNDS,
   SCENE_TIMES,
   SCENE_WEATHERS,
   STAGE_FX,

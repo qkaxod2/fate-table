@@ -1,6 +1,6 @@
 'use client';
 
-import type { Backdrop, Scene } from '@fate/rules-engine';
+import type { Backdrop, Scene, SceneSound } from '@fate/rules-engine';
 import { useEffect, useState } from 'react';
 import {
   audio,
@@ -32,7 +32,10 @@ export type AmbLayer =
   | 'fire';
 
 /** 바깥인 곳은 밤이 되면 풀벌레 소리로 바뀐다 */
-const PLACE: Record<Backdrop, { day: AmbLayer; night?: AmbLayer }> = {
+/** 바닥에 깔리는 소리 (GM이 고를 수 있는 것) */
+export type Bed = Exclude<SceneSound, 'none'>;
+
+const PLACE: Record<Backdrop, { day: Bed; night?: Bed }> = {
   classroom: { day: 'indoor' },
   office: { day: 'indoor' },
   cafe: { day: 'cafe' },
@@ -73,15 +76,22 @@ const LEVEL: Record<AmbLayer, number> = {
   fire: 0.65,
 };
 
+/** 배경 그림과 시간으로 고르는 바닥 소리 (GM이 따로 고르지 않았을 때). 직접 그린 배경이면 짐작하지 않는다 */
+export function autoBed(scene: Scene | null | undefined): Bed | null {
+  const place = scene?.backdrop && !scene.backgroundUrl ? PLACE[scene.backdrop] : undefined;
+  if (!place) return null;
+  const t = scene!.ambience?.time;
+  return (t === 'night' || t === 'dusk') && place.night ? place.night : place.day;
+}
+
 /** 지금 장면에 깔 소리들 */
 export function ambLayers(scene: Scene | null | undefined): AmbLayer[] {
-  if (!scene) return [];
+  if (!scene || scene.sound === 'none') return [];
   const a = scene.ambience;
   const out: AmbLayer[] = [];
-  const place = scene.backdrop && !scene.backgroundUrl ? PLACE[scene.backdrop] : undefined;
-  const dark = a?.time === 'night' || a?.time === 'dusk';
-  // 폭풍이 치면 풀벌레·새소리는 들리지 않는다
-  if (place && a?.weather !== 'storm') out.push(dark && place.night ? place.night : place.day);
+  const bed = scene.sound ?? autoBed(scene);
+  // 폭풍이 치면 풀벌레·새소리는 들리지 않는다 (GM이 직접 고른 소리는 그대로)
+  if (bed && (scene.sound || a?.weather !== 'storm')) out.push(bed);
   if (a?.weather === 'rain' || a?.weather === 'storm' || a?.weather === 'snow') out.push(a.weather);
   if (a?.conditions.includes('fire')) out.push('fire');
   return out;

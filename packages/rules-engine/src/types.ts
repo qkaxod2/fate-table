@@ -45,6 +45,24 @@ export type Backdrop = (typeof BACKDROPS)[number];
 export const SCENE_TIMES = ['day', 'dawn', 'dusk', 'night'] as const;
 export const SCENE_WEATHERS = ['clear', 'rain', 'storm', 'snow'] as const;
 export const SCENE_CONDITIONS = ['fire', 'dust', 'fog'] as const;
+/**
+ * 장면 배경음에서 바닥에 깔리는 소리. 없으면(자동) 배경 그림과 시간으로 고르고,
+ * 'none'이면 날씨·불길 소리까지 모두 끈다. 고른 소리 위에도 비·폭풍·눈·불길은 겹쳐 깔린다.
+ */
+export const SCENE_SOUNDS = [
+  'indoor',
+  'cafe',
+  'city',
+  'birds',
+  'night',
+  'tavern',
+  'hall',
+  'dungeon',
+  'harbor',
+  'wind',
+  'none',
+] as const;
+export type SceneSound = (typeof SCENE_SOUNDS)[number];
 export type SceneTime = (typeof SCENE_TIMES)[number];
 export type SceneWeather = (typeof SCENE_WEATHERS)[number];
 export type SceneCondition = (typeof SCENE_CONDITIONS)[number];
@@ -174,6 +192,8 @@ export interface Scene {
   /** 기본 배경. 그린 배경(backgroundUrl)과는 나중에 정한 쪽만 남는다 */
   backdrop?: Backdrop;
   ambience?: Ambience;
+  /** GM이 고른 배경음. 없으면 자동 */
+  sound?: SceneSound;
 }
 
 export interface Compel {

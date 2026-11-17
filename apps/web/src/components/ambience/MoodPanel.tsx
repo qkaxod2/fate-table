@@ -2,6 +2,7 @@
 
 import {
   SCENE_CONDITIONS,
+  SCENE_SOUNDS,
   SCENE_TIMES,
   SCENE_WEATHERS,
   type Command,
@@ -14,9 +15,11 @@ import {
   BACKDROP_LABELS,
   backdropUrl,
   CONDITION_LABELS,
+  SOUND_LABELS,
   TIME_LABELS,
   WEATHER_LABELS,
 } from '@/lib/ambience';
+import { autoBed } from '@/fx/ambience';
 import styles from './MoodPanel.module.css';
 
 type Run = (cmd: Command) => Promise<RoomEvent[]>;
@@ -42,6 +45,7 @@ export function MoodPanel({
       BACKDROP_GENRES.find((g) => scene.backdrop && g.items.includes(scene.backdrop))?.id ??
       BACKDROP_GENRES[0]!.id,
   );
+  const auto = autoBed(scene);
   const items = BACKDROP_GENRES.find((g) => g.id === genre)?.items ?? [];
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -142,6 +146,37 @@ export function MoodPanel({
             </button>
           );
         })}
+      </div>
+
+      <h3 className={styles.label}>배경음 · 비, 눈, 불길 소리는 위에 겹쳐 깔린다</h3>
+      <div className={styles.chips} role="radiogroup" aria-label="배경음">
+        <button
+          type="button"
+          role="radio"
+          aria-checked={!scene.sound}
+          onClick={() => scene.sound && set({ sound: null })}
+        >
+          자동{auto ? ` (${SOUND_LABELS[auto]})` : ''}
+        </button>
+        {SCENE_SOUNDS.filter((x) => x !== 'none').map((x) => (
+          <button
+            key={x}
+            type="button"
+            role="radio"
+            aria-checked={scene.sound === x}
+            onClick={() => scene.sound !== x && set({ sound: x })}
+          >
+            {SOUND_LABELS[x]}
+          </button>
+        ))}
+        <button
+          type="button"
+          role="radio"
+          aria-checked={scene.sound === 'none'}
+          onClick={() => scene.sound !== 'none' && set({ sound: 'none' })}
+        >
+          끄기
+        </button>
       </div>
     </section>
   );
