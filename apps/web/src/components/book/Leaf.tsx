@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, type ReactNode } from 'react';
 import { CloseGuardScope, useCloseGuard } from '@/components/ui/closeGuard';
+import { playSfx } from '@/fx/sfx';
 import { useClosing } from '@/lib/motion';
 import styles from './Leaf.module.css';
 
@@ -135,6 +136,10 @@ export function Leaf({
   }, dirty);
   const panel = useRef<HTMLElement>(null);
   useDialogKeys(panel, guard.requestClose);
+  // 종이 한 장이 펼쳐지는 작은 소리 (자주 여닫는 명령 창은 조용히)
+  useEffect(() => {
+    if (!top) playSfx('book-open');
+  }, [top]);
   return (
     <div
       className={styles.backdrop}

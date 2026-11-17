@@ -215,6 +215,50 @@
   box-shadow: 0 0 0 3px rgb(0 0 0 / 0.3);
 }
 
+/*
+ * 새로 붙은 꼬리표는 탁자에 카드를 내려놓듯 살짝 위에서 기울어져 떨어진다 (장면이 열리며
+ * 여러 장이 깔리면 한 장씩 차례로). GM이 공개한 꼬리표는 옆으로 뒤집히며 드러난다.
+ * 움직임 줄이기 설정이면 바로 나타난다.
+ */
+.tag[data-enter='deal'] {
+  animation: tag-deal 520ms var(--ease-spring) backwards;
+  animation-delay: calc(min(var(--i, 0), 6) * 70ms);
+}
+
+.tag[data-enter='reveal'] > :first-child {
+  animation: tag-reveal 640ms var(--ease-out) backwards;
+}
+
+@keyframes tag-deal {
+  from {
+    opacity: 0;
+    translate: 0 -22px;
+    rotate: -6deg;
+    scale: 1.08;
+  }
+  60% {
+    opacity: 1;
+  }
+}
+
+@keyframes tag-reveal {
+  from {
+    opacity: 0.4;
+    transform: perspective(600px) rotateY(-90deg);
+    filter: brightness(1.8);
+  }
+  60% {
+    filter: brightness(1.25);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tag[data-enter],
+  .tag[data-enter] > :first-child {
+    animation: none;
+  }
+}
+
 /* ---------- 판정 ---------- */
 .duelSlot {
   position: absolute;

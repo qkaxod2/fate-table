@@ -176,3 +176,10 @@
     display: none;
   }
 }
+
+/* 소리 아래에 딸린 줄: 조금 들여 써서 소리 스위치에 매인 것으로 보이게 */
+.row[data-sub] {
+  padding-left: 22px;
+  color: var(--ink-2);
+  font-size: 13px;
+}

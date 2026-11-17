@@ -27,7 +27,15 @@ import {
   undoneSeqs,
 } from '@fate/rules-engine';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import {
+  type CSSProperties,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import { CompelOffer } from '@/components/compel/CompelOffer';
 import { StoryLog } from '@/components/log/StoryLog';
 import { isDialogOpen } from '@/components/book/Leaf';
@@ -39,6 +47,7 @@ import { Nameplate } from '@/components/theater/Nameplate';
 import { TableView, type Seat } from '@/components/theater/TableView';
 import { consequenceDepth, TraitCard } from '@/components/theater/TraitCard';
 import th from '@/components/theater/theater.module.css';
+import { tagKey, useDealt } from '@/components/theater/useDealt';
 import { useDialogueTop } from '@/components/theater/useDialogueTop';
 import { SceneFade } from '@/components/scene/SceneFade';
 import { OUTCOME_FACES, pickFace, StageCast, type CastMember } from '@/components/scene/StageCast';
@@ -55,7 +64,8 @@ import { SceneAmbience } from '@/components/ambience/SceneAmbience';
 import { sceneImage } from '@/lib/ambience';
 import { StageFxMenu } from './StageFxMenu';
 import { toast, Toaster } from '@/components/ui/Toast';
-import { playSfx, sfxEnabled, sfxForEvent, sfxForOutcome } from '@/fx/sfx';
+import { useSceneAmbience } from '@/fx/ambience';
+import { playSfx, sfxEnabled, sfxForEvents, sfxForOutcome } from '@/fx/sfx';
 import { ApiError } from '@/lib/api';
 import { asset } from '@/lib/asset';
 import { Presence } from '@/lib/motion';
@@ -95,6 +105,8 @@ const LIGHT: ReadonlySet<Command['type']> = new Set([
   'zone.update',
   'event.undo',
   'character.expression',
+  'stage.fx',
+  'sfx.play',
 ]);
 
 /** GM이 한 일 중 알림에 "되돌리기"를 달아 주는 것 */
@@ -573,6 +585,8 @@ export function RoomTable({
 
   // ---------- 효과음 ----------
   const [sfxOn, setSfxOn] = useState(sfxEnabled);
+  // 장소·날씨·불길에 맞는 배경음이 낮게 깔린다 (설정에서 끄거나 줄인다)
+  useSceneAmbience(state.scene);
   const heard = useRef<number | null>(null);
   useEffect(() => {
     const last = events.at(-1)?.seq ?? 0;
@@ -580,16 +594,14 @@ export function RoomTable({
       heard.current = last;
       return;
     }
-    const names = new Set(
-      events
-        .filter((e) => e.seq > heard.current!)
-        .map(sfxForEvent)
-        .filter((n) => n !== null),
-    );
+    let sounds = sfxForEvents(events.filter((e) => e.seq > heard.current!));
     heard.current = last;
     // 내가 굴리기를 누를 때 이미 굴리는 소리를 냈으면 겹치지 않게 뺀다
-    if (soundedRoll.current && names.delete('dice-roll')) soundedRoll.current = false;
-    names.forEach((n) => playSfx(n));
+    if (soundedRoll.current && sounds.some(([n]) => n === 'dice-roll')) {
+      sounds = sounds.filter(([n]) => n !== 'dice-roll');
+      soundedRoll.current = false;
+    }
+    sounds.forEach(([n, v]) => playSfx(n, v));
   }, [events, live]);
   const outcomeKey = settled && outcome && roll ? `${rollKey}:${outcome}` : null;
   useEffect(() => {
@@ -667,9 +679,12 @@ export function RoomTable({
     const base = `${state.scene?.name ?? name} · 운명점 테이블`;
     document.title = myCall ? `● ${myCall} · ${base}` : base;
   }, [myCall, state.scene?.name, name]);
-  // 다른 탭·창을 보고 있을 때 차례가 오면 작은 종소리로 부른다 (화면을 보고 있으면 테두리가 빛나니 조용히)
+  // 차례가 오면 작은 손종이 한 번 울린다. 다른 탭을 보고 있으면 조금 크게, 방어·피해처럼
+  // 다른 소리와 같이 오는 부름은 화면을 보고 있을 때 테두리 빛만으로 충분하다
   useEffect(() => {
-    if (myCall && document.hidden) playSfx('style-chime', 0.45);
+    if (!myCall) return;
+    if (document.hidden) playSfx('turn-bell', 0.7);
+    else if (myCall === '내 차례') playSfx('turn-bell');
   }, [myCall]);
 
   // ---------- 단축키 ----------
@@ -887,6 +902,7 @@ export function RoomTable({
     ...hiddenAspects,
     ...(rollMode ? ownAspects(rival?.id) : []),
   ];
+  const dealt = useDealt(tagAspects, events);
 
   const choiceById = new Map(
     (handSide === 'defense' ? defenseChoices : choices).map((c) => [c.aspect.id, c]),
@@ -1188,17 +1204,27 @@ export function RoomTable({
 
       {/* 장면에 깔린 특성: 장면 여기저기에 붙는다. 판정 중에는 판정판 둘레로 옮겨 간다 */}
       <div className={th.tags}>
-        {tagAspects.map((a, i) => {
+        {tagAspects.map((a, i, all) => {
+          const enter = dealt(a);
+          // 여러 장이 한꺼번에 깔리면 새로 붙는 것끼리 차례로
+          const order = enter ? all.slice(0, i).filter((b) => dealt(b)).length : 0;
           const spots = rollMode ? TAG_SPOTS_ROLL : TAG_SPOTS;
           const spot = spots[i % spots.length]!;
           const lap = Math.floor(i / spots.length) * 5;
           const can = !!playable(a);
           return (
             <div
-              key={a.id}
+              key={tagKey(a)}
               className={`${th.tag} ${rt.tag}`}
-              style={{ left: `${spot[0] + lap}%`, top: `${spot[1] + lap}%` }}
+              style={
+                {
+                  left: `${spot[0] + lap}%`,
+                  top: `${spot[1] + lap}%`,
+                  '--i': order,
+                } as CSSProperties
+              }
               data-hidden={a.hidden || undefined}
+              data-enter={enter}
             >
               <TraitCard
                 aspect={a}

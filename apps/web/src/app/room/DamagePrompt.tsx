@@ -13,6 +13,7 @@ import { useEffect, useRef, useState } from 'react';
 import tryStyles from '../tutorial/try.module.css';
 import styles from './room.module.css';
 import { josa } from '@/lib/josa';
+import { playSfx } from '@/fx/sfx';
 
 interface Props {
   damage: PendingDamage;
@@ -56,7 +57,10 @@ export function DamagePrompt({ damage, character, run, pending }: Props) {
                 type="button"
                 className={styles.plan}
                 aria-pressed={i === pick}
-                onClick={() => setPick(i)}
+                onClick={() => {
+                  if (i !== pick) playSfx('pencil-mark');
+                  setPick(i);
+                }}
               >
                 {[
                   ...(p.stressBox ? [`${term('stress')} ${p.stressBox}번`] : []),

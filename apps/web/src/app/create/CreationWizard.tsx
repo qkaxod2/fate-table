@@ -19,6 +19,7 @@ import { PortraitStudio } from '@/components/media/PortraitStudio';
 import { josa } from '@/lib/josa';
 import { roomHref } from '@/lib/lobby';
 import { type CharacterDraft, findMyCharacter, saveMyCharacter } from '@/lib/myCharacters';
+import { playSfx } from '@/fx/sfx';
 import styles from './create.module.css';
 import { draftToForm, emptyRatings, Sheet, type Ratings, type StuntDraft } from './Sheet';
 
@@ -60,6 +61,8 @@ export function CreationWizard() {
     show(Math.min(Math.max(0, to), STEPS.length - 1)),
   );
   const go = (to: number) => {
+    // 단계를 넘길 때 수첩 한 장을 넘기는 소리
+    if (to !== step) playSfx('book-open');
     show(to);
     pushStep(to);
   };
@@ -119,6 +122,8 @@ export function CreationWizard() {
   const canJump = editing !== null && !saved && conceptOk && ratingsOk && stuntsOk;
 
   function rate(a: Approach, v: number) {
+    // 높은 값일수록 조금 높은 소리로 톡
+    playSfx('paper-tap', undefined, 0.9 + v * 0.07);
     setRatings((r) => {
       if (r[a] === v) return { ...r, [a]: null };
       const next = { ...r, [a]: null };
@@ -152,6 +157,7 @@ export function CreationWizard() {
       savedAt: new Date().toISOString(),
     });
     setSaved(true);
+    playSfx('milestone', 0.5);
     // 방에서 왔다면 돌아가서 바로 그 방에 데려온다
     if (fromRoom) router.push(`${roomHref(fromRoom)}&bring=${encodeURIComponent(key)}`);
   }

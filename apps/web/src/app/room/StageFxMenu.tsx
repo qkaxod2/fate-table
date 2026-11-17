@@ -2,6 +2,7 @@
 
 import type { Character, Command, RoomEvent, StageFxKind } from '@fate/rules-engine';
 import { useEffect, useRef, useState } from 'react';
+import { CUES, preloadSfx } from '@/fx/sfx';
 import styles from './StageFxMenu.module.css';
 
 type Run = (cmd: Command) => Promise<RoomEvent[]>;
@@ -19,7 +20,8 @@ const ONE: ReadonlyArray<readonly [StageFxKind, string, string]> = [
 
 /**
  * GM 입력 줄의 "연출" 단추. 위로 펼쳐지는 쪽지에서 무대 전체 효과(흔들기 · 번쩍 · 어둠)나
- * 캐릭터 하나에 거는 효과(떨림 · 타격)를 고르면 모두의 화면에서 같이 일어난다.
+ * 캐릭터 하나에 거는 효과(떨림 · 타격), 또는 소리(천둥 · 문 · 늑대 울음 …)를 고르면
+ * 모두의 화면에서 같이 일어난다.
  */
 export function StageFxMenu({
   run,
@@ -42,6 +44,8 @@ export function StageFxMenu({
 
   useEffect(() => {
     if (!open) return;
+    // 쪽지를 열면 소리를 미리 받아 둔다 (누르는 순간 바로 울리게)
+    preloadSfx(CUES.map(([n]) => n));
     const onDown = (e: PointerEvent) => {
       if (!wrap.current?.contains(e.target as Node)) setOpen(false);
     };
@@ -70,7 +74,7 @@ export function StageFxMenu({
         aria-expanded={open}
         aria-haspopup="true"
         aria-label="연출"
-        data-tip="무대 연출: 흔들기 · 번쩍 · 어둠 · 떨림 · 타격"
+        data-tip="무대 연출: 흔들기 · 번쩍 · 떨림 · 타격 · 소리"
         onClick={() => setOpen((o) => !o)}
       >
         <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden>
@@ -84,6 +88,19 @@ export function StageFxMenu({
           <div className={styles.row}>
             {WHOLE.map(([k, label, hint]) => (
               <button key={k} type="button" title={hint} onClick={() => fire(k)}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className={styles.label}>소리</p>
+          <div className={styles.cues}>
+            {CUES.map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                title={`${label} 소리를 모두에게 들려줌`}
+                onClick={() => void run({ type: 'sfx.play', payload: { assetId: id } })}
+              >
                 {label}
               </button>
             ))}
