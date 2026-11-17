@@ -278,7 +278,7 @@
 
 @media (max-width: 760px) {
   .cast {
-    inset: 46px 0 46dvh;
+    inset: 46px 0 min(var(--dlg, 46dvh), 46dvh);
   }
   .roster {
     top: 84px;

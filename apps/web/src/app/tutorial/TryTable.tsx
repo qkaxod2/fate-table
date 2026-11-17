@@ -2313,7 +2313,7 @@ function Table({
         data-tour="dialogue"
         data-log={logOpen || undefined}
       >
-        <DialogueGrip />
+        <DialogueGrip open={logOpen} onOpenChange={setLogOpen} />
         <div className={th.say}>
           <span className={th.speaker}>{lastSpeaker}</span>
           <div className={th.text}>

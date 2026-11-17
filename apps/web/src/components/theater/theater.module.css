@@ -525,17 +525,27 @@
 }
 
 /*
- * 글 칸: 화면 높이에 맞춘 넉넉한 기본 높이(손잡이로 끌어 바꾼 값이 있으면 그 값)를 쓰고,
- * 옆 칸(행동 메뉴)이 더 높으면 남는 높이까지 채운다.
- * 위로 밀려 올라간 줄은 잘리지 않고 흐려지되, 맨 위에 붙은 탭(이야기·알림)은 흐리지 않는다.
+ * 글 칸은 두 가지로 쓴다.
+ * - 접힘(기본): 최근 몇 줄만 보이는 낮은 칸. 장면 그림을 덜 가리고, 탭 바도 숨긴다.
+ * - 펼침(data-log): 탭(이야기·알림)과 지난 기록을 넉넉히. 높이는 손잡이로 끌어 바꾼 값(--say-h)을 쓴다.
+ * 옆 칸(행동 메뉴)이 더 높으면 남는 높이까지 채운다. 위로 밀려 올라간 줄은 잘리지 않고 흐려진다.
  */
 .text {
-  --tabs-h: 42px;
   flex: 1 0 auto;
-  height: min(var(--say-h, clamp(150px, 24dvh, 280px)), 60dvh);
-  min-height: 96px;
+  height: 96px;
   overflow: auto;
   scrollbar-width: thin;
+  mask-image: linear-gradient(180deg, transparent, #000 26px);
+}
+
+.dialogue:not([data-log]) .text [role='tablist'] {
+  display: none;
+}
+
+.dialogue[data-log] .text {
+  --tabs-h: 38px;
+  flex: none;
+  height: min(var(--say-h, min(52dvh, 460px)), 70dvh);
   mask-image: linear-gradient(
     180deg,
     #000 var(--tabs-h),
@@ -544,44 +554,76 @@
   );
 }
 
-.dialogue[data-log] .text {
-  flex: none;
-  height: max(min(var(--say-h, 0px), 60dvh), min(52dvh, 460px));
+/* 행동 메뉴가 비는 GM(움직일 캐릭터 없음)은 오른쪽 칸 없이 한 칸으로 좁게 */
+.dialogue[data-solo] {
+  grid-template-columns: minmax(0, 1fr);
+  width: min(880px, calc(100vw - 48px));
 }
 
-/* 대사창 윗변 손잡이: 끌어서 글 칸 높이를 바꾼다 */
+.dialogue[data-solo] .menu {
+  display: none;
+}
+
+/* 대사창 윗변 손잡이: 누르면 펼치기·접기, 끌면 펼친 높이 조절 */
 .grip {
   position: absolute;
-  top: -7px;
+  top: -11px;
   left: 50%;
   z-index: 2;
-  width: 96px;
-  height: 14px;
-  translate: -50% 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 12px;
+  /* 가운데 맞춤은 margin으로 한다 (눌렀을 때 버튼 공통 translate가 덮어써 손잡이가 옆으로 튀지 않게) */
+  margin-left: calc(var(--grip-w, 82px) / -2);
+  width: var(--grip-w, 82px);
+  justify-content: center;
+  border: 1px solid var(--table-line);
+  border-radius: 999px;
+  background: rgb(22 21 19 / 0.94);
+  color: var(--ink-3);
+  font: 600 11.5px var(--f-ui);
+  letter-spacing: 0.04em;
   cursor: ns-resize;
   touch-action: none;
+  transition:
+    color 0.2s var(--e),
+    border-color 0.2s var(--e);
 }
 
 .grip::before {
-  position: absolute;
-  inset: 5px 24px;
-  border-radius: 2px;
-  background: var(--table-line);
+  width: 6px;
+  height: 6px;
+  margin-top: 3px;
+  border: solid currentColor;
+  border-width: 1.5px 0 0 1.5px;
+  rotate: 45deg;
   content: '';
-  transition: background 0.2s var(--e);
+  transition:
+    rotate 0.25s var(--e),
+    margin 0.25s var(--e);
 }
 
-.grip:hover::before,
-.grip:focus-visible::before {
-  background: var(--ink-2);
+.grip[aria-expanded='true']::before {
+  margin-top: -3px;
+  rotate: 225deg;
+}
+
+.grip:hover,
+.grip:focus-visible {
+  border-color: var(--ink-3);
+  color: var(--ink-1);
 }
 
 .grip:focus-visible {
-  outline: none;
+  outline: 2px solid var(--seal-on-table);
+  outline-offset: 2px;
 }
 
 .sys {
   display: flex;
+  min-height: 0;
   gap: 16px;
   margin-top: 8px;
   color: var(--ink-3);
@@ -627,7 +669,7 @@
     min-height: 0;
   }
   .cast {
-    bottom: 46dvh;
+    bottom: min(var(--dlg, 46dvh), 46dvh);
     height: 46dvh;
   }
   .hero {
@@ -653,7 +695,7 @@
   }
   .myPlate,
   .foePlate {
-    bottom: calc(46dvh + 8px);
+    bottom: calc(min(var(--dlg, 46dvh), 46dvh) + 8px);
     scale: 0.82;
   }
   .myPlate {
@@ -691,11 +733,20 @@
   }
   .text {
     flex: none;
-    height: clamp(112px, 21dvh, 200px);
+    height: 92px;
   }
-  /* 휴대폰 대사창은 안에서 스크롤되므로 끌어 늘리지 않는다 (지난 이야기로 펼친다) */
+  .dialogue[data-log] {
+    max-height: 82dvh;
+  }
+  .dialogue[data-log] .text {
+    height: min(var(--say-h, 50dvh), 60dvh);
+  }
+  .dialogue[data-solo] {
+    width: 100%;
+  }
+  /* 휴대폰 대사창은 위가 둥근 판이라 손잡이를 안쪽 위에 얹는다 (안에서 스크롤되어 잘리지 않게) */
   .grip {
-    display: none;
+    top: 6px;
   }
   .menu {
     border-top: 1px solid var(--table-line);
