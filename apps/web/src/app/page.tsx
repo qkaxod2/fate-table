@@ -1,9 +1,11 @@
 import { term } from '@fate/glossary';
 import Link from 'next/link';
+import { Fragment } from 'react';
 import { AccountChip } from '@/components/account/AccountChip';
 import { ClientOnly } from '@/components/ui/ClientOnly';
 import { asset } from '@/lib/asset';
 import styles from './page.module.css';
+import { INTRO_BOOT, TitleIntro } from './TitleIntro';
 
 /*
  * 첫 화면 = 게임의 타이틀 화면 (design-system.md 31절).
@@ -19,6 +21,8 @@ const MENU = [
   { href: '/create/', label: '캐릭터 만들기', note: '컨셉과 약점 한 줄씩' },
 ];
 
+const TITLE = '운명점 테이블';
+
 const SHELF = [
   { href: '/characters/', label: '내 캐릭터' },
   { href: '/gallery/', label: '내 그림' },
@@ -27,6 +31,8 @@ const SHELF = [
 export default function Landing() {
   return (
     <main className={styles.title}>
+      {/* 첫 그림보다 먼저: 타이틀 콜을 틀 차례면 화면을 가려 둔다 */}
+      <script dangerouslySetInnerHTML={{ __html: INTRO_BOOT }} />
       <div className={styles.scene} aria-hidden>
         <img className={styles.bg} src={asset('/try/bg.jpg')} alt="" />
         <img className={`${styles.cast} ${styles.scout}`} src={asset('/try/scout.webp')} alt="" />
@@ -34,12 +40,37 @@ export default function Landing() {
         <img className={`${styles.cast} ${styles.knight}`} src={asset('/try/knight.webp')} alt="" />
       </div>
 
+      <TitleIntro titleId="title-call" />
+
       <ClientOnly>
         <AccountChip />
       </ClientOnly>
 
       <div className={styles.front}>
-        <h1 className={styles.name}>운명점 테이블</h1>
+        <h1 className={styles.name} aria-label={TITLE}>
+          <span id="title-call" className={styles.call} aria-hidden>
+            {/* 낱말 안에서는 줄이 바뀌지 않게 낱말마다 묶는다 */}
+            {TITLE.split(' ').map((word, w, words) => {
+              const start = words.slice(0, w).join(' ').length + (w ? 1 : 0);
+              return (
+                <Fragment key={w}>
+                  {w > 0 && ' '}
+                  <span className={styles.word}>
+                    {[...word].map((c, i) => (
+                      <span
+                        key={i}
+                        className={styles.glyph}
+                        style={{ '--i': start + i } as React.CSSProperties}
+                      >
+                        {c}
+                      </span>
+                    ))}
+                  </span>
+                </Fragment>
+              );
+            })}
+          </span>
+        </h1>
         <p className={styles.lead}>
           기동형 페이트로 친구들과 이야기를 굴리는 온라인 테이블. {term('aspect')} 한 줄과{' '}
           {term('fatePoint')} 몇 개면 된다.
