@@ -5,6 +5,7 @@ import {
   type Outcome,
   absorbOptions,
   APPROACHES,
+  isValidAbsorb,
   canInvoke,
   CommandError,
   formatRating,
@@ -47,6 +48,16 @@ import { SceneAmbience } from '@/components/ambience/SceneAmbience';
 import { PageNav } from '@/components/nav/PageNav';
 import { useHistoryStep } from '@/components/nav/useHistoryStep';
 import { BOSS, SAMPLE_CHARACTERS, SCENE, type SampleCharacter } from '@/content/oneshot';
+import {
+  attackApproach,
+  companionsOf,
+  ELDER,
+  FEAST,
+  STUNT_IDEAS,
+  VILLAGE,
+  VOICES,
+} from '@/content/tutorialStory';
+import { sceneImage } from '@/lib/ambience';
 import { useSceneAmbience } from '@/fx/ambience';
 import { playSfx, setSfxEnabled, sfxEnabled, sfxForEvents, sfxForOutcome } from '@/fx/sfx';
 import { asset } from '@/lib/asset';
@@ -55,6 +66,7 @@ import { Typewriter } from '@/components/ui/Typewriter';
 import { describe, ERROR_COPY, JUDGE, OUTCOME_COPY } from '@/lib/copy';
 import { josa } from '@/lib/josa';
 import { LocalRoom } from '@/state/localRoom';
+import { MilestonePicker, type MilestoneChoice } from './MilestonePicker';
 import styles from './try.module.css';
 
 const ME: Actor = { userId: 'me', role: 'player' };
@@ -72,10 +84,12 @@ const COMPEL_TEXT: Record<string, string> = {
 };
 
 /**
- * 단계별 튜토리얼 순서: 소개 → 1 극복 → 2 이점 만들기 → 3 공격 → 4 방어 → 자유 진행.
- * 진행 중에는 지금 단계의 버튼만 열어 두고 나머지는 어둡게 덮어 막는다.
+ * 이야기로 진행하는 튜토리얼. 장면 사이사이 GM 서술과 동료 NPC의 대사·굴림(이야기 박자)이 흐르고,
+ * 내 차례가 오면 행동 하나를 배운다: 1 극복 → 2 이점 만들기 → 3 공격 → 4 방어 → 마무리(진짜 주사위).
+ * 두목이 쓰러지면 잔치 장면, 세션 종료, 작은 이정표로 끝난다.
+ * 행동을 배우는 동안에는 지금 단계의 버튼만 열어 두고 나머지는 어둡게 덮어 막는다.
  */
-type Lesson = 'intro' | Action | 'free';
+type Lesson = 'story' | Action | 'free';
 const LESSONS: Action[] = ['overcome', 'create_advantage', 'attack', 'defend'];
 
 /** 행동마다: 무엇인지, 언제 쓰는지, 지금 해 볼 일 */
@@ -83,17 +97,17 @@ const LESSON_COPY: Record<Action, { title: string; body: string; example: string
   overcome: {
     title: `${term('overcome')}: 막힌 길 뚫기`,
     body: '앞을 막는 것을 넘을 때 쓴다. 불길을 뚫고 달리기, 잠긴 문 열기 같은 것. 난이도보다 높게 나오면 성공.',
-    example: `불길이 앞을 막고 있다. 1번 ${josa(`"${term('overcome')}"`, '을/를')} 누르기`,
+    example: `불길 너머에 창고지기가 쓰러져 있다. 1번 ${josa(`"${term('overcome')}"`, '을/를')} 눌러 불길 뚫기`,
   },
   create_advantage: {
     title: `${term('create_advantage')}: 유리한 상황 만들기`,
     body: `연기로 두목의 눈을 가리는 것처럼, 나중에 써먹을 상황을 만든다. 성공하면 장면에 새 ${term('aspect')}이 붙고 ${term('freeInvoke')}도 받는다.`,
-    example: `2번 ${josa(`"${term('create_advantage')}"`, '을/를')} 누르기`,
+    example: `두목과 맞붙기 전에 판을 기울인다. 2번 ${josa(`"${term('create_advantage')}"`, '을/를')} 누르기`,
   },
   attack: {
     title: `${term('attack')}: 상대에게 피해 주기`,
     body: `상대를 쓰러뜨릴 때 쓴다. 상대도 ${term('defend')}로 맞서 굴린다. 이긴 차이만큼 피해가 들어가고, 못 버티면 상대는 ${term('takenOut')}한다.`,
-    example: `3번 ${josa(`"${term('attack')}"`, '을/를')} 눌러 다락 위 두목 노리기`,
+    example: `동료가 열어 준 틈. 3번 ${josa(`"${term('attack')}"`, '을/를')} 눌러 두목 노리기`,
   },
   defend: {
     title: `${term('defend')}: 공격이나 방해 막기`,
@@ -191,8 +205,25 @@ interface Note {
   then?: () => void;
 }
 
+/**
+ * 이야기 박자. 앞에서부터 하나씩 흘러간다.
+ * line: GM 서술(who 없음)이나 등장인물의 말. 읽고 "다음"을 눌러 넘긴다.
+ * note: 규칙 설명 카드. npc: 동료가 굴린다 (판정판을 보고 "다음"). do: 장면 전환 같은 일을 하고 넘어간다.
+ * lesson: 내 차례. 행동 하나를 배운다. milestone: 이정표 혜택 고르기. end: 마침 카드.
+ * 글이 나중 상태에 기대면 (내가 지은 특성 이름 등) 함수로 넘긴다.
+ */
+type Beat =
+  | { kind: 'line'; who: string | null; text: string | (() => string) }
+  | { kind: 'note'; note: Note | (() => Note) }
+  | { kind: 'npc'; run: () => string | null }
+  | { kind: 'do'; run: () => void; wait?: number }
+  | { kind: 'lesson'; lesson: Action | 'free' }
+  | { kind: 'milestone' }
+  | { kind: 'end' };
+
 interface Tour {
-  coach: Coach & { focus?: CoachFocus };
+  /** 이야기 박자를 읽는 중에는 안내 카드 없이 대사창만 쓴다 */
+  coach?: Coach & { focus?: CoachFocus };
   /** 밝게 남길 곳 (안내 카드는 항상 남긴다) */
   open: string[];
   ring?: string;
@@ -215,36 +246,29 @@ function setupRoom(pick: SampleCharacter): LocalRoom {
     });
   }
   room.run(GM, { type: 'session.start', payload: { title: '튜토리얼' } });
+  // 이야기는 해 질 녘 마을에서 시작한다. 여는 서술은 첫 이야기 박자가 올린다
+  room.run(GM, {
+    type: 'scene.start',
+    payload: { name: VILLAGE.name, aspects: [...VILLAGE.aspects] },
+  });
+  room.run(GM, { type: 'scene.mood', payload: { backdrop: 'village', time: 'dusk' } });
+  return room;
+}
+
+/** 곡물 창고로 장면을 옮긴다. 두목은 앞서 마을 경비대와 싸우느라 스트레스 1·2번 칸이 차 있다 */
+function enterGranary(room: LocalRoom) {
   room.run(GM, { type: 'scene.start', payload: { name: SCENE.name, aspects: SCENE.aspects } });
   // 불타는 창고: 배경 위에 화재 분위기를 깐다 (불빛 · 그을음 · 불티)
   room.run(GM, { type: 'scene.mood', payload: { conditions: ['fire'] } });
-  // 튜토리얼이 길어지지 않게 두목은 이미 많이 다친 채로 시작한다: 스트레스 1·2번 칸과 중상·중태가 차 있다
   const bossId = findId(room.getSnapshot().state, BOSS.name);
-  const hurt = (
-    stressBox: 1 | 2 | null,
-    consequences: { slot: 'moderate' | 'severe'; text: string }[],
-  ) => ({
-    type: 'damage.absorbed' as const,
-    actorId: GM.userId,
-    visibility: 'public' as const,
-    payload: {
-      rollId: `prelude-${stressBox ?? 'c'}`,
-      targetId: bossId,
-      stressBox,
-      consequences: consequences.map((c) => ({ ...c, aspectId: `prelude-${c.slot}` })),
-    },
-  });
-  room.seed([
-    hurt(1, []),
-    hurt(2, []),
-    hurt(null, [
-      { slot: 'moderate', text: '깊게 베인 어깨' },
-      { slot: 'severe', text: '부러진 갈비뼈' },
-    ]),
-  ]);
-  // 여는 서술은 맨 마지막에 올린다: 대사창이 상처 기록이 아니라 GM의 이야기로 시작한다
-  room.run(GM, { type: 'narration.post', payload: { text: SCENE.opening } });
-  return room;
+  room.seed(
+    ([1, 2] as const).map((box) => ({
+      type: 'damage.absorbed' as const,
+      actorId: GM.userId,
+      visibility: 'public' as const,
+      payload: { rollId: `prelude-${box}`, targetId: bossId, stressBox: box, consequences: [] },
+    })),
+  );
 }
 
 export function TryTable() {
@@ -285,8 +309,9 @@ function Picker({ onPick }: { onPick: (s: SampleCharacter) => void }) {
       <header className={styles.pickHead}>
         <h1 className={styles.pickTitle}>누구로 플레이할지 고르기</h1>
         <p className={styles.pickLead}>
-          첫 장면은 &lsquo;{SCENE.name}&rsquo;. 한 명을 고르면 5분 안에 첫 굴림까지 간다. 규칙은
-          몰라도 된다.
+          해 질 녘 &lsquo;{VILLAGE.name}&rsquo;의 곡물 창고에 불이 났다. 한 명을 고르면 남은 둘은
+          동료로 함께 간다. 같이 도적 두목을 막고, 세션을 마치며 첫 {term('milestone')}까지 받는다.
+          규칙은 몰라도 된다.
         </p>
       </header>
       <ol className={styles.pickGrid} aria-label="등장인물">
@@ -358,6 +383,15 @@ function Table({
   const bossId = useMemo(() => findId(room.getSnapshot().state, BOSS.name), [room]);
   const me = state.characters[meId]!;
   const boss = state.characters[bossId]!;
+  const [mateA, mateB] = useMemo(() => companionsOf(pick), [pick]);
+  const voiceA = VOICES[mateA.key]!;
+  const voiceB = VOICES[mateB.key]!;
+  // 세션을 마치면 장면이 닫힌다. 그 뒤에도 마지막 장면의 그림과 소리를 남겨 둔다
+  const [shownScene, setShownScene] = useState(state.scene);
+  if (state.scene && state.scene !== shownScene) setShownScene(state.scene);
+  const stageScene = state.scene ?? shownScene;
+  // 두목은 곡물 창고에서만 무대에 선다
+  const atGranary = stageScene?.name === SCENE.name;
 
   const [action, setAction] = useState<Action | null>(null);
   const [approach, setApproach] = useState<Approach | null>(null);
@@ -369,8 +403,15 @@ function Table({
   const [diceMode, setDiceMode] = useState<DiceMode>('3d');
   const [error, setError] = useState<string | null>(null);
   const compelled = useRef(false);
-  const [lesson, setLesson] = useState<Lesson>('intro');
-  const [introStep, setIntroStep] = useState(0);
+  const [lesson, setLesson] = useState<Lesson>('story');
+  // 흘러갈 이야기 박자 (맨 앞이 지금)
+  const [beats, setBeats] = useState<Beat[]>([]);
+  const [milestoneOpen, setMilestoneOpen] = useState(false);
+  // 끝난 판정을 닫고 이야기로 돌아간 굴림
+  const [dismissed, setDismissed] = useState<string | null>(null);
+  const [finished, setFinished] = useState(false);
+  // 무대에 함께 선 동료 (가장 최근에 말하거나 굴린 쪽)
+  const [allyKey, setAllyKey] = useState<string | null>(null);
   // 이번 굴림에서 발동을 한 번 해 봤는지 (튜토리얼 발동 단계는 한 번이면 충분하다)
   const [invokedRoll, setInvokedRoll] = useState<string | null>(null);
   // 읽고 넘기는 설명 카드 줄 (굴림 뒤 해설, 강요 소개 등)
@@ -380,7 +421,7 @@ function Table({
   // 캐릭터를 고른 뒤에만 그려지는 화면이라 처음부터 브라우저 설정을 읽어도 된다
   const [sfxOn, setSfxOn] = useState(sfxEnabled);
   // 장소·날씨·불길에 맞는 배경음이 낮게 깔린다 (설정에서 끄거나 줄인다)
-  useSceneAmbience(state.scene);
+  useSceneAmbience(stageScene);
 
   // 새 이벤트마다 어울리는 효과음 (한 번에 같은 소리는 한 번만)
   const heard = useRef(-1);
@@ -633,10 +674,11 @@ function Table({
     const hurt = handleRewards(fin.payload.rewards, roll.targetId);
     setAction(null);
     setApproach(null);
-    // 이번 장의 행동을 마치면 해설을 읽고 다음 장으로
+    // 이번 장의 행동을 마치면 해설을 읽고, 이야기가 이어지다 다음 내 차례가 온다
     if (lesson === roll.action) {
-      setLesson(LESSONS[LESSONS.indexOf(roll.action) + 1] ?? 'free');
+      setLesson('story');
       setNotes(afterNotes(roll.action, fin.payload.outcome, hurt));
+      setBeats(actAfter(roll.action));
     }
   };
 
@@ -654,8 +696,9 @@ function Table({
     setAction(null);
     setApproach(null);
     if (lesson === 'defend') {
-      setLesson('free');
+      setLesson('story');
       setNotes(afterNotes('defend', outcomeFor(roll, 'defense'), hurt));
+      setBeats(actAfter('defend'));
     }
   };
 
@@ -735,7 +778,7 @@ function Table({
         example:
           a === 'defend'
             ? `내 이름표에서 ${term('stress')} 칸과 ${term('consequence')} 칸 확인`
-            : `${josa(BOSS.name, '은/는')} 이제 ${term('stress')} 3번 칸과 ${term('mild')}만 남았다. 조금만 더`,
+            : `${josa(BOSS.name, '은/는')} 이제 ${bossLeft()}만 남았다. 조금만 더`,
         label: '다음',
       });
     if (a === 'overcome')
@@ -791,9 +834,582 @@ function Table({
       open: ['[data-tour="party"]'],
       ring: '[data-tour="party"]',
       example: `${josa(term('fatePoint'), '은/는')} ${josa(term('compel'), '을/를')} 받아들여서 얻고, ${term('invoke')}할 때 쓴다.`,
-      label: '2장으로',
+      label: '이야기 계속',
     },
   ];
+
+  // ---------- 이야기 박자 ----------
+  const P = pick.name;
+  const gmSays = (text: string | (() => string)): Beat => ({ kind: 'line', who: null, text });
+  const says = (who: string, text: string | (() => string)): Beat => ({ kind: 'line', who, text });
+  const explain = (n: Omit<Note, 'step'> | (() => Omit<Note, 'step'>)): Beat => ({
+    kind: 'note',
+    note: () => ({ step: 4, ...(typeof n === 'function' ? n() : n) }),
+  });
+
+  /** 두목에게 남은 버틸 칸 (해설용) */
+  const bossLeft = useCallback(() => {
+    const b = room.getSnapshot().state.characters[bossId]!;
+    const parts = [
+      ...b.stress.flatMap((used, i) => (used ? [] : [`${term('stress')} ${i + 1}번 칸`])),
+      ...(['mild', 'moderate', 'severe'] as const)
+        .filter((slot) => !b.consequences[slot])
+        .map((slot) => term(slot)),
+    ];
+    if (parts.length === 0) return '버틸 칸 없음';
+    return parts.map((x, k) => (k < parts.length - 1 ? josa(x, '과/와') : x)).join(' ');
+  }, [room, bossId]);
+
+  /**
+   * 동료(GM 자동)가 두목을 공격한다. 차이(shifts)가 나오도록 주사위를 정해 두고,
+   * 특기와 (있으면) 내 특성의 무료 발동까지 실제 명령으로 처리한다.
+   * 두목은 주사위가 멈춘 뒤 정해 둔 후유증으로 받아낸다 (못 받아내면 탈락).
+   */
+  const npcAttack = (
+    who: SampleCharacter,
+    shifts: number,
+    opts: {
+      invoke?: string | null;
+      absorb?: { slot: 'mild' | 'moderate' | 'severe'; text: string };
+    },
+  ): string | null => {
+    const snap = room.getSnapshot().state;
+    const id = findId(snap, who.name);
+    const c = snap.characters[id]!;
+    const b = snap.characters[bossId]!;
+    if (b.takenOut) return null;
+    const approach = attackApproach(who);
+    const stunts = stuntBonuses(c, 'attack', approach);
+    const inv =
+      opts.invoke && (snap.aspects[opts.invoke]?.freeInvokes ?? 0) > 0 ? opts.invoke : null;
+    room.forceDice(
+      b.approaches.quick + shifts - c.approaches[approach] - stunts.length * 2 - (inv ? 2 : 0),
+    );
+    room.forceDice(0);
+    const evs = run(GM, {
+      type: 'roll.request',
+      payload: { characterId: id, action: 'attack', approach, targetId: bossId },
+    });
+    const first = evs[0];
+    const rid = first && 'rollId' in first.payload ? (first.payload.rollId as string) : null;
+    if (!rid) return null;
+    run(GM, { type: 'roll.defend', payload: { rollId: rid, approach: 'quick' } });
+    for (const st of stunts)
+      run(GM, { type: 'stunt.apply', payload: { rollId: rid, side: 'active', stuntId: st.id } });
+    if (inv)
+      run(GM, {
+        type: 'invoke.apply',
+        payload: {
+          rollId: rid,
+          side: 'active',
+          aspectId: inv,
+          mode: 'bonus',
+          paidWith: 'free_invoke',
+        },
+      });
+    run(GM, { type: 'roll.defense_ready', payload: { rollId: rid } });
+    run(GM, { type: 'roll.finalize', payload: { rollId: rid, reduceForBoost: false } });
+    setAllyKey(who.key);
+    window.setTimeout(() => {
+      const now = room.getSnapshot().state;
+      const pending = Object.values(now.pendingDamage).find((d) => d.rollId === rid);
+      if (!pending) return;
+      const target = now.characters[pending.targetId]!;
+      const wanted = opts.absorb
+        ? { stressBox: null, consequences: [opts.absorb.slot] as const }
+        : undefined;
+      const plan =
+        wanted &&
+        isValidAbsorb(pending.shifts, target, { ...wanted, consequences: [...wanted.consequences] })
+          ? { stressBox: null, consequences: [opts.absorb!] }
+          : (() => {
+              const p = absorbOptions(pending.shifts, target)[0];
+              const NAMES = {
+                mild: '그을린 소매',
+                moderate: '깊게 베인 어깨',
+                severe: '부러진 갈비뼈',
+              };
+              return p
+                ? {
+                    stressBox: p.stressBox,
+                    consequences: p.consequences.map((slot) => ({ slot, text: NAMES[slot] })),
+                  }
+                : null;
+            })();
+      run(GM, {
+        type: 'damage.absorb',
+        payload: plan
+          ? { rollId: rid, takeOut: false, ...plan }
+          : { rollId: rid, takeOut: true, stressBox: null, consequences: [] },
+      });
+    }, 1500);
+    return rid;
+  };
+
+  /** 이번 이야기에서 내가 이점 만들기로 붙인 장면 특성 (핀이 남아 있으면) */
+  const myMadeAspect = () =>
+    Object.values(room.getSnapshot().state.aspects).find(
+      (a) => a.ownerType === 'scene' && a.kind === 'situation' && a.freeInvokes > 0,
+    );
+
+  const enterFeast = () => {
+    room.run(GM, {
+      type: 'scene.start',
+      payload: { name: FEAST.name, aspects: [...FEAST.aspects] },
+    });
+    room.run(GM, { type: 'scene.mood', payload: { backdrop: 'tavern', time: 'night' } });
+  };
+
+  const prologue = (): Beat[] => [
+    gmSays(
+      '해 질 녘, 물레방아 마을. 추수를 막 끝낸 들판 너머로 검은 연기가 피어오른다. 마을 끝, 곡물 창고 쪽이다.',
+    ),
+    explain({
+      chapter: '프롤로그',
+      title: 'TRPG는 다 같이 이야기를 만드는 놀이',
+      body: 'GM이 장면을 들려주면, 나는 내 캐릭터가 뭘 할지 말로 정한다. 결과가 뻔하지 않을 때만 주사위를 굴린다.',
+      example: '정답은 없다. "내 캐릭터라면 어떻게 할까?"만 떠올리면 된다.',
+      points: ['이기고 지는 것보다 멋진 장면이 나오는 게 중요하다.'],
+      moreLabel: '이기면 끝일까',
+      open: ['[data-tour="dialogue"]'],
+      ring: '[data-tour="dialogue"]',
+      label: '이야기 듣기',
+    }),
+    says(ELDER, '도적 떼요! 겨울을 날 곡식이 전부 저 창고에 있소. 제발 좀 막아 주시오!'),
+    says(mateA.name, voiceA.hello(P)),
+    says(mateB.name, voiceB.hello(P)),
+    explain({
+      chapter: '프롤로그',
+      title: '동료와 함께 가는 이야기',
+      body: `이번 이야기에는 ${josa(mateA.name, '과/와')} ${josa(mateB.name, '이/가')} 동료로 함께한다. 진짜 게임에선 친구들이 한 명씩 맡는데, 여기선 컴퓨터가 대신 말하고 굴린다.`,
+      points: [
+        '대사창에는 GM의 서술과 등장인물의 말이 차례로 나온다. 위쪽 이름표가 지금 말하는 사람.',
+        '촌장처럼 GM이 맡는 사람들을 NPC라고 한다.',
+        `동료도 자기 차례에 행동하고 굴린다. 서로 만든 ${josa(term('aspect'), '을/를')} 이어받아 쓰기도 한다.`,
+      ],
+      moreLabel: '대사창 읽는 법',
+      open: ['[data-tour="dialogue"]'],
+      ring: '[data-tour="dialogue"]',
+    }),
+    explain({
+      chapter: '프롤로그',
+      title: `내 캐릭터: ${P}`,
+      body: `캐릭터는 숫자보다 짧은 문구로 설명한다. ${term('high')}은 "${pick.create.highConcept}", ${term('trouble')}은 ${josa(`"${pick.create.trouble}"`, '이다/다')}. 이런 문구를 ${term('aspect')}이라고 한다.`,
+      example: `${josa(term('trouble'), '은/는')} 일을 꼬이게 한다. 대신 그때마다 ${josa(term('fatePoint'), '을/를')} 받을 수 있다.`,
+      open: ['[data-tour="party"]'],
+      ring: '[data-tour="party"]',
+    }),
+    explain({
+      chapter: '프롤로그',
+      title: `${term('aspect')}은 이 이야기의 "사실"`,
+      body: `장면 위에 붙은 꼬리표가 지금 장면의 ${term('aspect')}이다. 굴림이 아쉬울 때 ${term('fatePoint')} 1개를 내고 ${josa(term('aspect'), '을/를')} "${term('invoke')}"하면 +2를 받는다.`,
+      example: `쓸 때는 "연기가 바람을 타니까 그 뒤에 숨을 수 있어!"처럼 이유를 붙인다.`,
+      points: [
+        `캐릭터 ${term('aspect')}: 어떤 사람인지 보여 주는 ${term('high')}, 발목을 잡는 ${term('trouble')}, 그 밖의 특징`,
+        `장면 ${term('aspect')}: 지금 장소와 상황에 대한 사실. 누구나 쓸 수 있음`,
+        `${term('aspect')}은 좋게도 나쁘게도 쓰인다. 불길은 나를 막기도, 적을 막기도 한다`,
+      ],
+      moreLabel: `${term('aspect')}의 종류`,
+      open: ['[data-tour="aspects"]'],
+      ring: '[data-tour="aspects"]',
+    }),
+    explain({
+      chapter: '프롤로그',
+      title: `${josa(term('fatePoint'), '은/는')} 지금 ${me.fatePoints}개`,
+      body: `이름표의 동전 하나가 ${term('fatePoint')} 1개. ${term('invoke')}할 때마다 하나씩 줄고, 저절로 늘지 않는다.`,
+      example: '그래서 진짜 중요한 굴림에 쓴다.',
+      points: [
+        `쓸 때: ${term('invoke')}할 때마다 1개, ${josa(term('compel'), '을/를')} 거절할 때 1개`,
+        `얻는 법: GM의 ${josa(term('compel'), '을/를')} 받아들여 일이 꼬이게 두면 1개, 상대가 내 ${josa(term('aspect'), '을/를')} 나에게 불리하게 쓰면 1개`,
+        `세션이 새로 시작되면 ${term('refresh')} 수치(${P}는 ${me.refresh})까지 다시 채워진다. 이야기 끝에서 직접 본다.`,
+      ],
+      moreLabel: '쓰는 법 · 얻는 법',
+      open: ['[data-tour="party"]'],
+      ring: '[data-tour="party"]',
+    }),
+    gmSays(
+      `${josa(P, '이/가')} 동료들과 창고로 달려가는 사이, 바람이 연기를 마을 쪽으로 밀어붙인다.`,
+    ),
+    { kind: 'do', run: () => enterGranary(room), wait: 700 },
+    gmSays(
+      '창고 문은 부서져 있다. 곡물 더미 사이로 불길이 치솟고, 도적들이 자루를 나른다. 다락 위에는 도끼를 어깨에 걸친 도적 두목. 마을 경비대와 한바탕 싸운 뒤라 숨을 몰아쉬고 있다.',
+    ),
+    says(mateB.name, '불길 너머에 창고지기 아저씨가 쓰러져 있어!'),
+    says(mateA.name, voiceA.sendAhead(P)),
+    explain({
+      chapter: '1장 · 내 차례',
+      title: '행동은 딱 네 가지',
+      body: `뭘 하든 대사창 오른쪽의 네 행동 중 하나다. ${term('overcome')}, ${term('create_advantage')}, ${term('attack')}, ${term('defend')}. 이야기 속에서 내 차례가 올 때마다 하나씩 해 본다.`,
+      example: '누를 곳만 빛난다. 빛나는 곳만 따라 누르면 된다.',
+      points: [5, 4, 3, 2, 1, 0, -1, -2].map((n) => `${sign(n)} ${LADDER_LABELS[n]}`),
+      moreLabel: `수치를 읽는 말: ${term('ladder')}`,
+      open: ['[data-tour="actions"]'],
+      ring: '[data-tour="actions"]',
+      label: '1장 시작',
+    }),
+    { kind: 'lesson', lesson: 'overcome' },
+  ];
+
+  /** 내 차례가 끝난 뒤 이어지는 이야기 */
+  const actAfter = (a: Action): Beat[] => {
+    if (a === 'overcome')
+      return [
+        gmSays(
+          `${josa(P, '이/가')} 창고지기를 불길 밖으로 끌어낸다. 그때 다락 위에서 웃음소리가 울린다. "내 곡식에 손대는 놈이 누구냐?" 두목이 도끼를 들고 뛰어내린다.`,
+        ),
+        says(mateB.name, voiceB.charge),
+        {
+          kind: 'npc',
+          run: () => npcAttack(mateB, 4, { absorb: { slot: 'moderate', text: '깊게 베인 어깨' } }),
+        },
+        explain({
+          chapter: '2장 · 동료의 차례',
+          title: `${mateB.name}의 ${term('attack')}`,
+          body: `동료도 자기 차례에 굴린다. ${josa(mateB.name, '은/는')} 두목보다 4 높게 나와 피해 4를 줬다. 두목은 ${josa(term('moderate'), '으로/로')} 받아냈다.`,
+          example: '두목 이름표에 상처가 하나 늘었다.',
+          open: ['[data-tour="foe"]'],
+          ring: '[data-tour="foe"]',
+        }),
+        explain(() => ({
+          chapter: '2장 · 동료의 차례',
+          title: `다쳤을 때 버티는 법: ${term('stress')}와 ${term('consequence')}`,
+          body: `공격을 못 막으면 진 차이만큼 피해가 들어온다. 바로 쓰러지진 않는다. 먼저 ${term('stress')} 칸으로, 모자라면 ${josa(term('consequence'), '으로/로')} 버틴다.`,
+          example: `${josa(BOSS.name, '은/는')} 경비대와 싸우며 ${term('stress')} 1·2번 칸을 이미 썼다. 남은 건 ${bossLeft()}.`,
+          points: [
+            `${term('stress')}(1·2·3번 칸): 숨이 차거나 살짝 긁힌 정도. 피해보다 번호가 같거나 큰 빈칸 하나를 채우면 그 피해를 다 막는다. 장면이 끝나면 비워진다.`,
+            `${term('consequence')}(${term('mild')} 2 · ${term('moderate')} 4 · ${term('severe')} 6): 진짜로 다친 것. 적힌 만큼 피해를 막는 대신 "깊게 베인 어깨" 같은 ${term('aspect')}이 남는다.`,
+            `둘 다 써도 못 막으면 ${term('takenOut')}. 그 전에 스스로 ${term('concede')}하면 어떻게 물러날지 내가 정하고, ${josa(term('fatePoint'), '을/를')} 받는다.`,
+          ],
+          moreLabel: `${term('stress')} · ${term('consequence')} 자세히`,
+          open: ['[data-tour="foe"]'],
+          ring: '[data-tour="foe"]',
+        })),
+        explain({
+          chapter: '2장 · 동료의 차례',
+          title: `상처 카드에 꽂힌 핀: ${term('freeInvoke')}`,
+          body: `상대에게 ${josa(term('consequence'), '을/를')} 남기면 그 카드에 핀이 하나 꽂힌다. 핀 하나로 ${term('fatePoint')} 없이 한 번 ${term('invoke')}할 수 있다.`,
+          example: `"깊게 베인 어깨"의 핀은 ${josa(mateB.name, '이/가')} 남긴 것. 같은 편이라 나도 쓸 수 있다.`,
+          points: [
+            `쓰는 법: ${term('fatePoint')} 대신 핀 하나를 뺀다. 똑같이 +2를 받거나 다시 굴릴 수 있다.`,
+            `핀을 다 써도 ${term('aspect')}은 남는다. 그다음부턴 ${josa(term('fatePoint'), '을/를')} 내고 ${term('invoke')}한다.`,
+            `얻는 법: ${term('create_advantage')}에 성공하면 핀 1개, 대성공하면 2개. 상대에게 ${josa(term('consequence'), '을/를')} 남겨도 1개.`,
+            `${josa(term('boost'), '은/는')} 핀 없이도 한 번 공짜로 쓰고 사라지는 작은 기회.`,
+          ],
+          moreLabel: '쓰는 법 · 얻는 법',
+          open: ['[data-tour="aspects"]'],
+          ring: '[data-tour="aspects"]',
+        }),
+        gmSays(
+          '두목이 어깨를 감싸 쥐고 물러선다. 그래도 도끼는 여전히 매섭다. 정면으로 붙기 전에, 판을 우리 쪽으로 기울여 두는 게 좋겠다.',
+        ),
+        explain({
+          chapter: '2장 · 내 차례',
+          title: '이번엔 판을 기울이기',
+          body: `${josa(term('create_advantage'), '은/는')} 나 혼자만 좋은 게 아니다. 내가 만든 ${term('aspect')}의 핀은 동료도 쓸 수 있다.`,
+          example: '연기, 무너지는 대들보, 흩어진 곡식 자루. 무엇이든 이용해 보자.',
+          label: '2장 시작',
+        }),
+        { kind: 'lesson', lesson: 'create_advantage' },
+      ];
+    if (a === 'create_advantage')
+      return [
+        says(mateA.name, () => voiceA.followUp(P, myMadeAspect()?.text ?? null)),
+        {
+          kind: 'npc',
+          run: () =>
+            npcAttack(mateA, 6, {
+              invoke: myMadeAspect()?.id ?? null,
+              absorb: { slot: 'severe', text: '부러진 갈비뼈' },
+            }),
+        },
+        explain(() => {
+          const used = Object.values(room.getSnapshot().state.rolls).some(
+            (r) =>
+              r.active.characterId === findId(room.getSnapshot().state, mateA.name) &&
+              r.active.modifiers.some((m) => m.paidWith === 'free_invoke'),
+          );
+          return {
+            chapter: '3장 · 함께 싸우기',
+            title: used
+              ? `${josa(mateA.name, '이/가')} 내 ${term('aspect')}의 핀을 썼다`
+              : `${mateA.name}의 ${term('attack')}`,
+            body: used
+              ? `${josa(mateA.name, '은/는')} 내가 만든 ${josa(term('aspect'), '을/를')} ${term('freeInvoke')}해 +2를 받고, 두목에게 ${josa(term('severe'), '을/를')} 남겼다. ${josa(term('create_advantage'), '은/는')} 이렇게 동료의 공격을 받쳐 준다.`
+              : `${josa(mateA.name, '은/는')} 두목에게 ${josa(term('severe'), '을/를')} 남겼다. 내가 ${josa(term('aspect'), '을/를')} 붙였다면 동료가 그 핀으로 +2를 받았을 것이다.`,
+            example: `${josa(BOSS.name, '은/는')} 이제 ${bossLeft()}만 남았다.`,
+            open: ['[data-tour="foe"]'],
+            ring: '[data-tour="foe"]',
+          };
+        }),
+        says(mateA.name, voiceA.cheer(P)),
+        { kind: 'lesson', lesson: 'attack' },
+      ];
+    if (a === 'attack')
+      return [
+        gmSays(
+          `두목이 피 섞인 침을 뱉는다. "애송이들이…!" 남은 힘을 모두 끌어모아, 도끼가 ${P}에게 날아든다.`,
+        ),
+        { kind: 'lesson', lesson: 'defend' },
+      ];
+    return [
+      says(mateB.name, `놈은 이제 버틸 힘이 거의 없어. ${P}, 끝내자!`),
+      explain({
+        chapter: '마무리',
+        title: '이제 진짜 주사위로',
+        body: `네 가지 행동을 다 해 봤다. 이번엔 주사위를 미리 정해 두지 않는다. 행동도 ${term('approach')}도 자유. ${josa(BOSS.name, '을/를')} 쓰러뜨리면 장면이 끝난다.`,
+        example: `${josa(term('fatePoint'), '은/는')} 아끼지 않아도 된다. 다음 세션이 열리면 ${josa(term('refresh'), '으로/로')} 다시 채워진다.`,
+        points: [
+          `${josa(term('stunt'), '이/가')} 맞는 ${josa(term('approach'), '을/를')} 고르면 +2를 더 받는다.`,
+          `굴림이 아쉬우면 장면이나 두목의 ${josa(term('aspect'), '을/를')} ${term('invoke')}한다. 핀이 꽂힌 카드부터.`,
+          '내가 못 끝내도 괜찮다. 동료가 이어받는다.',
+        ],
+        moreLabel: '이길 방법',
+        label: '마무리 시작',
+      }),
+      { kind: 'lesson', lesson: 'free' },
+    ];
+  };
+
+  /** 마무리에서 내가 한 번 굴린 뒤에도 두목이 버티면 동료가 끝낸다 */
+  const finisher = (): Beat[] => [
+    says(mateA.name, voiceA.finish),
+    { kind: 'npc', run: () => npcAttack(mateA, 4, {}) },
+  ];
+
+  /** 끝난 세션을 닫고 이정표를 준다 */
+  const closeSession = () => {
+    if (room.getSnapshot().state.session) run(GM, { type: 'session.end', payload: {} });
+    run(GM, {
+      type: 'milestone.grant',
+      payload: {
+        characterIds: [meId, findId(state, mateA.name), findId(state, mateB.name)],
+        size: 'minor',
+      },
+    });
+  };
+
+  const milestoneIntro = explain({
+    chapter: '에필로그 · 성장',
+    title: `세션이 끝나면 ${term('milestone')}`,
+    body: `GM이 세션을 마치며 작은 ${josa(term('milestone'), '을/를')} 줬다. 혜택 하나를 골라 ${josa(P, '을/를')} 조금 바꿀 수 있다. 고르지 않고 넘겨도 된다.`,
+    example: '이번 이야기에서 겪은 일에 맞게 고르면 된다.',
+    points: [
+      `작은 ${term('milestone')}: 보통 세션이 끝날 때마다. 접근법 두 개 맞바꾸기, ${term('high')} 말고 ${term('aspect')} 하나 고쳐 쓰기, ${term('stunt')} 하나 바꾸기, 새 ${term('stunt')} 얻기 중 하나.`,
+      `중요한 ${term('milestone')}: 이야기 한 편(시나리오)이 끝날 때. 작은 혜택에 더해 ${term('approach')} 하나 +1.`,
+      `큰 ${term('milestone')}: 캠페인이 크게 뒤바뀔 때. ${term('refresh')} +1, ${term('high')}도 고쳐 쓸 수 있다.`,
+    ],
+    moreLabel: '이정표 세 가지',
+    open: ['[data-tour="party"]'],
+    ring: '[data-tour="party"]',
+    label: '혜택 고르기',
+  });
+
+  const epilogue = (): Beat[] => [
+    gmSays(
+      '두목이 쓰러지자 남은 도적들이 자루를 내던지고 달아난다. 마을 사람들이 물동이를 들고 몰려와 불길을 잡는다.',
+    ),
+    { kind: 'do', run: enterFeast, wait: 700 },
+    explain({
+      chapter: '에필로그',
+      title: '장면이 바뀌면',
+      body: `${term('stress')} 칸은 장면이 끝나면 비워진다. 장면 ${term('aspect')}과 ${josa(term('boost'), '은/는')} 사라지고, ${josa(term('consequence'), '은/는')} 나을 때까지 남는다.`,
+      example: '이제 불타는 창고가 아니라 마을 광장이다.',
+      open: ['[data-tour="aspects"]'],
+    }),
+    gmSays(
+      '그날 밤, 마을 광장에 모닥불이 피어오른다. 지켜 낸 곡식으로 구운 빵 냄새가 골목마다 번진다.',
+    ),
+    says(ELDER, '겨울 양식을 지켜 주셨소. 오늘 밤만큼은 마을이 다 대접하겠소!'),
+    says(mateA.name, voiceA.feast(P)),
+    says(mateB.name, voiceB.feast(P)),
+    gmSays('이렇게 첫 이야기가 끝난다.'),
+    { kind: 'do', run: closeSession, wait: 400 },
+    milestoneIntro,
+    { kind: 'milestone' },
+  ];
+
+  /** 이정표 혜택을 적용하고 재충전으로 다음 세션을 여는 데까지 */
+  const onMilestone = (choice: MilestoneChoice | null) => {
+    setMilestoneOpen(false);
+    let what = '이번엔 아무것도 바꾸지 않았다. 이정표는 미뤄 두지 않고 그 자리에서 쓰거나 넘긴다.';
+    if (choice?.kind === 'swap') {
+      const next = {
+        ...me.approaches,
+        [choice.a]: me.approaches[choice.b],
+        [choice.b]: me.approaches[choice.a],
+      };
+      run(ME, { type: 'character.update', payload: { id: meId, patch: { approaches: next } } });
+      what = `${term(choice.a)} ${sign(me.approaches[choice.a])} ↔ ${term(choice.b)} ${sign(me.approaches[choice.b])}. 숫자 합은 그대로, 잘하는 방식만 바뀌었다.`;
+    }
+    if (choice?.kind === 'aspect') {
+      run(ME, { type: 'aspect.update', payload: { aspectId: choice.aspectId, text: choice.text } });
+      what = `${term('aspect')} 하나를 "${choice.text}"${josa(choice.text, '으로/로').slice(choice.text.length)} 고쳐 썼다. 겪은 일이 캐릭터를 바꾼 것.`;
+    }
+    if (choice?.kind === 'swapStunt' || choice?.kind === 'newStunt') {
+      const idea = STUNT_IDEAS[pick.key]!.find((x) => x.id === choice.stuntId)!;
+      const stunts =
+        choice.kind === 'swapStunt'
+          ? me.stunts.map((x) => (x.id === choice.replace ? idea : x))
+          : [...me.stunts, idea];
+      run(ME, { type: 'character.update', payload: { id: meId, patch: { stunts } } });
+      what =
+        choice.kind === 'swapStunt'
+          ? `${josa(term('stunt'), '을/를')} "${idea.text}"${josa(idea.text, '으로/로').slice(idea.text.length)} 바꿨다.`
+          : `새 ${term('stunt')} "${idea.text}". ${term('stunt')} ${stunts.length}개라 ${term('refresh')}은 ${room.getSnapshot().state.characters[meId]!.refresh} 그대로.`;
+    }
+    setBeats([
+      explain({
+        chapter: '에필로그 · 성장',
+        title: choice ? `${josa(P, '이/가')} 조금 달라졌다` : '이번엔 넘겼다',
+        body: what,
+        example: `내 이름표를 열면 바뀐 모습이 보인다.`,
+        open: ['[data-tour="party"]'],
+        ring: '[data-tour="party"]',
+      }),
+      explain(() => {
+        const c = room.getSnapshot().state.characters[meId]!;
+        return {
+          chapter: '에필로그 · 재충전',
+          title: `${term('refresh')}: 다음 세션의 ${term('fatePoint')}`,
+          body: `세션이 끝난 지금 ${josa(term('fatePoint'), '은/는')} ${c.fatePoints}개. 다음 세션이 열리면 ${term('refresh')} 수치인 ${c.refresh}개까지 다시 채워진다. 이미 더 많으면 줄지 않는다.`,
+          points: [
+            `${term('stunt')} 3개까지는 ${term('refresh')} 3 그대로. 4개째부터 하나 늘 때마다 ${term('refresh')}이 1씩 준다 (최소 1).`,
+            `그래서 ${josa(term('stunt'), '을/를')} 많이 가질수록 세션마다 받는 ${josa(term('fatePoint'), '이/가')} 줄어든다. 재주냐, 운이냐를 고르는 셈.`,
+            `큰 ${josa(term('milestone'), '은/는')} ${josa(term('refresh'), '을/를')} 1 늘려 준다.`,
+          ],
+          moreLabel: `${term('stunt')}과 ${term('refresh')}`,
+          example: '다음 세션을 열어 직접 보자.',
+          open: ['[data-tour="party"]'],
+          ring: '[data-tour="party"]',
+          label: '다음 세션 열기',
+        };
+      }),
+      {
+        kind: 'do',
+        run: () => run(GM, { type: 'session.start', payload: { title: '두 번째 세션' } }),
+        wait: 600,
+      },
+      { kind: 'end' },
+    ]);
+  };
+
+  // 처음 한 번: 프롤로그를 깐다
+  const started = useRef(false);
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    window.setTimeout(() => setBeats(prologue()), 0);
+    // 첫 화면에서 한 번만 깐다
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const playBeat = (head: Beat, shift: () => void) => {
+    // 이야기가 이어지면 끝난 판정은 접고 대사창으로 돌아간다
+    if ((head.kind === 'line' || head.kind === 'lesson') && rollId) setDismissed(rollId);
+    switch (head.kind) {
+      case 'line': {
+        const text = typeof head.text === 'function' ? head.text() : head.text;
+        if (head.who === null) run(GM, { type: 'narration.post', payload: { text } });
+        else run(GM, { type: 'chat.post', payload: { text, as: head.who } });
+        const mate = [mateA, mateB].find((m) => m.name === head.who);
+        if (mate) setAllyKey(mate.key);
+        return;
+      }
+      case 'note':
+        setNotes([typeof head.note === 'function' ? head.note() : head.note]);
+        shift();
+        return;
+      case 'npc': {
+        const id = head.run();
+        if (!id) return shift();
+        setRollId(id);
+        setSettled(false);
+        setAction(null);
+        setApproach(null);
+        return;
+      }
+      case 'do':
+        head.run();
+        window.setTimeout(shift, head.wait ?? 0);
+        return;
+      case 'lesson':
+        setLesson(head.lesson);
+        shift();
+        return;
+      case 'milestone':
+        setMilestoneOpen(true);
+        shift();
+        return;
+      case 'end':
+        setFinished(true);
+        shift();
+        return;
+    }
+  };
+
+  const head = beats[0];
+  const beatBlocked = !!compel || !!prompt || notes.length > 0 || milestoneOpen;
+  const ranBeat = useRef<Beat | null>(null);
+  useEffect(() => {
+    if (!head || beatBlocked || ranBeat.current === head) return;
+    ranBeat.current = head;
+    const shift = () => setBeats((q) => (q[0] === head ? q.slice(1) : q));
+    // 렌더가 끝난 뒤에 처리한다 (박자마다 명령을 보내고 화면 상태를 바꾼다)
+    window.setTimeout(() => playBeat(head, shift), 0);
+    // 박자 하나는 한 번만 처리한다 (ranBeat). playBeat는 그때의 화면 값을 쓰면 된다
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [head, beatBlocked]);
+
+  /** 대사를 읽고 넘기거나 동료의 굴림을 보고 넘긴다 */
+  const storyWaiting = !!head && !beatBlocked && (head.kind === 'line' || head.kind === 'npc');
+  const advance = () => {
+    if (!storyWaiting) return;
+    if (head.kind === 'npc' && rollId) setDismissed(rollId);
+    setBeats((q) => (q[0] === head ? q.slice(1) : q));
+  };
+
+  // 마무리: 내가 한 번 굴렸는데도 두목이 버티면 동료가 이어받는다
+  const helped = useRef(false);
+  useEffect(() => {
+    if (lesson !== 'free' || !final || !roll || roll.active.characterId !== meId) return;
+    if (helped.current || boss.takenOut) return;
+    helped.current = true;
+    window.setTimeout(() => {
+      if (room.getSnapshot().state.characters[bossId]!.takenOut) return;
+      setBeats((q) => [...q, ...finisher()]);
+    }, 1400);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lesson, final, roll, meId, boss.takenOut, room, bossId]);
+
+  // 두목이 쓰러지면 에필로그로
+  const epilogued = useRef(false);
+  useEffect(() => {
+    if (!boss.takenOut || epilogued.current) return;
+    epilogued.current = true;
+    window.setTimeout(() => {
+      setLesson('story');
+      setBeats(epilogue());
+    }, 1600);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boss.takenOut]);
+
+  /** 튜토리얼 건너뛰기: 창고로 가서 바로 마무리 싸움. 이미 두목이 쓰러졌으면 이정표로 */
+  const skipGuide = () => {
+    setNotes([]);
+    if (boss.takenOut) {
+      if (milestoneOpen || finished) return;
+      const granted = !!room.getSnapshot().state.characters[meId]!.milestone;
+      setBeats(
+        granted
+          ? [{ kind: 'milestone' }]
+          : [{ kind: 'do', run: closeSession }, { kind: 'milestone' }],
+      );
+      return;
+    }
+    setBeats([]);
+    if (room.getSnapshot().state.scene?.name !== SCENE.name) enterGranary(room);
+    setLesson('free');
+  };
 
   const submitPrompt = () => {
     const text = draft.trim();
@@ -830,7 +1446,10 @@ function Table({
 
   const sceneAspects = Object.values(state.aspects).filter(
     (a) =>
-      !a.hidden && (a.ownerType !== 'character' || a.kind === 'boost' || a.kind === 'consequence'),
+      !a.hidden &&
+      (a.ownerType !== 'character' || a.kind === 'boost' || a.kind === 'consequence') &&
+      // 창고를 떠나면 두목의 상처 카드는 무대에서 내린다
+      !(a.ownerType === 'character' && a.ownerId === bossId && !atGranary),
   );
   const dealt = useDealt(sceneAspects, events);
   const lines = events.map((e) => describe(e, state)).filter((l) => l !== null);
@@ -900,16 +1519,16 @@ function Table({
   );
 
   const tour = useMemo((): Tour | undefined => {
-    if (compel || prompt) return undefined;
-    if (boss.takenOut)
+    if (compel || prompt || milestoneOpen) return undefined;
+    if (finished)
       return {
         open: [],
         coach: {
           step: 4,
           total: 4,
           clear: true,
-          title: `${josa(boss.name, '을/를')} 쓰러뜨렸다`,
-          body: `행동 고르기, 굴리기, ${term('aspect')} ${term('invoke')}까지 다 해 봤다. 이제 진짜 게임으로.`,
+          title: '첫 세션 완료',
+          body: `${P}의 첫 이야기가 끝났다. 동료와 함께 굴리고, ${term('invoke')}하고, ${josa(term('compel'), '을/를')} 받고, ${term('milestone')}까지 받았다. 이제 진짜 게임으로.`,
           links: [
             { href: '/create/', label: '캐릭터 만들기' },
             { href: '/rooms/new/', label: '친구들과 방 만들기' },
@@ -942,163 +1561,8 @@ function Table({
         },
       };
 
-    if (lesson === 'intro') {
-      const next = (label: string) => ({ label, onClick: () => setIntroStep((n) => n + 1) });
-      const total = 9;
-      const steps: Tour[] = [
-        {
-          open: [],
-          coach: {
-            step: 1,
-            total,
-            chapter: '시작하기',
-            title: 'TRPG는 다 같이 이야기를 만드는 놀이',
-            body: 'GM이 장면을 들려주면 나는 내 캐릭터가 뭘 할지 말로 정한다. 결과가 뻔하지 않을 때만 주사위를 굴린다.',
-            example: '정답은 없다. "내 캐릭터라면 어떻게 할까?"만 떠올리면 된다.',
-            points: ['이기고 지는 것보다 멋진 장면이 나오는 게 중요하다.'],
-            moreLabel: '이기면 끝일까',
-            next: next('확인'),
-          },
-        },
-        {
-          open: ['[data-tour="dialogue"]'],
-          ring: '[data-tour="dialogue"]',
-          coach: {
-            step: 2,
-            total,
-            chapter: '시작하기',
-            title: '대사창에는 GM이 들려주는 이야기',
-            body: '불타는 곡물 창고에 도적들이 튀어나왔다. 다락 위에선 도적 두목이 도끼를 들고 웃고 있다. 두목은 앞서 동료들과 싸우다 이미 크게 다쳤다.',
-            example: '"지금 무슨 상황이지?"부터 떠올리기',
-            points: ['새 장면이 열리면 언제나 여기부터 읽는다.'],
-            next: next('다 읽음'),
-          },
-        },
-        {
-          open: ['[data-tour="party"]'],
-          ring: '[data-tour="party"]',
-          coach: {
-            step: 3,
-            total,
-            chapter: '시작하기',
-            title: `내 캐릭터: ${pick.name}`,
-            body: `캐릭터는 숫자보다 짧은 문구로 설명한다. ${term('high')}은 "${pick.create.highConcept}", ${term('trouble')}은 ${josa(`"${pick.create.trouble}"`, '이다/다')}. 이런 문구를 ${term('aspect')}이라고 한다.`,
-            example: `${term('trouble')}은 일을 꼬이게 한다. 대신 그때마다 ${josa(term('fatePoint'), '을/를')} 받을 수 있다.`,
-            next: next('다음'),
-          },
-        },
-        {
-          open: ['[data-tour="aspects"]'],
-          ring: '[data-tour="aspects"]',
-          coach: {
-            step: 4,
-            total,
-            chapter: '시작하기',
-            title: `${term('aspect')}은 이 이야기의 "사실"`,
-            body: `장면 위에 붙은 꼬리표가 지금 장면의 ${term('aspect')}이다. 굴림이 아쉬울 때 ${term('fatePoint')} 1개를 내고 ${josa(term('aspect'), '을/를')} "${term('invoke')}"하면 +2를 받는다.`,
-            example: '쓸 때는 "불길을 등지면 두목이 못 다가와!"처럼 이유를 붙인다.',
-            points: [
-              `캐릭터 ${term('aspect')}: 어떤 사람인지 보여 주는 ${term('high')}, 발목을 잡는 ${term('trouble')}, 그 밖의 특징`,
-              `장면 ${term('aspect')}: 지금 장소와 상황에 대한 사실. 누구나 쓸 수 있음`,
-              `${term('aspect')}은 좋게도 나쁘게도 쓰인다. 불길은 나를 막기도, 적을 막기도 한다`,
-            ],
-            moreLabel: `${term('aspect')}의 종류`,
-            next: next('다음'),
-          },
-        },
-        {
-          open: ['[data-tour="party"]'],
-          ring: '[data-tour="party"]',
-          coach: {
-            step: 5,
-            total,
-            chapter: '시작하기',
-            title: `${josa(term('fatePoint'), '은/는')} 딱 ${me.fatePoints}개뿐`,
-            body: `이름표의 동전 하나가 ${term('fatePoint')} 1개. ${term('invoke')}할 때마다 하나씩 줄고, 저절로 늘지 않는다.`,
-            example: '그래서 진짜 중요한 굴림에만 쓴다.',
-            points: [
-              `쓸 때: ${term('invoke')}할 때마다 1개, ${josa(term('compel'), '을/를')} 거절할 때 1개`,
-              `다 쓰면 ${term('freeInvoke')}만 쓸 수 있다.`,
-              `얻는 법: GM의 ${josa(term('compel'), '을/를')} 받아들여 일이 꼬이게 두면 1개, 상대가 내 ${josa(term('aspect'), '을/를')} 나에게 불리하게 쓰면 1개`,
-              `세션이 새로 시작되면 ${pick.name}의 ${josa(term('fatePoint'), '은/는')} ${me.refresh}개까지 다시 채워진다. 이걸 ${term('refresh')}이라고 한다. 이미 그보다 많으면 줄지 않는다.`,
-              '곤란할 때 모으고, 중요한 순간에 써서 뒤집는 게 기본이다.',
-            ],
-            moreLabel: '쓰는 법 · 얻는 법',
-            next: next('다음'),
-          },
-        },
-        {
-          open: ['[data-tour="aspects"]'],
-          ring: '[data-tour="aspects"]',
-          coach: {
-            step: 6,
-            total,
-            chapter: '시작하기',
-            title: `카드에 꽂힌 핀: ${term('freeInvoke')}`,
-            body: `핀 하나로 그 ${josa(term('aspect'), '을/를')} ${term('fatePoint')} 없이 한 번 ${term('invoke')}할 수 있다.`,
-            example: `${BOSS.name}의 상처 카드에 꽂힌 핀은 동료들이 남긴 것. 나도 쓸 수 있다.`,
-            points: [
-              `쓰는 법: ${term('fatePoint')} 대신 핀 하나를 뺀다. 똑같이 +2를 받거나 다시 굴릴 수 있다.`,
-              `핀을 다 써도 ${term('aspect')}은 남는다. 그다음부턴 ${josa(term('fatePoint'), '을/를')} 내고 ${term('invoke')}한다.`,
-              `얻는 법: ${term('create_advantage')}에 성공하면 핀 1개, 대성공하면 2개가 꽂힌다. 상대에게 ${josa(term('consequence'), '을/를')} 남겨도 1개를 얻는다.`,
-              `${josa(term('boost'), '은/는')} ${term('fatePoint')} 없이 한 번 쓸 수 있고, 쓰면 사라진다.`,
-              `${josa(term('fatePoint'), '은/는')} 아껴야 하니 핀이 꽂힌 카드부터 쓴다.`,
-            ],
-            moreLabel: '쓰는 법 · 얻는 법',
-            next: next('다음'),
-          },
-        },
-        {
-          open: ['[data-tour="party"]'],
-          coach: {
-            step: 7,
-            total,
-            chapter: '시작하기',
-            title: `숫자에 붙는 이름: ${term('ladder')}`,
-            body: `수치마다 이름이 있다. "+3"보다 "양호"라고 하면 더 이야기 같다.`,
-            example: `${josa(pick.name, '은/는')} ${term(best[0])} 수치가 ${sign(best[1])} ${josa(LADDER_LABELS[best[1]] ?? '', '으로/로')} 가장 높다. 보통 사람은 +0 평범, 전문가는 +3 양호쯤.`,
-            points: [5, 4, 3, 2, 1, 0, -1, -2].map((n) => `${sign(n)} ${LADDER_LABELS[n]}`),
-            moreLabel: `${term('ladder')} 전체 보기`,
-            next: next('다음'),
-          },
-        },
-        {
-          open: ['[data-tour="party"]', '[data-tour="foe"]'],
-          ring: '[data-tour="party"]',
-          coach: {
-            step: 8,
-            total,
-            chapter: '시작하기',
-            title: `다쳤을 때 버티는 법: ${term('stress')}와 ${term('consequence')}`,
-            body: `공격을 못 막으면 진 차이만큼 피해가 들어온다. 바로 쓰러지진 않는다. 먼저 ${term('stress')} 칸으로, 모자라면 ${josa(term('consequence'), '으로/로')} 버틴다.`,
-            example: `무대 위 ${BOSS.name}의 이름표를 보면 칸이 거의 다 차 있다. 한두 번만 제대로 맞히면 쓰러진다.`,
-            points: [
-              `${term('stress')}(1·2·3번 칸): 숨이 차거나 살짝 긁힌 정도. 피해보다 번호가 같거나 큰 빈칸 하나를 채우면 그 피해를 다 막는다. 장면이 끝나면 비워진다.`,
-              `${term('consequence')}(${term('mild')} 2 · ${term('moderate')} 4 · ${term('severe')} 6): 진짜로 다친 것. 적힌 만큼 피해를 막는 대신 "삐끗한 발목" 같은 ${term('aspect')}이 남는다. 상대는 그걸로 ${term('freeInvoke')}을 1번 얻는다.`,
-              `둘 다 써도 못 막으면 탈락. 그 전에 스스로 ${term('concede')}하면 어떻게 물러날지 내가 정하고, ${josa(term('fatePoint'), '을/를')} 받는다.`,
-              `${josa(BOSS.name, '은/는')} ${term('stress')} 1·2번 칸과 ${term('moderate')}·${term('severe')}가 이미 차 있다.`,
-            ],
-            moreLabel: `${term('stress')} · ${term('consequence')} 자세히`,
-            next: next('다음'),
-          },
-        },
-        {
-          open: ['[data-tour="actions"]'],
-          ring: '[data-tour="actions"]',
-          coach: {
-            step: 9,
-            total,
-            chapter: '시작하기',
-            title: '행동은 딱 네 가지',
-            body: `뭘 하든 대사창 오른쪽의 네 행동 중 하나다. ${term('overcome')}, ${term('create_advantage')}, ${term('attack')}, ${term('defend')}. 1번부터 하나씩 해 본다.`,
-            example: '누를 곳만 빛난다. 빛나는 곳만 따라 누르면 된다.',
-            next: { label: '1장 시작', onClick: () => setLesson('overcome') },
-          },
-        },
-      ];
-      const t = steps[Math.min(introStep, steps.length - 1)]!;
-      return { ...t, guide: { focus: null } };
-    }
+    // 이야기 박자를 읽는 중: 안내 카드 없이 대사창만
+    if (lesson === 'story') return undefined;
 
     if (lesson === 'free') {
       if (busy && !(settled && (myOutcomeNow === 'fail' || myOutcomeNow === 'tie')))
@@ -1113,15 +1577,19 @@ function Table({
             body: `빛나는 ${term('aspect')} 카드를 누르고 +2를 고른다. ${term('fatePoint')} 1개가 들고, 핀이 꽂힌 카드는 무료.`,
           },
         };
+      if (beats.length > 0 || boss.takenOut || !atGranary) return undefined;
+      const atk = me.stunts.find((st) => st.bonus?.action === 'attack')?.bonus;
       return {
         open: [],
         coach: {
           step: 4,
           total: 4,
-          chapter: '자유 진행',
-          title: '자유 진행',
-          body: `네 가지 행동을 다 해 봤다. 이제 순서는 자유. ${josa(boss.name, '을/를')} 쓰러뜨리면 장면이 끝난다.`,
-          example: `2번 ${josa(term('create_advantage'), '으로/로')} ${josa(term('aspect'), '을/를')} 붙이고 3번 ${josa(term('attack'), '을/를')} 하면 더 쉽다.`,
+          chapter: '마무리',
+          title: `${josa(boss.name, '을/를')} 쓰러뜨리기`,
+          body: `이제 주사위는 진짜로 구른다. 행동도 ${term('approach')}도 자유. ${josa(boss.name, '은/는')} ${bossLeft()}만 남았다.`,
+          example: atk
+            ? `3번 ${term('attack')}에 ${josa(term(atk.approach), '을/를')} 고르면 ${term('stunt')} +2까지 받는다.`
+            : `2번 ${josa(term('create_advantage'), '으로/로')} ${josa(term('aspect'), '을/를')} 붙이고 3번 ${josa(term('attack'), '을/를')} 하면 더 쉽다.`,
         },
       };
     }
@@ -1328,9 +1796,14 @@ function Table({
   }, [
     compel,
     prompt,
+    milestoneOpen,
+    finished,
+    beats.length,
+    atGranary,
+    P,
+    bossLeft,
     boss,
     lesson,
-    introStep,
     pick,
     me,
     busy,
@@ -1353,7 +1826,7 @@ function Table({
     explainRoll,
   ]);
   const coach = tour?.coach;
-  const guided = (lesson !== 'free' || notes.length > 0) && !!tour && !tour.coach.clear;
+  const guided = (lesson !== 'free' || notes.length > 0) && !!tour && !tour.coach?.clear;
   const [coachHidden, setCoachHidden] = useState(false);
   // 안내를 숨겼더라도 다 끝낸 순간의 축하 카드는 한 번 다시 보여 준다
   const [clearShown, setClearShown] = useState(false);
@@ -1405,18 +1878,33 @@ function Table({
   const invokable = Object.values(state.aspects).filter(
     (a) => !a.hidden && (a.ownerType !== 'character' || a.ownerId === meId || a.freeInvokes > 0),
   ).length;
-  const lastLine = lines.at(-1);
-  const heroSpeaks = lastLine?.kind === 'chat' && lastLine.text.startsWith(`${pick.name}:`);
+  // 마지막 대사의 주인: GM 서술이면 GM, 누군가의 말이면 그 사람
+  const lastTalk = lines.filter((l) => l.kind === 'chat' || l.kind === 'gm').at(-1);
+  const talker =
+    lastTalk?.kind === 'chat' ? (/^([^:：]{1,16})[:：]/.exec(lastTalk.text)?.[1] ?? null) : null;
+  const heroSpeaks = talker === pick.name;
+  const ally = SAMPLE_CHARACTERS.find((s) => s.key === allyKey);
+  // 동료가 굴리는 판정이면 무대 앞에 그 동료가 선다
+  const rollerMate =
+    roll && roll.active.characterId !== meId && roll.active.characterId !== bossId
+      ? SAMPLE_CHARACTERS.find((s) => s.name === state.characters[roll.active.characterId]?.name)
+      : undefined;
 
   // ---------- 장면 극장 (design-system.md 32절) ----------
   const [tableOpen, setTableOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
   const dialogueEl = useDialogueTop<HTMLElement>();
   const [rerollMode, setRerollMode] = useState(false);
-  // 끝난 판정을 닫고 이야기로 돌아간 굴림
-  const [dismissed, setDismissed] = useState<string | null>(null);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && !e.repeat && document.querySelector('[data-beat-next]')) {
+        const t = e.target;
+        if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement) return;
+        if (t instanceof HTMLButtonElement && !t.hasAttribute('data-beat-next')) return;
+        e.preventDefault();
+        (document.querySelector('[data-beat-next]') as HTMLButtonElement | null)?.click();
+        return;
+      }
       if (e.key !== 'Tab' || e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       if (compel || prompt) return;
@@ -1431,7 +1919,11 @@ function Table({
   const pickingDefense = defending && roll?.status === 'awaiting_defense';
   const wantsAction = guided && tour?.guide?.focus === 'action';
   const rollMode =
-    !!roll && !stale && !pickingDefense && !(final && (dismissed === roll.id || wantsAction));
+    !!roll &&
+    !stale &&
+    !pickingDefense &&
+    // 끝난 판정은 이야기가 이어지면 (다음 대사) 접고 대사창으로 돌아간다
+    !(final && (dismissed === roll.id || wantsAction || (storyWaiting && head?.kind === 'line')));
 
   const choiceById = new Map(choices.map((c) => [c.aspect.id, c]));
   const canPlayNow = !!roll && settled && roll.status === 'open' && myRoll;
@@ -1451,7 +1943,7 @@ function Table({
     run(ME, { type: 'invoke.revoke', payload: { rollId: roll.id, side: 'active', aspectId } });
   };
 
-  const sceneArt = asset(SCENE.background);
+  const sceneArt = sceneImage(stageScene);
   const portraitFor = (c: Character | undefined) =>
     !c
       ? null
@@ -1505,7 +1997,7 @@ function Table({
       };
     }) ?? [];
 
-  const lastSpeaker = heroSpeaks ? pick.name : 'GM';
+  const lastSpeaker = talker ?? 'GM';
   const intent =
     roll && roll.targetId === bossId
       ? roll.defense
@@ -1516,16 +2008,31 @@ function Table({
   return (
     <main className={th.theater} data-mode={rollMode ? 'roll' : 'story'} data-coach-region="">
       <div className={th.bg} style={{ backgroundImage: `url(${sceneArt})` }} />
+      {/* 동료: 창고에서는 방금 말하거나 굴린 동료가 내 뒤에 작게, 마을에서는 둘 다 무대에 선다 */}
+      {(atGranary ? (ally ? [ally] : []) : allyKey ? [mateA, mateB] : []).map(
+        (m, i) =>
+          !(rollMode && rollerMate) && (
+            <img
+              key={m.key}
+              className={`${th.cast} ${atGranary || i === 0 ? styles.ally : th.foe} ${styles.mate}`}
+              src={asset(m.image)}
+              alt={m.name}
+              data-focus={talker === m.name || undefined}
+            />
+          ),
+      )}
       <img
+        key={rollMode && rollerMate ? rollerMate.key : 'me'}
         className={`${th.cast} ${th.hero}`}
-        src={asset(pick.image)}
-        alt={pick.name}
+        src={asset((rollMode && rollerMate ? rollerMate : pick).image)}
+        alt={(rollMode && rollerMate ? rollerMate : pick).name}
         data-focus={heroSpeaks || undefined}
       />
       <img
         className={`${th.cast} ${th.foe}`}
         src={asset(SCENE.bossImage)}
         alt={boss.name}
+        hidden={!atGranary}
         data-out={boss.takenOut || undefined}
         data-hit={
           (final &&
@@ -1535,11 +2042,11 @@ function Table({
         }
       />
 
-      <SceneAmbience ambience={state.scene?.ambience} />
+      <SceneAmbience ambience={stageScene?.ambience} />
 
       <header className={th.top}>
         <PageNav tone="stage" />
-        <h1 key={state.scene?.id ?? 'none'}>{state.scene?.name}</h1>
+        <h1 key={stageScene?.id ?? 'none'}>{stageScene?.name}</h1>
       </header>
       <div className={th.tools}>
         <button type="button" className={th.tableBtn} onClick={() => setTableOpen(true)}>
@@ -1578,7 +2085,7 @@ function Table({
       <div className={th.myPlate} data-tour="party">
         <Nameplate character={me} sub={pick.create.highConcept} me />
       </div>
-      <div className={th.foePlate} data-tour="foe">
+      <div className={th.foePlate} data-tour="foe" hidden={!atGranary}>
         <Nameplate character={boss} sub={BOSS.highConcept} />
       </div>
       {rollMode && intent && (
@@ -1763,10 +2270,17 @@ function Table({
             결과 확정
           </button>
         )}
-        {final && roll && (
-          <button type="button" className={th.btn} onClick={() => setDismissed(roll.id)}>
-            이야기로
+        {final && roll && storyWaiting && head?.kind === 'npc' ? (
+          <button type="button" className={th.btn} data-beat-next="" onClick={advance}>
+            다음 ▸
           </button>
+        ) : (
+          final &&
+          roll && (
+            <button type="button" className={th.btn} onClick={() => setDismissed(roll.id)}>
+              이야기로
+            </button>
+          )
         )}
       </div>
 
@@ -1774,7 +2288,11 @@ function Table({
         <Presence show={showCoach}>
           {coach && showCoach && (
             <CoachMark
-              key={coach.clear ? 'clear' : `${lesson}:${introStep}:${coach.step}:${coach.title}`}
+              key={
+                coach.clear
+                  ? 'clear'
+                  : `${lesson}:${coach.chapter ?? ''}:${coach.step}:${coach.title}`
+              }
               coach={coach}
               hideLabel={guided ? '튜토리얼 건너뛰기' : '안내 숨기기'}
               anchor={
@@ -1788,8 +2306,7 @@ function Table({
               pinned={guided}
               onHide={() => {
                 if (!guided) return setCoachHidden(true);
-                setLesson('free');
-                setNotes([]);
+                skipGuide();
               }}
             />
           )}
@@ -1817,6 +2334,12 @@ function Table({
             </button>
             {error && <span className={th.error}>{error}</span>}
           </div>
+          {storyWaiting && head?.kind === 'line' && (
+            <button type="button" className={styles.beatNext} data-beat-next="" onClick={advance}>
+              다음 <span aria-hidden>▸</span>
+              <kbd>Enter</kbd>
+            </button>
+          )}
         </div>
         <div className={th.menu}>
           <ActionMenu
@@ -1825,6 +2348,9 @@ function Table({
             approach={approach}
             disabled={
               (busy && !defending) ||
+              lesson === 'story' ||
+              beats.length > 0 ||
+              milestoneOpen ||
               !!compel ||
               !!prompt ||
               me.takenOut === true ||
@@ -1941,6 +2467,21 @@ function Table({
                 </button>
               </div>
             </form>
+          </div>
+        )}
+      </Presence>
+
+      <Presence show={milestoneOpen}>
+        {milestoneOpen && (
+          <div className={styles.overlay} data-overlay="">
+            <MilestonePicker
+              character={me}
+              aspects={Object.values(state.aspects).filter(
+                (a) => a.ownerType === 'character' && a.ownerId === meId,
+              )}
+              ideas={STUNT_IDEAS[pick.key] ?? []}
+              onDone={onMilestone}
+            />
           </div>
         )}
       </Presence>

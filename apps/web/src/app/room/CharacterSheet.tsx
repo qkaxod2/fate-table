@@ -36,8 +36,9 @@ interface Props {
 
 const MILESTONE_LABEL = { minor: '작은', significant: '중요한', major: '큰' } as const;
 const MILESTONE_HELP = {
-  minor: '접근법 두 개 값 맞바꾸기, 특기 하나 바꾸기, 특성 하나 문구 고치기 중 하나',
-  significant: '작은 이정표에 더해 접근법 하나 +1 또는 특기 하나 추가',
+  minor:
+    '접근법 두 개 값 맞바꾸기, 핵심 컨셉 말고 특성 하나 고쳐 쓰기, 특기 하나 바꾸기, 새 특기 얻기(4개째부터 재충전 −1) 중 하나',
+  significant: '작은 이정표에 더해 접근법 하나 +1',
   major: '중요한 이정표에 더해 핵심 컨셉도 고쳐 쓰기 가능',
 } as const;
 
