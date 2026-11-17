@@ -66,7 +66,7 @@ import { sceneImage } from '@/lib/ambience';
 import { StageFxMenu } from './StageFxMenu';
 import { toast, Toaster } from '@/components/ui/Toast';
 import { useSceneAmbience } from '@/fx/ambience';
-import { playSfx, sfxEnabled, sfxForEvents, sfxForOutcome } from '@/fx/sfx';
+import { playSfx, sfxForEvents, sfxForOutcome } from '@/fx/sfx';
 import { ApiError } from '@/lib/api';
 import { asset } from '@/lib/asset';
 import { Presence } from '@/lib/motion';
@@ -84,6 +84,7 @@ import { DamagePrompt } from './DamagePrompt';
 import { FormatBar, formatShortcut } from '@/components/ui/FormatBar';
 import { GmBar, GmPanel, NarrationInput, SceneStarter, type GmOpen } from './GmConsole';
 import { RoomSettings } from './RoomSettings';
+import { SoundControl } from '@/components/ui/SoundControl';
 import rt from './RoomTheater.module.css';
 import styles from './room.module.css';
 import { Trackers } from './Trackers';
@@ -585,7 +586,6 @@ export function RoomTable({
           : null;
 
   // ---------- 효과음 ----------
-  const [sfxOn, setSfxOn] = useState(sfxEnabled);
   // 장소·날씨·불길에 맞는 배경음이 낮게 깔린다 (설정에서 끄거나 줄인다)
   useSceneAmbience(state.scene);
   const heard = useRef<number | null>(null);
@@ -1080,13 +1080,14 @@ export function RoomTable({
         <button type="button" className={th.tableBtn} onClick={() => setTableOpen(true)}>
           탁자 보기<kbd>Tab</kbd>
         </button>
+        <span className={rt.sound} data-ink="night">
+          <SoundControl />
+        </span>
         <span className={rt.settings} data-ink="night">
           <RoomSettings
             isGm={isGm}
             diceMode={diceMode}
             onDiceMode={setDiceMode}
-            sfxOn={sfxOn}
-            onSfx={setSfxOn}
             onPalette={() => setPalette(true)}
             onHelp={() => setHelp(true)}
             onExit={() => setExitOpen(true)}

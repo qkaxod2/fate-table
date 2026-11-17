@@ -60,7 +60,8 @@ import {
 } from '@/content/tutorialStory';
 import { sceneImage } from '@/lib/ambience';
 import { useSceneAmbience } from '@/fx/ambience';
-import { playSfx, setSfxEnabled, sfxEnabled, sfxForEvents, sfxForOutcome } from '@/fx/sfx';
+import { playSfx, sfxForEvents, sfxForOutcome } from '@/fx/sfx';
+import { SoundControl } from '@/components/ui/SoundControl';
 import { asset } from '@/lib/asset';
 import { Presence, reducedMotion } from '@/lib/motion';
 import { Typewriter } from '@/components/ui/Typewriter';
@@ -419,8 +420,6 @@ function Table({
   const [notes, setNotes] = useState<Note[]>([]);
   // 결과 해설 카드를 이미 본 굴림
   const [explained, setExplained] = useState<string | null>(null);
-  // 캐릭터를 고른 뒤에만 그려지는 화면이라 처음부터 브라우저 설정을 읽어도 된다
-  const [sfxOn, setSfxOn] = useState(sfxEnabled);
   // 장소·날씨·불길에 맞는 배경음이 낮게 깔린다 (설정에서 끄거나 줄인다)
   useSceneAmbience(stageScene);
 
@@ -2068,16 +2067,9 @@ function Table({
             </option>
           ))}
         </select>
-        <button
-          type="button"
-          aria-pressed={sfxOn}
-          onClick={() => {
-            setSfxEnabled(!sfxOn);
-            setSfxOn(!sfxOn);
-          }}
-        >
-          소리 {sfxOn ? '켜짐' : '꺼짐'}
-        </button>
+        <span className={styles.sound} data-ink="night">
+          <SoundControl />
+        </span>
         <button type="button" onClick={onRestart}>
           처음부터
         </button>

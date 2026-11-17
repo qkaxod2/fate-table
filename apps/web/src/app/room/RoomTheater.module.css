@@ -318,3 +318,8 @@
 .cast figcaption {
   display: none;
 }
+
+/* 스피커 단추는 휴대폰에서도 남긴다 (다른 도구는 좁은 화면에서 숨는다) */
+.sound.sound.sound {
+  display: contents;
+}

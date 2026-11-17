@@ -1137,3 +1137,8 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* 머리글 도구 줄의 스피커 단추. 휴대폰에서도 남긴다 (다른 도구는 좁은 화면에서 숨는다) */
+.sound.sound.sound {
+  display: contents;
+}
