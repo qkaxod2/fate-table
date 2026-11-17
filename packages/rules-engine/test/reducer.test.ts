@@ -456,6 +456,32 @@ describe('milestones', () => {
     expect(t.state.characters.a!.approaches.sneaky).toBe(4);
   });
 
+  it('lets a minor milestone buy one new stunt and lowers refresh from the fourth (FAE)', () => {
+    const t = table();
+    const st = (id: string) => ({
+      id,
+      text: id,
+      kind: 'bonus' as const,
+      bonus: { approach: 'careful' as const, action: 'defend' as const, value: 2 as const },
+    });
+    const grow = (stunts: ReturnType<typeof st>[]) =>
+      t.run(P1, { type: 'character.update', payload: { id: 'a', patch: { stunts } } });
+    const minor = () =>
+      t.run(GM, { type: 'milestone.grant', payload: { characterIds: ['a'], size: 'minor' } });
+    minor();
+    expect(() => grow([st('x'), st('y')])).toThrow();
+    grow([st('x')]);
+    expect(t.state.characters.a!.refresh).toBe(3);
+    minor();
+    grow([st('x'), st('y')]);
+    minor();
+    grow([st('x'), st('y'), st('z')]);
+    expect(t.state.characters.a!.refresh).toBe(3);
+    minor();
+    grow([st('x'), st('y'), st('z'), st('w')]);
+    expect(t.state.characters.a!.refresh).toBe(2);
+  });
+
   it('lets the owner write a backstory any time without spending a milestone', () => {
     const t = table();
     const story = {

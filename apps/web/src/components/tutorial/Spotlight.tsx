@@ -98,7 +98,8 @@ export function Spotlight({ open, ring }: Props) {
     // 처음 한 번은 꼭 다시 그리게 (고리가 없어진 단계에서 지난 고리가 남지 않도록)
     let lastRing: Box[] | null = null;
     const tick = () => {
-      const h = open
+      // 고리를 두른 곳은 눌러야 할 곳이라 어둠도 뚫는다 (open에 빠져 있어도 누를 수 있게)
+      const h = [...open, ...(ring ? [ring] : [])]
         .flatMap((sel) => [...document.querySelectorAll(sel)])
         // 안내 말풍선은 어둠보다 위에 떠 있어서 따로 뚫을 필요가 없다 (뚫으면 둘레에 밝은 테가 생긴다)
         .filter((el) => !el.hasAttribute('data-coach'))

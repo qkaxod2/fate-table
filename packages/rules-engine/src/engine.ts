@@ -317,7 +317,8 @@ const resolvers: Resolvers = {
       if (!c.milestone) throw new CommandError('FORBIDDEN_ROLE', 'needs a milestone');
       if (p.patch.approaches && !isGrowth(c, p.patch.approaches, c.milestone))
         throw new CommandError('INVALID_CHARACTER', 'APPROACH_SPREAD');
-      if (p.patch.stunts && c.milestone === 'minor' && p.patch.stunts.length > c.stunts.length)
+      // 이정표 하나로 새 특기는 하나까지 (4개째부터는 재충전이 1씩 준다: refreshFor)
+      if (p.patch.stunts && p.patch.stunts.length > c.stunts.length + 1)
         throw new CommandError('INVALID_CHARACTER', 'TOO_MANY_STUNTS');
     }
     const patch = {
