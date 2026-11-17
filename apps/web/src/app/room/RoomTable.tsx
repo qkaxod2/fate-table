@@ -48,6 +48,7 @@ import { TableView, type Seat } from '@/components/theater/TableView';
 import { consequenceDepth, TraitCard } from '@/components/theater/TraitCard';
 import th from '@/components/theater/theater.module.css';
 import { tagKey, useDealt } from '@/components/theater/useDealt';
+import { DialogueGrip } from '@/components/theater/DialogueGrip';
 import { useDialogueTop } from '@/components/theater/useDialogueTop';
 import { SceneFade } from '@/components/scene/SceneFade';
 import { OUTCOME_FACES, pickFace, StageCast, type CastMember } from '@/components/scene/StageCast';
@@ -1469,6 +1470,7 @@ export function RoomTable({
         data-ink="night"
         data-log={logOpen || undefined}
       >
+        <DialogueGrip />
         {me && !busyRoll && (
           <div className={rt.picks} data-ink="night">
             {controllable.length > 1 && (

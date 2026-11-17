@@ -238,6 +238,8 @@
 
 .log[data-variant='book'] {
   min-height: 0;
+  /* 스크롤은 바깥 글 칸이 맡는다. 여기서도 스크롤 칸이 되면 탭이 이 안에 붙어 함께 밀려 올라간다 */
+  overflow: visible;
   padding: var(--s-3) var(--s-6) var(--s-3) var(--s-6);
   border: 0;
   border-radius: 0;
@@ -247,7 +249,9 @@
   scrollbar-color: var(--paper-edge) transparent;
 }
 
+/* 책 본문은 바깥 칸(대사창 글 칸)이 스크롤하므로, 탭은 그 칸 맨 위에 딱 붙는다 (위로 잘리지 않게) */
 .log[data-variant='book'] .tabs {
+  top: 0;
   margin: calc(var(--s-3) * -1) calc(var(--s-6) * -1) var(--s-3) calc(var(--s-6) * -1);
   padding: var(--s-2) var(--s-6) 0 var(--s-6);
   border-bottom: 1px solid var(--paper-edge);

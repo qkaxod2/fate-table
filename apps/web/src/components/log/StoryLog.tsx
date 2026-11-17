@@ -52,9 +52,11 @@ export function StoryLog({ lines, undone, onUndo, sending = [], variant = 'panel
     lastTab.current = tab;
     // 기록을 품은 스크롤 칸(기록 자신이나 방의 오른쪽 열)만 내린다. 페이지 전체가 스크롤되는
     // 좁은 화면에서 scrollIntoView를 쓰면 화면이 통째로 기록까지 끌려 내려갔다
-    const el = scrollParent(box.current);
+    // 책 본문은 감싼 글 칸이 스크롤 칸이다. 아직 넘치지 않았다고 그 바깥(휴대폰 대사창)을 내리면
+    // 화자 이름표가 위로 밀려 가려지므로, 넘치든 아니든 가장 가까운 스크롤 칸에서 멈춘다
+    const el = scrollParent(box.current, variant === 'book');
     el?.scrollTo({ top: el.scrollHeight, behavior: jump ? 'auto' : 'smooth' });
-  }, [shown.length, tab, sending.length]);
+  }, [shown.length, tab, sending.length, variant]);
 
   const open = (t: Tab) => {
     setSeen((x) => ({ ...x, [tab]: lastSeq(tab), [t]: lastSeq(t) }));
@@ -167,10 +169,11 @@ function BookLine({ line, typing }: { line: LogLine; typing: boolean }) {
 }
 
 /** 스스로 스크롤되는 가장 가까운 칸. 문서 자체는 고르지 않는다 */
-function scrollParent(from: HTMLElement | null): HTMLElement | null {
+function scrollParent(from: HTMLElement | null, nearest = false): HTMLElement | null {
   for (let el = from; el && el !== document.body; el = el.parentElement) {
     const y = getComputedStyle(el).overflowY;
-    if ((y === 'auto' || y === 'scroll') && el.scrollHeight > el.clientHeight) return el;
+    if ((y === 'auto' || y === 'scroll') && (nearest || el.scrollHeight > el.clientHeight))
+      return el;
   }
   return null;
 }
