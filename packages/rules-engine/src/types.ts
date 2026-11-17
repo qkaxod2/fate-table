@@ -17,6 +17,18 @@ export type StageFxKind = (typeof STAGE_FX)[number];
 
 /** 범용 기본 배경 (그림은 웹의 public/backdrops/<id>.webp) */
 export const BACKDROPS = [
+  // 현대
+  'classroom',
+  'office',
+  'cafe',
+  'store',
+  'street',
+  'residential',
+  'subway',
+  'park',
+  'rooftop',
+  'apartment',
+  // 판타지
   'forest',
   'village',
   'tavern',

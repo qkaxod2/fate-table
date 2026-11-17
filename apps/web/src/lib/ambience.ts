@@ -3,6 +3,16 @@ import { asset } from './asset';
 
 /** 범용 기본 배경 이름 (design-system.md 33절) */
 export const BACKDROP_LABELS: Record<Backdrop, string> = {
+  classroom: '교실',
+  office: '사무실',
+  cafe: '카페',
+  store: '편의점',
+  street: '도심 거리',
+  residential: '주택가',
+  subway: '지하철역',
+  park: '공원',
+  rooftop: '옥상',
+  apartment: '거실',
   forest: '숲길',
   village: '마을 광장',
   tavern: '선술집',
@@ -14,6 +24,42 @@ export const BACKDROP_LABELS: Record<Backdrop, string> = {
   ruins: '폐허',
   alley: '뒷골목',
 };
+
+/** 고르는 판에서 나누어 보이는 묶음 */
+export const BACKDROP_GENRES: ReadonlyArray<{ id: string; label: string; items: Backdrop[] }> = [
+  {
+    id: 'modern',
+    label: '현대',
+    items: [
+      'classroom',
+      'office',
+      'cafe',
+      'store',
+      'street',
+      'residential',
+      'subway',
+      'park',
+      'rooftop',
+      'apartment',
+    ],
+  },
+  {
+    id: 'fantasy',
+    label: '판타지',
+    items: [
+      'forest',
+      'village',
+      'tavern',
+      'castle',
+      'dungeon',
+      'harbor',
+      'plains',
+      'mountain',
+      'ruins',
+      'alley',
+    ],
+  },
+];
 
 export const TIME_LABELS: Record<SceneTime, string> = {
   day: '낮',
