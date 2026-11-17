@@ -21075,7 +21075,7 @@ var resolvers = {
       if (!c.milestone) throw new CommandError("FORBIDDEN_ROLE", "needs a milestone");
       if (p.patch.approaches && !isGrowth(c, p.patch.approaches, c.milestone))
         throw new CommandError("INVALID_CHARACTER", "APPROACH_SPREAD");
-      if (p.patch.stunts && c.milestone === "minor" && p.patch.stunts.length > c.stunts.length)
+      if (p.patch.stunts && p.patch.stunts.length > c.stunts.length + 1)
         throw new CommandError("INVALID_CHARACTER", "TOO_MANY_STUNTS");
     }
     const patch = {
