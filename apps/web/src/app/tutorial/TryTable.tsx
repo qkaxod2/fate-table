@@ -37,6 +37,7 @@ import { Nameplate } from '@/components/theater/Nameplate';
 import { TableView } from '@/components/theater/TableView';
 import { consequenceDepth, TraitCard } from '@/components/theater/TraitCard';
 import th from '@/components/theater/theater.module.css';
+import { useDialogueTop } from '@/components/theater/useDialogueTop';
 import { DICE_MODES, DiceTray, saveDiceMode, type DiceMode } from '@/components/roll/DiceTray';
 import type { InvokeChoice } from '@/components/roll/InvokeTray';
 import { CoachMark, type Coach } from '@/components/tutorial/CoachMark';
@@ -152,20 +153,21 @@ const COACH_SHY = [
 
 /** 장면 꼬리표 자리 (화면 비율 %): 이야기 중에는 장면 여기저기, 판정 중에는 판정판 둘레 */
 const TAG_SPOTS: ReadonlyArray<readonly [number, number]> = [
-  [40, 46],
-  [45, 17],
-  [57, 31],
-  [36, 28],
-  [52, 52],
-  [62, 12],
+  [40, 40],
+  [44, 14],
+  [51, 27],
+  [49, 53],
+  [58, 40],
+  [33, 53],
 ];
+/* 판정 중에는 판정판과 손패를 가리지 않게 양옆 두 줄로 선다 */
 const TAG_SPOTS_ROLL: ReadonlyArray<readonly [number, number]> = [
-  [5, 52],
-  [27, 3],
-  [74, 56],
-  [75, 14],
-  [6, 68],
-  [77, 70],
+  [3, 40],
+  [77, 40],
+  [3, 52],
+  [77, 52],
+  [3, 64],
+  [77, 64],
 ];
 
 const sign = (n: number) => `${n >= 0 ? '+' : ''}${n}`;
@@ -214,7 +216,6 @@ function setupRoom(pick: SampleCharacter): LocalRoom {
   room.run(GM, { type: 'scene.start', payload: { name: SCENE.name, aspects: SCENE.aspects } });
   // 불타는 창고: 배경 위에 화재 분위기를 깐다 (불빛 · 그을음 · 불티)
   room.run(GM, { type: 'scene.mood', payload: { conditions: ['fire'] } });
-  room.run(GM, { type: 'narration.post', payload: { text: SCENE.opening } });
   // 튜토리얼이 길어지지 않게 두목은 이미 많이 다친 채로 시작한다: 스트레스 1·2번 칸과 중상·중태가 차 있다
   const bossId = findId(room.getSnapshot().state, BOSS.name);
   const hurt = (
@@ -239,6 +240,8 @@ function setupRoom(pick: SampleCharacter): LocalRoom {
       { slot: 'severe', text: '부러진 갈비뼈' },
     ]),
   ]);
+  // 여는 서술은 맨 마지막에 올린다: 대사창이 상처 기록이 아니라 GM의 이야기로 시작한다
+  room.run(GM, { type: 'narration.post', payload: { text: SCENE.opening } });
   return room;
 }
 
@@ -703,7 +706,7 @@ function Table({
         chapter,
         step: 4,
         title: `${josa(term('freeInvoke'), '은/는')} ${term('fatePoint')} 없이 받는 +2`,
-        body: `방금 지은 ${term('aspect')}이 무대 아래 카드로 붙었다. 꽂힌 핀 수만큼 ${term('fatePoint')} 없이 ${term('invoke')}할 수 있다.`,
+        body: `방금 지은 ${term('aspect')}이 장면에 꼬리표로 붙었다. 꽂힌 핀 수만큼 ${term('fatePoint')} 없이 ${term('invoke')}할 수 있다.`,
         points: [
           `${term('freeInvoke')}은 이 ${term('aspect')}을 만든 나나 동료가 쓸 수 있다.`,
           `다 써도 ${term('aspect')}은 장면에 남는다. 그 뒤로는 ${josa(term('fatePoint'), '을/를')} 내고 ${term('invoke')}하면 된다.`,
@@ -731,7 +734,7 @@ function Table({
         ring: '[data-tour="party"]',
         example:
           a === 'defend'
-            ? `내 기록지에서 ${term('stress')} 칸과 ${term('consequence')} 줄 확인`
+            ? `내 이름표에서 ${term('stress')} 칸과 ${term('consequence')} 칸 확인`
             : `${josa(BOSS.name, '은/는')} 이제 ${term('stress')} 3번 칸과 ${term('mild')}만 남았다. 조금만 더`,
         label: '다음',
       });
@@ -783,7 +786,7 @@ function Table({
         ? `${term('fatePoint')} +1, 이야기가 꼬였다`
         : `${term('fatePoint')} 1개를 내고 막았다`,
       body: accepted
-        ? `기록지의 동전이 하나 늘었다. 지금 곤란해진 대신 나중에 판을 뒤집을 힘을 얻은 것.`
+        ? `이름표의 동전이 하나 늘었다. 지금 곤란해진 대신 나중에 판을 뒤집을 힘을 얻은 것.`
         : `거절은 언제든 할 수 있지만 ${josa(term('fatePoint'), '이/가')} 든다. 대개는 받아들이는 편이 이득.`,
       open: ['[data-tour="party"]'],
       ring: '[data-tour="party"]',
@@ -963,7 +966,7 @@ function Table({
             step: 2,
             total,
             chapter: '시작하기',
-            title: '책 본문은 GM이 들려주는 이야기',
+            title: '대사창에는 GM이 들려주는 이야기',
             body: '불타는 곡물 창고에 도적들이 튀어나왔다. 다락 위에선 도적 두목이 도끼를 들고 웃고 있다. 두목은 앞서 동료들과 싸우다 이미 크게 다쳤다.',
             example: '"지금 무슨 상황이지?"부터 떠올리기',
             points: ['새 장면이 열리면 언제나 여기부터 읽는다.'],
@@ -991,7 +994,7 @@ function Table({
             total,
             chapter: '시작하기',
             title: `${term('aspect')}은 이 이야기의 "사실"`,
-            body: `무대 아래 카드들이 지금 장면의 ${term('aspect')}이다. 굴림이 아쉬울 때 ${term('fatePoint')} 1개를 내고 ${josa(term('aspect'), '을/를')} "${term('invoke')}"하면 +2를 받는다.`,
+            body: `장면 위에 붙은 꼬리표가 지금 장면의 ${term('aspect')}이다. 굴림이 아쉬울 때 ${term('fatePoint')} 1개를 내고 ${josa(term('aspect'), '을/를')} "${term('invoke')}"하면 +2를 받는다.`,
             example: '쓸 때는 "불길을 등지면 두목이 못 다가와!"처럼 이유를 붙인다.',
             points: [
               `캐릭터 ${term('aspect')}: 어떤 사람인지 보여 주는 ${term('high')}, 발목을 잡는 ${term('trouble')}, 그 밖의 특징`,
@@ -1010,8 +1013,8 @@ function Table({
             total,
             chapter: '시작하기',
             title: `${josa(term('fatePoint'), '은/는')} 딱 ${me.fatePoints}개뿐`,
-            body: `기록지의 동전 하나가 ${term('fatePoint')} 1개. ${term('invoke')}할 때마다 하나씩 줄고, 저절로 늘지 않는다.`,
-            example: '그래서 진짜 중요한 굴림에만 써요.',
+            body: `이름표의 동전 하나가 ${term('fatePoint')} 1개. ${term('invoke')}할 때마다 하나씩 줄고, 저절로 늘지 않는다.`,
+            example: '그래서 진짜 중요한 굴림에만 쓴다.',
             points: [
               `쓸 때: ${term('invoke')}할 때마다 1개, ${josa(term('compel'), '을/를')} 거절할 때 1개`,
               `다 쓰면 ${term('freeInvoke')}만 쓸 수 있다.`,
@@ -1065,7 +1068,7 @@ function Table({
             step: 8,
             total,
             chapter: '시작하기',
-            title: `다치면 이렇게 버텨요: ${term('stress')}와 ${term('consequence')}`,
+            title: `다쳤을 때 버티는 법: ${term('stress')}와 ${term('consequence')}`,
             body: `공격을 못 막으면 진 차이만큼 피해가 들어온다. 바로 쓰러지진 않는다. 먼저 ${term('stress')} 칸으로, 모자라면 ${josa(term('consequence'), '으로/로')} 버틴다.`,
             example: `무대 위 ${BOSS.name}의 이름표를 보면 칸이 거의 다 차 있다. 한두 번만 제대로 맞히면 쓰러진다.`,
             points: [
@@ -1086,7 +1089,7 @@ function Table({
             total,
             chapter: '시작하기',
             title: '행동은 딱 네 가지',
-            body: `뭘 하든 아래 목차의 네 행동 중 하나다. ${term('overcome')}, ${term('create_advantage')}, ${term('attack')}, ${term('defend')}. 1번부터 하나씩 해 본다.`,
+            body: `뭘 하든 대사창 오른쪽의 네 행동 중 하나다. ${term('overcome')}, ${term('create_advantage')}, ${term('attack')}, ${term('defend')}. 1번부터 하나씩 해 본다.`,
             example: '누를 곳만 빛난다. 빛나는 곳만 따라 누르면 된다.',
             next: { label: '1장 시작', onClick: () => setLesson('overcome') },
           },
@@ -1105,7 +1108,7 @@ function Table({
           coach: {
             step: 4,
             total: 4,
-            title: `${term('aspect')} ${term('invoke')}로 뒤집기`,
+            title: `${josa(`${term('aspect')} ${term('invoke')}`, '으로/로')} 뒤집기`,
             body: `빛나는 ${term('aspect')} 카드를 누르고 +2를 고른다. ${term('fatePoint')} 1개가 들고, 핀이 꽂힌 카드는 무료.`,
           },
         };
@@ -1387,7 +1390,6 @@ function Table({
     );
     return () => clearTimeout(t);
   }, [outcomeKey]);
-  const showBoss = roll?.targetId === bossId || action === 'attack' || boss.takenOut === true;
 
   const companions = SAMPLE_CHARACTERS.filter((s) => s.name !== pick.name).map((s) => ({
     character: state.characters[findId(state, s.name)]!,
@@ -1408,6 +1410,7 @@ function Table({
   // ---------- 장면 극장 (design-system.md 32절) ----------
   const [tableOpen, setTableOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
+  const dialogueEl = useDialogueTop<HTMLElement>();
   const [rerollMode, setRerollMode] = useState(false);
   // 끝난 판정을 닫고 이야기로 돌아간 굴림
   const [dismissed, setDismissed] = useState<string | null>(null);
@@ -1518,20 +1521,18 @@ function Table({
         alt={pick.name}
         data-focus={heroSpeaks || undefined}
       />
-      {showBoss && (
-        <img
-          className={`${th.cast} ${th.foe}`}
-          src={asset(SCENE.bossImage)}
-          alt={boss.name}
-          data-out={boss.takenOut || undefined}
-          data-hit={
-            (final &&
-              roll?.action === 'attack' &&
-              (roll.result?.outcome === 'success' || roll.result?.outcome === 'style')) ||
-            undefined
-          }
-        />
-      )}
+      <img
+        className={`${th.cast} ${th.foe}`}
+        src={asset(SCENE.bossImage)}
+        alt={boss.name}
+        data-out={boss.takenOut || undefined}
+        data-hit={
+          (final &&
+            roll?.action === 'attack' &&
+            (roll.result?.outcome === 'success' || roll.result?.outcome === 'style')) ||
+          undefined
+        }
+      />
 
       <SceneAmbience ambience={state.scene?.ambience} />
 
@@ -1576,11 +1577,9 @@ function Table({
       <div className={th.myPlate} data-tour="party">
         <Nameplate character={me} sub={pick.create.highConcept} me />
       </div>
-      {showBoss && (
-        <div className={th.foePlate} data-tour="foe">
-          <Nameplate character={boss} sub={BOSS.highConcept} />
-        </div>
-      )}
+      <div className={th.foePlate} data-tour="foe">
+        <Nameplate character={boss} sub={BOSS.highConcept} />
+      </div>
       {rollMode && intent && (
         <div className={th.intent}>
           상대가 맞서는 수<b>{intent}</b>
@@ -1791,7 +1790,13 @@ function Table({
         </Presence>
       </div>
 
-      <section className={th.dialogue} data-tour="dialogue" data-log={logOpen || undefined}>
+      <section
+        ref={dialogueEl}
+        className={th.dialogue}
+        data-ink="night"
+        data-tour="dialogue"
+        data-log={logOpen || undefined}
+      >
         <div className={th.say}>
           <span className={th.speaker}>{lastSpeaker}</span>
           <div className={th.text}>

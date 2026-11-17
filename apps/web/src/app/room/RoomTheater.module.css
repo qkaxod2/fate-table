@@ -12,7 +12,7 @@
 /* 스탠딩은 대사창 위 공간을 쓰고, 판정 중에는 뒤로 물러난다 */
 .cast {
   position: absolute;
-  inset: 70px 0 200px;
+  inset: 70px 0 calc(var(--dlg) - 36px);
   z-index: -1;
   pointer-events: none;
   transition:
@@ -314,27 +314,7 @@
   }
 }
 
-/* 대사창 안에 입력 줄이 더해지므로 글 칸을 조금 낮춰 이름표를 가리지 않게 한다 */
-.text.text {
-  height: 92px;
-}
-
 /* 이름은 이름표에 있으니 스탠딩 아래 이름 꼬리표는 숨긴다 */
 .cast figcaption {
   display: none;
-}
-
-
-/* 방의 대사창은 입력 줄까지 있어 더 높다: 이름표를 그만큼 올린다 (판정 중 위치는 그대로) */
-@media (min-width: 761px) {
-  .lift.lift,
-  .liftFoe.liftFoe {
-    bottom: 300px;
-  }
-  :global([data-mode='roll']) > .lift.lift {
-    translate: -2vw calc(-1 * (100dvh - 300px - 230px));
-  }
-  :global([data-mode='roll']) > .liftFoe.liftFoe {
-    translate: 0 calc(-1 * (100dvh - 300px - 190px));
-  }
 }

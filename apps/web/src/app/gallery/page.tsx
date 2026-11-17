@@ -1,3 +1,4 @@
+import { LobbyBackdrop } from '@/components/lobby/LobbyBackdrop';
 import type { Metadata } from 'next';
 import { PageNav } from '@/components/nav/PageNav';
 import { MyGallery } from '@/components/media/MyGallery';
@@ -8,7 +9,8 @@ export const metadata: Metadata = { title: '내 그림 · 운명점 테이블' }
 
 export default function MyGalleryPage() {
   return (
-    <main className={styles.main}>
+    <main className={styles.main} data-ink="night">
+      <LobbyBackdrop />
       <div className={`${styles.card} ${styles.wide}`}>
         <PageNav />
         <h1 className={styles.title}>내 그림</h1>

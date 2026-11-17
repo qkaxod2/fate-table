@@ -1,3 +1,4 @@
+import { LobbyBackdrop } from '@/components/lobby/LobbyBackdrop';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PageNav } from '@/components/nav/PageNav';
@@ -10,7 +11,8 @@ export const metadata: Metadata = { title: '내 방 · 운명점 테이블' };
 
 export default function MyRoomsPage() {
   return (
-    <main className={styles.main}>
+    <main className={styles.main} data-ink="night">
+      <LobbyBackdrop />
       <ClientOnly>
         <AccountChip />
       </ClientOnly>

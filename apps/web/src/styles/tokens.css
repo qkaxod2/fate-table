@@ -52,6 +52,10 @@
   --seal-hi: #b23745;
   --seal-ink: #ffffff;
   --seal-tint: color-mix(in srgb, var(--seal) 9%, var(--card));
+  /* 진홍 면(1순위 버튼·말하는 사람 꼬리표). 어두운 면(data-ink='night') 안에서도 그대로다 */
+  --seal-fill: #9b2a36;
+  --seal-fill-hi: #b23745;
+  --seal-fill-ink: #ffffff;
   --brass: #b8914a;
   --brass-hi: #e2c27e;
   --brass-ink: #6e5520;
@@ -84,15 +88,18 @@
   --token: #b08a45;
   --token-hi: #e2c27e;
 
-  /* judgement (판정) */
-  --perfect: #f27bad;
-  --perfect-hi: #ffd3e4;
-  --great: #6fbceb;
-  --great-hi: #d6eeff;
-  --good: #5ed1ba;
-  --good-hi: #d2f7ee;
-  --miss: #a598de;
-  --miss-hi: #e6e0ff;
+  /*
+   * judgement (판정). 사탕색 네 가지 대신 탁자 위의 세 재료로 한 줄을 만든다:
+   * 실패는 바랜 진홍, 동점은 뼛빛, 성공은 놋쇠, 대성공은 빛나는 금. 밝을수록 좋은 결과다.
+   */
+  --perfect: #ffd978;
+  --perfect-hi: #ffe9b0;
+  --great: #d9b668;
+  --great-hi: #ecd399;
+  --good: #c9c3b4;
+  --good-hi: #e4dfd2;
+  --miss: #c7737c;
+  --miss-hi: #e6a1a8;
 
   /* aspect kind bar (왼쪽 4px 색 막대) */
   --k-high: var(--gold);
@@ -220,6 +227,45 @@
   --label-color: var(--seal-on-table);
   --shadow-panel: 0 1px 0 rgb(0 0 0 / 0.3);
   color-scheme: dark;
+  color: var(--ink-1);
+}
+
+/*
+ * 어두운 면 안에 다시 놓이는 종이 물건 (캐릭터 시트, 그림 카드 등).
+ * night가 바꾼 토큰을 종이 값으로 되돌린다.
+ */
+[data-ink='paper'] {
+  --paper: #e8e5de;
+  --paper-2: #dcd8cf;
+  --paper-edge: #cbc6bb;
+  --card: #f4f2ed;
+  --plate: #fcfbf8;
+  --panel: #f4f2ed;
+  --panel-s: #e9e6df;
+  --surface-1: rgb(244 242 237 / 0.96);
+  --surface-2: #ece9e2;
+  --edge: rgb(29 28 25 / 0.14);
+  --line: #cdc9bf;
+  --line-hi: #a8a397;
+  --fg: #1d1c19;
+  --ink-1: #1d1c19;
+  --ink-2: #4a4741;
+  --ink-3: #67635b;
+  --muted: #4a4741;
+  --faint: #67635b;
+  --pen: #1d1c19;
+  --seal: #9b2a36;
+  --seal-hi: #b23745;
+  --seal-ink: #ffffff;
+  --gold: #9b2a36;
+  --gold-hi: #b23745;
+  --hi: #9b2a36;
+  --danger: #b3261e;
+  --brass-ink: #6e5520;
+  --rule: color-mix(in srgb, #9b2a36 32%, transparent);
+  --label-color: #9b2a36;
+  --shadow-panel: 0 1px 0 var(--paper-edge), 0 14px 30px -16px rgb(0 0 0 / 0.6);
+  color-scheme: light;
   color: var(--ink-1);
 }
 

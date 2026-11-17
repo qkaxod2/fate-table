@@ -39,6 +39,7 @@ import { Nameplate } from '@/components/theater/Nameplate';
 import { TableView, type Seat } from '@/components/theater/TableView';
 import { consequenceDepth, TraitCard } from '@/components/theater/TraitCard';
 import th from '@/components/theater/theater.module.css';
+import { useDialogueTop } from '@/components/theater/useDialogueTop';
 import { SceneFade } from '@/components/scene/SceneFade';
 import { OUTCOME_FACES, pickFace, StageCast, type CastMember } from '@/components/scene/StageCast';
 import {
@@ -116,20 +117,21 @@ const DONE_COPY: Partial<Record<Command['type'], string>> = {
 
 /** 장면 꼬리표 자리 (화면 비율 %): 이야기 중에는 장면 여기저기, 판정 중에는 판정판 둘레 */
 const TAG_SPOTS: ReadonlyArray<readonly [number, number]> = [
-  [40, 46],
-  [45, 17],
-  [57, 31],
-  [36, 28],
-  [52, 52],
-  [62, 12],
+  [40, 40],
+  [44, 14],
+  [51, 27],
+  [49, 53],
+  [58, 40],
+  [33, 53],
 ];
+/* 판정 중에는 판정판과 손패를 가리지 않게 양옆 두 줄로 선다 */
 const TAG_SPOTS_ROLL: ReadonlyArray<readonly [number, number]> = [
-  [5, 52],
-  [27, 3],
-  [74, 56],
-  [75, 14],
-  [6, 68],
-  [77, 70],
+  [3, 40],
+  [77, 40],
+  [3, 52],
+  [77, 52],
+  [3, 64],
+  [77, 64],
 ];
 
 /** 손패 부채꼴: 가운데는 곧게, 바깥으로 갈수록 기운다 */
@@ -727,6 +729,7 @@ export function RoomTable({
   // 말을 주고받는 두 사람: [왼쪽, 오른쪽]과 지금 말하는 쪽. 한동안 조용하면 내려간다
   const [talk, setTalk] = useState<{ ids: [string, string | null]; focus: string } | null>(null);
   const stageEl = useRef<HTMLElement>(null);
+  const dialogueEl = useDialogueTop<HTMLElement>();
   // 무대 전체 효과 (흔들림 · 번쩍 · 어둠 · 맞음 · 쓰러짐 · 갈등 시작)
   const [stageFx, setStageFx] = useState<{ seq: number; kind: StageFxKind } | null>(null);
   if (newestSeq !== beatFrom) {
@@ -1116,7 +1119,7 @@ export function RoomTable({
       </aside>
 
       {me && (
-        <div className={`${th.myPlate} ${rt.lift}`}>
+        <div className={th.myPlate}>
           <button
             type="button"
             className={rt.plateBtn}
@@ -1128,7 +1131,7 @@ export function RoomTable({
         </div>
       )}
       {foe && (
-        <div className={`${th.foePlate} ${rt.liftFoe}`}>
+        <div className={th.foePlate}>
           <button
             type="button"
             className={rt.plateBtn}
@@ -1435,7 +1438,9 @@ export function RoomTable({
       </div>
 
       <section
+        ref={dialogueEl}
         className={`${th.dialogue} ${handSide ? '' : rt.keepSay}`}
+        data-ink="night"
         data-log={logOpen || undefined}
       >
         {me && !busyRoll && (
@@ -1541,7 +1546,7 @@ export function RoomTable({
         )}
         <div className={th.say}>
           <span className={th.speaker}>{speaker}</span>
-          <div className={`${th.text} ${rt.text}`}>
+          <div className={th.text}>
             <StoryLog
               variant="book"
               lines={lines}

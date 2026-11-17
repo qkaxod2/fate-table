@@ -507,6 +507,18 @@
   text-align: center;
 }
 
+/* 초상화 대신 찍는 이름 첫 글자 */
+.noPortrait[data-mono] {
+  border: 0;
+  background: var(--paper-2);
+  color: var(--ink-2);
+  font: 800 34px / 1 var(--f-head);
+}
+
+.sheetCard[data-full] .noPortrait[data-mono] {
+  font-size: 44px;
+}
+
 .who {
   min-width: 0;
 }
@@ -531,9 +543,19 @@
   font: 500 var(--fs-sm) / 1.4 var(--f-ui);
 }
 
-.refresh span {
-  color: var(--brass);
-  letter-spacing: 2px;
+/* 운명점: 이름표와 같은 놋쇠 동전 */
+.coins {
+  display: inline-flex;
+  align-self: center;
+  gap: 3px;
+}
+
+.coins i {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--brass-hi), var(--brass) 60%, #7a5c25);
+  box-shadow: 0 1px 0 #5c4519;
 }
 
 .refresh small {

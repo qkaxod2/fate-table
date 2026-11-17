@@ -1,14 +1,19 @@
 .duel {
   display: grid;
   justify-items: center;
-  gap: 14px;
+  gap: 12px;
   width: min(640px, calc(100vw - 32px));
-  padding: 18px 28px 22px;
+  padding: 16px 28px 20px;
   border: 1px solid var(--table-line);
   border-radius: 14px;
   background: rgb(20 19 17 / 0.86);
   backdrop-filter: blur(4px);
   color: var(--on-table);
+}
+
+/* 맞서 굴릴 때는 양쪽 주사위가 한 줄에 놓이도록 판을 넓힌다 */
+.duel[data-opposed] {
+  width: min(820px, calc(100vw - 32px));
 }
 
 .kind {
@@ -82,7 +87,7 @@
 }
 
 .ladder li[data-on] {
-  color: #fff;
+  color: var(--table);
 }
 .ladder li[data-tone='miss'] {
   background: var(--miss);
@@ -130,6 +135,7 @@
 }
 .verdict b[data-tone='perfect'] {
   color: var(--perfect-hi);
+  text-shadow: 0 0 18px rgb(255 217 120 / 0.45);
 }
 
 @keyframes stamp {
@@ -144,7 +150,10 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: 8px;
-  min-height: 40px;
+}
+
+.played:empty {
+  display: none;
 }
 
 .hint {
