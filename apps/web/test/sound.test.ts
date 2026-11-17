@@ -1,4 +1,4 @@
-import type { RoomEvent, Scene } from '@fate/rules-engine';
+import type { Ambience, RoomEvent, Scene } from '@fate/rules-engine';
 import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { ambLayers } from '../src/fx/ambience';
@@ -47,7 +47,7 @@ describe('장면 배경음', () => {
   });
 
   it('바깥은 밤이면 풀벌레, 폭풍이 치면 장소 소리는 빠진다', () => {
-    const night = { time: 'night', weather: 'clear', conditions: [] } as const;
+    const night: Ambience = { time: 'night', weather: 'clear', conditions: [] };
     expect(ambLayers(scene({ backdrop: 'forest', ambience: night }))).toEqual(['night']);
     expect(
       ambLayers(scene({ backdrop: 'forest', ambience: { ...night, weather: 'storm' } })),
