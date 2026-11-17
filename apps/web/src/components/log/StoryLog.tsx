@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import type { LogLine } from '@/lib/copy';
 import { reducedMotion } from '@/lib/motion';
 import { RichText } from '../ui/RichText';
@@ -31,7 +31,22 @@ function splitSpeaker(text: string): [string | null, string] {
 type Tab = 'story' | 'system';
 
 /** 이야기(굴림·대사·채팅)와 시스템(입장·생성·되돌리기 같은 알림)을 탭으로 나눈다 */
-export function StoryLog({ lines, undone, onUndo, sending = [], variant = 'panel' }: Props) {
+/** 맨 아래에서 이만큼은 늘 실제로 배치한다 (그 위는 화면 밖이면 배치를 건너뛴다) */
+const NEAR_LINES = 40;
+
+const NO_SENDING: NonNullable<Props['sending']> = [];
+
+/**
+ * 기록이 수백 줄로 길어져도 입력할 때마다 다시 그리지 않게 memo로 감싼다.
+ * 부모는 lines·sending·onUndo를 바뀔 때만 새로 넘긴다
+ */
+export const StoryLog = memo(function StoryLog({
+  lines,
+  undone,
+  onUndo,
+  sending = NO_SENDING,
+  variant = 'panel',
+}: Props) {
   const [tab, setTab] = useState<Tab>('story');
   const [seen, setSeen] = useState<Record<Tab, number>>({ story: 0, system: 0 });
   const live = lines.filter((l) => !undone?.has(l.seq));
@@ -97,37 +112,18 @@ export function StoryLog({ lines, undone, onUndo, sending = [], variant = 'panel
       )}
       <ol className={styles.list}>
         {shown.map((l, i) => (
-          <li
+          <Line
             key={l.seq}
-            className={styles.line}
-            data-kind={l.kind}
-            data-open={
-              (variant === 'book' && l.kind === 'gm' && shown[i - 1]?.kind === 'scene') || undefined
-            }
-          >
-            {variant === 'book' ? (
-              <BookLine line={l} typing={l.kind === 'gm' && i === shown.length - 1} />
-            ) : (
-              <span>
-                {l.kind === 'chat' || l.kind === 'gm' ? (
-                  <RichText text={l.text} fx={l.fx} />
-                ) : (
-                  l.text
-                )}
-              </span>
-            )}
-            {onUndo && l.undoable !== false && (
-              <button
-                type="button"
-                className={styles.undo}
-                title="이 일 되돌리기"
-                aria-label="되돌리기"
-                onClick={() => onUndo(l.seq)}
-              >
-                ↶
-              </button>
-            )}
-          </li>
+            seq={l.seq}
+            kind={l.kind}
+            text={l.text}
+            fx={l.fx}
+            book={variant === 'book'}
+            open={variant === 'book' && l.kind === 'gm' && shown[i - 1]?.kind === 'scene'}
+            typing={variant === 'book' && l.kind === 'gm' && i === shown.length - 1}
+            far={i < shown.length - NEAR_LINES}
+            onUndo={l.undoable !== false ? onUndo : undefined}
+          />
         ))}
         {tab === 'story' &&
           sending.map((m) => (
@@ -140,7 +136,61 @@ export function StoryLog({ lines, undone, onUndo, sending = [], variant = 'panel
       </ol>
     </section>
   );
-}
+});
+
+/**
+ * 기록 한 줄. 새 줄이 붙어도 앞선 줄들은 내용이 같으면 다시 그리지 않는다
+ * (describe가 매번 새 객체를 만들므로 값으로 비교한다)
+ */
+const Line = memo(function Line({
+  seq,
+  kind,
+  text,
+  fx,
+  book,
+  open,
+  typing,
+  far,
+  onUndo,
+}: {
+  seq: number;
+  kind: LogLine['kind'];
+  text: string;
+  fx: LogLine['fx'];
+  book: boolean;
+  open: boolean;
+  typing: boolean;
+  /** 맨 아래에서 멀리 떨어진 줄: 화면 밖이면 배치를 건너뛴다 */
+  far: boolean;
+  onUndo: ((seq: number) => void) | undefined;
+}) {
+  const line: LogLine = fx ? { seq, kind, text, fx } : { seq, kind, text };
+  return (
+    <li
+      className={styles.line}
+      data-kind={kind}
+      data-open={open || undefined}
+      data-far={far || undefined}
+    >
+      {book ? (
+        <BookLine line={line} typing={typing} />
+      ) : (
+        <span>{kind === 'chat' || kind === 'gm' ? <RichText text={text} fx={fx} /> : text}</span>
+      )}
+      {onUndo && (
+        <button
+          type="button"
+          className={styles.undo}
+          title="이 일 되돌리기"
+          aria-label="되돌리기"
+          onClick={() => onUndo(seq)}
+        >
+          ↶
+        </button>
+      )}
+    </li>
+  );
+});
 
 function BookLine({ line, typing }: { line: LogLine; typing: boolean }) {
   if (line.kind === 'gm')

@@ -2008,39 +2008,42 @@ function Table({
   return (
     <main className={th.theater} data-mode={rollMode ? 'roll' : 'story'} data-coach-region="">
       <div className={th.bg} style={{ backgroundImage: `url(${sceneArt})` }} />
-      {/* 동료: 창고에서는 방금 말하거나 굴린 동료가 내 뒤에 작게, 마을에서는 둘 다 무대에 선다 */}
-      {(atGranary ? (ally ? [ally] : []) : allyKey ? [mateA, mateB] : []).map(
-        (m, i) =>
-          !(rollMode && rollerMate) && (
-            <img
-              key={m.key}
-              className={`${th.cast} ${atGranary || i === 0 ? styles.ally : th.foe} ${styles.mate}`}
-              src={asset(m.image)}
-              alt={m.name}
-              data-focus={talker === m.name || undefined}
-            />
-          ),
-      )}
-      <img
-        key={rollMode && rollerMate ? rollerMate.key : 'me'}
-        className={`${th.cast} ${th.hero}`}
-        src={asset((rollMode && rollerMate ? rollerMate : pick).image)}
-        alt={(rollMode && rollerMate ? rollerMate : pick).name}
-        data-focus={heroSpeaks || undefined}
-      />
-      <img
-        className={`${th.cast} ${th.foe}`}
-        src={asset(SCENE.bossImage)}
-        alt={boss.name}
-        hidden={!atGranary}
-        data-out={boss.takenOut || undefined}
-        data-hit={
-          (final &&
-            roll?.action === 'attack' &&
-            (roll.result?.outcome === 'success' || roll.result?.outcome === 'style')) ||
-          undefined
-        }
-      />
+      {/* 인물 층: 장면 시간의 색 보정을 인물에 한 번에 건다 */}
+      <div className={th.castLayer}>
+        {/* 동료: 창고에서는 방금 말하거나 굴린 동료가 내 뒤에 작게, 마을에서는 둘 다 무대에 선다 */}
+        {(atGranary ? (ally ? [ally] : []) : allyKey ? [mateA, mateB] : []).map(
+          (m, i) =>
+            !(rollMode && rollerMate) && (
+              <img
+                key={m.key}
+                className={`${th.cast} ${atGranary || i === 0 ? styles.ally : th.foe} ${styles.mate}`}
+                src={asset(m.image)}
+                alt={m.name}
+                data-focus={talker === m.name || undefined}
+              />
+            ),
+        )}
+        <img
+          key={rollMode && rollerMate ? rollerMate.key : 'me'}
+          className={`${th.cast} ${th.hero}`}
+          src={asset((rollMode && rollerMate ? rollerMate : pick).image)}
+          alt={(rollMode && rollerMate ? rollerMate : pick).name}
+          data-focus={heroSpeaks || undefined}
+        />
+        <img
+          className={`${th.cast} ${th.foe}`}
+          src={asset(SCENE.bossImage)}
+          alt={boss.name}
+          hidden={!atGranary}
+          data-out={boss.takenOut || undefined}
+          data-hit={
+            (final &&
+              roll?.action === 'attack' &&
+              (roll.result?.outcome === 'success' || roll.result?.outcome === 'style')) ||
+            undefined
+          }
+        />
+      </div>
 
       <SceneAmbience ambience={stageScene?.ambience} />
 

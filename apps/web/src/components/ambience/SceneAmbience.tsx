@@ -8,7 +8,7 @@ const CLEAR: Ambience = { time: 'day', weather: 'clear', conditions: [] };
 
 /**
  * 장면 분위기 (design-system.md 33절).
- * 배경 그림은 그대로 두고, 그 위에 시간(색 필터) · 상태(화재 · 황사 · 안개 층) ·
+ * 배경 그림은 그대로 두고, 그 위에 시간(색 곱하기 · 색 보정은 무대가 data-grade를 보고 건다) · 상태(화재 · 황사 · 안개 층) ·
  * 날씨(비 · 폭풍 · 눈 입자) · 테두리(비네트)를 겹쳐 그린다. 인물 위, 꼬리표 아래에 깔린다.
  */
 export function SceneAmbience({ ambience }: { ambience?: Ambience | undefined }) {
@@ -18,13 +18,14 @@ export function SceneAmbience({ ambience }: { ambience?: Ambience | undefined })
     <div
       className={styles.root}
       data-time={a.time}
+      // 무대(theater)가 이 값을 보고 배경 그림과 인물에 시간 보정 filter를 건다
+      data-grade={a.time !== 'day' ? a.time : undefined}
       data-weather={a.weather}
       data-fire={has('fire') || undefined}
       data-dust={has('dust') || undefined}
       data-fog={has('fog') || undefined}
       aria-hidden
     >
-      {a.time !== 'day' && <div key={`g:${a.time}`} className={styles.grade} />}
       {a.time !== 'day' && <div key={a.time} className={styles.tint} />}
       {has('fire') && <div className={styles.fire} />}
       {has('dust') && (
@@ -76,6 +77,30 @@ interface P {
   r: number;
   a: number;
   t: number;
+}
+
+/** 불티 빛망울 한 장의 폭 (입자 반지름 1 기준, CSS px). 핵 반지름 1 + 번짐 6 정도 */
+const EMBER_SPAN = 9;
+
+/**
+ * 불티 하나: 주황 핵과 붉은 번짐. 예전의 arc + shadowBlur(6)와 같은 모양을 한 번만 그려 둔다.
+ * 반지름 1~2.6 입자를 한 장으로 늘려 쓰므로 번짐도 입자 크기를 따라 커진다
+ */
+function emberSprite(dpr: number): HTMLCanvasElement {
+  const px = Math.ceil(EMBER_SPAN * 2.6 * dpr);
+  const c = document.createElement('canvas');
+  c.width = c.height = px;
+  const g = c.getContext('2d')!;
+  const r = px / 2;
+  const grad = g.createRadialGradient(r, r, 0, r, r, r);
+  grad.addColorStop(0, 'rgb(255 190 100)');
+  grad.addColorStop(0.18, 'rgb(255 170 70)');
+  grad.addColorStop(0.24, 'rgb(255 120 30 / 0.55)');
+  grad.addColorStop(0.55, 'rgb(255 120 30 / 0.12)');
+  grad.addColorStop(1, 'rgb(255 120 30 / 0)');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, px, px);
+  return c;
 }
 
 /** 입자 한 판: 비 · 눈 · 불티 · 흙먼지. 움직임 줄이기를 켜면 그리지 않는다 */
@@ -169,6 +194,8 @@ function Particles({
     if (weather === 'snow') plan.push(['snow', 170]);
     if (fire) plan.push(['ember', 70]);
     if (dust) plan.push(['mote', 140]);
+    // 불티의 번짐은 미리 그려 둔 빛망울을 찍는다. 매 장면 입자마다 shadowBlur를 거는 것은 무거웠다
+    const glow = fire ? emberSprite(dpr) : null;
     const ps: P[] = plan.flatMap(([k, n]) =>
       Array.from({ length: Math.round(n * area) }, () => spawn(k, true)),
     );
@@ -200,22 +227,21 @@ function Particles({
           ctx.moveTo(p.x, p.y);
           ctx.lineTo(p.x - p.vx * len, p.y - p.vy * len);
           ctx.stroke();
+        } else if (p.k === 'ember' && glow) {
+          const alpha =
+            Math.max(0, Math.min(1, (p.y - h * 0.15) / (h * 0.5))) *
+            (0.6 + 0.4 * Math.sin(p.t * 9));
+          // 빛망울은 반지름 1일 때 기준으로 그렸으니 입자 크기만큼 늘린다
+          const s = EMBER_SPAN * p.r;
+          ctx.globalAlpha = alpha;
+          ctx.drawImage(glow, p.x - s / 2, p.y - s / 2, s, s);
+          ctx.globalAlpha = 1;
         } else {
-          let alpha = p.a;
-          let color = '255 255 255';
-          if (p.k === 'ember') {
-            alpha =
-              Math.max(0, Math.min(1, (p.y - h * 0.15) / (h * 0.5))) *
-              (0.6 + 0.4 * Math.sin(p.t * 9));
-            color = '255 170 70';
-            ctx.shadowColor = 'rgb(255 120 30)';
-            ctx.shadowBlur = 6;
-          } else if (p.k === 'mote') color = '214 178 120';
-          ctx.fillStyle = `rgb(${color} / ${alpha})`;
+          const color = p.k === 'mote' ? '214 178 120' : '255 255 255';
+          ctx.fillStyle = `rgb(${color} / ${p.a})`;
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
           ctx.fill();
-          ctx.shadowBlur = 0;
         }
       }
       raf = requestAnimationFrame(tick);

@@ -622,7 +622,11 @@ export function RoomTable({
     ? Object.values(state.aspects).filter((a) => a.hidden && a.ownerType !== 'character')
     : [];
   const [gmOpen, setGmOpen] = useState<GmOpen | null>(null);
-  const lines = events.map((e) => describe(e, state)).filter((l) => l !== null);
+  // 입력할 때마다 기록 전체를 다시 문장으로 바꾸지 않게, 기록·상태가 바뀔 때만 만든다
+  const lines = useMemo(
+    () => events.map((e) => describe(e, state)).filter((l) => l !== null),
+    [events, state],
+  );
   const lastUndoable =
     [...lines].reverse().find((l) => l.undoable !== false && !undone.has(l.seq)) ?? null;
   const notes = liveEvents.flatMap((e) => (e.type === 'gm.note' ? [e.payload.text] : []));
@@ -635,6 +639,16 @@ export function RoomTable({
   // GM은 대사와 말하기를 한 입력 자리에서 바꿔 쓴다 (책이 빽빽해지지 않게)
   const [composeMode, setComposeMode] = useState<'narrate' | 'chat'>('narrate');
   const [sending, setSending] = useState<Array<{ id: number; text: string; fx?: boolean }>>([]);
+  // 기록(StoryLog)은 memo라, 넘기는 값이 입력할 때마다 새로 만들어지지 않게 묶어 둔다
+  const logSending = useMemo(
+    () =>
+      narrationEcho ? [...sending, { id: -1, text: `GM: ${narrationEcho}`, fx: true }] : sending,
+    [sending, narrationEcho],
+  );
+  const undoLine = useCallback(
+    (seq: number) => void run({ type: 'event.undo', payload: { targetSeq: seq } }),
+    [run],
+  );
   const chatField = useRef<HTMLInputElement>(null);
   const sendIds = useRef(0);
   const myNick = state.members[room.userId]?.nickname;
@@ -1581,17 +1595,8 @@ export function RoomTable({
               variant="book"
               lines={lines}
               undone={undone}
-              sending={
-                narrationEcho
-                  ? [...sending, { id: -1, text: `GM: ${narrationEcho}`, fx: true }]
-                  : sending
-              }
-              {...(isGm
-                ? {
-                    onUndo: (seq: number) =>
-                      void run({ type: 'event.undo', payload: { targetSeq: seq } }),
-                  }
-                : {})}
+              sending={logSending}
+              {...(isGm ? { onUndo: undoLine } : {})}
             />
           </div>
           {role !== 'spectator' && (
