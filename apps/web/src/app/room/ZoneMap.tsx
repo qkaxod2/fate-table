@@ -144,6 +144,7 @@ export function ZoneMap({ state, run, isGm, canControl, pending, auto = 'full' }
       <button
         type="button"
         className={styles.tab}
+        data-ink="night"
         aria-expanded={false}
         aria-label={zones.length ? `${term('zone')} 지도 펼치기` : `${term('zone')} 지도 그리기`}
         onClick={() => (zones.length ? setUserOpen(true) : startEditing())}

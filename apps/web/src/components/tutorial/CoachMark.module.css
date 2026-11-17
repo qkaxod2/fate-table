@@ -19,14 +19,12 @@
   z-index: 70;
   box-sizing: border-box;
   width: min(352px, calc(100vw - 24px));
-  border: 1px solid var(--paper-edge);
+  border: 1px solid color-mix(in srgb, var(--brass) 55%, transparent);
   border-radius: 8px;
-  background: var(--paper-grain), var(--card);
+  background: rgb(26 24 21 / 0.94);
+  backdrop-filter: blur(12px);
   color: var(--ink-1);
-  box-shadow:
-    0 1px 0 var(--paper-edge),
-    0 22px 44px -16px rgb(20 12 4 / 0.7),
-    0 2px 6px rgb(20 12 4 / 0.25);
+  box-shadow: 0 22px 44px -16px rgb(0 0 0 / 0.85);
   opacity: 0;
 }
 
@@ -85,8 +83,8 @@
   position: absolute;
   width: 14px;
   height: 14px;
-  border: 1px solid var(--paper-edge);
-  background: var(--card);
+  border: 1px solid color-mix(in srgb, var(--brass) 55%, transparent);
+  background: rgb(26 24 21);
   rotate: 45deg;
 }
 
@@ -134,7 +132,7 @@
 }
 
 .chapter {
-  color: var(--seal);
+  color: var(--brass-hi);
   font: 600 var(--fs-xs) / 1.4 var(--f-ui);
   letter-spacing: var(--label-track);
   white-space: nowrap;
@@ -163,8 +161,8 @@
 }
 
 .dots li[data-on] {
-  border-color: var(--seal);
-  background: var(--seal);
+  border-color: var(--brass);
+  background: var(--brass);
 }
 
 .hide {
@@ -290,8 +288,8 @@
   padding: 7px 16px;
   border: 0;
   border-radius: 999px;
-  background: var(--seal);
-  color: var(--seal-ink);
+  background: var(--seal-fill);
+  color: var(--seal-fill-ink);
   font: 600 var(--fs-sm) / 1.3 var(--f-ui);
   cursor: pointer;
   box-shadow: none;

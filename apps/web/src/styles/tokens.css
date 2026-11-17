@@ -196,6 +196,7 @@
  * 진홍은 어두운 바탕에서 읽히도록 밝히고, 그 위 글자는 먹으로 바꾼다.
  */
 [data-ink='night'] {
+  --seal-tint: color-mix(in srgb, var(--seal) 16%, var(--card));
   --paper: var(--table-2);
   --paper-2: var(--table-3);
   --paper-edge: var(--table-line-hi);
@@ -235,6 +236,7 @@
  * night가 바꾼 토큰을 종이 값으로 되돌린다.
  */
 [data-ink='paper'] {
+  --seal-tint: color-mix(in srgb, var(--seal) 9%, var(--card));
   --paper: #e8e5de;
   --paper-2: #dcd8cf;
   --paper-edge: #cbc6bb;
