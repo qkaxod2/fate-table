@@ -183,3 +183,19 @@
   color: var(--ink-2);
   font-size: 13px;
 }
+
+/* 소리를 껐을 때 크기 막대는 흐리게 */
+.row[data-off] {
+  opacity: 0.45;
+}
+
+/* 스피커 단추: 그림만, 톱니처럼 돌지 않는다 */
+.trigger[data-icon] {
+  width: 34px;
+  padding: 0;
+  justify-content: center;
+}
+
+.trigger[data-icon] svg {
+  rotate: none;
+}
