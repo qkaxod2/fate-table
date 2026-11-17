@@ -175,6 +175,11 @@ Deno.serve(async (req) => {
       return fail(429, 'BUSY', '다른 그림을 그리는 중이에요. 잠시 뒤 다시 눌러 주세요.');
     if (!res.ok) {
       console.error('nai', kind, res.status, (await res.text()).slice(0, 300));
+      // 키가 틀리거나 만료됐을 때. GitHub 시크릿만 바꾸면 Supabase 워크플로가 다시 돌아야 함수에 반영된다
+      if (res.status === 401 || res.status === 403)
+        return fail(503, 'NAI_KEY_REJECTED', '이미지 생성 키가 거절됐어요. 관리자가 키를 확인해야 해요.');
+      if (res.status === 402)
+        return fail(503, 'NAI_NO_CREDIT', '이미지 생성 계정의 구독이나 Anlas가 부족해요.');
       return fail(502, 'NAI_FAILED', '그림을 만들지 못했어요. 잠시 뒤 다시 시도해 주세요.');
     }
     // 여기부터는 생성 비용이 들었으므로 저장에 실패해도 사용량을 남긴다
