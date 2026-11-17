@@ -21,6 +21,8 @@ export const hasVisibleText = (s: string) => s.replace(INVISIBLE, '').length > 0
 const visible = (max: number) =>
   z.string().trim().min(1).max(max).refine(hasVisibleText, { message: 'empty' });
 const text = visible(200);
+/** 지나온 이야기 (자유 서술). 비우면 지운 것으로 본다 */
+const backstory = z.string().trim().max(4000);
 const approach = z.enum(APPROACHES);
 const action = z.enum(ACTIONS);
 const slot = z.enum(CONSEQUENCE_SLOTS);
@@ -76,6 +78,7 @@ export const CommandSchema = z.discriminatedUnion('type', [
     highConcept: text,
     trouble: text.optional(),
     aspects: z.array(text).max(3).default([]),
+    backstory: backstory.optional(),
     /** 캐릭터 만들기에서 그린 초상화 (공개 Storage URL) */
     portraitUrl: z.string().url().max(500).optional(),
     /** 캐릭터 만들기에서 저장한 초안의 키. 같은 초안을 두 번 데려오지 않게 한다 */
@@ -87,6 +90,7 @@ export const CommandSchema = z.discriminatedUnion('type', [
       name: text.optional(),
       approaches: approaches.optional(),
       stunts: z.array(stunt).max(5).optional(),
+      backstory: backstory.optional(),
     }),
   }),
   cmd('milestone.grant', {

@@ -73,6 +73,7 @@ export function CreationWizard() {
   const [ratings, setRatings] = useState<Ratings>(emptyRatings);
   const [stunts, setStunts] = useState<StuntDraft[]>([]);
   const [portrait, setPortrait] = useState<string | undefined>();
+  const [story, setStory] = useState('');
   const [saved, setSaved] = useState(false);
   const router = useRouter();
   /** 방에서 넘어왔다면 그 방 (?room=id). 다 만들거나 그만두면 그 방으로 돌아간다 */
@@ -106,6 +107,7 @@ export function CreationWizard() {
       setRatings(f.ratings);
       setStunts(f.stunts);
       setPortrait(f.portrait);
+      setStory(f.story);
       setEditing(d);
     });
     return () => {
@@ -153,6 +155,7 @@ export function CreationWizard() {
       highConcept: high.trim(),
       trouble: trouble.trim(),
       aspects: extra.map((t) => t.trim()).filter(Boolean),
+      ...(story.trim() ? { backstory: story.trim() } : {}),
       portraitUrl: portrait,
       savedAt: new Date().toISOString(),
     });
@@ -289,6 +292,19 @@ export function CreationWizard() {
                     />
                   </Field>
                 ))}
+                <Field
+                  label="지나온 이야기 (선택)"
+                  help="어디서 왔고, 무엇을 잃었고, 왜 지금 길 위에 있는지. 자유롭게 적고 판정에는 쓰지 않는다. 방에서 시트를 열어 언제든 고칠 수 있다."
+                  example="예: 왕국이 무너지던 밤, 왕녀를 지키겠다는 맹세 하나만 들고 성을 빠져나왔다."
+                >
+                  <textarea
+                    className={styles.storyInput}
+                    value={story}
+                    onChange={(e) => setStory(e.target.value)}
+                    maxLength={4000}
+                    rows={5}
+                  />
+                </Field>
               </div>
             )}
 
@@ -425,6 +441,7 @@ export function CreationWizard() {
                   ratings={ratings}
                   stunts={stunts}
                   portrait={portrait}
+                  story={story}
                   full
                 />
                 <div className={styles.finish}>
@@ -469,6 +486,7 @@ export function CreationWizard() {
               ratings={ratings}
               stunts={stunts}
               portrait={portrait}
+              story={story}
             />
           </aside>
         )}

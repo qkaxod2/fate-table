@@ -89,6 +89,8 @@ export interface Character {
   consequences: Partial<Record<ConsequenceSlot, ConsequenceState>>;
   portraitAssetId?: string;
   portraitUrl?: string;
+  /** 지나온 이야기 (자유 서술, 판정에는 쓰지 않는다) */
+  backstory?: string;
   /** 캐릭터 만들기 초안에서 데려왔다면 그 초안의 키 */
   sourceKey?: string;
   /** 라이트노벨풍 스탠딩: 표정 id → 투명 PNG URL. 'neutral'이 기본 */

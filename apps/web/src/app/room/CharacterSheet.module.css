@@ -505,3 +505,55 @@
     gap: 0;
   }
 }
+
+/* ---------- 지나온 이야기: 이야기 글이라 명조로, 줄바꿈을 그대로 둔다 ---------- */
+.story {
+  margin: 0;
+  color: var(--ink-1);
+  font: 400 var(--fs-md) / 1.8 var(--f-story);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.head ~ section > h3 .mini {
+  order: 1;
+  min-height: 26px;
+  padding: 0 8px;
+  font-size: 12px;
+  letter-spacing: 0;
+}
+
+.storyForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.storyForm textarea {
+  width: 100%;
+  min-height: 9em;
+  padding: 10px 12px;
+  border: 1px solid var(--paper-edge);
+  border-bottom: 2px solid var(--line-hi);
+  border-radius: 4px 4px 2px 2px;
+  background: var(--card);
+  color: var(--ink-1);
+  font: 400 var(--fs-md) / 1.8 var(--f-story);
+  resize: vertical;
+}
+
+.storyForm textarea:focus-visible {
+  border-bottom-color: var(--seal);
+  outline: 2px solid color-mix(in srgb, var(--seal) 35%, transparent);
+  outline-offset: 1px;
+}
+
+.storyForm .row {
+  justify-content: flex-end;
+}
+
+.count {
+  margin-right: auto;
+  color: var(--ink-2);
+  font: 500 12px var(--f-num);
+}

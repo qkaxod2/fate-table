@@ -286,6 +286,7 @@ const resolvers: Resolvers = {
       stress: [false, false, false],
       consequences: {},
       ...(p.portraitUrl ? { portraitUrl: p.portraitUrl } : {}),
+      ...(p.backstory ? { backstory: p.backstory } : {}),
       ...(p.sourceKey ? { sourceKey: p.sourceKey } : {}),
     };
     const mk = (kind: Aspect['kind'], text: string): Aspect => ({
@@ -308,8 +309,10 @@ const resolvers: Resolvers = {
   },
   'character.update': (s, p, a) => {
     const c = controlled(s, a, p.id);
-    // 플레이어는 이정표를 받았을 때만 성장한다 (GM은 언제든 고칠 수 있다)
-    const growth = a.role !== 'gm' && !c.isNpc;
+    // 플레이어는 이정표를 받았을 때만 성장한다 (GM은 언제든 고칠 수 있다).
+    // 지나온 이야기는 판정에 쓰지 않으니 언제든 고칠 수 있다
+    const { backstory: _story, ...rules } = p.patch;
+    const growth = a.role !== 'gm' && !c.isNpc && Object.keys(rules).length > 0;
     if (growth) {
       if (!c.milestone) throw new CommandError('FORBIDDEN_ROLE', 'needs a milestone');
       if (p.patch.approaches && !isGrowth(c, p.patch.approaches, c.milestone))
