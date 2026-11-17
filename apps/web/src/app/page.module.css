@@ -169,6 +169,154 @@
   font: 400 var(--fs-xs) / 1.6 var(--f-ui);
 }
 
+/* ---------- 타이틀 콜: 들어올 때 한 번 (TitleIntro.tsx) ----------
+ * 어둠 → 가운데에 제목이 한 글자씩 → 장면에 불이 들어오며 제목이 제자리로 → 소개와 메뉴.
+ * 장식은 더하지 않는다. 움직이는 건 이미 있는 그림과 글자뿐.
+ * 끝난 모습은 평소 화면과 똑같아서, 재생이 끝나 애니메이션을 떼도 아무것도 튀지 않는다.
+ */
+.call {
+  display: inline-block;
+  transform-origin: 50% 50%;
+}
+
+.word {
+  white-space: nowrap;
+}
+
+.glyph {
+  display: inline-block;
+}
+
+.skip {
+  display: none;
+  position: absolute;
+  right: clamp(20px, 6vw, 88px);
+  bottom: 18px;
+  z-index: 6;
+  padding: 6px 2px;
+  border: 0;
+  background: none;
+  color: var(--on-table-3);
+  font: 500 var(--fs-sm) / 1.4 var(--f-ui);
+  cursor: pointer;
+}
+
+.skip:hover,
+.skip:focus-visible {
+  color: var(--on-table);
+}
+
+/* 스크립트가 재기 전: 모두 가려 둔다 (제목은 자리를 재야 하니 옮기지 않는다) */
+:global(html[data-intro='wait']) .scene,
+:global(html[data-intro='wait']) .glyph,
+:global(html[data-intro='wait']) .front > :not(.name),
+:global(html[data-intro='wait']) .title > :not(.scene, .front) {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* 1. 제목: 가운데에서 한 글자씩 초점이 맞으며, 벌어져 있던 글자가 모인다 */
+:global(html[data-intro='run']) .glyph {
+  animation: intro-glyph 1000ms var(--ease-out) calc(220ms + var(--i) * 85ms) both;
+}
+
+/* 2. 가운데에서 잠깐 머문 뒤 제자리로 내려앉는다 */
+:global(html[data-intro='run']) .call {
+  animation: intro-call 2500ms var(--ease-in-out) both;
+}
+
+/* 3. 장면: 어둠에서 천천히 밝아지며 살짝 물러난다. 인물은 한 사람씩 */
+:global(html[data-intro='run']) .scene {
+  animation: intro-scene 2200ms var(--ease-out) 1100ms both;
+}
+
+:global(html[data-intro='run']) .cast {
+  animation: intro-cast 1600ms var(--ease-out) both;
+}
+:global(html[data-intro='run']) .knight {
+  animation-delay: 1400ms;
+}
+:global(html[data-intro='run']) .alch {
+  animation-delay: 1560ms;
+}
+:global(html[data-intro='run']) .scout {
+  animation-delay: 1720ms;
+}
+
+/* 4. 소개, 메뉴, 나머지는 제목이 자리를 잡을 때 한 덩어리씩 */
+:global(html[data-intro='run']) .front > :not(.name) {
+  animation: intro-rise 700ms var(--ease-out) 2250ms both;
+}
+:global(html[data-intro='run']) .front > .menu {
+  animation-delay: 2380ms;
+}
+:global(html[data-intro='run']) .front > .shelf {
+  animation-delay: 2500ms;
+}
+:global(html[data-intro='run']) .title > :not(.scene, .front, .skip) {
+  animation: intro-fade 700ms var(--ease-out) 2500ms both;
+}
+:global(html[data-intro='run']) .skip {
+  display: block;
+  animation: intro-fade 600ms var(--ease-out) 700ms both;
+}
+
+/* 건너뛰면: 다 된 화면으로 짧게 밝아진다 */
+:global(html[data-intro='skip']) .title {
+  animation: intro-skip 320ms var(--ease-out);
+}
+
+@keyframes intro-glyph {
+  from {
+    opacity: 0;
+    filter: blur(12px);
+    translate: calc((var(--i) - 2.5) * 0.09em) 0.12em;
+  }
+}
+
+@keyframes intro-call {
+  0%,
+  56% {
+    transform: translate(var(--ix, 0), var(--iy, 0)) scale(var(--is, 1));
+  }
+}
+
+@keyframes intro-scene {
+  from {
+    opacity: 0;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes intro-cast {
+  from {
+    opacity: 0;
+    translate: 2.5% 0;
+  }
+}
+
+/* visibility도 같이: 나타나기 전에는 눌리지 않는다 */
+@keyframes intro-rise {
+  from {
+    opacity: 0;
+    visibility: hidden;
+    translate: 0 8px;
+  }
+}
+
+@keyframes intro-fade {
+  from {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes intro-skip {
+  from {
+    opacity: 0.2;
+  }
+}
+
 /* ---------- 휴대폰: 그림은 위, 제목과 메뉴는 아래 ---------- */
 @media (max-width: 760px) {
   .scene {
