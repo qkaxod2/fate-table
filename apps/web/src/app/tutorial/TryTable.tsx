@@ -39,6 +39,7 @@ import { TableView } from '@/components/theater/TableView';
 import { consequenceDepth, TraitCard } from '@/components/theater/TraitCard';
 import th from '@/components/theater/theater.module.css';
 import { tagKey, useDealt } from '@/components/theater/useDealt';
+import { DialogueGrip } from '@/components/theater/DialogueGrip';
 import { useDialogueTop } from '@/components/theater/useDialogueTop';
 import { DICE_MODES, DiceTray, saveDiceMode, type DiceMode } from '@/components/roll/DiceTray';
 import type { InvokeChoice } from '@/components/roll/InvokeTray';
@@ -2320,6 +2321,7 @@ function Table({
         data-tour="dialogue"
         data-log={logOpen || undefined}
       >
+        <DialogueGrip />
         <div className={th.say}>
           <span className={th.speaker}>{lastSpeaker}</span>
           <div className={th.text}>

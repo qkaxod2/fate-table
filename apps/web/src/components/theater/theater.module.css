@@ -524,18 +524,60 @@
   font: 700 14px var(--f-ui);
 }
 
-/* 글 칸: 남는 높이를 다 쓰고, 위로 밀려 올라간 줄은 잘리지 않고 흐려진다 */
+/*
+ * 글 칸: 화면 높이에 맞춘 넉넉한 기본 높이(손잡이로 끌어 바꾼 값이 있으면 그 값)를 쓰고,
+ * 옆 칸(행동 메뉴)이 더 높으면 남는 높이까지 채운다.
+ * 위로 밀려 올라간 줄은 잘리지 않고 흐려지되, 맨 위에 붙은 탭(이야기·알림)은 흐리지 않는다.
+ */
 .text {
-  flex: 1 1 0;
-  min-height: 120px;
+  --tabs-h: 42px;
+  flex: 1 0 auto;
+  height: min(var(--say-h, clamp(150px, 24dvh, 280px)), 60dvh);
+  min-height: 96px;
   overflow: auto;
   scrollbar-width: thin;
-  mask-image: linear-gradient(180deg, rgb(0 0 0 / 0.3), #000 20px);
+  mask-image: linear-gradient(
+    180deg,
+    #000 var(--tabs-h),
+    rgb(0 0 0 / 0.3) var(--tabs-h),
+    #000 calc(var(--tabs-h) + 20px)
+  );
 }
 
 .dialogue[data-log] .text {
   flex: none;
-  height: min(52dvh, 460px);
+  height: max(min(var(--say-h, 0px), 60dvh), min(52dvh, 460px));
+}
+
+/* 대사창 윗변 손잡이: 끌어서 글 칸 높이를 바꾼다 */
+.grip {
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  z-index: 2;
+  width: 96px;
+  height: 14px;
+  translate: -50% 0;
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+.grip::before {
+  position: absolute;
+  inset: 5px 24px;
+  border-radius: 2px;
+  background: var(--table-line);
+  content: '';
+  transition: background 0.2s var(--e);
+}
+
+.grip:hover::before,
+.grip:focus-visible::before {
+  background: var(--ink-2);
+}
+
+.grip:focus-visible {
+  outline: none;
 }
 
 .sys {
@@ -644,11 +686,16 @@
   .speaker {
     position: static;
     display: inline-block;
+    align-self: flex-start;
     margin-bottom: 6px;
   }
   .text {
     flex: none;
-    height: 112px;
+    height: clamp(112px, 21dvh, 200px);
+  }
+  /* 휴대폰 대사창은 안에서 스크롤되므로 끌어 늘리지 않는다 (지난 이야기로 펼친다) */
+  .grip {
+    display: none;
   }
   .menu {
     border-top: 1px solid var(--table-line);
