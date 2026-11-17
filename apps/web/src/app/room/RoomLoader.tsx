@@ -1,5 +1,6 @@
 'use client';
 
+import { LobbyBackdrop } from '@/components/lobby/LobbyBackdrop';
 import Link from 'next/link';
 import { PageNav } from '@/components/nav/PageNav';
 import { useSearchParams } from 'next/navigation';
@@ -53,7 +54,8 @@ export function RoomLoader() {
   if (load.kind === 'ready')
     return <OpenRoom room={load.room} name={load.name} inviteCode={load.inviteCode} />;
   return (
-    <main className={styles.main}>
+    <main className={styles.main} data-ink="night">
+      <LobbyBackdrop />
       <div className={styles.card}>
         {load.kind === 'loading' ? (
           <Loading label="테이블을 펼치는 중…" />
@@ -92,7 +94,8 @@ function OpenRoom({
 
   if (!closed) return <RoomTable room={room} name={name} inviteCode={inviteCode} />;
   return (
-    <main className={styles.main}>
+    <main className={styles.main} data-ink="night">
+      <LobbyBackdrop />
       <div className={styles.card} role="alert">
         <PageNav fallback="/rooms/" />
         <h1 className={styles.title}>방이 닫혔다</h1>

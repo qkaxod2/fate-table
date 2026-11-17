@@ -43,7 +43,7 @@
 }
 
 .glitch::after {
-  color: var(--great);
+  color: #6fbceb;
   opacity: 0.85;
   animation: tear-b 2.4s steps(1, end) infinite;
 }

@@ -171,7 +171,7 @@
 }
 
 .list > li[data-kind='roll']:last-child {
-  --flash: rgb(111 188 235 / 0.16);
+  --flash: rgb(226 194 126 / 0.16);
 }
 
 @keyframes line-in {

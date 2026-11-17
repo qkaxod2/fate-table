@@ -23,23 +23,27 @@
   opacity: 1;
 }
 
+/* 탁자는 내용만큼만 펼쳐 화면 가운데에 놓는다 (빈 펠트가 화면을 채우지 않게) */
 .felt {
   position: absolute;
-  inset: 24px 24px 24px;
+  top: 50%;
+  left: 50%;
   display: grid;
-  grid-template-rows: auto 1fr auto;
-  gap: 18px;
-  padding: 20px 32px 26px;
+  gap: 22px;
+  width: min(1240px, calc(100vw - 48px));
+  max-height: calc(100dvh - 48px);
+  padding: 20px 32px 28px;
   overflow: auto;
-  border-radius: 26px;
-  background: radial-gradient(70% 60% at 50% 40%, #2a2723, #1c1a17 75%);
+  border-radius: 18px;
+  background: radial-gradient(90% 80% at 50% 0%, #2a2723, #1c1a17 80%);
   box-shadow:
     0 0 0 1px rgb(255 255 255 / 0.06),
     0 30px 80px -20px #000;
   color: var(--on-table);
   opacity: 0;
   scale: 0.96;
-  translate: 0 30px;
+  translate: -50% calc(-50% + 30px);
+  scrollbar-width: thin;
   transition:
     opacity 0.4s var(--ease-out),
     scale 0.55s var(--ease-out),
@@ -49,7 +53,7 @@
 .layer[data-open] .felt {
   opacity: 1;
   scale: 1;
-  translate: 0 0;
+  translate: -50% -50%;
 }
 
 /* 카드는 하나씩 떨어지듯 놓인다 */
@@ -125,64 +129,56 @@
   font: inherit;
 }
 
+/* 위: 왼쪽에 장면과 장면 특성, 오른쪽에 상대. 카드는 겹치지 않게 나란히 놓아 문구가 다 읽힌다 */
 .top {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 32px;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 28px 40px;
   align-items: start;
 }
 
 .sceneSide {
-  display: flex;
-  align-items: flex-start;
-  gap: 0;
+  display: grid;
+  gap: 14px;
 }
 
-/* 장면 특성: 장면 카드 왼쪽에 겹쳐 흩어 놓는다 (한 줄로 세우지 않는다) */
-.scatter {
+.cards {
   display: flex;
   flex-wrap: wrap;
-  max-width: 340px;
-  padding-top: 20px;
-}
-
-.scatter .drop:nth-child(odd) {
-  margin: 0 -26px 0 0;
-}
-
-.scatter .drop:nth-child(even) {
-  margin: 56px -26px 0 0;
-}
-
-.scatter .drop:nth-child(n + 3) {
-  margin-top: -90px;
+  gap: 10px;
 }
 
 .scene {
   position: relative;
-  z-index: 0;
-  flex: 1;
-  max-width: 560px;
-  min-width: 280px;
-  margin: 0 0 0 30px;
+  display: grid;
+  margin: 0;
   overflow: hidden;
   border-radius: 10px;
-  background: var(--card);
-  color: var(--ink-1);
+  background: #000;
   box-shadow: var(--sh-object);
 }
 
 .scene img {
   display: block;
   width: 100%;
-  height: 200px;
+  height: 168px;
   object-fit: cover;
   object-position: center 60%;
 }
 
+/* 장면 이름은 그림 위에 글자로만 얹는다 */
 .scene figcaption {
+  position: absolute;
+  inset: auto 0 0;
   display: grid;
-  padding: 12px 16px 14px;
+  padding: 34px 16px 12px;
+  background: linear-gradient(180deg, transparent, rgb(14 13 11 / 0.88) 70%);
+}
+
+.scene:not(:has(img)) figcaption {
+  position: static;
+  padding-top: 14px;
+  background: var(--table-3);
 }
 
 .scene b {
@@ -190,24 +186,29 @@
 }
 
 .scene small {
-  color: var(--ink-3);
+  color: var(--on-table-2);
   font: 500 13px var(--f-ui);
 }
 
 .foes {
   display: grid;
-  gap: 18px;
+  gap: 20px;
 }
 
-.foe {
+.foe,
+.seat {
   display: grid;
-  justify-items: end;
+  gap: 10px;
+  justify-items: start;
 }
 
 .foeCard,
 .seatCard {
   position: relative;
-  z-index: 2;
+  display: grid;
+  grid-template-columns: 72px auto;
+  align-items: center;
+  min-width: 260px;
   margin: 0;
   overflow: hidden;
   border-radius: 10px;
@@ -215,16 +216,18 @@
   box-shadow: var(--sh-object);
 }
 
-.foeCard {
-  width: 230px;
-}
-
-.foeCard img {
-  display: block;
-  width: 100%;
-  height: 130px;
+.foeCard img,
+.seatCard img {
+  width: 72px;
+  height: 100%;
+  min-height: 88px;
   object-fit: cover;
   object-position: center top;
+}
+
+.foeCard:not(:has(img)),
+.seatCard:not(:has(img)) {
+  grid-template-columns: auto;
 }
 
 .foeCard > section,
@@ -236,53 +239,19 @@
   filter: grayscale(1);
 }
 
-/* 주인 아래로 비죽 나오게 겹쳐 놓는 카드 */
-.tucked {
-  display: flex;
-  margin-top: -24px;
-  padding-right: 44px;
+.none {
+  margin: 0;
+  color: var(--on-table-3);
+  font: 500 13px var(--f-ui);
 }
 
-.tucked .drop {
-  margin-right: -44px;
-}
-
-.tucked .drop:nth-child(even) {
-  margin-top: 26px;
-}
-
+/* 아래: 우리 자리. 가는 선 하나로 탁자의 이쪽과 저쪽을 가른다 */
 .seats {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-around;
-  gap: 24px;
-  align-items: end;
-}
-
-.seat {
-  display: grid;
-  justify-items: center;
-}
-
-.seat .tucked {
-  z-index: 1;
-  margin: 0 0 -70px;
-  padding: 0 0 0 60px;
-}
-
-.seatCard {
-  display: grid;
-  grid-template-columns: 72px auto;
-  align-items: center;
-  min-width: 280px;
-}
-
-.seatCard img {
-  width: 72px;
-  height: 100%;
-  min-height: 92px;
-  object-fit: cover;
-  object-position: center top;
+  gap: 20px 32px;
+  padding-top: 22px;
+  border-top: 1px solid var(--table-line);
 }
 
 .seat[data-me] .seatCard {
@@ -292,28 +261,25 @@
 
 @media (max-width: 760px) {
   .felt {
-    inset: 8px;
+    width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
     padding: 16px;
   }
   .top {
     grid-template-columns: 1fr;
   }
-  .sceneSide {
-    flex-direction: column-reverse;
-  }
-  .scene {
-    margin: 0;
-  }
-  .scatter {
-    max-width: none;
-    padding: 0;
+  .foeCard,
+  .seatCard {
+    min-width: 0;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .felt,
-  .drop {
+  .felt {
     scale: 1;
+    translate: -50% -50%;
+  }
+  .drop {
     translate: none;
   }
 }

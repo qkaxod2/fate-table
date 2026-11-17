@@ -30,7 +30,7 @@ interface Props {
 /**
  * 탁자 보기 (design-system.md 32절, 시안 A).
  * 장면 위에 펠트 탁자를 펼쳐 모두의 상태를 한눈에 본다. Tab이나 닫기로 접는다.
- * 카드는 줄 세우지 않고 주인 곁에 겹쳐 흩어 놓는다.
+ * 카드는 주인 곁에 겹치지 않게 나란히 놓는다: 한눈에 보는 화면이라 문구가 다 읽혀야 한다.
  */
 export function TableView({
   open,
@@ -73,13 +73,6 @@ export function TableView({
 
         <div className={styles.top}>
           <div className={styles.sceneSide}>
-            <div className={styles.scatter}>
-              {sceneAspects.map((a) => (
-                <div key={a.id} className={styles.drop}>
-                  {card(a)}
-                </div>
-              ))}
-            </div>
             <figure className={styles.scene}>
               {scene.image && <img src={scene.image} alt="" />}
               <figcaption>
@@ -87,6 +80,17 @@ export function TableView({
                 {scene.note && <small>{scene.note}</small>}
               </figcaption>
             </figure>
+            {sceneAspects.length > 0 ? (
+              <div className={styles.cards}>
+                {sceneAspects.map((a) => (
+                  <div key={a.id} className={styles.drop}>
+                    {card(a)}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className={styles.none}>장면에 붙은 {term('aspect')} 없음</p>
+            )}
           </div>
           <div className={styles.foes}>
             {foes.map((f) => (
@@ -95,13 +99,15 @@ export function TableView({
                   {f.image && <img src={f.image} alt="" />}
                   <Nameplate character={f.character} />
                 </figure>
-                <div className={styles.tucked}>
-                  {f.aspects.map((a) => (
-                    <div key={a.id} className={styles.drop}>
-                      {card(a)}
-                    </div>
-                  ))}
-                </div>
+                {f.aspects.length > 0 && (
+                  <div className={styles.cards}>
+                    {f.aspects.map((a) => (
+                      <div key={a.id} className={styles.drop}>
+                        {card(a)}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -110,13 +116,6 @@ export function TableView({
         <div className={styles.seats}>
           {seats.map((s) => (
             <div key={s.character.id} className={styles.seat} data-me={s.me || undefined}>
-              <div className={styles.tucked}>
-                {s.aspects.map((a) => (
-                  <div key={a.id} className={styles.drop}>
-                    {card(a)}
-                  </div>
-                ))}
-              </div>
               <div className={styles.seatCard}>
                 {s.image && <img src={s.image} alt="" />}
                 <Nameplate
@@ -125,6 +124,15 @@ export function TableView({
                   me={s.me ?? false}
                 />
               </div>
+              {s.aspects.length > 0 && (
+                <div className={styles.cards}>
+                  {s.aspects.map((a) => (
+                    <div key={a.id} className={styles.drop}>
+                      {card(a)}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>

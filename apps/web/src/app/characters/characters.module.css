@@ -8,7 +8,6 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: var(--s-2) var(--s-4);
-  border-bottom: 1px solid var(--paper-edge);
 }
 
 .head h1 {
@@ -19,15 +18,15 @@
   margin-bottom: 12px;
   padding: 9px 16px;
   border-radius: var(--r-ctl);
-  background: var(--seal);
-  color: var(--seal-ink);
-  font: 600 var(--fs-sm) / 1.2 var(--f-ui);
+  background: var(--seal-fill);
+  color: var(--seal-fill-ink);
+  font: 700 var(--fs-sm) / 1.2 var(--f-ui);
   text-decoration: none;
 }
 
 .create:hover,
 .create:focus-visible {
-  background: var(--seal-hi);
+  background: var(--seal-fill-hi);
 }
 
 .grid {

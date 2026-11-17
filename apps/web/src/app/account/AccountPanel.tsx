@@ -1,5 +1,6 @@
 'use client';
 
+import { LobbyBackdrop } from '@/components/lobby/LobbyBackdrop';
 import Link from 'next/link';
 import { PageNav } from '@/components/nav/PageNav';
 import { useEffect, useState } from 'react';
@@ -56,7 +57,8 @@ export function AccountPanel() {
   }, []);
 
   return (
-    <main className={styles.main}>
+    <main className={styles.main} data-ink="night">
+      <LobbyBackdrop />
       <div className={styles.card}>
         <PageNav />
         <h1 className={styles.title}>계정</h1>

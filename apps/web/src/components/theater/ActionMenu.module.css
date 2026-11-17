@@ -27,7 +27,7 @@
 
 @keyframes ping {
   50% {
-    box-shadow: 0 0 0 3px var(--seal-tint);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--seal) 30%, transparent);
   }
 }
 
@@ -68,8 +68,8 @@
 
 .row:hover:not(:disabled),
 .row:focus-visible {
-  background: var(--seal);
-  color: #fff;
+  background: var(--seal-fill);
+  color: var(--seal-fill-ink);
 }
 
 .row:hover:not(:disabled) :is(.note, .key),
@@ -163,8 +163,8 @@
 
 .ap[aria-checked='true'] {
   border-color: var(--seal);
-  background: var(--seal);
-  color: #fff;
+  background: var(--seal-fill);
+  color: var(--seal-fill-ink);
 }
 
 .ap[aria-checked='true'] .apTags,
@@ -185,8 +185,8 @@
   padding: 10px;
   border: 0;
   border-radius: 6px;
-  background: var(--seal);
-  color: #fff;
+  background: var(--seal-fill);
+  color: var(--seal-fill-ink);
   font: 800 17px var(--f-ui);
   cursor: pointer;
 }

@@ -57,7 +57,12 @@ export function Duel({
 }: Props) {
   const at = outcome ? LADDER.indexOf(outcome) : -1;
   return (
-    <section className={styles.duel} data-roll-panel="" aria-label={kind}>
+    <section
+      className={styles.duel}
+      data-roll-panel=""
+      data-opposed={'difficulty' in opp ? undefined : ''}
+      aria-label={kind}
+    >
       <p className={styles.kind}>{kind}</p>
       <div className={styles.row}>
         <div className={styles.side}>

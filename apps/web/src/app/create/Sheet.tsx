@@ -83,13 +83,16 @@ export function Sheet({
   ];
   const refresh = refreshFor(stunts.length);
   return (
-    <div className={styles.sheetCard} data-full={full || undefined}>
+    <div className={styles.sheetCard} data-full={full || undefined} data-ink="paper">
       <div className={styles.sheetTop}>
         <div className={styles.photo} data-none={!portrait || undefined}>
           {portrait ? (
             <img src={portrait} alt={`${name} 초상화`} className={styles.portrait} />
           ) : (
-            <div className={styles.noPortrait}>{full || saved ? '초상화 없음' : '초상화'}</div>
+            // 초상화가 없으면 이름 첫 글자를 도장처럼 찍어 둔다 (빈 점선 칸 대신)
+            <div className={styles.noPortrait} data-mono={name.trim() ? '' : undefined}>
+              {name.trim() ? Array.from(name.trim())[0] : '초상화'}
+            </div>
           )}
         </div>
         <div className={styles.who}>
@@ -101,7 +104,12 @@ export function Sheet({
             </p>
           )}
           <p className={styles.refresh}>
-            {term('fatePoint')} <span aria-hidden>{'◆'.repeat(refresh)}</span>
+            {term('fatePoint')}{' '}
+            <span className={styles.coins} aria-hidden>
+              {Array.from({ length: refresh }, (_, i) => (
+                <i key={i} />
+              ))}
+            </span>
             <small>
               {term('refresh')} {refresh}
             </small>

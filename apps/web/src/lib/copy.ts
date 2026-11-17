@@ -16,8 +16,8 @@ export const OUTCOME_COPY: Record<Action, Record<Outcome, string>> = {
   overcome: {
     fail: '넘지 못함. 큰 대가를 치르면 넘을 수도 있다',
     tie: '작은 대가를 치르고 넘어감',
-    success: '성공!',
-    style: '대성공. 부스트도 얻음',
+    success: '깔끔하게 넘어감',
+    style: '넘어가고 부스트도 얻음',
   },
   create_advantage: {
     fail: '특성을 만들지 못함. 상대가 무료 발동을 얻을 수도 있다',

@@ -1,0 +1,38 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.backdrop img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 60% center;
+  filter: saturate(0.8) brightness(0.6);
+}
+
+/* 왼쪽 글 줄은 탁자색으로 덮고, 오른쪽으로 갈수록 장면이 비친다 */
+.backdrop::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      90deg,
+      var(--table) 0%,
+      rgb(25 24 22 / 0.92) 36%,
+      rgb(25 24 22 / 0.45) 72%,
+      rgb(25 24 22 / 0.3) 100%
+    ),
+    linear-gradient(0deg, var(--table), transparent 45%);
+}
+
+@media (max-width: 760px) {
+  .backdrop::after {
+    background: rgb(25 24 22 / 0.9);
+  }
+}

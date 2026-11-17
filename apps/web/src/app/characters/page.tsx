@@ -1,3 +1,4 @@
+import { LobbyBackdrop } from '@/components/lobby/LobbyBackdrop';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { AccountChip } from '@/components/account/AccountChip';
@@ -11,7 +12,8 @@ export const metadata: Metadata = { title: '내 캐릭터 · 운명점 테이블
 
 export default function MyCharactersPage() {
   return (
-    <main className={styles.main}>
+    <main className={styles.main} data-ink="night">
+      <LobbyBackdrop />
       <ClientOnly>
         <AccountChip />
       </ClientOnly>
@@ -24,9 +26,8 @@ export default function MyCharactersPage() {
           </Link>
         </div>
         <p className={styles.lead}>
-          캐릭터 만들기에서 저장한 시트. 방의 캐릭터 데려오기에서 그대로 불러온다. 고친 내용은
-          다음에 데려갈 때부터 들어가고, 이미 방에 있는 캐릭터는 그 방에서 쌓인 기록과 함께 그대로
-          남는다.
+          저장한 캐릭터시트. 어느 방에서든 데려올 수 있고, 고친 내용은 다음에 데려갈 때부터
+          들어간다.
         </p>
         <ClientOnly>
           <CharacterShelf />

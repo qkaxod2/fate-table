@@ -57,7 +57,7 @@
 .bar > .btn[data-mark='glitch']:hover {
   text-shadow:
     -1px 0 var(--seal-hi),
-    1px 0 var(--great);
+    1px 0 #6fbceb;
 }
 
 .bar > .btn[data-mark='flip']:hover {

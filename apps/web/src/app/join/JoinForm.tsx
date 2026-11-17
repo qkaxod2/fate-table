@@ -1,5 +1,6 @@
 'use client';
 
+import { LobbyBackdrop } from '@/components/lobby/LobbyBackdrop';
 import Link from 'next/link';
 import { PageNav } from '@/components/nav/PageNav';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -38,7 +39,8 @@ export function JoinForm() {
   }
 
   return (
-    <main className={styles.main}>
+    <main className={styles.main} data-ink="night">
+      <LobbyBackdrop />
       <div className={styles.card}>
         <PageNav />
         <h1 className={styles.title}>방 참가</h1>

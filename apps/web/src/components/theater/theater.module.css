@@ -7,6 +7,8 @@
 .theater {
   --e: var(--ease-out);
   --d: 0.7s;
+  /* 대사창 윗변이 화면 아래에서 얼마나 올라와 있는지. useDialogueTop이 실제 높이로 채운다 */
+  --dlg: 286px;
   position: relative;
   height: 100dvh;
   min-height: 600px;
@@ -45,9 +47,9 @@
 /* ---------- 인물 ---------- */
 .cast {
   position: absolute;
-  bottom: 190px;
+  bottom: calc(var(--dlg) - 36px);
   z-index: -1;
-  height: min(80dvh, 760px);
+  height: min(calc(100dvh - var(--dlg) - 20px), 760px);
   max-width: none;
   mask-image:
     linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent),
@@ -71,7 +73,7 @@
 
 .foe {
   right: max(2vw, 20px);
-  height: min(76dvh, 720px);
+  height: min(calc(100dvh - var(--dlg) - 50px), 720px);
   filter: brightness(0.86);
 }
 
@@ -159,10 +161,11 @@
 .myPlate,
 .foePlate {
   position: absolute;
-  bottom: 236px;
+  bottom: calc(var(--dlg) + 16px);
   z-index: 3;
   transition:
     translate var(--d) var(--e),
+    bottom 0.3s var(--e),
     opacity 0.4s var(--e);
 }
 
@@ -175,11 +178,11 @@
 }
 
 .theater[data-mode='roll'] .myPlate {
-  translate: -2vw calc(-1 * (100dvh - 236px - 230px));
+  translate: -2vw calc(-1 * (100dvh - var(--dlg) - 16px - 230px));
 }
 
 .theater[data-mode='roll'] .foePlate {
-  translate: 0 calc(-1 * (100dvh - 236px - 190px));
+  translate: 0 calc(-1 * (100dvh - var(--dlg) - 16px - 190px));
 }
 
 /* ---------- 장면 꼬리표: 장면 여기저기에 붙는다 ---------- */
@@ -254,12 +257,13 @@
 
 .hand {
   position: absolute;
-  bottom: -14px;
+  bottom: 22px;
   left: 50%;
   z-index: 7;
   display: flex;
   align-items: flex-end;
-  translate: -50% 360px;
+  translate: -50% 420px;
+  transform-origin: bottom center;
   transition: translate var(--d) var(--e);
 }
 
@@ -272,30 +276,43 @@
   transform-origin: bottom center;
 }
 
+/* 손패는 언제나 카드 전체가 보인다: 부채꼴로 기울이되 화면 아래로 빠지지 않는다 */
 .hand > *:hover,
 .hand > *:focus-visible {
   z-index: 2;
-  translate: 0 -40px;
+  translate: 0 -18px;
 }
 
 .fan1 {
-  rotate: -5deg;
-  translate: 0 20px;
+  rotate: -4deg;
+  translate: 0 6px;
 }
 .fan2 {
   rotate: 0deg;
 }
 .fan3 {
-  rotate: 5deg;
-  translate: 0 20px;
+  rotate: 4deg;
+  translate: 0 6px;
 }
 .fanL {
-  rotate: -9deg;
-  translate: 0 46px;
+  rotate: -8deg;
+  translate: 0 18px;
 }
 .fanR {
-  rotate: 9deg;
-  translate: 0 46px;
+  rotate: 8deg;
+  translate: 0 18px;
+}
+
+/* 낮은 화면: 판정판과 겹치지 않게 손패를 줄인다 */
+@media (min-width: 761px) and (max-height: 860px) {
+  .hand {
+    scale: 0.84;
+  }
+}
+@media (min-width: 761px) and (max-height: 760px) {
+  .hand {
+    scale: 0.68;
+  }
 }
 
 .chips {
@@ -384,8 +401,8 @@
   padding: 13px 26px;
   border: 0;
   border-radius: 7px;
-  background: var(--seal);
-  color: #fff;
+  background: var(--seal-fill);
+  color: var(--seal-fill-ink);
   font: 800 17px var(--f-ui);
   cursor: pointer;
 }
@@ -411,20 +428,28 @@
   font: 500 13px var(--f-ui);
 }
 
-/* ---------- 대사창 ---------- */
+/* ---------- 대사창 ----------
+ * 장면 위에 얹힌 어두운 읽기 칸 (30절: 이야기는 어두운 칼럼에서 조판된 글로 읽는다).
+ * 종이는 탁자 위 물건(이름표·카드)에만 쓰고, 대사창은 그림을 가리지 않게 가라앉힌다.
+ * TSX에서 data-ink="night"를 함께 붙여 안쪽 컴포넌트의 종이 토큰을 한 번에 바꾼다.
+ */
 .dialogue {
   position: absolute;
   bottom: 22px;
   left: 50%;
   z-index: 8;
   display: grid;
-  grid-template-columns: 1fr 300px;
+  grid-template-columns: minmax(0, 1fr) 300px;
   width: min(1180px, calc(100vw - 48px));
+  min-height: 264px;
   translate: -50% 0;
-  border-radius: 8px;
-  background: var(--card);
-  color: var(--ink-1);
-  box-shadow: var(--sh-object);
+  border: 1px solid var(--table-line);
+  border-radius: 10px;
+  background: rgb(22 21 19 / 0.86);
+  backdrop-filter: blur(14px) saturate(1.1);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.05),
+    0 30px 60px -30px #000;
   transition:
     translate var(--d) var(--e),
     opacity 0.5s var(--e);
@@ -438,8 +463,10 @@
 
 .say {
   position: relative;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
-  padding: 24px 30px 14px;
+  padding: 22px 30px 14px;
 }
 
 .speaker {
@@ -448,18 +475,22 @@
   left: 26px;
   padding: 4px 14px;
   border-radius: 3px;
-  background: var(--seal);
-  color: #fff;
+  background: var(--seal-fill);
+  color: var(--seal-fill-ink);
   font: 700 14px var(--f-ui);
 }
 
+/* 글 칸: 남는 높이를 다 쓰고, 위로 밀려 올라간 줄은 잘리지 않고 흐려진다 */
 .text {
-  height: 132px;
+  flex: 1 1 0;
+  min-height: 120px;
   overflow: auto;
   scrollbar-width: thin;
+  mask-image: linear-gradient(180deg, rgb(0 0 0 / 0.3), #000 20px);
 }
 
 .dialogue[data-log] .text {
+  flex: none;
   height: min(52dvh, 460px);
 }
 
@@ -489,12 +520,13 @@
 }
 
 .menu {
-  border-left: 1px solid var(--edge);
+  border-left: 1px solid var(--table-line);
 }
 
+/* 가리킬 곳이 없는 안내는 위쪽 가운데에 선다 (오른쪽 위 도구와 양옆 인물을 가리지 않게) */
 .coachSlot {
   position: absolute;
-  inset: 0;
+  inset: 64px calc(50% - 176px) 0 0;
   z-index: 30;
   pointer-events: none;
 }
@@ -555,7 +587,9 @@
     bottom: 0;
     grid-template-columns: 1fr;
     width: 100%;
+    min-height: 0;
     max-height: 46dvh;
+    border-width: 1px 0 0;
     overflow: auto;
     border-radius: 12px 12px 0 0;
   }
@@ -569,10 +603,11 @@
     margin-bottom: 6px;
   }
   .text {
-    height: 96px;
+    flex: none;
+    height: 112px;
   }
   .menu {
-    border-top: 1px solid var(--edge);
+    border-top: 1px solid var(--table-line);
     border-left: 0;
   }
   .duelSlot {
