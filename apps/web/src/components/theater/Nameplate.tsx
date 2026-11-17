@@ -26,6 +26,7 @@ export function Nameplate({
   return (
     <section
       className={styles.plate}
+      data-ink="night"
       aria-label={`${c.name} 상태`}
       data-me={me || undefined}
       data-out={c.takenOut || undefined}

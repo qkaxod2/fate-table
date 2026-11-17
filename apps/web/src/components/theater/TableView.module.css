@@ -182,7 +182,7 @@
 }
 
 .scene b {
-  font: 800 21px var(--f-ui);
+  font: 700 21px var(--f-story);
 }
 
 .scene small {
@@ -211,9 +211,9 @@
   min-width: 260px;
   margin: 0;
   overflow: hidden;
+  border: 1px solid var(--table-line);
   border-radius: 10px;
-  background: var(--card);
-  box-shadow: var(--sh-object);
+  background: rgb(255 255 255 / 0.04);
 }
 
 .foeCard img,
@@ -232,6 +232,9 @@
 
 .foeCard > section,
 .seatCard > section {
+  border: 0;
+  background: none;
+  backdrop-filter: none;
   box-shadow: none;
 }
 
@@ -255,8 +258,7 @@
 }
 
 .seat[data-me] .seatCard {
-  outline: 2px solid var(--seal-on-table);
-  outline-offset: 3px;
+  border-color: var(--brass);
 }
 
 @media (max-width: 760px) {

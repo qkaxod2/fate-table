@@ -347,6 +347,7 @@ export function CoachMark({
     <div
       ref={box}
       className={styles.coach}
+      data-ink="night"
       role="status"
       aria-live="polite"
       data-coach

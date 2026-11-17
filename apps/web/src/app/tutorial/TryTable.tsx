@@ -153,12 +153,12 @@ const COACH_SHY = [
 
 /** 장면 꼬리표 자리 (화면 비율 %): 이야기 중에는 장면 여기저기, 판정 중에는 판정판 둘레 */
 const TAG_SPOTS: ReadonlyArray<readonly [number, number]> = [
-  [40, 40],
-  [44, 14],
-  [51, 27],
-  [49, 53],
-  [58, 40],
-  [33, 53],
+  [38, 43],
+  [53, 43],
+  [45.5, 56],
+  [30, 56],
+  [61, 56],
+  [45.5, 30],
 ];
 /* 판정 중에는 판정판과 손패를 가리지 않게 양옆 두 줄로 선다 */
 const TAG_SPOTS_ROLL: ReadonlyArray<readonly [number, number]> = [
@@ -298,6 +298,7 @@ function Picker({ onPick }: { onPick: (s: SampleCharacter) => void }) {
               <button
                 type="button"
                 className={styles.pickCard}
+                data-ink="night"
                 data-chosen={chosen === s.key || undefined}
                 aria-label={`${josa(s.name, '으로/로')} 시작하기. ${s.blurb}. ${term('high')}: ${s.create.highConcept}. ${term('trouble')}: ${s.create.trouble}`}
                 onClick={() => choose(s)}

@@ -117,12 +117,12 @@ const DONE_COPY: Partial<Record<Command['type'], string>> = {
 
 /** 장면 꼬리표 자리 (화면 비율 %): 이야기 중에는 장면 여기저기, 판정 중에는 판정판 둘레 */
 const TAG_SPOTS: ReadonlyArray<readonly [number, number]> = [
-  [40, 40],
-  [44, 14],
-  [51, 27],
-  [49, 53],
-  [58, 40],
-  [33, 53],
+  [38, 43],
+  [53, 43],
+  [45.5, 56],
+  [30, 56],
+  [61, 56],
+  [45.5, 30],
 ];
 /* 판정 중에는 판정판과 손패를 가리지 않게 양옆 두 줄로 선다 */
 const TAG_SPOTS_ROLL: ReadonlyArray<readonly [number, number]> = [
@@ -1175,7 +1175,7 @@ export function RoomTable({
       </div>
 
       {waitingOn && (
-        <div className={`${styles.waitChip} ${rt.wait}`}>
+        <div className={`${styles.waitChip} ${rt.wait}`} data-ink="night">
           <span className={styles.dots} aria-hidden />
           {waitingOn}
           {isGm && roll && (

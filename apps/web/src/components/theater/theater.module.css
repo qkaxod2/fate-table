@@ -116,7 +116,7 @@
 
 .top h1 {
   margin: 0;
-  font: 800 30px / 1.2 var(--f-head);
+  font: 700 30px / 1.2 var(--f-story);
   letter-spacing: -0.02em;
   text-shadow: 0 2px 14px #000;
 }
