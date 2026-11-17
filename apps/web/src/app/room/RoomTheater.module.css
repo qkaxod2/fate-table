@@ -15,6 +15,8 @@
   inset: 70px 0 calc(var(--dlg) - 36px);
   z-index: -1;
   pointer-events: none;
+  /* 장면 시간의 색 보정 (theater.module.css의 --grade) */
+  filter: brightness(1) var(--grade);
   transition:
     opacity 0.6s var(--ease-out),
     filter 0.6s var(--ease-out);
@@ -25,7 +27,7 @@
 }
 
 :global([data-mode='roll']) > .cast {
-  filter: brightness(0.6);
+  filter: brightness(0.6) var(--grade);
 }
 
 .kicker {

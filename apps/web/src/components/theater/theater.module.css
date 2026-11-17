@@ -16,6 +16,22 @@
   background: var(--table);
   color: var(--on-table);
   isolation: isolate;
+  /*
+   * 장면 시간의 색 보정. 예전에는 화면 전체를 덮는 backdrop-filter로 걸었는데, 그 위에서 불티·비가
+   * 움직일 때마다 화면 전체를 다시 보정해 렉이 걸렸다. 같은 보정을 배경 그림과 인물에 filter로 직접 건다.
+   * 함수 목록을 늘 같게 두어야 시간이 바뀔 때 부드럽게 넘어간다
+   */
+  --grade: brightness(1) saturate(1) sepia(0);
+}
+
+.theater:has(> [data-grade='dawn']) {
+  --grade: brightness(1.05) saturate(0.85) sepia(0);
+}
+.theater:has(> [data-grade='dusk']) {
+  --grade: brightness(1) saturate(1.15) sepia(0.25);
+}
+.theater:has(> [data-grade='night']) {
+  --grade: brightness(0.72) saturate(0.5) sepia(0);
 }
 
 .bg {
@@ -23,7 +39,7 @@
   inset: 0;
   z-index: -2;
   background: center / cover no-repeat;
-  filter: brightness(0.62) saturate(0.85);
+  filter: brightness(0.62) saturate(0.85) var(--grade);
   transition: filter var(--d) var(--e);
 }
 
@@ -41,7 +57,17 @@
 }
 
 .theater[data-mode='roll'] .bg {
-  filter: brightness(0.32) saturate(0.6);
+  filter: brightness(0.32) saturate(0.6) var(--grade);
+}
+
+/* 인물을 한데 담는 층. 시간 보정을 인물에도 한 번에 건다 */
+.castLayer {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  filter: var(--grade);
+  transition: filter var(--d) var(--e);
 }
 
 /* ---------- 인물 ---------- */
@@ -489,8 +515,8 @@
   translate: -50% 0;
   border: 1px solid var(--table-line);
   border-radius: 10px;
-  background: rgb(22 21 19 / 0.86);
-  backdrop-filter: blur(14px) saturate(1.1);
+  /* 뒤를 흐리는 backdrop-filter 대신 조금 더 짙게 칠한다 (불티·비가 움직일 때마다 다시 흐리느라 무거웠다) */
+  background: rgb(22 21 19 / 0.92);
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.05),
     0 30px 60px -30px #000;

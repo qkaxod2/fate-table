@@ -14,20 +14,12 @@
   inset: 0;
 }
 
-/* ---------- 시간: 뒤를 보정(grade)하고 색을 곱해 덮는다 ---------- */
-.grade {
-  animation: fade-in 1.4s var(--ease-out) both;
-}
-
-.root[data-time='dawn'] .grade {
-  backdrop-filter: saturate(0.85) brightness(1.05);
-}
-.root[data-time='dusk'] .grade {
-  backdrop-filter: saturate(1.15) sepia(0.25);
-}
-.root[data-time='night'] .grade {
-  backdrop-filter: brightness(0.72) saturate(0.5);
-}
+/*
+ * ---------- 시간: 색을 곱해 덮는다 ----------
+ * 색 보정(채도·세피아·밝기)은 여기서 backdrop-filter로 걸지 않고, 무대가 data-grade를 보고
+ * 배경 그림과 인물에 filter로 직접 건다 (theater.module.css의 --grade). 화면 전체 backdrop-filter는
+ * 위에서 입자가 움직일 때마다 다시 계산돼 무거웠다
+ */
 
 .tint {
   mix-blend-mode: multiply;
