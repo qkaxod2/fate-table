@@ -270,10 +270,16 @@ describe('character creation', () => {
         highConcept: '떠돌이 마법사',
         trouble: '호기심을 못 참는다',
         aspects: ['옛 스승의 빚'],
+        backstory: '스승을 잃고 길을 떠났다.',
       },
     });
     const c = Object.values(t.state.characters)[0]!;
-    expect(c).toMatchObject({ ownerId: 'u1', refresh: 2, fatePoints: 2 });
+    expect(c).toMatchObject({
+      ownerId: 'u1',
+      refresh: 2,
+      fatePoints: 2,
+      backstory: '스승을 잃고 길을 떠났다.',
+    });
     expect(Object.values(t.state.aspects).map((a) => a.kind)).toEqual([
       'high',
       'trouble',
@@ -448,6 +454,21 @@ describe('milestones', () => {
       payload: { id: 'a', patch: { approaches: { ...swapped, sneaky: 4 } } },
     });
     expect(t.state.characters.a!.approaches.sneaky).toBe(4);
+  });
+
+  it('lets the owner write a backstory any time without spending a milestone', () => {
+    const t = table();
+    const story = {
+      type: 'character.update',
+      payload: { id: 'a', patch: { backstory: '북쪽 마을에서 자랐다.' } },
+    } as const;
+    expect(() => t.run(P2, story)).toThrow();
+    t.run(P1, story);
+    expect(t.state.characters.a!.backstory).toBe('북쪽 마을에서 자랐다.');
+    t.run(GM, { type: 'milestone.grant', payload: { characterIds: ['a'], size: 'minor' } });
+    t.run(P1, { type: 'character.update', payload: { id: 'a', patch: { backstory: '' } } });
+    expect(t.state.characters.a!.backstory).toBe('');
+    expect(t.state.characters.a!.milestone).toBe('minor');
   });
 });
 

@@ -35,6 +35,7 @@ export function draftToForm(d: CharacterDraft) {
       action: s.bonus?.action ?? 'attack',
     })),
     portrait: d.portraitUrl,
+    story: d.backstory ?? '',
   };
 }
 
@@ -50,6 +51,7 @@ export function Sheet({
   ratings,
   stunts,
   portrait,
+  story = '',
   full = false,
   saved = false,
 }: {
@@ -60,6 +62,8 @@ export function Sheet({
   ratings: Ratings;
   stunts: StuntDraft[];
   portrait: string | undefined;
+  /** 지나온 이야기 (선택) */
+  story?: string;
   full?: boolean;
   /** 저장한 캐릭터 목록의 카드: 빈 칸 안내를 숨긴다 */
   saved?: boolean;
@@ -154,6 +158,13 @@ export function Sheet({
             </li>
           ))}
         </ul>
+      )}
+
+      {(story.trim() || !(full || saved)) && (
+        <section className={styles.story} data-empty={!story.trim() || undefined}>
+          <span className={styles.indexLabel}>지나온 이야기</span>
+          <p>{story.trim() || '어디서 왔는지 (선택)'}</p>
+        </section>
       )}
     </div>
   );

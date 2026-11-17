@@ -20630,6 +20630,7 @@ var INVISIBLE = /[\s\u00AD\u034F\u115F\u1160\u17B4\u17B5\u180E\u200B-\u200F\u202
 var hasVisibleText = (s) => s.replace(INVISIBLE, "").length > 0;
 var visible = (max) => external_exports.string().trim().min(1).max(max).refine(hasVisibleText, { message: "empty" });
 var text = visible(200);
+var backstory = external_exports.string().trim().max(4e3);
 var approach = external_exports.enum(APPROACHES);
 var action = external_exports.enum(ACTIONS);
 var slot = external_exports.enum(CONSEQUENCE_SLOTS);
@@ -20674,6 +20675,7 @@ var CommandSchema = external_exports.discriminatedUnion("type", [
     highConcept: text,
     trouble: text.optional(),
     aspects: external_exports.array(text).max(3).default([]),
+    backstory: backstory.optional(),
     /** 캐릭터 만들기에서 그린 초상화 (공개 Storage URL) */
     portraitUrl: external_exports.string().url().max(500).optional(),
     /** 캐릭터 만들기에서 저장한 초안의 키. 같은 초안을 두 번 데려오지 않게 한다 */
@@ -20684,7 +20686,8 @@ var CommandSchema = external_exports.discriminatedUnion("type", [
     patch: external_exports.object({
       name: text.optional(),
       approaches: approaches.optional(),
-      stunts: external_exports.array(stunt).max(5).optional()
+      stunts: external_exports.array(stunt).max(5).optional(),
+      backstory: backstory.optional()
     })
   }),
   cmd("milestone.grant", {
@@ -21043,6 +21046,7 @@ var resolvers = {
       stress: [false, false, false],
       consequences: {},
       ...p.portraitUrl ? { portraitUrl: p.portraitUrl } : {},
+      ...p.backstory ? { backstory: p.backstory } : {},
       ...p.sourceKey ? { sourceKey: p.sourceKey } : {}
     };
     const mk = (kind, text2) => ({
@@ -21065,7 +21069,8 @@ var resolvers = {
   },
   "character.update": (s, p, a) => {
     const c = controlled(s, a, p.id);
-    const growth = a.role !== "gm" && !c.isNpc;
+    const { backstory: _story, ...rules } = p.patch;
+    const growth = a.role !== "gm" && !c.isNpc && Object.keys(rules).length > 0;
     if (growth) {
       if (!c.milestone) throw new CommandError("FORBIDDEN_ROLE", "needs a milestone");
       if (p.patch.approaches && !isGrowth(c, p.patch.approaches, c.milestone))

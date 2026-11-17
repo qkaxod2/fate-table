@@ -68,12 +68,18 @@ export function CharacterSheet({
   const [stuntAction, setStuntAction] = useState<Action>('overcome');
   const [editAspect, setEditAspect] = useState<string | null>(null);
   const [aspectText, setAspectText] = useState('');
+  /** 지나온 이야기를 고치는 중이면 그 글 */
+  const [story, setStory] = useState<string | null>(null);
 
   const changed =
     APPROACHES.some((a) => draft[a] !== c.approaches[a]) ||
     JSON.stringify(stunts) !== JSON.stringify(c.stunts);
 
-  const dirty = changed || !!stuntText.trim() || editAspect !== null;
+  const dirty =
+    changed ||
+    !!stuntText.trim() ||
+    editAspect !== null ||
+    (story !== null && story.trim() !== (c.backstory ?? ''));
 
   return (
     <Leaf
@@ -442,6 +448,58 @@ export function CharacterSheet({
             );
           })}
         </ul>
+      </section>
+
+      <section>
+        <h3>
+          지나온 이야기
+          {canEdit && story === null && (
+            <button
+              type="button"
+              className={styles.mini}
+              onClick={() => setStory(c.backstory ?? '')}
+            >
+              {c.backstory ? '고치기' : '적기'}
+            </button>
+          )}
+        </h3>
+        {story !== null ? (
+          <form
+            className={styles.storyForm}
+            onSubmit={(e) => {
+              e.preventDefault();
+              void run({
+                type: 'character.update',
+                payload: { id: c.id, patch: { backstory: story.trim() } },
+              }).then((evs) => {
+                if (evs.length) setStory(null);
+              });
+            }}
+          >
+            <textarea
+              autoFocus
+              aria-label="지나온 이야기"
+              value={story}
+              maxLength={4000}
+              rows={6}
+              placeholder="어디서 왔고, 무엇을 잃었고, 왜 지금 여기 있는지"
+              onChange={(e) => setStory(e.target.value)}
+            />
+            <span className={styles.row}>
+              <small className={styles.count}>{story.length} / 4000</small>
+              <button type="button" className={styles.ghost} onClick={() => setStory(null)}>
+                취소
+              </button>
+              <button type="submit" className={styles.primary} disabled={pending}>
+                저장
+              </button>
+            </span>
+          </form>
+        ) : c.backstory ? (
+          <p className={styles.story}>{c.backstory}</p>
+        ) : (
+          <p className={styles.muted}>{canEdit ? '아직 적지 않음' : '없음'}</p>
+        )}
       </section>
 
       {(canEdit || isGm) && (

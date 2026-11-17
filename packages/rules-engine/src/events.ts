@@ -50,7 +50,10 @@ export interface EventPayloads {
   'character.updated': {
     id: string;
     patch: Partial<
-      Pick<Character, 'name' | 'approaches' | 'stunts' | 'refresh' | 'portraitAssetId'>
+      Pick<
+        Character,
+        'name' | 'approaches' | 'stunts' | 'refresh' | 'portraitAssetId' | 'backstory'
+      >
     >;
     /** 플레이어가 이정표로 성장했으면 이정표를 쓴 것으로 처리 */
     milestoneUsed?: boolean;

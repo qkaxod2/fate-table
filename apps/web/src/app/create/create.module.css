@@ -917,3 +917,56 @@
     opacity: 0;
   }
 }
+
+/* ---------- 지나온 이야기: 이야기 글이라 명조. 줄바꿈을 그대로 둔다 ---------- */
+.field .storyInput {
+  min-height: 8em;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--paper-edge);
+  border-bottom: 2px solid var(--line-hi);
+  border-radius: 4px 4px 2px 2px;
+  background: var(--plate);
+  color: var(--ink-1);
+  font: 400 var(--fs-md) / 1.8 var(--f-story);
+  resize: vertical;
+}
+
+.field .storyInput:focus-visible {
+  border-bottom-color: var(--seal);
+  outline: 2px solid color-mix(in srgb, var(--seal) 35%, transparent);
+  outline-offset: 1px;
+}
+
+.story {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 0 0;
+  border-top: 1px solid var(--paper-edge);
+}
+
+.story p {
+  margin: 0;
+  color: var(--ink-1);
+  font: 400 var(--fs-sm) / 1.75 var(--f-story);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.story[data-empty] p {
+  color: var(--line-hi);
+}
+
+/* 미리보기·목록 카드에서는 네 줄까지만 */
+.story p {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.sheetCard[data-full] .story p {
+  display: block;
+  font-size: var(--fs-md);
+  -webkit-line-clamp: unset;
+}
