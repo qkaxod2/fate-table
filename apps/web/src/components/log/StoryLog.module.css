@@ -240,7 +240,8 @@
   min-height: 0;
   /* 스크롤은 바깥 글 칸이 맡는다. 여기서도 스크롤 칸이 되면 탭이 이 안에 붙어 함께 밀려 올라간다 */
   overflow: visible;
-  padding: var(--s-3) var(--s-6) var(--s-3) var(--s-6);
+  /* 왼쪽 끝을 대사창의 입력 칸·도구 줄과 같은 선에 맞춘다 (안쪽 여백은 대사창이 준다) */
+  padding: var(--s-2) 0;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -252,10 +253,11 @@
 /* 책 본문은 바깥 칸(대사창 글 칸)이 스크롤하므로, 탭은 그 칸 맨 위에 딱 붙는다 (위로 잘리지 않게) */
 .log[data-variant='book'] .tabs {
   top: 0;
-  margin: calc(var(--s-3) * -1) calc(var(--s-6) * -1) var(--s-3) calc(var(--s-6) * -1);
-  padding: var(--s-2) var(--s-6) 0 var(--s-6);
+  margin: calc(var(--s-2) * -1) 0 var(--s-3);
+  padding: var(--s-1) 0 0;
   border-bottom: 1px solid var(--paper-edge);
-  background: var(--paper);
+  /* 아래로 지나가는 줄이 비치지 않게 불투명하게 (대사창 바탕과 같은 어둠) */
+  background: rgb(26 25 23);
 }
 
 .log[data-variant='book'] .tab {
@@ -280,8 +282,8 @@
 }
 
 .log[data-variant='book'] .list {
-  gap: var(--s-4);
-  max-width: 34em;
+  gap: var(--s-3);
+  max-width: 46em;
 }
 
 /*
@@ -326,19 +328,27 @@
   display: none;
 }
 
-/* 장면 시작: 가운데 작은 활자 구분선 */
+/* 장면·세션 시작: 왼쪽 끝에 맞춘 작은 활자 머리글과 뒤로 이어지는 가는 선 */
 .log[data-variant='book'] .line[data-kind='scene'] {
-  justify-content: center;
-  margin-top: var(--s-2);
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin-top: var(--s-1);
   color: var(--ink-3);
-  font: 600 13px/1.6 var(--f-ui);
-  letter-spacing: 0.12em;
-  text-align: center;
+  font: 600 12.5px/1.6 var(--f-ui);
+  letter-spacing: 0.06em;
 }
 
-.log[data-variant='book'] .line[data-kind='scene'] > span::before,
-.log[data-variant='book'] .line[data-kind='scene'] > span::after {
-  content: ' — ';
+.log[data-variant='book'] .line[data-kind='scene'] > span {
+  flex: none;
+}
+
+.log[data-variant='book'] .line[data-kind='scene']::after {
+  flex: 1;
+  order: 1;
+  height: 1px;
+  background: var(--paper-edge);
+  content: '';
 }
 
 /* 굴림·운명점 기록: 본문보다 한 단계 작고 흐린 메모 */
@@ -361,6 +371,7 @@
 }
 
 .log[data-variant='book'] .undo {
+  order: 2;
   color: var(--ink-3);
 }
 
@@ -370,16 +381,6 @@
 }
 
 @media (max-width: 760px) {
-  .log[data-variant='book'] {
-    padding-left: var(--s-4);
-  }
-  .log[data-variant='book'] {
-    padding-right: var(--s-4);
-  }
-  .log[data-variant='book'] .tabs {
-    margin-inline: calc(var(--s-4) * -1);
-    padding-inline: var(--s-4);
-  }
   .log[data-variant='book'] .line {
     font-size: 16px;
   }

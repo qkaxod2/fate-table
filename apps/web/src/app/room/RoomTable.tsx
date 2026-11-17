@@ -1469,8 +1469,9 @@ export function RoomTable({
         className={`${th.dialogue} ${handSide ? '' : rt.keepSay}`}
         data-ink="night"
         data-log={logOpen || undefined}
+        data-solo={(isGm && !me) || undefined}
       >
-        <DialogueGrip />
+        <DialogueGrip open={logOpen} onOpenChange={setLogOpen} />
         {me && !busyRoll && (
           <div className={rt.picks} data-ink="night">
             {controllable.length > 1 && (
@@ -1678,19 +1679,14 @@ export function RoomTable({
               )}
             </div>
           )}
-          <div className={th.sys}>
-            <button type="button" onClick={() => setLogOpen((o) => !o)}>
-              {logOpen ? '이야기 접기' : '지난 이야기'}
-            </button>
-            <button type="button" onClick={() => setTableOpen(true)}>
-              탁자 보기 Tab
-            </button>
-            {me && (
+          {/* 펼치기·접기는 윗변 손잡이, 탁자 보기는 오른쪽 위 도구에 있으니 여기엔 내 시트만 둔다 */}
+          {me && (
+            <div className={th.sys}>
               <button type="button" onClick={() => setSheetId(me.id)}>
                 내 시트
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
         <div className={`${th.menu} ${rt.menu}`}>
           {me ? (
