@@ -1,0 +1,47 @@
+/* 운영자 전체 캐릭터: 찾기 줄 + 카드 아래 주인 이름표. 카드 격자는 내 캐릭터(characters.module.css)와 같다 */
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-4);
+  margin: 0 0 var(--s-5);
+}
+
+.search {
+  flex: 1 1 260px;
+  min-width: 0;
+  min-height: 44px;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--paper-edge);
+  border-bottom: 2px solid var(--line-hi);
+  border-radius: 4px 4px 2px 2px;
+  background: var(--plate);
+  color: var(--ink-1);
+  font: 400 var(--fs-md) / 1.4 var(--f-book);
+}
+
+.search:focus-visible {
+  border-bottom-color: var(--seal);
+  outline: 2px solid color-mix(in srgb, var(--seal) 35%, transparent);
+  outline-offset: 1px;
+}
+
+.count {
+  color: var(--ink-3);
+  font: 400 var(--fs-sm) / 1.4 var(--f-ui);
+  font-variant-numeric: tabular-nums;
+}
+
+.owner {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink-1);
+  font: 600 var(--fs-sm) / 1.4 var(--f-ui);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.owner[data-anon] {
+  color: var(--ink-3);
+  font-weight: 500;
+}

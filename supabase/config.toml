@@ -24,3 +24,6 @@ verify_jwt = true
 
 [functions.close]
 verify_jwt = true
+
+[functions.admin-characters]
+verify_jwt = true
