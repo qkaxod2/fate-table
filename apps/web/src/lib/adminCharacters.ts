@@ -24,3 +24,8 @@ export function fetchAllCharacters(): Promise<{
 }> {
   return callFunction('admin-characters', {});
 }
+
+/** 운영자가 친구 계정의 비밀번호를 바로 바꿔 준다 (메일 서버 없이) */
+export async function setUserPassword(email: string, password: string): Promise<void> {
+  await callFunction('admin-characters', { setPassword: { email, password } });
+}

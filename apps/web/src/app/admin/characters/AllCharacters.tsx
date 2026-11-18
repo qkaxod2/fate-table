@@ -8,6 +8,7 @@ import { type AdminCharacter, fetchAllCharacters } from '@/lib/adminCharacters';
 import { ApiError } from '@/lib/api';
 import lobby from '../../rooms/lobby.module.css';
 import { draftToForm, Sheet } from '../../create/Sheet';
+import { PasswordDesk } from './PasswordDesk';
 import shelf from '../../characters/characters.module.css';
 import styles from './admin.module.css';
 
@@ -101,6 +102,7 @@ export function AllCharacters() {
   const owners = new Set(load.list.map((c) => c.owner?.id)).size;
   return (
     <>
+      <PasswordDesk />
       <div className={styles.bar}>
         <input
           type="search"
