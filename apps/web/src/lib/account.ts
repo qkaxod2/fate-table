@@ -108,6 +108,8 @@ const MESSAGES: Record<string, string> = {
   provider_disabled: '아직 켜지지 않은 로그인 방법',
   signup_disabled: '지금은 새 계정을 만들 수 없음',
   same_password: '지금 쓰는 비밀번호와 같음',
+  otp_expired: '링크가 만료됐거나 이미 쓴 링크. 비밀번호 찾기를 다시 하기',
+  user_not_found: '그 이메일로 가입한 계정이 없음',
 };
 
 export class AccountError extends Error {
@@ -244,6 +246,25 @@ export async function finishRedirect(): Promise<number | null> {
     // 무시
   }
   return afterSignIn(sb, token);
+}
+
+/** 비밀번호 찾기 메일의 링크가 돌아올 주소. 돌아오면 계정 화면이 새 비밀번호 칸을 연다 */
+export const RESET_PARAM = 'reset';
+
+/**
+ * 비밀번호 찾기: 이메일로 재설정 링크를 보낸다. 링크를 누르면 그 계정으로 로그인된 채
+ * 계정 화면(?reset=1)으로 돌아오고, 거기서 새 비밀번호를 정한다.
+ */
+export async function sendPasswordReset(email: string): Promise<void> {
+  const { error } = await need().auth.resetPasswordForEmail(email, {
+    redirectTo: `${accountUrl()}?${RESET_PARAM}=1`,
+  });
+  if (error) fail(error);
+}
+
+/** 비밀번호 찾기 링크로 막 돌아왔는지 (주소에 ?reset=1) */
+export function cameFromReset(): boolean {
+  return new URLSearchParams(window.location.search).get(RESET_PARAM) === '1';
 }
 
 export async function setPassword(password: string): Promise<void> {
