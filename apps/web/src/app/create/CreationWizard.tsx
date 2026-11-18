@@ -357,10 +357,14 @@ export function CreationWizard() {
                   </p>
                   <p>
                     3개까지는 부담 없이 넣을 수 있다. 4개째부터는 하나 늘 때마다{' '}
-                    {josa(term('refresh'), '이/가')} 1씩 준다. {term('refresh')}은 세션이 시작될 때{' '}
-                    {term('fatePoint')}이 다시 채워지는 수라서, 특기를 더 갖는 대신 쓸 수 있는{' '}
-                    {term('fatePoint')}이 줄어드는 셈이다. 지금 {term('refresh')}{' '}
-                    {refreshFor(stunts.length)}.
+                    {josa(term('refresh'), '이/가')} 1씩 준다. 그 대가를 치르고 지금 바로 넣어도
+                    되고(5개까지), 플레이하다가 {josa(term('milestone'), '을/를')} 받을 때 하나씩
+                    새로 얻을 수도 있다.
+                  </p>
+                  <p>
+                    {term('refresh')}은 세션이 시작될 때 {term('fatePoint')}이 다시 채워지는 수다.
+                    그래서 특기를 더 갖는 대신 쓸 수 있는 {term('fatePoint')}이 줄어드는 셈이다.
+                    지금 {term('refresh')} {refreshFor(stunts.length)}.
                   </p>
                 </div>
                 {stunts.map((s, i) => (
