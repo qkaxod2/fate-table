@@ -1,10 +1,11 @@
 import type { Command } from '@fate/rules-engine';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { getSupabase } from './supabase';
+import { ensureSession, getSupabase } from './supabase';
 
 /**
- * 캐릭터 만들기에서 저장한 캐릭터. 이 브라우저에 두고, 세션(익명 포함)이 있으면 계정의
- * 보관함(saved_characters)에도 올려서 다른 기기에서도 데려올 수 있게 한다.
+ * 캐릭터 만들기에서 저장한 캐릭터. 이 브라우저에 두고, 계정의 보관함(saved_characters)에도
+ * 올린다. 로그인하지 않았으면 익명 세션을 만들어 올리고(운영자 화면에서도 보인다),
+ * 나중에 로그인하면 익명 기록이 계정으로 옮겨진다.
  */
 export type CharacterDraft = Extract<Command, { type: 'character.create' }>['payload'] & {
   key: string;
@@ -40,8 +41,10 @@ async function sessionUser(sb: SupabaseClient): Promise<string | null> {
 }
 
 async function pushCharacters(sb: SupabaseClient, list: CharacterDraft[]): Promise<void> {
+  if (list.length === 0) return;
+  await ensureSession(sb);
   const uid = await sessionUser(sb);
-  if (!uid || list.length === 0) return;
+  if (!uid) return;
   const { error } = await sb
     .from('saved_characters')
     .upsert(list.map((c) => ({ user_id: uid, key: c.key, data: c, saved_at: c.savedAt })));
@@ -67,17 +70,25 @@ export function mergeCharacters(...lists: CharacterDraft[][]): CharacterDraft[] 
 export async function listMyCharacters(): Promise<CharacterDraft[]> {
   const local = loadMyCharacters();
   const sb = getSupabase();
-  if (!sb || !(await sessionUser(sb))) return local;
+  if (!sb) return local;
+  // 이 브라우저에만 있던 캐릭터가 있으면 익명 세션을 만들어서라도 올린다
+  if (local.length > 0) await ensureSession(sb).catch(() => undefined);
+  if (!(await sessionUser(sb))) return local;
   const { data, error } = await sb
     .from('saved_characters')
     .select('data')
     .order('saved_at', { ascending: false })
     .limit(50);
   if (error) return local;
-  return mergeCharacters(
-    data.map((r) => r.data as CharacterDraft),
-    local,
-  );
+  const remote = data.map((r) => r.data as CharacterDraft);
+  // 서버에 없거나 서버 판보다 나중에 고친 것만 올린다 (다른 기기에서 고친 판을 덮지 않게)
+  const savedAt = new Map(remote.map((c) => [c.key, c.savedAt]));
+  const stale = local.filter((c) => {
+    const at = savedAt.get(c.key);
+    return at === undefined || at < c.savedAt;
+  });
+  if (stale.length > 0) void pushCharacters(sb, stale).catch(() => undefined);
+  return mergeCharacters(remote, local);
 }
 
 /** 저장한 캐릭터 하나 (계정 보관함 포함) */
