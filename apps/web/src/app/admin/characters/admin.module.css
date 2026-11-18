@@ -45,3 +45,38 @@
   color: var(--ink-3);
   font-weight: 500;
 }
+
+/* 친구 비밀번호 바꿔 주기: 평소엔 접어 둔다 */
+.desk {
+  margin: 0 0 var(--s-5);
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--r-ctl);
+}
+
+.desk summary {
+  color: var(--ink-1);
+  font: 600 var(--fs-sm) / 1.4 var(--f-ui);
+  cursor: pointer;
+}
+
+.deskForm {
+  display: grid;
+  gap: var(--s-3);
+  max-width: 420px;
+  margin-top: var(--s-3);
+}
+
+.deskOk,
+.deskError {
+  margin: 0;
+  font: 500 var(--fs-sm) / 1.5 var(--f-ui);
+}
+
+.deskOk {
+  color: var(--ink-1);
+}
+
+.deskError {
+  color: var(--danger);
+}
