@@ -8,10 +8,13 @@ import {
   type Account,
   AccountError,
   type AuthOptions,
+  cameFromReset,
   continueWithGoogle,
   finishRedirect,
   loadAuthOptions,
   redirectError,
+  RESET_PARAM,
+  sendPasswordReset,
   setAccountNickname,
   setPassword,
   signIn,
@@ -116,7 +119,7 @@ function SignInForms({
   options: AuthOptions | null;
   onNotice: (n: Notice | null) => void;
 }) {
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [mode, setMode] = useState<'signin' | 'signup' | 'reset'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPw] = useState('');
   const [busy, setBusy] = useState(false);
@@ -127,7 +130,13 @@ function SignInForms({
     setBusy(true);
     onNotice(null);
     try {
-      if (mode === 'signin') {
+      if (mode === 'reset') {
+        await sendPasswordReset(email.trim());
+        onNotice({
+          tone: 'ok',
+          text: `${email.trim()} 주소로 비밀번호 재설정 메일 발송. 메일의 링크를 누르면 이 화면에서 새 비밀번호를 정한다.`,
+        });
+      } else if (mode === 'signin') {
         const rooms = await signIn(email.trim(), password);
         onNotice({ tone: 'ok', text: `로그인 완료.${moved(rooms)}` });
       } else {
@@ -163,7 +172,7 @@ function SignInForms({
             key={m}
             type="button"
             role="tab"
-            aria-selected={mode === m}
+            aria-selected={mode === m || (m === 'signin' && mode === 'reset')}
             className={own.tab}
             onClick={() => setMode(m)}
           >
@@ -182,24 +191,51 @@ function SignInForms({
             required
           />
         </label>
-        <label className={styles.field}>
-          비밀번호
-          <input
-            type="password"
-            autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-            minLength={mode === 'signup' ? 8 : undefined}
-            value={password}
-            onChange={(e) => setPw(e.target.value)}
-            required
-          />
-        </label>
+        {mode === 'reset' ? (
+          <p className={styles.muted}>
+            가입한 이메일로 비밀번호를 다시 정하는 링크를 보낸다.{' '}
+            <button type="button" className={own.textLink} onClick={() => setMode('signin')}>
+              로그인으로 돌아가기
+            </button>
+          </p>
+        ) : (
+          <label className={styles.field}>
+            비밀번호
+            <input
+              type="password"
+              autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+              minLength={mode === 'signup' ? 8 : undefined}
+              value={password}
+              onChange={(e) => setPw(e.target.value)}
+              required
+            />
+          </label>
+        )}
         {mode === 'signup' && <p className={styles.muted}>비밀번호 8자 이상</p>}
+        {mode === 'signin' && (
+          <button
+            type="button"
+            className={own.textLink}
+            onClick={() => {
+              onNotice(null);
+              setMode('reset');
+            }}
+          >
+            비밀번호를 잊었어요
+          </button>
+        )}
         <button
           type="submit"
           className={styles.primary}
-          disabled={busy || !email.trim() || !password}
+          disabled={busy || !email.trim() || (mode !== 'reset' && !password)}
         >
-          {busy ? '잠시만요…' : mode === 'signin' ? '로그인' : '계정 만들기'}
+          {busy
+            ? '잠시만요…'
+            : mode === 'signin'
+              ? '로그인'
+              : mode === 'signup'
+                ? '계정 만들기'
+                : '재설정 메일 보내기'}
         </button>
       </form>
       {options?.google && (
@@ -232,6 +268,9 @@ function Profile({
   const [nickname, setNick] = useState(account.nickname);
   const [password, setPw] = useState('');
   const [busy, setBusy] = useState(false);
+  /** 비밀번호 찾기 링크로 돌아왔거나, 바꾸기를 눌렀을 때 새 비밀번호 칸을 연다 */
+  const [changing, setChanging] = useState(cameFromReset);
+  const askPassword = account.needsPassword || changing;
 
   async function run(job: () => Promise<void>, done: string) {
     if (busy) return;
@@ -255,7 +294,7 @@ function Profile({
         {account.providers.includes('google') ? '구글 계정으로 로그인함' : '로그인함'}
       </p>
 
-      {account.needsPassword && (
+      {askPassword && (
         <form
           className={styles.form}
           onSubmit={(e) => {
@@ -263,11 +302,13 @@ function Profile({
             void run(async () => {
               await setPassword(password);
               setPw('');
+              setChanging(false);
+              clearResetParam();
             }, '비밀번호 설정 완료. 다른 기기에서는 이메일과 이 비밀번호로 로그인');
           }}
         >
           <label className={styles.field}>
-            비밀번호 정하기
+            {account.needsPassword ? '비밀번호 정하기' : '새 비밀번호'}
             <input
               type="password"
               autoComplete="new-password"
@@ -281,6 +322,11 @@ function Profile({
             비밀번호 저장
           </button>
         </form>
+      )}
+      {!askPassword && account.providers.includes('email') && (
+        <button type="button" className={own.textLink} onClick={() => setChanging(true)}>
+          비밀번호 바꾸기
+        </button>
       )}
 
       <form
@@ -323,4 +369,12 @@ function Profile({
       </div>
     </>
   );
+}
+
+/** 비밀번호를 정했으면 주소의 ?reset=1을 지운다 (새로고침해도 칸이 다시 열리지 않게) */
+function clearResetParam() {
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has(RESET_PARAM)) return;
+  url.searchParams.delete(RESET_PARAM);
+  window.history.replaceState(window.history.state, '', url);
 }

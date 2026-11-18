@@ -125,3 +125,21 @@
 .signOut:hover {
   color: var(--danger);
 }
+
+/* 글처럼 보이는 작은 단추: 비밀번호를 잊었어요 · 바꾸기 */
+.textLink {
+  align-self: flex-start;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  font: 500 var(--fs-sm) / 1.4 var(--f-ui);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.textLink:hover,
+.textLink:focus-visible {
+  color: var(--seal);
+}
