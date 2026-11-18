@@ -348,11 +348,21 @@ export function CreationWizard() {
 
             {step === 2 && (
               <div className={styles.form}>
-                <p className={styles.lead}>
-                  {josa(term('stunt'), '은/는')} 정해진 상황에서 +2를 받는 능력. 3개까지 넣을 수
-                  있고 지금은 비워 둬도 된다. 세션이 시작될 때마다 {term('fatePoint')}은{' '}
-                  {refreshFor(stunts.length)}개까지 채워지고, 이 수를 {term('refresh')}이라고 한다.
-                </p>
+                <div className={styles.lead}>
+                  <p>
+                    {josa(term('stunt'), '은/는')} 정해진 상황에서 +2를 받는 나만의 재주다. 어떤{' '}
+                    {term('approach')}으로 어떤 행동을 할 때 쓰는지 정해 둔다. 예를 들어
+                    &quot;마지막 돌격: {term('forceful')}으로 {term('attack')}할 때 +2&quot;. 지금은
+                    비워 두고 플레이하면서 채워도 된다.
+                  </p>
+                  <p>
+                    3개까지는 부담 없이 넣을 수 있다. 4개째부터는 하나 늘 때마다{' '}
+                    {josa(term('refresh'), '이/가')} 1씩 준다. {term('refresh')}은 세션이 시작될 때{' '}
+                    {term('fatePoint')}이 다시 채워지는 수라서, 특기를 더 갖는 대신 쓸 수 있는{' '}
+                    {term('fatePoint')}이 줄어드는 셈이다. 지금 {term('refresh')}{' '}
+                    {refreshFor(stunts.length)}.
+                  </p>
+                </div>
                 {stunts.map((s, i) => (
                   <div key={i} className={styles.stunt}>
                     <input
