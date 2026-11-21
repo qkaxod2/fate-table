@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { SkeletonRows } from '@/components/ui/Loading';
 import { toast, Toaster } from '@/components/ui/Toast';
+import { CopyButton } from '@/components/ui/CopyButton';
 import { useAccount } from '@/lib/account';
 import {
   type CharacterDraft,
@@ -11,6 +12,7 @@ import {
   deleteMyCharacter,
   listMyCharacters,
 } from '@/lib/myCharacters';
+import { draftToText } from '@/lib/sheetText';
 import lobby from '../rooms/lobby.module.css';
 import { draftToForm, Sheet } from '../create/Sheet';
 import styles from './characters.module.css';
@@ -114,6 +116,12 @@ export function CharacterShelf() {
                       <button type="button" className={styles.quiet} onClick={() => copy(c)}>
                         사본 만들기
                       </button>
+                      <CopyButton
+                        className={styles.quiet}
+                        label="글로 복사"
+                        title="시트 내용을 클립보드에 글로 복사"
+                        getText={() => draftToText(c)}
+                      />
                       <button
                         type="button"
                         className={styles.quiet}

@@ -91,6 +91,17 @@
   color: var(--seal);
 }
 
+.asideBtns {
+  display: flex;
+  flex: none;
+  gap: var(--s-2);
+}
+
+.art[data-done='ok'] {
+  border-color: var(--seal);
+  color: var(--seal);
+}
+
 .art {
   flex: none;
   height: 32px;
