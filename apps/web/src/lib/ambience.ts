@@ -88,7 +88,7 @@ export const SOUND_LABELS: Record<Exclude<SceneSound, 'none'>, string> = {
   cafe: '카페 웅성임',
   city: '도시 소음',
   birds: '새소리',
-  night: '밤 풀벌레',
+  night: '밤 개구리',
   tavern: '선술집 웅성임',
   hall: '돌로 된 큰 방',
   dungeon: '지하 물방울',
