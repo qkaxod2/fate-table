@@ -2,6 +2,7 @@
 
 import { term } from '@fate/glossary';
 import { APPROACHES, refreshFor, type Action, type Approach } from '@fate/rules-engine';
+import { useEffect, useRef, useState } from 'react';
 import { josa } from '@/lib/josa';
 import type { CharacterDraft } from '@/lib/myCharacters';
 import styles from './create.module.css';
@@ -163,9 +164,49 @@ export function Sheet({
       {(story.trim() || !(full || saved)) && (
         <section className={styles.story} data-empty={!story.trim() || undefined}>
           <span className={styles.indexLabel}>지나온 이야기</span>
-          <p>{story.trim() || '어디서 왔는지 (선택)'}</p>
+          {story.trim() && !full ? (
+            <StoryText text={story.trim()} />
+          ) : (
+            <p>{story.trim() || '어디서 왔는지 (선택)'}</p>
+          )}
         </section>
       )}
     </div>
+  );
+}
+
+/** 목록 카드의 지나온 이야기: 네 줄을 넘으면 펼치기/접기 버튼을 붙인다 */
+function StoryText({ text }: { text: string }) {
+  const ref = useRef<HTMLParagraphElement>(null);
+  const [open, setOpen] = useState(false);
+  const [long, setLong] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || open) return;
+    const measure = () => setLong(el.scrollHeight > el.clientHeight + 1);
+    measure();
+    if (typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [text, open]);
+
+  return (
+    <>
+      <p ref={ref} data-open={open || undefined}>
+        {text}
+      </p>
+      {(long || open) && (
+        <button
+          type="button"
+          className={styles.storyToggle}
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+        >
+          {open ? '접기' : '펼치기'}
+        </button>
+      )}
+    </>
   );
 }

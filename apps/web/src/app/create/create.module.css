@@ -965,6 +965,31 @@
   overflow: hidden;
 }
 
+.story p[data-open] {
+  display: block;
+  -webkit-line-clamp: unset;
+}
+
+.storyToggle {
+  align-self: flex-start;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: var(--seal);
+  font: 600 12px / 1.4 var(--f-ui);
+  letter-spacing: var(--label-track);
+  cursor: pointer;
+}
+
+.storyToggle:hover {
+  text-decoration: underline;
+}
+
+.storyToggle:focus-visible {
+  outline: 2px solid var(--seal);
+  outline-offset: 2px;
+}
+
 .sheetCard[data-full] .story p {
   display: block;
   font-size: var(--fs-md);
