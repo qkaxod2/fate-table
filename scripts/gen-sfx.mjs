@@ -50,14 +50,14 @@ export const AMB = {
   indoor: ['indoor room ambience, a wall clock ticking clearly, air conditioner hum, distant muffled voices', 14],
   cafe: ['cozy cafe ambience, soft murmuring chatter, cups and spoons clinking, no music', 14],
   city: ['distant city traffic ambience, cars passing far away, soft urban hum', 14],
-  birds: ['daytime forest ambience, clearly audible birds singing and chirping, leaves rustling in the wind', 14],
-  night: ['calm night ambience outdoors, crickets chirping softly, faint breeze', 14],
+  birds: ['peaceful countryside morning ambience, a few distant songbirds, gentle wind in the trees, soft and warm', 14],
+  night: ['quiet night ambience outdoors, frogs croaking softly in a distant pond, gentle breeze in the grass, calm and warm, no crickets', 14],
   tavern: ['medieval tavern ambience, warm crowd murmur, wooden mugs clinking, fire crackling, no music', 14],
   hall: ['large empty stone castle hall ambience, distant echoes, faint wind through high windows', 14],
   dungeon: ['dark stone dungeon ambience, slow water drips echoing, distant low rumble', 14],
   harbor: ['harbor ambience, gentle waves lapping on a wooden dock, distant seagulls, creaking ropes', 14],
   wind: ['steady cold mountain wind blowing across open rocky land, ambience', 14],
-  rain: ['steady gentle rain falling outdoors, ambience, no thunder', 14],
+  rain: ['steady gentle rain falling outdoors on grass and leaves, soft and warm, heavy low rumble of rainfall, no thunder', 14],
   storm: ['heavy rainstorm with strong wind gusts and occasional distant thunder rumble', 16],
   snow: ['cold winter wind howling softly outdoors, snowy blizzard ambience', 14],
   fire: ['a large fire burning and crackling, wood popping, roaring flames ambience', 14],
@@ -93,3 +93,6 @@ for (const [out, name, text, duration, loop] of jobs) {
 }
 // 만든 뒤 ffmpeg로 크기를 맞춘다: 효과음 -18 LUFS, GM 소리 -16 LUFS, 배경음 -24 LUFS(64k). 효과음은 앞의 빈칸을 잘라 낸다.
 //   예: ffmpeg -i x.mp3 -af "volume=<목표-측정>dB,alimiter=limit=0.95" -b:a 64k y.mp3
+// 배경음은 오래 깔리므로 귀를 찌르는 고음을 먼저 깎는다 (풀벌레 10kHz · 새소리 7kHz · 빗소리 쉿 소리가 문제였다):
+//   -af "highpass=f=40,equalizer=f=9500:t=q:w=1.2:g=-6,highshelf=f=6000:g=-4,lowpass=f=11000"
+// 만든 뒤 4kHz 위 에너지가 전체의 20%를 넘으면 다시 뽑는다.

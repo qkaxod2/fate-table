@@ -31,7 +31,7 @@ export type AmbLayer =
   | 'snow'
   | 'fire';
 
-/** 바깥인 곳은 밤이 되면 풀벌레 소리로 바뀐다 */
+/** 바깥인 곳은 밤이 되면 밤 소리(먼 개구리 · 바람)로 바뀐다 */
 /** 바닥에 깔리는 소리 (GM이 고를 수 있는 것) */
 export type Bed = Exclude<SceneSound, 'none'>;
 
@@ -90,7 +90,7 @@ export function ambLayers(scene: Scene | null | undefined): AmbLayer[] {
   const a = scene.ambience;
   const out: AmbLayer[] = [];
   const bed = scene.sound ?? autoBed(scene);
-  // 폭풍이 치면 풀벌레·새소리는 들리지 않는다 (GM이 직접 고른 소리는 그대로)
+  // 폭풍이 치면 밤 소리·새소리는 들리지 않는다 (GM이 직접 고른 소리는 그대로)
   if (bed && (scene.sound || a?.weather !== 'storm')) out.push(bed);
   if (a?.weather === 'rain' || a?.weather === 'storm' || a?.weather === 'snow') out.push(a.weather);
   if (a?.conditions.includes('fire')) out.push('fire');
