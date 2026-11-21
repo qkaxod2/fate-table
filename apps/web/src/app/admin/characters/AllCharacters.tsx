@@ -3,9 +3,11 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { SkeletonRows } from '@/components/ui/Loading';
+import { CopyButton } from '@/components/ui/CopyButton';
 import { useAccount } from '@/lib/account';
 import { type AdminCharacter, fetchAllCharacters } from '@/lib/adminCharacters';
 import { ApiError } from '@/lib/api';
+import { draftToText } from '@/lib/sheetText';
 import lobby from '../../rooms/lobby.module.css';
 import { draftToForm, Sheet } from '../../create/Sheet';
 import { PasswordDesk } from './PasswordDesk';
@@ -132,6 +134,12 @@ export function AllCharacters() {
                 <span className={styles.owner} data-anon={c.owner?.anonymous || undefined}>
                   {c.owner?.label ?? '알 수 없는 사용자'}
                 </span>
+                <CopyButton
+                  className={shelf.quiet}
+                  label="글로 복사"
+                  title="시트 내용을 클립보드에 글로 복사"
+                  getText={() => draftToText(c.data)}
+                />
                 <span className={shelf.date}>{savedDate(c.savedAt)}</span>
               </div>
             </li>

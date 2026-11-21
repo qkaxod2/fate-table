@@ -18,6 +18,8 @@ import { useState } from 'react';
 import { AspectCard } from '@/components/aspect/AspectCard';
 import { FatePointToken } from '@/components/fate/FatePointToken';
 import { Leaf } from '@/components/book/Leaf';
+import { CopyButton } from '@/components/ui/CopyButton';
+import { characterToText } from '@/lib/sheetText';
 import styles from './CharacterSheet.module.css';
 import { josa } from '@/lib/josa';
 import { playSfx } from '@/fx/sfx';
@@ -90,16 +92,23 @@ export function CharacterSheet({
       onClose={onClose}
       dirty={dirty}
       aside={
-        canEdit && (
-          <button
-            type="button"
+        <span className={styles.asideBtns}>
+          <CopyButton
             className={styles.art}
-            onClick={onArt}
-            title="스탠딩 · 표정 · 초상화 그리기"
-          >
-            그림
-          </button>
-        )
+            title="시트 내용을 클립보드에 글로 복사"
+            getText={() => characterToText(c, aspects)}
+          />
+          {canEdit && (
+            <button
+              type="button"
+              className={styles.art}
+              onClick={onArt}
+              title="스탠딩 · 표정 · 초상화 그리기"
+            >
+              그림
+            </button>
+          )}
+        </span>
       }
     >
       <div className={styles.head}>
