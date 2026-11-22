@@ -111,6 +111,13 @@ export function describe(e: RoomEvent, state: RoomState): LogLine | null {
       );
     case 'compel.offered':
       return line('gm', `GM의 ${term('compel')}: ${e.payload.text}`);
+    case 'compel.proposed':
+      return line(
+        'gm',
+        `${name(state, e.payload.targetId)}의 ${term('compel')} 제안: ${e.payload.text}`,
+      );
+    case 'roll.helped':
+      return line('roll', `${josa(name(state, e.payload.helperId), '이/가')} 도움 +1`);
     case 'compel.accepted':
       return line('fate', `${term('compel')} 수락. ${term('fatePoint')} +1`);
     case 'compel.refused':

@@ -101,6 +101,10 @@ export function playedCards(
   revoke?: (aspectId: string) => void,
 ): Played[] {
   return modifiers.map((m, i) => {
+    if (m.source.startsWith('help:')) {
+      const helper = state.characters[m.source.slice(5)];
+      return { id: `${m.source}:${i}`, text: `${helper?.name ?? '동료'}의 도움`, how: '도움 +1' };
+    }
     if (m.source.startsWith('stunt:')) {
       const st = character?.stunts.find((x) => `stunt:${x.id}` === m.source);
       return { id: `${m.source}:${i}`, text: st?.text ?? term('stunt'), how: term('stunt') };

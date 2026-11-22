@@ -201,6 +201,8 @@ export interface Compel {
   aspectId: string;
   targetId: string;
   text: string;
+  /** 플레이어가 스스로 제안한 강요: GM이 받아들일지 정한다 */
+  proposed?: true;
 }
 
 export interface PendingDamage {

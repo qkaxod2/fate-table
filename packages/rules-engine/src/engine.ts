@@ -101,6 +101,7 @@ const GM_ONLY: ReadonlySet<CommandType> = new Set<CommandType>([
   'fate.adjust',
   'compel.offer',
   'compel.withdraw',
+  'compel.decide',
   'conflict.start',
   'conflict.end',
   'consequence.clear',
@@ -513,6 +514,19 @@ const resolvers: Resolvers = {
     }
     return { events };
   },
+  'roll.help': (s, p, a) => {
+    const r = openRoll(s, p.rollId);
+    if (p.side === 'defense') defenseStillAdjusting(r);
+    const sideState = need(p.side === 'active' ? r.active : r.defense, 'side');
+    const helper = controlled(s, a, p.helperId);
+    const other = p.side === 'active' ? r.defense?.characterId : r.active.characterId;
+    if (helper.id === sideState.characterId || helper.id === other)
+      throw new CommandError('INVALID', 'cannot help your own roll');
+    if (helper.takenOut) throw new CommandError('INVALID', 'helper is out of the scene');
+    if (sideState.modifiers.some((m) => m.source === `help:${helper.id}`))
+      throw new CommandError('INVALID', 'already helping');
+    return one(ev('roll.helped', a, { rollId: r.id, side: p.side, helperId: helper.id }));
+  },
   'stunt.apply': (s, p, a) => {
     const r = openRoll(s, p.rollId);
     if (p.side === 'defense') defenseStillAdjusting(r);
@@ -593,10 +607,40 @@ const resolvers: Resolvers = {
   },
   'compel.respond': (s, p, a) => {
     const compel = need(s.compels[p.compelId], 'compel');
+    // 스스로 제안한 강요는 GM이 정한다
+    if (compel.proposed) throw new CommandError('INVALID', 'proposed compel is decided by the GM');
     const target = controlled(s, a, compel.targetId);
     if (p.accept) return one(ev('compel.accepted', a, { compelId: compel.id }));
     if (fatePointsOf(s, target) < 1) throw new CommandError('NOT_ENOUGH_FATE_POINTS');
     return one(ev('compel.refused', a, { compelId: compel.id }));
+  },
+  'compel.propose': (s, p, a, ctx) => {
+    const c = controlled(s, a, p.characterId);
+    if (c.isNpc) throw new CommandError('INVALID', 'only player characters propose compels');
+    const asp = need(s.aspects[p.aspectId], 'aspect');
+    if (asp.hidden) throw new CommandError('NOT_FOUND', 'aspect not found');
+    // 자기 특성이나 장면·구역 특성으로만 (다른 캐릭터의 특성으로 그 캐릭터를 꼬지는 않는다)
+    if (asp.ownerType === 'character' && asp.ownerId !== c.id)
+      throw new CommandError('INVALID', 'not your aspect');
+    if (Object.values(s.compels).some((x) => x.targetId === c.id))
+      throw new CommandError('INVALID', 'a compel is already waiting');
+    return one(
+      ev('compel.proposed', a, {
+        compelId: ctx.newId(),
+        aspectId: asp.id,
+        targetId: c.id,
+        text: p.text,
+      }),
+    );
+  },
+  'compel.decide': (s, p, a) => {
+    const compel = need(s.compels[p.compelId], 'compel');
+    if (!compel.proposed) throw new CommandError('INVALID', 'not a proposed compel');
+    return one(
+      p.accept
+        ? ev('compel.accepted', a, { compelId: compel.id })
+        : ev('compel.withdrawn', a, { compelId: compel.id }),
+    );
   },
   'compel.withdraw': (s, p, a) =>
     one(ev('compel.withdrawn', a, { compelId: need(s.compels[p.compelId], 'compel').id })),

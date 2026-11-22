@@ -241,7 +241,10 @@ export function sfxForEvent(e: RoomEvent): SfxName | null {
     case 'compel.refused':
       return 'token-flip';
     case 'compel.offered':
+    case 'compel.proposed':
       return 'compel-card';
+    case 'roll.helped':
+      return 'token-flip';
     case 'fate.adjusted':
       return e.payload.delta > 0 && e.payload.target !== 'gm_pool' ? 'token-fly' : null;
     case 'compel.accepted':
