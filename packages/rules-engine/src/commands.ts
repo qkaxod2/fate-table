@@ -209,7 +209,19 @@ export const CommandSchema = z.discriminatedUnion('type', [
     expression: z.string().min(1).max(24).nullable(),
   }),
 
-  cmd('chat.post', { text: visible(2000), as: text.optional() }),
+  cmd('chat.post', {
+    text: visible(2000),
+    as: text.optional(),
+    /** 귓속말: GM이면 받을 참가자 userId, 플레이어면 GM에게 (값은 무엇이든 GM에게만 간다) */
+    whisper: id.optional(),
+    /** 캐릭터 밖 잡담 (OOC) */
+    ooc: z.boolean().optional(),
+  }),
+  /** GM 비밀 굴림: GM만 보는 주사위 4개 (상태와 상관없다) */
+  cmd('dice.secret', {
+    modifier: z.number().int().min(-10).max(10).default(0),
+    label: text.optional(),
+  }),
   cmd('gm.note', { text: visible(4000) }),
   cmd('narration.post', { text: visible(4000) }),
   cmd('sfx.play', { assetId: id }),

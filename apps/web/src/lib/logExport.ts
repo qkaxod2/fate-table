@@ -49,6 +49,8 @@ export function logToMarkdown(lines: readonly LogLine[], opts: ExportOptions): s
     notes = [];
   };
   for (const l of lines) {
+    // 잡담·귓속말·비밀 굴림은 이야기 기록에 넣지 않는다
+    if (l.tag) continue;
     switch (l.kind) {
       case 'scene': {
         flush();

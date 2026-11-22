@@ -67,6 +67,7 @@ export type Outcome =
  */
 export const STATELESS: ReadonlySet<string> = new Set([
   'chat.post',
+  'dice.secret',
   'narration.post',
   'gm.note',
   'sfx.play',
