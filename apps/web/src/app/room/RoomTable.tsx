@@ -511,12 +511,35 @@ export function RoomTable({
   const outcome: Outcome | null =
     roll && result ? (roll.result?.outcome ?? outcomeFor(roll, 'active')) : null;
 
+  // 도움 주기: 판정에 끼지 않은 내 캐릭터가 같은 편(PC끼리, NPC끼리)에 +1을 보탠다
+  const helpOptions =
+    roll && roll.status === 'open'
+      ? controllable.flatMap((c) => {
+          if (isGm && !c.isNpc) return [];
+          if (c.takenOut || c.id === roll.active.characterId) return [];
+          if (c.id === roll.defense?.characterId) return [];
+          const activeAlly = state.characters[roll.active.characterId];
+          const defenseAlly = roll.defense ? state.characters[roll.defense.characterId] : undefined;
+          const side: InvokeSide | null =
+            activeAlly && activeAlly.isNpc === c.isNpc
+              ? 'active'
+              : defenseAlly && defenseAlly.isNpc === c.isNpc && defenseAdjusting
+                ? 'defense'
+                : null;
+          if (!side) return [];
+          const mods = side === 'active' ? roll.active.modifiers : roll.defense?.modifiers;
+          if (mods?.some((m) => m.source === `help:${c.id}`)) return [];
+          return [{ helper: c, side }];
+        })
+      : [];
+
   // ---------- 강요 · 피해 ----------
   const myCompel = Object.values(state.compels).find(
-    (c) => canControl(state.characters[c.targetId]) && !isGm,
+    (c) => !c.proposed && canControl(state.characters[c.targetId]) && !isGm,
   );
+  // GM이 답할 것: NPC에게 건 강요, 플레이어가 스스로 제안한 강요
   const gmCompelFor = isGm
-    ? Object.values(state.compels).find((c) => state.characters[c.targetId]?.isNpc)
+    ? Object.values(state.compels).find((c) => c.proposed || state.characters[c.targetId]?.isNpc)
     : undefined;
   const compel = myCompel ?? gmCompelFor;
   const damage = Object.values(state.pendingDamage).find((d) =>
@@ -1368,6 +1391,24 @@ export function RoomTable({
                 {term('stunt')} 적용: {defenseStunt.text}
               </button>
             )}
+            {settled &&
+              helpOptions.map(({ helper, side }) => (
+                <button
+                  key={helper.id}
+                  type="button"
+                  className={th.ghost}
+                  disabled={pending}
+                  title="같은 편 판정에 +1을 보탠다"
+                  onClick={() =>
+                    void run({
+                      type: 'roll.help',
+                      payload: { rollId: roll.id, side, helperId: helper.id },
+                    })
+                  }
+                >
+                  {josa(helper.name, '으로/로')} 도움 +1
+                </button>
+              ))}
             {roll.status === 'final' && settled && (
               <button type="button" className={th.ghost} onClick={() => setFolded(rollKey)}>
                 이야기로
@@ -1748,6 +1789,9 @@ export function RoomTable({
               aspect={state.aspects[compel.aspectId] as Aspect}
               text={compel.text}
               targetId={compel.targetId}
+              {...(compel.proposed
+                ? { proposedBy: state.characters[compel.targetId]?.name ?? '플레이어' }
+                : {})}
               fatePoints={
                 state.characters[compel.targetId]?.isNpc
                   ? state.gmPool
@@ -1755,13 +1799,13 @@ export function RoomTable({
               }
               onAccept={() =>
                 void run({
-                  type: 'compel.respond',
+                  type: compel.proposed ? 'compel.decide' : 'compel.respond',
                   payload: { compelId: compel.id, accept: true },
                 })
               }
               onRefuse={() =>
                 void run({
-                  type: 'compel.respond',
+                  type: compel.proposed ? 'compel.decide' : 'compel.respond',
                   payload: { compelId: compel.id, accept: false },
                 })
               }

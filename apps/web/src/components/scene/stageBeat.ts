@@ -98,8 +98,9 @@ export function beatOf(
       };
     case 'compel.accepted': {
       const offer = events.find(
-        (x): x is RoomEvent<'compel.offered'> =>
-          x.type === 'compel.offered' && x.payload.compelId === e.payload.compelId,
+        (x): x is RoomEvent<'compel.offered' | 'compel.proposed'> =>
+          (x.type === 'compel.offered' || x.type === 'compel.proposed') &&
+          x.payload.compelId === e.payload.compelId,
       );
       if (!offer) return null;
       return {

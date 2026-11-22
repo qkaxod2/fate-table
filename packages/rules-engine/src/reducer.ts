@@ -400,6 +400,30 @@ const handlers: Handlers = {
     return adjustFate({ ...s, compels: withoutKey(s.compels, c.id) }, c.targetId, -1);
   },
   'compel.withdrawn': (s, p) => ({ ...s, compels: withoutKey(s.compels, p.compelId) }),
+  'compel.proposed': (s, p) => ({
+    ...s,
+    compels: {
+      ...s.compels,
+      [p.compelId]: {
+        id: p.compelId,
+        aspectId: p.aspectId,
+        targetId: p.targetId,
+        text: p.text,
+        proposed: true,
+      },
+    },
+  }),
+  'roll.helped': (s, p) => {
+    const r = s.rolls[p.rollId];
+    const side = r?.[p.side];
+    if (!r || !side) return s;
+    const updated = {
+      ...side,
+      modifiers: [...side.modifiers, { source: `help:${p.helperId}`, value: 1 }],
+    };
+    const base = p.side === 'active' ? reopenDefense(r) : r;
+    return { ...s, rolls: { ...s.rolls, [r.id]: { ...base, [p.side]: updated } } };
+  },
 
   'conflict.started': (s, p) => ({
     ...s,

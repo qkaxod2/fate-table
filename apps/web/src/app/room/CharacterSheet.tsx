@@ -71,6 +71,11 @@ export function CharacterSheet({
   const [stuntAction, setStuntAction] = useState<Action>('overcome');
   const [editAspect, setEditAspect] = useState<string | null>(null);
   const [aspectText, setAspectText] = useState('');
+  /** 자발적 강요를 적는 중인 특성 */
+  const [compelOn, setCompelOn] = useState<string | null>(null);
+  const [compelText, setCompelText] = useState('');
+  const compelWaiting = Object.values(state.compels).some((x) => x.targetId === c.id);
+  const canPropose = mine && !c.isNpc && !compelWaiting;
   /** 지나온 이야기를 고치는 중이면 그 글 */
   const [story, setStory] = useState<string | null>(null);
 
@@ -216,8 +221,56 @@ export function CharacterSheet({
             ) : (
               <li key={a.id} className={styles.aspectItem}>
                 <AspectCard aspect={a} size="sm" />
+                {compelOn === a.id && (
+                  <form
+                    className={styles.inlineForm}
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const text = compelText.trim();
+                      if (!text) return;
+                      void run({
+                        type: 'compel.propose',
+                        payload: { aspectId: a.id, characterId: c.id, text },
+                      }).then((evs) => {
+                        if (evs.length) {
+                          setCompelOn(null);
+                          setCompelText('');
+                        }
+                      });
+                    }}
+                  >
+                    <input
+                      autoFocus
+                      aria-label={`${term('compel')} 상황`}
+                      placeholder="이 특성 때문에 어떻게 꼬일까?"
+                      value={compelText}
+                      maxLength={200}
+                      onChange={(e) => setCompelText(e.target.value)}
+                    />
+                    <span className={styles.row}>
+                      <button type="submit" disabled={!compelText.trim() || pending}>
+                        GM에게 제안
+                      </button>
+                      <button type="button" onClick={() => setCompelOn(null)}>
+                        그만두기
+                      </button>
+                    </span>
+                  </form>
+                )}
                 {(canEdit || isGm) && a.kind !== 'consequence' && (
                   <span className={styles.cardTools}>
+                    {canPropose && compelOn !== a.id && (
+                      <button
+                        type="button"
+                        title={`이 특성으로 일이 꼬이게 하고 ${term('fatePoint')} +1 받기 (GM이 정함)`}
+                        onClick={() => {
+                          setCompelOn(a.id);
+                          setCompelText('');
+                        }}
+                      >
+                        {term('compel')} 제안
+                      </button>
+                    )}
                     {canEdit && (
                       <button
                         type="button"

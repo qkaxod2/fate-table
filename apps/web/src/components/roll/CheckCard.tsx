@@ -40,7 +40,8 @@ export function sumLine(side: RollState['active']): string | null {
     `주사위 ${signed(sumDice(side.dice))}`,
     `${term(side.approach)} ${signed(side.rating)}`,
     ...side.modifiers.map(
-      (m) => `${m.source.startsWith('stunt:') ? term('stunt') : term('invoke')} ${signed(m.value)}`,
+      (m) =>
+        `${m.source.startsWith('stunt:') ? term('stunt') : m.source.startsWith('help:') ? '도움' : term('invoke')} ${signed(m.value)}`,
     ),
   ].join(' · ');
 }

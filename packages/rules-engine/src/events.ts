@@ -126,6 +126,10 @@ export interface EventPayloads {
   'compel.accepted': { compelId: string };
   'compel.refused': { compelId: string };
   'compel.withdrawn': { compelId: string };
+  /** 플레이어가 제안한 자발적 강요 (GM이 받아들이면 compel.accepted, 거절하면 compel.withdrawn) */
+  'compel.proposed': { compelId: string; aspectId: string; targetId: string; text: string };
+  /** 아군이 판정에 +1을 보탰다 */
+  'roll.helped': { rollId: string; side: 'active' | 'defense'; helperId: string };
 
   'conflict.started': { conflictId: string; kind: 'physical' | 'mental'; order: string[] };
   'conflict.turn_advanced': { conflictId: string; index: number; round: number };

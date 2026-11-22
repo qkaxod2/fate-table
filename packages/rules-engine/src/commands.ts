@@ -131,6 +131,8 @@ export const CommandSchema = z.discriminatedUnion('type', [
   /** 확정 전에 +2로 낸 특성을 다시 뺀다. 운명점·무료 발동·부스트를 돌려받는다 */
   cmd('invoke.revoke', { rollId: id, side: side.default('active'), aspectId: id }),
   cmd('stunt.apply', { rollId: id, side: side.default('active'), stuntId: id }),
+  /** 도움 주기: 판정 당사자가 아닌 아군이 +1을 보탠다 */
+  cmd('roll.help', { rollId: id, side: side.default('active'), helperId: id }),
   cmd('roll.defense_ready', { rollId: id }),
   cmd('roll.finalize', { rollId: id, reduceForBoost: z.boolean().default(false) }),
 
@@ -138,6 +140,10 @@ export const CommandSchema = z.discriminatedUnion('type', [
   cmd('compel.offer', { aspectId: id, targetId: id, text }),
   cmd('compel.respond', { compelId: id, accept: z.boolean() }),
   cmd('compel.withdraw', { compelId: id }),
+  /** 자발적 강요: 플레이어가 자기 캐릭터의 특성으로 꼬이는 상황을 GM에게 제안한다 */
+  cmd('compel.propose', { aspectId: id, characterId: id, text }),
+  /** GM이 자발적 강요 제안을 받아들이거나(운명점 +1) 거절한다 */
+  cmd('compel.decide', { compelId: id, accept: z.boolean() }),
 
   cmd('conflict.start', {
     kind: z.enum(['physical', 'mental']),
