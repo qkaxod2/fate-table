@@ -16,10 +16,13 @@ import { FatePointToken } from '@/components/fate/FatePointToken';
 import { FormatBar, formatShortcut } from '@/components/ui/FormatBar';
 import { useClosing } from '@/lib/motion';
 import styles from './GmConsole.module.css';
+import { NpcLibrary, PrepPanel } from './GmPrep';
+import { saveNpc } from '@/lib/gmLibrary';
 
 type Run = (cmd: Command) => Promise<RoomEvent[]>;
 
-export type GmTool = 'scene' | 'aspect' | 'npc' | 'conflict' | 'compel' | 'note' | 'session';
+export type GmTool =
+  'scene' | 'prep' | 'aspect' | 'npc' | 'conflict' | 'compel' | 'note' | 'session';
 export interface GmOpen {
   tool: GmTool;
   /** 강요: 무대 특성 카드에서 눌렀을 때 미리 고른 특성 */
@@ -28,6 +31,7 @@ export interface GmOpen {
 
 const TOOLS: ReadonlyArray<readonly [GmTool, string, string]> = [
   ['scene', '장면', '장면 열고 닫기'],
+  ['prep', '준비함', '미리 준비한 장면을 한 번에 열기 (배경·특성·NPC·메모)'],
   ['aspect', term('aspect'), '장면 특성 붙이기, 숨긴 특성 공개'],
   ['npc', 'NPC', '적이나 조연 바로 만들기'],
   ['conflict', '갈등·경합', '차례가 있는 싸움, 3승 겨루기, 여러 단계 도전'],
@@ -414,6 +418,7 @@ export function GmPanel({
   return (
     <Modal title={title} onClose={onClose} closer={closer}>
       {open.tool === 'scene' && <ScenePanel {...props} />}
+      {open.tool === 'prep' && <PrepPanel {...props} />}
       {open.tool === 'aspect' && <AspectPanel {...props} />}
       {open.tool === 'npc' && <NpcPanel {...props} />}
       {open.tool === 'conflict' && <ConflictPanel {...props} />}
@@ -547,64 +552,77 @@ function AspectPanel({ state, pending, done }: PanelProps) {
   );
 }
 
-function NpcPanel({ pending, done }: PanelProps) {
+function NpcPanel({ run, pending, done }: PanelProps) {
   const [name, setName] = useState('');
   const [high, setHigh] = useState('');
   const [best, setBest] = useState<Approach>('forceful');
+  const [keep, setKeep] = useState(false);
   return (
-    <form
-      className={styles.form}
-      onSubmit={(e) => {
-        e.preventDefault();
-        const approaches = Object.fromEntries(
-          APPROACHES.map((a) => [a, a === best ? 2 : 0]),
-        ) as Record<Approach, number>;
-        void done({
-          type: 'character.create',
-          payload: {
+    <>
+      <h3 className={styles.sub}>NPC 보관함</h3>
+      <NpcLibrary run={run} pending={pending} />
+      <h3 className={styles.sub}>바로 만들기</h3>
+      <form
+        className={styles.form}
+        onSubmit={(e) => {
+          e.preventDefault();
+          const approaches = Object.fromEntries(
+            APPROACHES.map((a) => [a, a === best ? 2 : 0]),
+          ) as Record<Approach, number>;
+          const payload = {
             name: name.trim(),
             isNpc: true,
             approaches,
             stunts: [],
             highConcept: high.trim() || name.trim(),
             aspects: [],
-          },
-        });
-      }}
-    >
-      <label className={styles.field}>
-        이름
-        <input
-          autoFocus
-          placeholder="예: 밀수꾼"
-          value={name}
-          maxLength={40}
-          onChange={(e) => setName(e.target.value)}
-        />
-      </label>
-      <label className={styles.field}>
-        {term('high')} <small>(비우면 이름 그대로)</small>
-        <input
-          placeholder="예: 부두의 칼잡이"
-          value={high}
-          maxLength={80}
-          onChange={(e) => setHigh(e.target.value)}
-        />
-      </label>
-      <div className={styles.field}>
-        잘하는 {term('approach')} (+2)
-        <div className={styles.chips}>
-          {APPROACHES.map((a) => (
-            <button key={a} type="button" aria-pressed={best === a} onClick={() => setBest(a)}>
-              {term(a)}
-            </button>
-          ))}
+          };
+          if (keep) void saveNpc(payload).catch(() => undefined);
+          void done({ type: 'character.create', payload });
+        }}
+      >
+        <label className={styles.field}>
+          이름
+          <input
+            autoFocus
+            placeholder="예: 밀수꾼"
+            value={name}
+            maxLength={40}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </label>
+        <label className={styles.field}>
+          {term('high')} <small>(비우면 이름 그대로)</small>
+          <input
+            placeholder="예: 부두의 칼잡이"
+            value={high}
+            maxLength={80}
+            onChange={(e) => setHigh(e.target.value)}
+          />
+        </label>
+        <div className={styles.field}>
+          잘하는 {term('approach')} (+2)
+          <div className={styles.chips}>
+            {APPROACHES.map((a) => (
+              <button key={a} type="button" aria-pressed={best === a} onClick={() => setBest(a)}>
+                {term(a)}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
-      <button type="submit" className={styles.primary} disabled={pending || !hasVisibleText(name)}>
-        만들기
-      </button>
-    </form>
+        <label className={styles.check}>
+          <input type="checkbox" checked={keep} onChange={(e) => setKeep(e.target.checked)} />
+          NPC 보관함에도 저장
+        </label>
+        <button
+          type="submit"
+          className={styles.primary}
+          disabled={pending || !hasVisibleText(name)}
+        >
+          만들기
+        </button>
+      </form>
+    </>
   );
 }
 

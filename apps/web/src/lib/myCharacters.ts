@@ -1,4 +1,4 @@
-import type { Command } from '@fate/rules-engine';
+import type { Aspect, Character, Command } from '@fate/rules-engine';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { ensureSession, getSupabase } from './supabase';
 
@@ -123,4 +123,35 @@ export function copyMyCharacter(c: CharacterDraft): CharacterDraft {
   };
   saveMyCharacter(copy);
   return copy;
+}
+
+/**
+ * 방에서 자란 캐릭터(이정표로 바뀐 접근법·특기·특성·지나온 이야기)를 보관함 초안으로 옮긴다.
+ * 데려온 초안이 있으면 그 키에 덮어쓰고, 없으면 새로 만든다. 이번 판 상태(스트레스·후유증·운명점)는 옮기지 않는다.
+ */
+export function draftFromCharacter(
+  c: Character,
+  aspects: readonly Aspect[],
+  base?: CharacterDraft | null,
+): CharacterDraft {
+  const own = aspects.filter((a) => a.ownerType === 'character' && a.ownerId === c.id && !a.hidden);
+  const high = own.find((a) => a.kind === 'high')?.text ?? base?.highConcept ?? c.name;
+  const trouble = own.find((a) => a.kind === 'trouble')?.text ?? base?.trouble;
+  const rest = own.filter((a) => a.kind === 'normal').map((a) => a.text);
+  const portraitUrl = c.portraitUrl ?? base?.portraitUrl;
+  const backstory = c.backstory ?? base?.backstory;
+  return {
+    ...(base ?? {}),
+    key: c.sourceKey ?? base?.key ?? crypto.randomUUID(),
+    savedAt: new Date().toISOString(),
+    name: c.name,
+    isNpc: false,
+    approaches: c.approaches,
+    stunts: c.stunts.map(({ usedThisSession: _u, ...s }) => s),
+    highConcept: high,
+    ...(trouble ? { trouble } : {}),
+    aspects: rest.length > 0 ? rest.slice(0, 3) : (base?.aspects ?? []),
+    ...(backstory ? { backstory } : {}),
+    ...(portraitUrl ? { portraitUrl } : {}),
+  };
 }

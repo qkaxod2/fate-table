@@ -20,6 +20,8 @@ import { FatePointToken } from '@/components/fate/FatePointToken';
 import { Leaf } from '@/components/book/Leaf';
 import { CopyButton } from '@/components/ui/CopyButton';
 import { characterToText } from '@/lib/sheetText';
+import { npcFromCharacter, saveNpc } from '@/lib/gmLibrary';
+import { draftFromCharacter, findMyCharacter, saveMyCharacter } from '@/lib/myCharacters';
 import styles from './CharacterSheet.module.css';
 import { josa } from '@/lib/josa';
 import { playSfx } from '@/fx/sfx';
@@ -71,6 +73,22 @@ export function CharacterSheet({
   const [stuntAction, setStuntAction] = useState<Action>('overcome');
   const [editAspect, setEditAspect] = useState<string | null>(null);
   const [aspectText, setAspectText] = useState('');
+  /** 보관함 저장: 플레이어는 내 캐릭터 보관함(성장 반영), GM은 NPC 보관함 */
+  const [keepState, setKeepState] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
+  const keep = async () => {
+    setKeepState('saving');
+    try {
+      const all = Object.values(state.aspects);
+      if (c.isNpc) await saveNpc(npcFromCharacter(c, all));
+      else {
+        const base = c.sourceKey ? await findMyCharacter(c.sourceKey) : null;
+        saveMyCharacter(draftFromCharacter(c, all, base));
+      }
+      setKeepState('saved');
+    } catch {
+      setKeepState('failed');
+    }
+  };
   /** 자발적 강요를 적는 중인 특성 */
   const [compelOn, setCompelOn] = useState<string | null>(null);
   const [compelText, setCompelText] = useState('');
@@ -111,6 +129,29 @@ export function CharacterSheet({
               title="스탠딩 · 표정 · 초상화 그리기"
             >
               그림
+            </button>
+          )}
+          {((mine && !c.isNpc) || (isGm && c.isNpc)) && (
+            <button
+              type="button"
+              className={styles.art}
+              disabled={keepState === 'saving'}
+              onClick={() => void keep()}
+              title={
+                c.isNpc
+                  ? '이 NPC를 GM 보관함에 저장해 다른 방에서도 꺼내 쓰기'
+                  : c.sourceKey
+                    ? '이 방에서 자란 모습(접근법·특기·특성)을 내 캐릭터 보관함에 덮어쓰기'
+                    : '이 캐릭터를 내 캐릭터 보관함에 저장'
+              }
+            >
+              {keepState === 'saved'
+                ? '저장됨 ✓'
+                : keepState === 'failed'
+                  ? '저장 실패'
+                  : c.isNpc
+                    ? 'NPC 보관'
+                    : '보관함에 저장'}
             </button>
           )}
         </span>
