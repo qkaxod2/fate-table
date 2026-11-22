@@ -19,6 +19,7 @@ export function RoomSettings({
   onDiceMode,
   onPalette,
   onHelp,
+  onExport,
   onExit,
 }: {
   isGm: boolean;
@@ -26,6 +27,8 @@ export function RoomSettings({
   onDiceMode: (m: DiceMode) => void;
   onPalette: () => void;
   onHelp: () => void;
+  /** 이야기 기록을 마크다운 파일로 받기 */
+  onExport: () => void;
   onExit: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -98,6 +101,10 @@ export function RoomSettings({
           <button type="button" className={styles.row} onClick={then(onHelp)}>
             <span>단축키 보기</span>
             <kbd>?</kbd>
+          </button>
+          <button type="button" className={styles.row} onClick={then(onExport)}>
+            <span>기록 내보내기</span>
+            <small>마크다운 .md</small>
           </button>
           <hr className={styles.sep} />
           <button

@@ -298,10 +298,13 @@ export function SceneStarter({
 export function NarrationInput({
   run,
   onEcho,
+  onTyping,
 }: {
   run: Run;
   /** 서버 응답 전에 대사 창에 먼저 띄울 글 (실패하면 null) */
   onEcho?: (text: string | null) => void;
+  /** 쓰는 중 표시 (빈 글이면 내린다) */
+  onTyping?: (text: string) => void;
 }) {
   const [text, setText] = useState('');
   const field = useRef<HTMLTextAreaElement>(null);
@@ -310,6 +313,7 @@ export function NarrationInput({
     if (!hasVisibleText(t)) return;
     // 바로 비우고 먼저 보여 준 뒤, 실패하면 되돌려 놓는다
     setText('');
+    onTyping?.('');
     onEcho?.(t);
     const evs = await run({ type: 'narration.post', payload: { text: t } });
     onEcho?.(null);
@@ -329,7 +333,10 @@ export function NarrationInput({
         value={text}
         placeholder="장면 묘사… (Enter)"
         aria-label="GM 대사"
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => {
+          setText(e.target.value);
+          onTyping?.(e.target.value);
+        }}
         onKeyDown={(e) => {
           if (formatShortcut(e, text, setText)) return;
           if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
