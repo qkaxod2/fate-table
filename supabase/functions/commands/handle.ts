@@ -1,6 +1,8 @@
 // 명령 처리의 순서와 규칙. DB 접근은 Store로 받아서 index.ts는 Supabase를, 테스트는 메모리를 꽂는다.
 // 순서: 참가자 확인 → 이미 처리한 명령이면 저장된 결과 → 이벤트로 상태 복원 → resolve → append
 import { CommandError, initialState, replay, resolve } from '../_shared/engine.js';
+
+type RoomState = ReturnType<typeof initialState>;
 import type { PlainEvent, StoredEvent } from '../_shared/http.ts';
 
 export interface Store {
@@ -8,8 +10,11 @@ export interface Store {
   memberRole(): Promise<string | null>;
   /** 이 명령 id로 이미 기록한 이벤트 범위 [first, last] (command_log) */
   findCommand(): Promise<readonly [number, number] | null>;
-  /** 방의 모든 이벤트(비공개 포함) */
-  readHistory(): Promise<{ history: StoredEvent[] }>;
+  /** after 다음부터의 이벤트(비공개 포함). after가 0이면 방의 모든 이벤트 */
+  readHistory(after: number): Promise<StoredEvent[]>;
+  /** 저장해 둔 상태 체크포인트 (지금 규칙 엔진 버전의 것만) */
+  snapshot(): Promise<Snapshot | null>;
+  saveSnapshot(snapshot: Snapshot): Promise<void>;
   /** 반대 굴림 하나의 봉인된 공격자 주사위. 방어 명령에서만 읽는다 */
   sealedSide(rollId: string): Promise<unknown>;
   /** 되돌리기: 이 seq를 만든 명령의 이벤트 범위 */
@@ -19,6 +24,33 @@ export interface Store {
   append(expected: number | null, events: PlainEvent[]): Promise<number | 'STALE'>;
   /** seq가 first..last인 이벤트 */
   loadRange(first: number, last: number): Promise<StoredEvent[]>;
+}
+
+export interface Snapshot {
+  seq: number;
+  state: RoomState;
+}
+
+/** 이벤트가 이만큼 쌓일 때마다 상태 체크포인트를 저장한다 */
+export const SNAPSHOT_EVERY = 200;
+/** 장면·세션이 끝날 때는 이만큼만 쌓였어도 저장한다 */
+const SNAPSHOT_AT_SCENE_END = 20;
+
+/** 되돌리기가 체크포인트 이전(seq <= base)을 건드리면 그 체크포인트는 쓸 수 없다 */
+function touchesBefore(events: readonly StoredEvent[], base: number): boolean {
+  return events.some(
+    (e) =>
+      e.type === 'event.undone' && (e.payload as { seqs: number[] }).seqs.some((q) => q <= base),
+  );
+}
+
+interface Read {
+  /** 체크포인트 상태 (없으면 처음 상태) */
+  base: RoomState;
+  baseSeq: number;
+  /** base 이후 이벤트 */
+  history: StoredEvent[];
+  head: number;
 }
 
 export interface Rand {
@@ -57,11 +89,27 @@ export async function handleCommand(
   // 방어를 되돌리면 다시 방어해야 하므로 봉인은 지우지 않는다
   const defendId =
     type === 'roll.defend' ? (command as { payload: { rollId: string } }).payload.rollId : null;
-  // 참가자 확인, 처리 기록, 이력, 되돌리기 범위, 봉인은 나란히 읽는다
-  const [role, done, firstRead, group, seal] = await Promise.all([
+  // 되돌리기는 지난 이벤트를 직접 찾아야 해서 체크포인트 없이 처음부터 읽는다
+  const useSnapshot = undoSeq === null;
+  const read = async (snap: Snapshot | null): Promise<Read> => {
+    if (snap) {
+      const history = await store.readHistory(snap.seq);
+      if (!touchesBefore(history, snap.seq))
+        return {
+          base: snap.state,
+          baseSeq: snap.seq,
+          history,
+          head: history.at(-1)?.seq ?? snap.seq,
+        };
+    }
+    const history = await store.readHistory(0);
+    return { base: initialState(), baseSeq: 0, history, head: history.at(-1)?.seq ?? 0 };
+  };
+  // 참가자 확인, 처리 기록, 체크포인트, 되돌리기 범위, 봉인은 나란히 읽는다
+  const [role, done, snap, group, seal] = await Promise.all([
     store.memberRole(),
     store.findCommand(),
-    stateless ? Promise.resolve(null) : store.readHistory(),
+    stateless || !useSnapshot ? Promise.resolve(null) : store.snapshot().catch(() => null),
     undoSeq === null ? Promise.resolve(null) : store.undoGroup(undoSeq),
     defendId === null ? Promise.resolve(undefined) : store.sealedSide(defendId),
   ]);
@@ -106,12 +154,9 @@ export async function handleCommand(
     };
   }
 
-  let read = firstRead!;
   for (let attempt = 0; attempt < 4; attempt++) {
-    if (attempt > 0) read = await store.readHistory();
-    const { history } = read;
-    const head = history.at(-1)?.seq ?? 0;
-    const state = replay(history);
+    const { base, baseSeq, history, head } = await read(snap);
+    const state = replay(history, base);
 
     let result;
     try {
@@ -142,14 +187,36 @@ export async function handleCommand(
       if (range) return stored(range);
       continue;
     }
-    return {
-      status: 200,
-      events: events.map((e, i) => ({ ...e, seq: head + 1 + i })).filter(canSee),
-    };
+    const written = events.map((e, i) => ({ ...e, seq: head + 1 + i }) as StoredEvent);
+    await maybeSnapshot(store, base, baseSeq, [...history, ...written]);
+    return { status: 200, events: written.filter(canSee) };
   }
   return {
     status: 409,
     code: 'STALE_STATE',
     message: '다른 사람과 동시에 눌렀어요. 다시 시도해 주세요.',
   };
+}
+
+/**
+ * 체크포인트 뒤로 충분히 쌓였거나 장면·세션이 끝났으면 지금 상태를 저장한다.
+ * 저장에 실패해도 명령은 이미 기록됐으므로 다음 기회에 다시 저장한다.
+ */
+async function maybeSnapshot(
+  store: Store,
+  base: RoomState,
+  baseSeq: number,
+  after: StoredEvent[],
+): Promise<void> {
+  const head = after.at(-1)?.seq ?? baseSeq;
+  const since = head - baseSeq;
+  const sceneEnd = after.some((e) => e.type === 'scene.ended' || e.type === 'session.ended');
+  if (since < SNAPSHOT_EVERY && !(sceneEnd && since >= SNAPSHOT_AT_SCENE_END)) return;
+  // 방금 쓴 되돌리기가 체크포인트 이전을 건드렸다면 이 base로는 접을 수 없다 (다음 명령이 처음부터 읽고 저장한다)
+  if (touchesBefore(after, baseSeq)) return;
+  try {
+    await store.saveSnapshot({ seq: head, state: replay(after, base) });
+  } catch (e) {
+    console.error('snapshot save failed', e);
+  }
 }

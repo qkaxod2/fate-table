@@ -213,3 +213,44 @@ describe('RemoteRoom command result behind a gap', () => {
     expect(room.getSnapshot().events.map((e) => e.seq)).toEqual([2]);
   });
 });
+
+describe('undo checkpoints', () => {
+  it('refolds from a checkpoint and matches a full replay, including redo', async () => {
+    const { replay } = await import('@fate/rules-engine');
+    const room = new RemoteRoom({} as SupabaseClient, 'r', 'gm');
+    // 실시간으로 받은 것처럼 바로 넣는다 (빈 seq가 없으니 서버를 읽지 않는다)
+    const push = (r: Row) =>
+      (room as unknown as { receive(l: unknown[]): void }).receive([fromRowT(r)]);
+    let seq = 0;
+    for (let i = 0; i < 450; i++) push(plusOne(++seq));
+    const undo = (seqs: number[]) =>
+      push({
+        seq: ++seq,
+        type: 'event.undone',
+        actor_id: 'gm',
+        payload: { seqs },
+        visibility: 'public',
+        owner_id: null,
+      });
+    undo([300]);
+    expect(room.getSnapshot().state.gmPool).toBe(449);
+    undo([10]);
+    expect(room.getSnapshot().state.gmPool).toBe(448);
+    for (let i = 0; i < 250; i++) push(plusOne(++seq));
+    // 되돌리기(10)를 되돌리면 10이 살아난다
+    undo([452]);
+    const events = room.getSnapshot().events;
+    expect(room.getSnapshot().state).toEqual(replay(events));
+    expect(room.getSnapshot().state.gmPool).toBe(699);
+  });
+});
+
+function fromRowT(r: Row) {
+  return {
+    seq: r.seq,
+    type: r.type,
+    actorId: r.actor_id,
+    payload: r.payload,
+    visibility: r.visibility,
+  };
+}
