@@ -1,0 +1,326 @@
+/* 큰 화면: TV · 프로젝터로 멀리서 읽는 화면. 글자는 크게, 누를 것은 없다 */
+.screen {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 34vw);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'head join'
+    'foes log'
+    'party log';
+  gap: 2vh 2vw;
+  padding: 3vh 3vw;
+  background: #12100e;
+  color: #f5efe4;
+  font-family: var(--f-ui);
+}
+
+.bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  transition: filter 1.2s ease;
+}
+
+.screen[data-grade='night'] .bg {
+  filter: brightness(0.55) saturate(0.7) hue-rotate(-10deg);
+}
+.screen[data-grade='dusk'] .bg {
+  filter: sepia(0.25) saturate(1.2) brightness(0.85);
+}
+.screen[data-grade='dawn'] .bg {
+  filter: brightness(0.9) saturate(0.85);
+}
+
+/* 그림 위의 글자가 읽히도록 아래·오른쪽을 어둡게 */
+.screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(
+      to bottom,
+      rgb(0 0 0 / 0.55),
+      transparent 30%,
+      transparent 60%,
+      rgb(0 0 0 / 0.75)
+    ),
+    linear-gradient(to left, rgb(0 0 0 / 0.6), transparent 45%);
+  pointer-events: none;
+}
+
+.screen > :not(.bg) {
+  position: relative;
+  z-index: 2;
+}
+
+.head {
+  grid-area: head;
+}
+
+.kicker {
+  margin: 0;
+  color: #e9d9b8;
+  font: 600 clamp(14px, 1.6vw, 26px) var(--f-ui);
+  letter-spacing: 0.04em;
+}
+
+.head h1 {
+  margin: 0.2em 0 0.4em;
+  font: 800 clamp(28px, 4.4vw, 76px) / 1.1 var(--f-head);
+  text-shadow: 0 2px 18px rgb(0 0 0 / 0.6);
+  animation: rise 0.9s ease both;
+}
+
+.aspects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6vw;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.aspects li {
+  padding: 0.35em 0.9em;
+  border-radius: 6px;
+  background: #f4ecdc;
+  color: #2a2420;
+  font: 700 clamp(14px, 1.5vw, 26px) var(--f-book);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.35);
+}
+
+.aspects li[data-boost] {
+  background: #fff6d8;
+  border: 2px dashed #b8902c;
+}
+
+.aspects small {
+  margin-left: 0.5em;
+  color: #9b2a36;
+  font-size: 0.8em;
+  letter-spacing: 0.1em;
+}
+
+.join {
+  grid-area: join;
+  justify-self: end;
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  padding: 0.8em 1.1em;
+  border-radius: 12px;
+  background: rgb(0 0 0 / 0.45);
+  border: 1px solid rgb(255 255 255 / 0.15);
+  text-align: right;
+}
+
+.join span,
+.join small {
+  color: #d8cdb8;
+  font: 600 clamp(12px, 1.1vw, 18px) var(--f-ui);
+}
+
+.join b {
+  font: 800 clamp(24px, 3vw, 52px) / 1 var(--f-ui);
+  letter-spacing: 0.12em;
+}
+
+.log {
+  grid-area: log;
+  align-self: end;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.log li {
+  padding: 0.55em 0.8em;
+  border-left: 3px solid rgb(255 255 255 / 0.25);
+  background: rgb(0 0 0 / 0.4);
+  border-radius: 0 8px 8px 0;
+  font: 500 clamp(14px, 1.45vw, 26px) / 1.45 var(--f-book);
+  opacity: 0.72;
+}
+
+.log li[data-kind='roll'] {
+  border-left-color: #e0b44c;
+}
+.log li[data-kind='scene'] {
+  border-left-color: #9b2a36;
+}
+.log li[data-kind='fate'] {
+  border-left-color: #c9a227;
+}
+
+.log li[data-new] {
+  opacity: 1;
+  background: rgb(0 0 0 / 0.6);
+  animation: rise 0.6s ease both;
+}
+
+.foes,
+.party {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2vw;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.foes {
+  grid-area: foes;
+  align-self: start;
+  opacity: 0.9;
+}
+
+.party {
+  grid-area: party;
+}
+
+.party li,
+.foes li {
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  padding: 0.6em 0.9em;
+  border-radius: 14px;
+  background: rgb(0 0 0 / 0.5);
+  border: 1px solid rgb(255 255 255 / 0.12);
+}
+
+.party li[data-out] {
+  opacity: 0.45;
+}
+
+.face {
+  display: grid;
+  place-items: center;
+  width: clamp(40px, 4.6vw, 84px);
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #3a302a;
+  color: #f5efe4;
+  font: 800 clamp(16px, 2vw, 34px) var(--f-head);
+}
+
+.face img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.who {
+  display: grid;
+  gap: 4px;
+}
+
+.who b {
+  font: 800 clamp(15px, 1.6vw, 28px) var(--f-ui);
+}
+
+.who small {
+  max-width: 22vw;
+  color: #f0b9a8;
+  font: 600 clamp(11px, 1vw, 17px) var(--f-ui);
+}
+
+.stress {
+  display: flex;
+  gap: 4px;
+}
+
+.stress i {
+  width: clamp(10px, 1vw, 18px);
+  aspect-ratio: 1;
+  border: 2px solid #d8cdb8;
+  border-radius: 3px;
+}
+
+.stress i[data-on] {
+  background: #c0392b;
+  border-color: #c0392b;
+}
+
+.fate {
+  display: grid;
+  place-items: center;
+  min-width: clamp(30px, 3vw, 54px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f6d77a, #b8902c);
+  color: #2a2010;
+  font: 800 clamp(15px, 1.7vw, 30px) var(--f-ui);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.4);
+}
+
+.start {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-content: center;
+  gap: 0.4em;
+  border: 0;
+  background: rgb(0 0 0 / 0.55);
+  color: #fff;
+  font: 800 clamp(22px, 3vw, 48px) var(--f-head);
+  cursor: pointer;
+}
+
+.start small {
+  color: #d8cdb8;
+  font: 600 clamp(13px, 1.3vw, 22px) var(--f-ui);
+}
+
+.blank {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #12100e;
+  color: #d8cdb8;
+  font: 600 20px var(--f-ui);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .head h1,
+  .log li[data-new] {
+    animation: none;
+  }
+}
+
+/* 세로 화면(태블릿을 세워 둔 경우): 한 줄로 쌓는다 */
+@media (max-aspect-ratio: 1/1) {
+  .screen {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+    grid-template-areas: 'head' 'join' 'foes' 'log' 'party';
+  }
+  .join {
+    justify-self: start;
+    justify-items: start;
+    text-align: left;
+  }
+  .who small {
+    max-width: 60vw;
+  }
+}

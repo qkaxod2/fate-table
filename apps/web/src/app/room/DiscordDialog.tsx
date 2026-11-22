@@ -47,14 +47,12 @@ export function DiscordDialog({
     const sb = getSupabase();
     if (!sb || !valid) return;
     setBusy(true);
-    const { error } = await sb
-      .from('room_webhooks')
-      .upsert({
-        room_id: roomId,
-        url: url.trim(),
-        created_by: userId,
-        updated_at: new Date().toISOString(),
-      });
+    const { error } = await sb.from('room_webhooks').upsert({
+      room_id: roomId,
+      url: url.trim(),
+      created_by: userId,
+      updated_at: new Date().toISOString(),
+    });
     setBusy(false);
     if (error) return setMsg({ text: '저장하지 못함. 잠시 뒤 다시', error: true });
     setSaved(url.trim());
