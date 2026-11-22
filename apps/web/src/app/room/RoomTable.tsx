@@ -5,12 +5,10 @@ import { term } from '@fate/glossary';
 import { EXPRESSIONS } from '@fate/portrait';
 import {
   APPROACHES,
-  canInvoke,
   chanceAtLeast,
   formatRating,
   hasVisibleText,
   outcomeFor,
-  previewInvokes,
   resolveRoll,
   sideTotal,
   stuntBonuses,
@@ -48,6 +46,14 @@ import { TableView, type Seat } from '@/components/theater/TableView';
 import { consequenceDepth, TraitCard } from '@/components/theater/TraitCard';
 import th from '@/components/theater/theater.module.css';
 import { tagKey, useDealt } from '@/components/theater/useDealt';
+import {
+  fanOf,
+  invokableAspects,
+  invokeChoicesFor,
+  playedCards,
+  TAG_SPOTS,
+  TAG_SPOTS_ROLL,
+} from '@/components/theater/tableKit';
 import { DialogueGrip } from '@/components/theater/DialogueGrip';
 import { useDialogueTop } from '@/components/theater/useDialogueTop';
 import { SceneFade } from '@/components/scene/SceneFade';
@@ -93,11 +99,6 @@ import styles from './room.module.css';
 import { Trackers } from './Trackers';
 import { ZoneMap } from './ZoneMap';
 
-const BLOCK_REASON: Record<string, string> = {
-  NOT_ENOUGH_FATE_POINTS: '운명점 부족',
-  ASPECT_ALREADY_INVOKED: '이번 굴림에 이미 씀',
-};
-
 type Prompt = { kind: 'aspect'; freeInvokes: 1 | 2 } | { kind: 'boost'; ownerId: string } | null;
 
 /** 기다리는 동안 다른 버튼을 잠글 필요가 없는 가벼운 명령 */
@@ -130,33 +131,6 @@ const DONE_COPY: Partial<Record<Command['type'], string>> = {
   'gm.note': '메모 남김',
   'media.attach': '그림 바뀜',
   'scene.mood': '분위기 바뀜',
-};
-
-/** 장면 꼬리표 자리 (화면 비율 %): 이야기 중에는 장면 여기저기, 판정 중에는 판정판 둘레 */
-const TAG_SPOTS: ReadonlyArray<readonly [number, number]> = [
-  [38, 43],
-  [53, 43],
-  [45.5, 56],
-  [30, 56],
-  [61, 56],
-  [45.5, 30],
-];
-/* 판정 중에는 판정판과 손패를 가리지 않게 양옆 두 줄로 선다 */
-const TAG_SPOTS_ROLL: ReadonlyArray<readonly [number, number]> = [
-  [3, 40],
-  [77, 40],
-  [3, 52],
-  [77, 52],
-  [3, 64],
-  [77, 64],
-];
-
-/** 손패 부채꼴: 가운데는 곧게, 바깥으로 갈수록 기운다 */
-const fanOf = (i: number, n: number) => {
-  const d = i - (n - 1) / 2;
-  if (n <= 1 || Math.abs(d) < 0.6) return th.fan2;
-  if (Math.abs(d) < 1.6) return d < 0 ? th.fan1 : th.fan3;
-  return d < 0 ? th.fanL : th.fanR;
 };
 
 const signed = (n: number) => `${n >= 0 ? '+' : ''}${n}`;
@@ -421,35 +395,7 @@ export function RoomTable({
       characterId: payerChar.id,
       fatePoints: payerChar.isNpc ? state.gmPool : payerChar.fatePoints,
     };
-    const visible = Object.values(state.aspects).filter(
-      (a) =>
-        !a.hidden &&
-        (a.ownerType !== 'character' ||
-          a.ownerId === roll.active.characterId ||
-          (roll.defense && a.ownerId === roll.defense.characterId)),
-    );
-    return visible.map((a): InvokeChoice => {
-      const previews = previewInvokes(roll, [a], payer, side);
-      const owner = a.ownerType === 'character' ? state.characters[a.ownerId]?.name : undefined;
-      const against = a.ownerType === 'character' && a.ownerId !== payerChar.id;
-      const base = { aspect: a, ...(owner ? { owner } : {}), against };
-      if (previews.length === 0) {
-        const check = canInvoke(
-          roll,
-          a,
-          payer,
-          side,
-          a.freeInvokes > 0 ? 'free_invoke' : 'fate_point',
-        );
-        return {
-          ...base,
-          blocked: check.ok ? '쓸 수 없음' : (BLOCK_REASON[check.code] ?? '쓸 수 없음'),
-        };
-      }
-      const bonus = previews.find((p) => p.mode === 'bonus');
-      const reroll = previews.find((p) => p.mode === 'reroll');
-      return { ...base, ...(bonus ? { bonus } : {}), ...(reroll ? { reroll } : {}) };
-    });
+    return invokeChoicesFor(state, roll, invokableAspects(state, roll), payer, side);
   };
   const choices = invokeChoices('active', activeChar);
   const defenseChoices = invokeChoices('defense', defenseChar);
@@ -962,34 +908,18 @@ export function RoomTable({
   // 판정판에 꽂힌 카드: 조정 중인 쪽의 것. 낸 사람이 다시 누르면 빠진다
   const playedSide: InvokeSide = handSide ?? 'active';
   const playedChar = playedSide === 'defense' ? defenseChar : activeChar;
-  const played: Played[] = (
-    (playedSide === 'defense' ? roll?.defense?.modifiers : roll?.active.modifiers) ?? []
-  ).map((m, i) => {
-    if (m.source.startsWith('stunt:')) {
-      const st = playedChar?.stunts.find((x) => `stunt:${x.id}` === m.source);
-      return { id: `${m.source}:${i}`, text: st?.text ?? term('stunt'), how: term('stunt') };
-    }
-    const id = m.source.replace(/^aspect:/, '');
-    const a = state.aspects[id] ?? m.restore;
-    return {
-      id,
-      text: a?.text ?? term('aspect'),
-      how:
-        m.paidWith === 'free_invoke'
-          ? a?.kind === 'boost'
-            ? term('boost')
-            : term('freeInvoke')
-          : `${term('fatePoint')} 1`,
-      onRevoke:
-        roll && handSide && m.paidWith
-          ? () =>
-              void run({
-                type: 'invoke.revoke',
-                payload: { rollId: roll.id, side: handSide, aspectId: id },
-              })
-          : undefined,
-    };
-  });
+  const played: Played[] = playedCards(
+    state,
+    (playedSide === 'defense' ? roll?.defense?.modifiers : roll?.active.modifiers) ?? [],
+    playedChar,
+    roll && handSide
+      ? (id) =>
+          void run({
+            type: 'invoke.revoke',
+            payload: { rollId: roll.id, side: handSide, aspectId: id },
+          })
+      : undefined,
+  );
 
   const artOf = (a: Aspect) => ({
     portrait:

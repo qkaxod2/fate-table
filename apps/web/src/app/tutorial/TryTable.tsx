@@ -6,11 +6,9 @@ import {
   absorbOptions,
   APPROACHES,
   isValidAbsorb,
-  canInvoke,
   CommandError,
   formatRating,
   outcomeFor,
-  previewInvokes,
   resolveRoll,
   sideTotal,
   stuntBonuses,
@@ -39,6 +37,13 @@ import { TableView } from '@/components/theater/TableView';
 import { consequenceDepth, TraitCard } from '@/components/theater/TraitCard';
 import th from '@/components/theater/theater.module.css';
 import { tagKey, useDealt } from '@/components/theater/useDealt';
+import {
+  fanOf,
+  invokeChoicesFor,
+  playedCards,
+  TAG_SPOTS,
+  TAG_SPOTS_ROLL,
+} from '@/components/theater/tableKit';
 import { DialogueGrip } from '@/components/theater/DialogueGrip';
 import { useDialogueTop } from '@/components/theater/useDialogueTop';
 import { DICE_MODES, DiceTray, saveDiceMode, type DiceMode } from '@/components/roll/DiceTray';
@@ -73,11 +78,6 @@ import styles from './try.module.css';
 
 const ME: Actor = { userId: 'me', role: 'player' };
 const GM: Actor = { userId: 'gm', role: 'gm' };
-
-const BLOCK_REASON: Record<string, string> = {
-  NOT_ENOUGH_FATE_POINTS: '운명점 부족',
-  ASPECT_ALREADY_INVOKED: '이번 굴림에 이미 씀',
-};
 
 const COMPEL_TEXT: Record<string, string> = {
   hayun: '맹세가 발목을 잡는다. 도적이 인질을 앞세우자 하윤은 칼을 거둘 수밖에 없다.',
@@ -167,25 +167,6 @@ const COACH_SHY = [
   '[data-tour="dialogue"]',
   '[data-tour="actionbar"]',
   '[data-tour="foe"]',
-];
-
-/** 장면 꼬리표 자리 (화면 비율 %): 이야기 중에는 장면 여기저기, 판정 중에는 판정판 둘레 */
-const TAG_SPOTS: ReadonlyArray<readonly [number, number]> = [
-  [38, 43],
-  [53, 43],
-  [45.5, 56],
-  [30, 56],
-  [61, 56],
-  [45.5, 30],
-];
-/* 판정 중에는 판정판과 손패를 가리지 않게 양옆 두 줄로 선다 */
-const TAG_SPOTS_ROLL: ReadonlyArray<readonly [number, number]> = [
-  [3, 40],
-  [77, 40],
-  [3, 52],
-  [77, 52],
-  [3, 64],
-  [77, 64],
 ];
 
 const sign = (n: number) => `${n >= 0 ? '+' : ''}${n}`;
@@ -530,28 +511,7 @@ function Table({
           a.ownerId === meId ||
           (roll.defense && a.ownerId === roll.defense.characterId)),
     );
-    return visible.map((a): InvokeChoice => {
-      const previews = previewInvokes(roll, [a], payer);
-      const owner = a.ownerType === 'character' ? state.characters[a.ownerId]?.name : undefined;
-      const against = a.ownerType === 'character' && a.ownerId !== meId;
-      const base = { aspect: a, ...(owner ? { owner } : {}), against };
-      if (previews.length === 0) {
-        const check = canInvoke(
-          roll,
-          a,
-          payer,
-          'active',
-          a.freeInvokes > 0 ? 'free_invoke' : 'fate_point',
-        );
-        return {
-          ...base,
-          blocked: check.ok ? '쓸 수 없음' : (BLOCK_REASON[check.code] ?? '쓸 수 없음'),
-        };
-      }
-      const bonus = previews.find((p) => p.mode === 'bonus');
-      const reroll = previews.find((p) => p.mode === 'reroll');
-      return { ...base, ...(bonus ? { bonus } : {}), ...(reroll ? { reroll } : {}) };
-    });
+    return invokeChoicesFor(state, roll, visible, payer);
   }, [roll, state, me.fatePoints, meId]);
 
   const onInvoke = (aspectId: string, mode: InvokeMode, paidWith: PaidWith) => {
@@ -1967,35 +1927,16 @@ function Table({
       a.ownerId === meId &&
       (a.kind === 'high' || a.kind === 'normal' || a.kind === 'trouble'),
   );
-  const fan = (i: number, n: number) => {
-    const mid = (n - 1) / 2;
-    const d = i - mid;
-    if (n <= 1) return th.fan2;
-    if (Math.abs(d) < 0.6) return th.fan2;
-    if (Math.abs(d) < 1.6) return d < 0 ? th.fan1 : th.fan3;
-    return d < 0 ? th.fanL : th.fanR;
-  };
+  const fan = fanOf;
 
-  const played =
-    roll?.active.modifiers.map((m, i) => {
-      if (m.source.startsWith('stunt:')) {
-        const st = activeChar?.stunts.find((s) => `stunt:${s.id}` === m.source);
-        return { id: `${m.source}:${i}`, text: st?.text ?? term('stunt'), how: term('stunt') };
-      }
-      const id = m.source.replace(/^aspect:/, '');
-      const a = state.aspects[id] ?? m.restore;
-      return {
-        id,
-        text: a?.text ?? term('aspect'),
-        how:
-          m.paidWith === 'free_invoke'
-            ? a?.kind === 'boost'
-              ? term('boost')
-              : term('freeInvoke')
-            : `${term('fatePoint')} 1`,
-        onRevoke: roll.status === 'open' && myRoll && m.paidWith ? () => onRevoke(id) : undefined,
-      };
-    }) ?? [];
+  const played = roll
+    ? playedCards(
+        state,
+        roll.active.modifiers,
+        activeChar,
+        roll.status === 'open' && myRoll ? onRevoke : undefined,
+      )
+    : [];
 
   const lastSpeaker = talker ?? 'GM';
   const intent =
