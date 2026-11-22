@@ -1160,6 +1160,9 @@ export function RoomTable({
             }
             onShare={isGm ? () => void shareReplay() : undefined}
             onDiscord={isGm ? () => setDiscordOpen(true) : undefined}
+            onScreen={() =>
+              window.open(`${asset('/screen/')}?id=${room.roomId}`, `screen-${room.roomId}`)
+            }
             onExit={() => setExitOpen(true)}
           />
         </span>

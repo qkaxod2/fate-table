@@ -23,6 +23,7 @@ export function RoomSettings({
   onReport,
   onShare,
   onDiscord,
+  onScreen,
   onExit,
 }: {
   isGm: boolean;
@@ -38,6 +39,8 @@ export function RoomSettings({
   onShare?: (() => void) | undefined;
   /** GM: 디스코드 알림 설정 */
   onDiscord?: (() => void) | undefined;
+  /** TV · 프로젝터용 큰 화면을 새 창으로 */
+  onScreen?: (() => void) | undefined;
   onExit: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -115,6 +118,12 @@ export function RoomSettings({
             <span>기록 내보내기</span>
             <small>마크다운 .md</small>
           </button>
+          {onScreen && (
+            <button type="button" className={styles.row} onClick={then(onScreen)}>
+              <span>큰 화면 열기</span>
+              <small>TV · 프로젝터용 새 창</small>
+            </button>
+          )}
           {onShare && (
             <button type="button" className={styles.row} onClick={then(onShare)}>
               <span>리플레이 링크 복사</span>
