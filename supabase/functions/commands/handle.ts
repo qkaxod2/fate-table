@@ -24,6 +24,8 @@ export interface Store {
   append(expected: number | null, events: PlainEvent[]): Promise<number | 'STALE'>;
   /** seq가 first..last인 이벤트 */
   loadRange(first: number, last: number): Promise<StoredEvent[]>;
+  /** 기록을 마친 뒤 바깥에 알린다 (디스코드). before는 명령을 처리하기 전 상태. 기다리지 않는다 */
+  notify?(events: StoredEvent[], before: RoomState): void;
 }
 
 export interface Snapshot {
@@ -191,6 +193,7 @@ export async function handleCommand(
     }
     const written = events.map((e, i) => ({ ...e, seq: head + 1 + i }) as StoredEvent);
     await maybeSnapshot(store, base, baseSeq, [...history, ...written]);
+    store.notify?.(written, state);
     return { status: 200, events: written.filter(canSee) };
   }
   return {

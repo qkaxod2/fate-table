@@ -1,0 +1,23 @@
+/* 디스코드 알림 창의 저장 단추 (나머지는 exit.module.css와 같은 종이 위 양식) */
+.primary {
+  min-height: 40px;
+  padding: 0 var(--s-5);
+  border: 1px solid var(--seal);
+  border-radius: var(--r-token);
+  background: var(--seal);
+  color: #fff;
+  font: 700 15px var(--f-ui);
+  cursor: pointer;
+}
+
+.primary:not(:disabled):hover {
+  filter: brightness(1.08);
+}
+
+.primary:disabled {
+  border-style: dashed;
+  border-color: var(--ink-3);
+  background: transparent;
+  color: var(--ink-2);
+  cursor: not-allowed;
+}

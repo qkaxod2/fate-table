@@ -67,6 +67,7 @@ import {
 } from '@/components/scene/stageBeat';
 import { StageFx } from '@/components/scene/StageFx';
 import { MoodPanel } from '@/components/ambience/MoodPanel';
+import { DiscordDialog } from './DiscordDialog';
 import { useMusic } from '@/fx/music';
 import { SceneAmbience } from '@/components/ambience/SceneAmbience';
 import { sceneImage } from '@/lib/ambience';
@@ -716,6 +717,7 @@ export function RoomTable({
   };
   // 세션 결산: 세션이 끝나는 순간 모두에게 한 번 뜨고, 설정에서 다시 볼 수 있다
   const [reportOpen, setReportOpen] = useState(false);
+  const [discordOpen, setDiscordOpen] = useState(false);
   const report = useMemo(() => (reportOpen ? sessionReport(events) : null), [reportOpen, events]);
   const lastType = events.at(-1)?.type;
   const lastSeqSeen = events.at(-1)?.seq ?? 0;
@@ -1157,6 +1159,7 @@ export function RoomTable({
               state.sessionsPlayed > 0 || state.session ? () => setReportOpen(true) : undefined
             }
             onShare={isGm ? () => void shareReplay() : undefined}
+            onDiscord={isGm ? () => setDiscordOpen(true) : undefined}
             onExit={() => setExitOpen(true)}
           />
         </span>
@@ -2051,6 +2054,15 @@ export function RoomTable({
             setArtOpen({ tab: 'standing', characterId: sheet.id });
             setSheetId(null);
           }}
+        />
+      )}
+
+      {discordOpen && (
+        <DiscordDialog
+          roomId={room.roomId}
+          userId={room.userId}
+          roomName={name}
+          onClose={() => setDiscordOpen(false)}
         />
       )}
 
