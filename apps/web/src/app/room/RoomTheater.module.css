@@ -123,6 +123,50 @@
   opacity: 0.5;
 }
 
+/* 접속 표시: 사람이 들어와 있는 캐릭터는 초상 옆에 작은 불이 켜진다 */
+.member {
+  position: relative;
+}
+
+.member[data-online]::after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 21px;
+  width: 8px;
+  height: 8px;
+  border: 2px solid rgb(20 19 17);
+  border-radius: 50%;
+  background: #6fbf73;
+}
+
+.online {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 0;
+  color: var(--on-table-3);
+  font: 500 12px var(--f-ui);
+}
+
+.online i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6fbf73;
+}
+
+/* '○○ 님이 쓰는 중…': 비어 있으면 자리를 차지하지 않는다 */
+.presence {
+  margin: 6px 0 0;
+  color: var(--ink-3);
+  font: italic 500 12.5px var(--f-ui);
+}
+
+.presence:empty {
+  display: none;
+}
+
 .empty {
   margin: 0;
   color: var(--on-table-3);

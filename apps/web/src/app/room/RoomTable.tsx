@@ -85,6 +85,9 @@ import { FormatBar, formatShortcut } from '@/components/ui/FormatBar';
 import { GmBar, GmPanel, NarrationInput, SceneStarter, type GmOpen } from './GmConsole';
 import { RoomSettings } from './RoomSettings';
 import { SoundControl } from '@/components/ui/SoundControl';
+import { getSupabase } from '@/lib/supabase';
+import { downloadText, exportFileName, logToMarkdown } from '@/lib/logExport';
+import { doingLine, usePresence } from '@/state/presence';
 import rt from './RoomTheater.module.css';
 import styles from './room.module.css';
 import { Trackers } from './Trackers';
@@ -652,6 +655,23 @@ export function RoomTable({
   const chatField = useRef<HTMLInputElement>(null);
   const sendIds = useRef(0);
   const myNick = state.members[room.userId]?.nickname;
+  // 접속 상태: 들어와 있는 사람, 쓰는 중, 방어 고르는 중 (기록에는 남기지 않는다)
+  const { presence, noteTyping } = usePresence(
+    getSupabase(),
+    room.roomId,
+    room.userId,
+    myNick,
+    iDefend,
+  );
+  const presenceLine =
+    doingLine(presence, room.userId, 'defending') ?? doingLine(presence, room.userId, 'typing');
+  const gmOnline = Object.entries(state.members).some(
+    ([id, m]) => m.role === 'gm' && !!presence[id],
+  );
+  const onlineOf = (c: Character) => (c.isNpc ? gmOnline : !!presence[c.ownerId ?? '']);
+  const onlineNames = Object.entries(presence)
+    .filter(([id]) => state.members[id])
+    .map(([id, p]) => state.members[id]?.nickname ?? p.nickname);
   // GM은 NPC 이름으로 말할 수 있다: 그 NPC가 무대에 서서 말풍선으로 말한다
   const [speakAs, setSpeakAs] = useState('');
   const voices = isGm ? party.filter((c) => c.isNpc && !c.takenOut) : [];
@@ -1104,6 +1124,12 @@ export function RoomTable({
             onDiceMode={setDiceMode}
             onPalette={() => setPalette(true)}
             onHelp={() => setHelp(true)}
+            onExport={() => {
+              const live = lines.filter((l) => !undone.has(l.seq));
+              const title = name;
+              downloadText(exportFileName(title), logToMarkdown(live, { title }));
+              toast({ text: '기록을 파일로 받았어요', tone: 'success', key: 'export' });
+            }}
             onExit={() => setExitOpen(true)}
           />
         </span>
@@ -1133,7 +1159,8 @@ export function RoomTable({
                   data-npc={c.isNpc || undefined}
                   data-turn={c.id === turnId || undefined}
                   data-out={c.takenOut || undefined}
-                  title={mine ? `${josa(c.name, '으로/로')} 움직이기` : `${c.name} 시트 보기`}
+                  data-online={onlineOf(c) || undefined}
+                  title={`${mine ? `${josa(c.name, '으로/로')} 움직이기` : `${c.name} 시트 보기`}${onlineOf(c) ? '' : ' · 자리 비움'}`}
                   onClick={() => (mine && c.id !== me?.id ? setActingId(c.id) : setSheetId(c.id))}
                 >
                   {c.portraitUrl ? (
@@ -1148,6 +1175,12 @@ export function RoomTable({
           })}
         </ul>
         {party.length === 0 && <p className={rt.empty}>아직 테이블에 캐릭터 없음</p>}
+        {onlineNames.length > 0 && (
+          <p className={rt.online} title={onlineNames.join(', ')}>
+            <i aria-hidden /> 접속 {onlineNames.length}명 · {onlineNames.slice(0, 4).join(', ')}
+            {onlineNames.length > 4 ? ' …' : ''}
+          </p>
+        )}
       </aside>
 
       {me && (
@@ -1599,6 +1632,9 @@ export function RoomTable({
               {...(isGm ? { onUndo: undoLine } : {})}
             />
           </div>
+          <p className={rt.presence} aria-live="polite">
+            {presenceLine}
+          </p>
           {role !== 'spectator' && (
             <div className={`${styles.composer} ${rt.composer}`} data-gm={isGm || undefined}>
               {isGm && (
@@ -1633,7 +1669,7 @@ export function RoomTable({
               )}
               {isGm && composeMode === 'narrate' ? (
                 <div className={styles.narrate}>
-                  <NarrationInput run={run} onEcho={setNarrationEcho} />
+                  <NarrationInput run={run} onEcho={setNarrationEcho} onTyping={noteTyping} />
                 </div>
               ) : (
                 <form
@@ -1643,6 +1679,7 @@ export function RoomTable({
                     const text = chat.trim();
                     if (!hasVisibleText(text)) return;
                     setChat('');
+                    noteTyping('');
                     // 못 보냈으면 쓴 글을 되살린다 (그 사이 새로 쓴 게 없을 때만)
                     void sendChat(text).then((ok) => {
                       if (!ok) setChat((cur) => (cur ? cur : text));
@@ -1668,7 +1705,10 @@ export function RoomTable({
                   <input
                     ref={chatField}
                     value={chat}
-                    onChange={(e) => setChat(e.target.value)}
+                    onChange={(e) => {
+                      setChat(e.target.value);
+                      noteTyping(e.target.value);
+                    }}
                     onKeyDown={(e) => {
                       if (formatShortcut(e, chat, setChat)) return;
                       if (e.key === 'Escape') e.currentTarget.blur();
