@@ -70,6 +70,7 @@ export const STATELESS: ReadonlySet<string> = new Set([
   'dice.secret',
   'narration.post',
   'gm.note',
+  'music.set',
   'sfx.play',
   'stage.fx',
 ]);

@@ -1,6 +1,7 @@
 import { term } from '@fate/glossary';
 import type { Action, Outcome, RoomEvent, RoomState } from '@fate/rules-engine';
 import { josa } from '@/lib/josa';
+import { musicLabel } from '@/lib/ambience';
 
 /** 판정 연출 (design-system.md 17·21절). 크게 찍는 글자는 한국어 결과(word)다. */
 export const JUDGE: Record<Outcome, { word: string; tone: 'perfect' | 'great' | 'good' | 'miss' }> =
@@ -154,6 +155,10 @@ export function describe(e: RoomEvent, state: RoomState): LogLine | null {
           ? { ...l, tag: 'ooc' }
           : l;
       return member?.role === 'gm' ? { ...tagged, fx: true } : tagged;
+    }
+    case 'music.set': {
+      const name = musicLabel(e.payload.music ?? undefined);
+      return line('system', name ? `음악: ${name}` : '음악을 껐다');
     }
     case 'dice.secret_rolled': {
       const sum = e.payload.dice.reduce<number>((n, d) => n + d, 0) + e.payload.modifier;

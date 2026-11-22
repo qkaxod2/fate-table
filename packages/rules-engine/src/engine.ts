@@ -117,6 +117,7 @@ const GM_ONLY: ReadonlySet<CommandType> = new Set<CommandType>([
   'zone.update',
   'zone.remove',
   'gm.note',
+  'music.set',
   'dice.secret',
   'narration.post',
   'sfx.play',
@@ -834,6 +835,16 @@ const resolvers: Resolvers = {
         },
         'gm',
       ),
+    ),
+  'music.set': (_s, p, a) =>
+    one(
+      ev('music.set', a, {
+        music: p.track
+          ? { track: p.track }
+          : p.url
+            ? { url: p.url, ...(p.title ? { title: p.title } : {}) }
+            : null,
+      }),
     ),
   'gm.note': (_s, p, a) => one(ev('gm.note', a, p, 'gm')),
   'narration.post': (_s, p, a) => one(ev('narration.posted', a, p)),

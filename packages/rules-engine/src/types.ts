@@ -63,6 +63,19 @@ export const SCENE_SOUNDS = [
   'none',
 ] as const;
 export type SceneSound = (typeof SCENE_SOUNDS)[number];
+/** 기본 배경 음악 (장면이 바뀌어도 GM이 바꿀 때까지 이어진다) */
+export const MUSIC_TRACKS = [
+  'calm',
+  'adventure',
+  'tense',
+  'battle',
+  'mystery',
+  'sad',
+  'festive',
+] as const;
+export type MusicTrack = (typeof MUSIC_TRACKS)[number];
+/** 지금 흐르는 음악: 기본 곡이나 GM이 붙인 음악 파일 주소 */
+export type Music = { track: MusicTrack } | { url: string; title?: string };
 export type SceneTime = (typeof SCENE_TIMES)[number];
 export type SceneWeather = (typeof SCENE_WEATHERS)[number];
 export type SceneCondition = (typeof SCENE_CONDITIONS)[number];
@@ -257,6 +270,8 @@ export interface RoomState {
   contest: Contest | null;
   challenge: Challenge | null;
   tokens: Record<string, string>;
+  /** 배경 음악. 없으면 조용하다 */
+  music?: Music;
 }
 
 export interface Actor {

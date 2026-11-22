@@ -9,6 +9,7 @@ import type {
   ConsequenceSlot,
   Dice,
   MediaMeta,
+  Music,
   Modifier,
   Outcome,
   Role,
@@ -160,6 +161,8 @@ export interface EventPayloads {
   'token.moved': { characterId: string; zoneId: string | null };
   'chat.posted': { text: string; as?: string; whisper?: string; ooc?: boolean };
   /** GM만 보는 비밀 굴림 */
+  /** 배경 음악 (null이면 끔) */
+  'music.set': { music: Music | null };
   'dice.secret_rolled': { dice: Dice; modifier: number; label?: string };
   'gm.note': { text: string };
   'narration.posted': { text: string };

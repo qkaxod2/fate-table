@@ -4,6 +4,7 @@ import {
   APPROACHES,
   BACKDROPS,
   CONSEQUENCE_SLOTS,
+  MUSIC_TRACKS,
   SCENE_CONDITIONS,
   SCENE_SOUNDS,
   SCENE_TIMES,
@@ -221,6 +222,17 @@ export const CommandSchema = z.discriminatedUnion('type', [
   cmd('dice.secret', {
     modifier: z.number().int().min(-10).max(10).default(0),
     label: text.optional(),
+  }),
+  /** 배경 음악: 기본 곡(track)이나 음악 파일 주소(url). 둘 다 없으면 끈다 */
+  cmd('music.set', {
+    track: z.enum(MUSIC_TRACKS).optional(),
+    url: z
+      .string()
+      .url()
+      .max(500)
+      .refine((u) => u.startsWith('https://'), { message: 'https' })
+      .optional(),
+    title: visible(80).optional(),
   }),
   cmd('gm.note', { text: visible(4000) }),
   cmd('narration.post', { text: visible(4000) }),

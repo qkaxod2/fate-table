@@ -1,5 +1,7 @@
 import type {
   Backdrop,
+  Music,
+  MusicTrack,
   Scene,
   SceneCondition,
   SceneSound,
@@ -95,6 +97,23 @@ export const SOUND_LABELS: Record<Exclude<SceneSound, 'none'>, string> = {
   harbor: '파도와 갈매기',
   wind: '바람',
 };
+
+/** 기본 배경 음악 이름 */
+export const TRACK_LABELS: Record<MusicTrack, string> = {
+  calm: '잔잔함',
+  adventure: '모험',
+  tense: '긴장',
+  battle: '전투',
+  mystery: '수수께끼',
+  sad: '슬픔',
+  festive: '잔치',
+};
+
+export function musicLabel(m: Music | undefined): string | null {
+  if (!m) return null;
+  if ('track' in m) return TRACK_LABELS[m.track];
+  return m.title ?? '음악 파일';
+}
 
 export const CONDITION_LABELS: Record<SceneCondition, string> = {
   fire: '화재',
