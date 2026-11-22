@@ -40,4 +40,4 @@ jobs:
         run: for f in media-image media-prompt rooms join commands account leave close admin-characters; do (cd supabase/functions/$f && deno check index.ts) || exit 1; done
       - name: deno test
         working-directory: supabase/functions
-        run: deno test --config commands/deno.json _shared/quota.test.ts _shared/http.test.ts commands/handle.test.ts
+        run: deno test --config commands/deno.json _shared/quota.test.ts _shared/http.test.ts commands/handle.test.ts commands/discord.test.ts

@@ -12,6 +12,7 @@ import {
   ok,
   readJson,
 } from '../_shared/http.ts';
+import { discordLines, postDiscord, type NameSource } from './discord.ts';
 import { handleCommand, type Store } from './handle.ts';
 
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -107,6 +108,22 @@ serve(async (req) => {
     },
     append: (expected, events) => appendEvents(db, roomId, expected, events, clientCmd),
     loadRange: (first, last) => loadEvents(db, roomId, first - 1, last),
+    notify(events, before) {
+      const lines = discordLines(events, before as NameSource);
+      if (!lines.length) return;
+      const job = (async () => {
+        const { data } = await db
+          .from('room_webhooks')
+          .select('url')
+          .eq('room_id', roomId)
+          .maybeSingle();
+        if (data?.url) await postDiscord(data.url, lines);
+      })().catch(() => {});
+      // 응답을 보낸 뒤에도 끝까지 보내도록
+      (
+        globalThis as { EdgeRuntime?: { waitUntil(p: Promise<unknown>): void } }
+      ).EdgeRuntime?.waitUntil(job);
+    },
   };
 
   const out = await handleCommand(user.id, command, store, {

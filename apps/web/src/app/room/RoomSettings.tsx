@@ -22,6 +22,7 @@ export function RoomSettings({
   onExport,
   onReport,
   onShare,
+  onDiscord,
   onExit,
 }: {
   isGm: boolean;
@@ -35,6 +36,8 @@ export function RoomSettings({
   onReport?: (() => void) | undefined;
   /** GM: 읽기 전용 리플레이 링크 만들어 복사 */
   onShare?: (() => void) | undefined;
+  /** GM: 디스코드 알림 설정 */
+  onDiscord?: (() => void) | undefined;
   onExit: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -116,6 +119,12 @@ export function RoomSettings({
             <button type="button" className={styles.row} onClick={then(onShare)}>
               <span>리플레이 링크 복사</span>
               <small>로그인 없이 공개 기록만</small>
+            </button>
+          )}
+          {onDiscord && (
+            <button type="button" className={styles.row} onClick={then(onDiscord)}>
+              <span>디스코드 알림</span>
+              <small>세션 · 장면 · 대성공 소식</small>
             </button>
           )}
           {onReport && (
