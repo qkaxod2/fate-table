@@ -20,6 +20,8 @@ export function RoomSettings({
   onPalette,
   onHelp,
   onExport,
+  onReport,
+  onShare,
   onExit,
 }: {
   isGm: boolean;
@@ -29,6 +31,10 @@ export function RoomSettings({
   onHelp: () => void;
   /** 이야기 기록을 마크다운 파일로 받기 */
   onExport: () => void;
+  /** 세션 결산 보기 (세션이 한 번이라도 열렸을 때만) */
+  onReport?: (() => void) | undefined;
+  /** GM: 읽기 전용 리플레이 링크 만들어 복사 */
+  onShare?: (() => void) | undefined;
   onExit: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -106,6 +112,17 @@ export function RoomSettings({
             <span>기록 내보내기</span>
             <small>마크다운 .md</small>
           </button>
+          {onShare && (
+            <button type="button" className={styles.row} onClick={then(onShare)}>
+              <span>리플레이 링크 복사</span>
+              <small>로그인 없이 공개 기록만</small>
+            </button>
+          )}
+          {onReport && (
+            <button type="button" className={styles.row} onClick={then(onReport)}>
+              <span>세션 결산 보기</span>
+            </button>
+          )}
           <hr className={styles.sep} />
           <button
             type="button"

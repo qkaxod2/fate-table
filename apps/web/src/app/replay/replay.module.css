@@ -1,0 +1,73 @@
+.page {
+  min-height: 100dvh;
+  padding: 24px 16px 48px;
+  background: var(--table);
+  color: var(--on-table);
+}
+
+.head {
+  max-width: 760px;
+  margin: 16px auto 12px;
+}
+
+.head h1 {
+  margin: 0;
+  font: 800 28px / 1.2 var(--f-head);
+}
+
+.kicker,
+.scene {
+  margin: 0;
+  color: var(--on-table-3);
+  font: 600 13px var(--f-ui);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  max-width: 760px;
+  margin: 0 auto 12px;
+}
+
+.controls input[type='range'] {
+  flex: 1;
+  min-width: 140px;
+  accent-color: var(--seal-on-table);
+}
+
+.controls button {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--table-line-hi, var(--on-table-3));
+  border-radius: var(--r-token);
+  background: transparent;
+  color: var(--on-table);
+  font: 700 13.5px var(--f-ui);
+  cursor: pointer;
+}
+
+.count {
+  color: var(--on-table-3);
+  font: 600 12.5px var(--f-ui);
+  font-variant-numeric: tabular-nums;
+}
+
+.book {
+  max-width: 760px;
+  max-height: calc(100dvh - 200px);
+  margin: 0 auto;
+  padding: 20px 24px;
+  overflow-y: auto;
+  border-radius: var(--r-ctl);
+  background: var(--paper);
+  color: var(--ink-1);
+}
+
+.note {
+  padding: 48px 16px;
+  color: var(--on-table-2);
+  font: 500 15px var(--f-ui);
+  text-align: center;
+}

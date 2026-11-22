@@ -93,6 +93,8 @@ import { RoomSettings } from './RoomSettings';
 import { SoundControl } from '@/components/ui/SoundControl';
 import { getSupabase } from '@/lib/supabase';
 import { downloadText, exportFileName, logToMarkdown } from '@/lib/logExport';
+import { sessionReport } from '@/lib/sessionReport';
+import { SessionReport } from '@/components/report/SessionReport';
 import { doingLine, usePresence } from '@/state/presence';
 import rt from './RoomTheater.module.css';
 import styles from './room.module.css';
@@ -682,6 +684,44 @@ export function RoomTable({
   };
   const [copied, setCopied] = useState(false);
   const [exitOpen, setExitOpen] = useState(false);
+  // 읽기 전용 리플레이 링크: 방마다 하나를 만들어 두고 다시 누르면 같은 링크를 복사한다
+  const shareReplay = async () => {
+    const sb = getSupabase();
+    if (!sb) return;
+    const found = await sb
+      .from('room_shares')
+      .select('token')
+      .eq('room_id', room.roomId)
+      .limit(1)
+      .maybeSingle();
+    let token = found.data?.token as string | undefined;
+    if (!token) {
+      const made = await sb
+        .from('room_shares')
+        .insert({ room_id: room.roomId, created_by: room.userId })
+        .select('token')
+        .single();
+      token = made.data?.token as string | undefined;
+    }
+    if (!token) {
+      toast({ text: '리플레이 링크를 만들지 못함', tone: 'error' });
+      return;
+    }
+    const url = `${location.origin}${asset('/replay/')}?t=${token}`;
+    void navigator.clipboard?.writeText(url);
+    toast({ text: '리플레이 링크 복사됨', tone: 'success', key: 'share' });
+  };
+  // 세션 결산: 세션이 끝나는 순간 모두에게 한 번 뜨고, 설정에서 다시 볼 수 있다
+  const [reportOpen, setReportOpen] = useState(false);
+  const report = useMemo(() => (reportOpen ? sessionReport(events) : null), [reportOpen, events]);
+  const lastType = events.at(-1)?.type;
+  const lastSeqSeen = events.at(-1)?.seq ?? 0;
+  // 들어오기 전에 끝난 세션은 띄우지 않는다
+  const [reportedSeq, setReportedSeq] = useState(lastSeqSeen);
+  if (live && lastType === 'session.ended' && reportedSeq !== lastSeqSeen) {
+    setReportedSeq(lastSeqSeen);
+    setReportOpen(true);
+  }
   const router = useRouter();
   const joinUrl = `${location.origin}${asset('/join/')}?code=${inviteCode}`;
 
@@ -1110,6 +1150,10 @@ export function RoomTable({
               downloadText(exportFileName(title), logToMarkdown(live, { title }));
               toast({ text: '기록을 파일로 받았어요', tone: 'success', key: 'export' });
             }}
+            onReport={
+              state.sessionsPlayed > 0 || state.session ? () => setReportOpen(true) : undefined
+            }
+            onShare={isGm ? () => void shareReplay() : undefined}
             onExit={() => setExitOpen(true)}
           />
         </span>
@@ -2000,6 +2044,10 @@ export function RoomTable({
             setSheetId(null);
           }}
         />
+      )}
+
+      {reportOpen && report && (
+        <SessionReport report={report} onClose={() => setReportOpen(false)} />
       )}
 
       {artOpen && (
