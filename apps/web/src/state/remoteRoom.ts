@@ -30,6 +30,29 @@ function fromRow(r: Row): RoomEvent {
   } as RoomEvent;
 }
 
+/** 이만큼 이벤트마다 되돌리기용 중간 상태를 남긴다 */
+const CHECKPOINT_EVERY = 200;
+
+/**
+ * 이 되돌리기가 상태를 바꾸는 가장 앞의 seq. 되돌리기를 되돌리면(다시 하기) 그 되돌리기가
+ * 빼 두었던 이벤트가 살아나므로 그쪽 대상까지 따라간다.
+ */
+export function earliestTouched(events: readonly RoomEvent[], undo: RoomEvent<'event.undone'>) {
+  const bySeq = new Map(events.map((e) => [e.seq, e]));
+  let first = undo.seq;
+  const stack = [...undo.payload.seqs];
+  const seen = new Set<number>();
+  while (stack.length) {
+    const q = stack.pop()!;
+    if (seen.has(q)) continue;
+    seen.add(q);
+    first = Math.min(first, q);
+    const t = bySeq.get(q);
+    if (t?.type === 'event.undone') stack.push(...t.payload.seqs);
+  }
+  return first;
+}
+
 export interface RoomSnapshot {
   state: RoomState;
   events: RoomEvent[];
@@ -55,6 +78,11 @@ export class RemoteRoom {
   /** 채우는 동안 새 이벤트가 와서 한 번 더 읽어야 하는지 */
   private refill = false;
   private snapshot: RoomSnapshot = { state: this.state, events: [], live: false, closed: false };
+  /**
+   * 되돌리기가 오면 처음부터 다시 접는 대신 가까운 중간 상태부터 접는다.
+   * at번째 이벤트까지 접은 상태. 그보다 앞을 되돌리는 이벤트가 오면 그 뒤 체크포인트는 버린다
+   */
+  private checkpoints: Array<{ at: number; seq: number; state: RoomState }> = [];
 
   constructor(
     private readonly sb: SupabaseClient,
@@ -154,10 +182,21 @@ export class RemoteRoom {
 
   private apply(e: RoomEvent) {
     if (e.type === 'room.closed') this.snapshot = { ...this.snapshot, closed: true };
-    this.events = [...this.events, e];
-    // 되돌리기는 지난 이벤트를 빼고 처음부터 다시 접는다
-    this.state = e.type === 'event.undone' ? replay(this.events) : reduce(this.state, e);
+    // 처음 읽을 때 수천 개를 하나씩 붙여도 배열을 매번 복사하지 않는다 (화면에 넘길 때 복사한다)
+    this.events.push(e);
+    // 되돌리기는 지난 이벤트를 빼고, 건드린 곳보다 앞선 체크포인트부터 다시 접는다
+    this.state = e.type === 'event.undone' ? this.refold(e) : reduce(this.state, e);
     this.lastSeq = e.seq;
+    if (this.events.length % CHECKPOINT_EVERY === 0)
+      this.checkpoints.push({ at: this.events.length, seq: e.seq, state: this.state });
+  }
+
+  private refold(undo: RoomEvent<'event.undone'>): RoomState {
+    const first = earliestTouched(this.events, undo);
+    // 되돌린 이벤트 이상을 품은 체크포인트는 이제 틀린 상태다
+    while ((this.checkpoints.at(-1)?.seq ?? 0) >= first) this.checkpoints.pop();
+    const cp = this.checkpoints.at(-1);
+    return cp ? replay(this.events.slice(cp.at), cp.state) : replay(this.events);
   }
 
   /**
@@ -208,7 +247,7 @@ export class RemoteRoom {
   }
 
   private emit() {
-    this.snapshot = { ...this.snapshot, state: this.state, events: this.events };
+    this.snapshot = { ...this.snapshot, state: this.state, events: this.events.slice() };
     for (const fn of this.listeners) fn();
   }
 }

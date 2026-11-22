@@ -1,6 +1,7 @@
 // 명령 처리: 파싱 → 로그인 확인 → handleCommand (참가자 확인 → 재전송 확인 → resolve → append_events)
 // 요청: { roomId, clientCmdId, command }  응답: { events: [{seq, ...}] }
 import { parseCommand } from '../_shared/engine.js';
+import { ENGINE_VERSION } from '../_shared/engine-version.js';
 import {
   admin,
   appendEvents,
@@ -61,8 +62,26 @@ Deno.serve(async (req) => {
       if (error) throw new Error(error.message);
       return range(data);
     },
-    async readHistory() {
-      return { history: await loadEvents(db, roomId) };
+    readHistory: (after) => loadEvents(db, roomId, after),
+    async snapshot() {
+      const { data, error } = await db
+        .from('room_snapshots')
+        .select('seq, state')
+        .eq('room_id', roomId)
+        .eq('version', ENGINE_VERSION)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      return data ? { seq: Number(data.seq), state: data.state } : null;
+    },
+    async saveSnapshot({ seq, state }) {
+      const { error } = await db.from('room_snapshots').upsert({
+        room_id: roomId,
+        seq,
+        version: ENGINE_VERSION,
+        state,
+        created_at: new Date().toISOString(),
+      });
+      if (error) throw new Error(error.message);
     },
     async sealedSide(rollId) {
       const { data, error } = await db

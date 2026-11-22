@@ -1,7 +1,8 @@
 // deno test: 명령 재전송과 동시 처리. DB 대신 command_log·append_events를 흉내 내는 메모리 저장소를 쓴다.
 import { parseCommand } from '../_shared/engine.js';
 import type { PlainEvent, StoredEvent } from '../_shared/http.ts';
-import { handleCommand, type Store } from './handle.ts';
+import { replay } from '../_shared/engine.js';
+import { handleCommand, SNAPSHOT_EVERY, type Snapshot, type Store } from './handle.ts';
 
 /** 키 순서와 상관없이 비교한다 */
 const canon = (v: unknown): string =>
@@ -22,6 +23,7 @@ function memoryRoom(roles: Record<string, string>) {
   const events: StoredEvent[] = [];
   const log = new Map<string, [number, number]>();
   const seals = new Map<string, unknown>();
+  const snap: { current: Snapshot | null; saved: number } = { current: null, saved: 0 };
   let ids = 0;
   const storeFor = (
     userId: string,
@@ -30,7 +32,13 @@ function memoryRoom(roles: Record<string, string>) {
   ): Store => ({
     memberRole: () => Promise.resolve(roles[userId] ?? null),
     findCommand: () => Promise.resolve(log.get(clientCmd) ?? null),
-    readHistory: () => Promise.resolve({ history: [...events] }),
+    readHistory: (after: number) => Promise.resolve(events.filter((e) => e.seq > after)),
+    snapshot: () => Promise.resolve(snap.current),
+    saveSnapshot: (v: Snapshot) => {
+      snap.current = structuredClone(v);
+      snap.saved++;
+      return Promise.resolve();
+    },
     sealedSide: (rollId: string) => Promise.resolve(seals.get(rollId)),
     undoGroup: () => Promise.resolve(null),
     seal: (rollId: string, side: unknown) => {
@@ -65,7 +73,7 @@ function memoryRoom(roles: Record<string, string>) {
     evs.forEach((e, i) => events.push({ visibility: 'public', ...e, seq: head + 1 + i }));
     log.set(clientCmd, [head + 1, head + evs.length]);
   };
-  return { events, run, commit, storeFor };
+  return { events, run, commit, storeFor, snap };
 }
 
 const START = { type: 'session.start', payload: {} };
@@ -149,9 +157,9 @@ Deno.test('chat skips the history read and appends at the head', async () => {
   const expected: Array<number | null> = [];
   const store: Store = {
     ...base,
-    readHistory: () => {
+    readHistory: (after) => {
       reads++;
-      return base.readHistory();
+      return base.readHistory(after);
     },
     append: (e, evs) => {
       expected.push(e);
@@ -212,4 +220,86 @@ Deno.test('only a defense reads its own sealed roll', async () => {
   );
   assertEquals(asked, ['r1']);
   assertEquals(out.status, 409);
+});
+
+const BUMP = { type: 'fate.adjust', payload: { target: 'gm_pool', delta: 1 } };
+
+Deno.test(
+  'a state command starts from the saved snapshot and reads only later events',
+  async () => {
+    const room = memoryRoom({ gm: 'gm' });
+    for (let i = 0; i < SNAPSHOT_EVERY; i++) await room.run('gm', `c${i}`, BUMP);
+    assertEquals(room.snap.saved, 1, 'snapshot saved once enough events piled up');
+    assertEquals(room.snap.current?.seq, SNAPSHOT_EVERY);
+    const afters: number[] = [];
+    const base = room.storeFor('gm', 'next');
+    const out = await handleCommand(
+      'gm',
+      parseCommand(BUMP),
+      {
+        ...base,
+        readHistory: (after) => {
+          afters.push(after);
+          return base.readHistory(after);
+        },
+      },
+      { int: () => 0, uuid: () => 'u' },
+    );
+    assertEquals(out.status, 200);
+    assertEquals(afters, [SNAPSHOT_EVERY], 'reads only after the snapshot');
+    assertEquals(replay(room.events).gmPool, SNAPSHOT_EVERY + 1);
+  },
+);
+
+Deno.test('undoing an event from before the snapshot replays from the start', async () => {
+  const room = memoryRoom({ gm: 'gm' });
+  for (let i = 0; i < SNAPSHOT_EVERY + 5; i++) await room.run('gm', `c${i}`, BUMP);
+  const undo = await room.run('gm', 'undo', { type: 'event.undo', payload: { targetSeq: 3 } });
+  assertEquals(undo.status, 200);
+  // 되돌리기는 처음부터 접었고, 그 결과로 체크포인트를 새로 저장했다
+  assertEquals(room.snap.current?.seq, SNAPSHOT_EVERY + 6);
+  assertEquals(room.snap.current?.state.gmPool, SNAPSHOT_EVERY + 4);
+  const afters: number[] = [];
+  const base = room.storeFor('gm', 'next');
+  let seen = -1;
+  await handleCommand(
+    'gm',
+    parseCommand({ type: 'fate.adjust', payload: { target: 'gm_pool', delta: -1 } }),
+    {
+      ...base,
+      readHistory: async (after) => {
+        afters.push(after);
+        const h = await base.readHistory(after);
+        if (after === 0) seen = replay(h).gmPool;
+        return h;
+      },
+    },
+    { int: () => 0, uuid: () => 'u' },
+  );
+  assertEquals(afters, [SNAPSHOT_EVERY + 6]);
+  assertEquals(seen, -1);
+  assertEquals(replay(room.events).gmPool, SNAPSHOT_EVERY + 3);
+});
+
+Deno.test('a snapshot is not used when a later undo reaches behind it', async () => {
+  const room = memoryRoom({ gm: 'gm' });
+  for (let i = 0; i < SNAPSHOT_EVERY; i++) await room.run('gm', `c${i}`, BUMP);
+  // 다른 서버가 체크포인트 이전을 되돌린 기록을 남겼다 (체크포인트는 그대로)
+  room.commit('undo', [{ type: 'event.undone', actorId: 'gm', payload: { seqs: [5] } }]);
+  const afters: number[] = [];
+  const base = room.storeFor('gm', 'next');
+  await handleCommand(
+    'gm',
+    parseCommand(BUMP),
+    {
+      ...base,
+      readHistory: (after) => {
+        afters.push(after);
+        return base.readHistory(after);
+      },
+    },
+    { int: () => 0, uuid: () => 'u' },
+  );
+  assertEquals(afters, [SNAPSHOT_EVERY, 0], 'snapshot rejected, then full read');
+  assertEquals(replay(room.events).gmPool, SNAPSHOT_EVERY);
 });
