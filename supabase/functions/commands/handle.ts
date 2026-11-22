@@ -8,8 +8,10 @@ export interface Store {
   memberRole(): Promise<string | null>;
   /** 이 명령 id로 이미 기록한 이벤트 범위 [first, last] (command_log) */
   findCommand(): Promise<readonly [number, number] | null>;
-  /** 방의 모든 이벤트(비공개 포함)와 봉인 주사위 */
-  readHistory(): Promise<{ history: StoredEvent[]; sealed: Map<string, unknown> }>;
+  /** 방의 모든 이벤트(비공개 포함) */
+  readHistory(): Promise<{ history: StoredEvent[] }>;
+  /** 반대 굴림 하나의 봉인된 공격자 주사위. 방어 명령에서만 읽는다 */
+  sealedSide(rollId: string): Promise<unknown>;
   /** 되돌리기: 이 seq를 만든 명령의 이벤트 범위 */
   undoGroup(seq: number): Promise<readonly [number, number] | null>;
   seal(rollId: string, side: unknown): Promise<void>;
@@ -51,12 +53,17 @@ export async function handleCommand(
     (command as { type: string }).type === 'event.undo'
       ? (command as { payload: { targetSeq: number } }).payload.targetSeq
       : null;
-  // 참가자 확인, 처리 기록, 이력, 되돌리기 범위는 나란히 읽는다
-  const [role, done, firstRead, group] = await Promise.all([
+  // 봉인 주사위는 방어할 때만 그 판정 하나를 읽는다 (방에 쌓인 봉인을 매번 다 읽지 않는다).
+  // 방어를 되돌리면 다시 방어해야 하므로 봉인은 지우지 않는다
+  const defendId =
+    type === 'roll.defend' ? (command as { payload: { rollId: string } }).payload.rollId : null;
+  // 참가자 확인, 처리 기록, 이력, 되돌리기 범위, 봉인은 나란히 읽는다
+  const [role, done, firstRead, group, seal] = await Promise.all([
     store.memberRole(),
     store.findCommand(),
     stateless ? Promise.resolve(null) : store.readHistory(),
     undoSeq === null ? Promise.resolve(null) : store.undoGroup(undoSeq),
+    defendId === null ? Promise.resolve(undefined) : store.sealedSide(defendId),
   ]);
   if (!role) return { status: 403, code: 'NOT_MEMBER', message: '이 방의 참가자가 아니에요.' };
   const actor = { userId, role };
@@ -102,7 +109,7 @@ export async function handleCommand(
   let read = firstRead!;
   for (let attempt = 0; attempt < 4; attempt++) {
     if (attempt > 0) read = await store.readHistory();
-    const { history, sealed } = read;
+    const { history } = read;
     const head = history.at(-1)?.seq ?? 0;
     const state = replay(history);
 
@@ -112,7 +119,7 @@ export async function handleCommand(
         rng: rand.int,
         newId: rand.uuid,
         animSeed: () => rand.int(2 ** 32),
-        sealed: (id: string) => sealed.get(id),
+        sealed: (id: string) => (id === defendId && seal != null ? seal : undefined) as never,
         history,
         groupOf: () => group ?? undefined,
       });
