@@ -1,0 +1,144 @@
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+  gap: 8px;
+  margin-bottom: var(--s-3);
+}
+
+.tile {
+  display: grid;
+  justify-items: center;
+  padding: 10px 6px;
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--r-ctl);
+}
+
+.tile b {
+  color: var(--ink-1);
+  font: 800 26px / 1.1 var(--f-head);
+}
+
+.tile span {
+  color: var(--ink-3);
+  font: 600 12px var(--f-ui);
+}
+
+.line {
+  margin: 0 0 var(--s-3);
+  color: var(--ink-2);
+  font: 500 13.5px / 1.5 var(--f-ui);
+}
+
+.h {
+  margin: var(--s-3) 0 6px;
+  color: var(--ink-1);
+  font: 700 14px var(--f-ui);
+}
+
+.top {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--ink-1);
+  font: 500 14px / 1.6 var(--f-book);
+}
+
+.top small {
+  color: var(--ink-3);
+  font: 500 12px var(--f-ui);
+}
+
+.chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: none;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  align-items: center;
+  margin-bottom: 6px;
+  color: var(--ink-2);
+  font: 600 12.5px var(--f-ui);
+}
+
+.legend span {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.legend b {
+  color: var(--ink-1);
+}
+
+.toggle {
+  margin-left: auto;
+  padding: 2px 8px;
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--r-token);
+  background: transparent;
+  color: var(--ink-2);
+  font: 600 12px var(--f-ui);
+  cursor: pointer;
+}
+
+.grid line {
+  stroke: var(--paper-edge);
+  stroke-width: 1;
+}
+
+.grid text,
+.label {
+  fill: var(--ink-3);
+  font: 500 11px var(--f-ui);
+}
+
+.label {
+  fill: var(--ink-2);
+  font-weight: 600;
+}
+
+.series {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.cross {
+  stroke: var(--ink-3);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.dot {
+  stroke: var(--card);
+  stroke-width: 2;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--ink-1);
+  font: 500 13px var(--f-ui);
+}
+
+.table th,
+.table td {
+  padding: 3px 6px;
+  border-bottom: 1px solid var(--paper-edge);
+  text-align: right;
+}
+
+.table th:first-child,
+.table td:first-child {
+  text-align: left;
+}
