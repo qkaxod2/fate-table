@@ -4,7 +4,9 @@ name: Supabase
 on:
   push:
     branches: [main]
-    paths: ['supabase/**', '.github/workflows/supabase.yml']
+    # 공용 번들은 packages/에서 만들므로 규칙 엔진·초상화가 바뀌어도 다시 배포한다
+    paths:
+      ['supabase/**', 'packages/**', 'scripts/bundle-shared.mjs', '.github/workflows/supabase.yml']
   workflow_dispatch:
 
 concurrency:
@@ -20,6 +22,14 @@ jobs:
       PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Edge Function이 import하는 _shared/engine.js · portrait.js (git에는 없다)
+      - run: pnpm bundle:shared
       - uses: supabase/setup-cli@v1
         with:
           # 3.x는 db push가 로컬을 기본으로 보고 --project-ref를 받지 않는다. 바꿀 때 명령도 함께 고친다

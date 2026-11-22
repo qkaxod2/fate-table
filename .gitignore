@@ -10,3 +10,7 @@ coverage
 next-env.d.ts
 *.tsbuildinfo
 out
+
+# Edge Function 공용 번들: CI·배포가 pnpm bundle:shared로 만든다
+supabase/functions/_shared/engine.js
+supabase/functions/_shared/portrait.js

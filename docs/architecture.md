@@ -47,7 +47,7 @@ flowchart LR
 1. **모노레포**: pnpm + Turborepo. `apps/web`(Next.js 16, React 19, TypeScript strict, `output: 'export'`) + `packages/rules-engine` + `packages/glossary` + `supabase/`.
 2. **명령 → 이벤트**: 클라이언트는 "하고 싶은 일"(명령)만 Edge Function `commands`에 보냄. 함수가 rules-engine으로 검증·해석하고 **이벤트**를 DB에 쌓음. 상태는 이벤트를 리듀서로 접어서 계산.
 3. **주사위는 서버에서만**: Edge Function이 `crypto.getRandomValues`로 굴림. 조작 불가, 모든 화면이 같은 결과.
-4. **같은 리듀서를 양쪽에서**: Edge Function(검증)과 브라우저(화면 상태)가 같은 `reduce()`를 씀. rules-engine은 의존성이 Zod뿐이라 Deno용으로 그대로 번들(esbuild)해 `supabase/functions/_shared/engine.js`로 넣음.
+4. **같은 리듀서를 양쪽에서**: Edge Function(검증)과 브라우저(화면 상태)가 같은 `reduce()`를 씀. rules-engine은 의존성이 Zod뿐이라 Deno용으로 그대로 번들(esbuild, 압축)해 `supabase/functions/_shared/engine.js`로 만듦. 번들은 git에 넣지 않고 CI·배포 워크플로에서 `pnpm bundle:shared`로 생성.
 5. **Supabase**: Postgres + Realtime + Auth(익명 로그인으로 링크만으로 입장) + Storage + Edge Functions. 무료 요금제로 시작.
 6. **외부 AI 키는 서버에만**: NAI·ElevenLabs 키는 `supabase secrets set NAI_API_KEY=… ELEVENLABS_API_KEY=…`로 함수 비밀값에 저장. 브라우저 번들에는 Supabase URL과 anon 키(공개용)만 들어감. GitHub 시크릿의 키를 바꾸면 Actions의 **Supabase** 워크플로를 수동 실행(Run workflow)해야 함수에 반영됨. 그 전까지 함수는 옛 키를 써서 NAI가 거절함.
 7. **정적 경로**: Pages는 모르는 동적 경로를 만들 수 없으므로 방 ID는 쿼리로 받음 (`/room/?id=…`). 저장소 이름이 경로 앞에 붙으므로 `basePath: '/fate-table'`.

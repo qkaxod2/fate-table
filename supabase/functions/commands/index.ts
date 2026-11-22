@@ -62,11 +62,17 @@ Deno.serve(async (req) => {
       return range(data);
     },
     async readHistory() {
-      const [history, { data: seals }] = await Promise.all([
-        loadEvents(db, roomId),
-        db.from('sealed_rolls').select('roll_id, side').eq('room_id', roomId),
-      ]);
-      return { history, sealed: new Map((seals ?? []).map((s) => [s.roll_id, s.side])) };
+      return { history: await loadEvents(db, roomId) };
+    },
+    async sealedSide(rollId) {
+      const { data, error } = await db
+        .from('sealed_rolls')
+        .select('side')
+        .eq('room_id', roomId)
+        .eq('roll_id', rollId)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      return data?.side;
     },
     async undoGroup(seq) {
       const { data } = await db

@@ -21,6 +21,7 @@ function assertEquals(actual: unknown, expected: unknown, msg = '') {
 function memoryRoom(roles: Record<string, string>) {
   const events: StoredEvent[] = [];
   const log = new Map<string, [number, number]>();
+  const seals = new Map<string, unknown>();
   let ids = 0;
   const storeFor = (
     userId: string,
@@ -29,9 +30,13 @@ function memoryRoom(roles: Record<string, string>) {
   ): Store => ({
     memberRole: () => Promise.resolve(roles[userId] ?? null),
     findCommand: () => Promise.resolve(log.get(clientCmd) ?? null),
-    readHistory: () => Promise.resolve({ history: [...events], sealed: new Map() }),
+    readHistory: () => Promise.resolve({ history: [...events] }),
+    sealedSide: (rollId: string) => Promise.resolve(seals.get(rollId)),
     undoGroup: () => Promise.resolve(null),
-    seal: () => Promise.resolve(),
+    seal: (rollId: string, side: unknown) => {
+      seals.set(rollId, side);
+      return Promise.resolve();
+    },
     append(expected: number | null, evs: PlainEvent[]) {
       hooks.beforeAppend?.();
       if (log.has(clientCmd)) return Promise.resolve(-1);
@@ -184,4 +189,27 @@ Deno.test('glitch and flip effects are GM only, bold and italic are for everyone
   assertEquals((await room.run('gm', 'cmd-2', fx)).status, 200);
   const bold = { type: 'chat.post', payload: { text: '**좋아** *음*' } };
   assertEquals((await room.run('p1', 'cmd-3', bold)).status, 200);
+});
+
+Deno.test('only a defense reads its own sealed roll', async () => {
+  const room = memoryRoom({ gm: 'gm' });
+  const asked: string[] = [];
+  const spy = (clientCmd: string): Store => ({
+    ...room.storeFor('gm', clientCmd),
+    sealedSide: (rollId) => {
+      asked.push(rollId);
+      return Promise.resolve(undefined);
+    },
+  });
+  const rand = { int: () => 0, uuid: () => 'u' };
+  await handleCommand('gm', parseCommand(START), spy('cmd-1'), rand);
+  assertEquals(asked, [], 'other commands do not read seals');
+  const out = await handleCommand(
+    'gm',
+    parseCommand({ type: 'roll.defend', payload: { rollId: 'r1', approach: 'careful' } }),
+    spy('cmd-2'),
+    rand,
+  );
+  assertEquals(asked, ['r1']);
+  assertEquals(out.status, 409);
 });
