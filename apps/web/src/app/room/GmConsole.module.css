@@ -468,3 +468,77 @@
     animation: none;
   }
 }
+
+/* 보관함 목록 (NPC · 준비한 장면): 이름과 한 줄 설명, 오른쪽에 버튼 */
+.library {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 var(--s-3);
+  padding: 0;
+  list-style: none;
+}
+
+.library li {
+  display: flex;
+  gap: var(--s-2);
+  align-items: center;
+  padding: 6px 8px;
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--r-ctl);
+}
+
+.library li > span {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.library small {
+  overflow: hidden;
+  color: var(--ink-3);
+  font: 500 12px var(--f-ui);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.library .primary,
+.library .ghost {
+  width: auto;
+  margin: 0;
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+.row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.row button[aria-pressed] {
+  padding: 4px 8px;
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--r-token);
+  background: transparent;
+  color: var(--ink-2);
+  font: 600 12px var(--f-ui);
+}
+
+.row button[aria-pressed='true'] {
+  border-color: var(--seal);
+  background: var(--seal);
+  color: var(--seal-ink);
+}
+
+.check {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  color: var(--ink-2);
+  font: 500 13px var(--f-ui);
+}
