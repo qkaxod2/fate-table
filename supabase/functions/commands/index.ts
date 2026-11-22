@@ -5,7 +5,7 @@ import { ENGINE_VERSION } from '../_shared/engine-version.js';
 import {
   admin,
   appendEvents,
-  CORS,
+  serve,
   currentUser,
   fail,
   loadEvents,
@@ -20,8 +20,7 @@ function cryptoInt(max: number): number {
   return crypto.getRandomValues(new Uint32Array(1))[0]! % max;
 }
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
+serve(async (req) => {
   if (req.method !== 'POST') return fail(405, 'METHOD', 'POST만 받아요.');
   const body = await readJson<{ roomId?: string; clientCmdId?: string; command?: unknown }>(req);
   const roomId = String(body?.roomId ?? '');

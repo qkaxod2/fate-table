@@ -1,7 +1,7 @@
 // 장면·인물 묘사 → NovelAI 태그 (Vertex AI Gemini). 지침은 guide.ts.
 // 요청: { kind: 'scene'|'npc'|'standing', description, context? }
 // 응답: { ok, data: { prompt, negative, summary, model } } | { ok:false, error }
-import { admin, CORS, currentUser, fail, ok, readJson } from '../_shared/http.ts';
+import { admin, serve, currentUser, fail, ok, readJson } from '../_shared/http.ts';
 import { withUsage } from '../_shared/quota.ts';
 import { generateJson, VERTEX_MODEL, VertexError, vertexConfigured } from '../_shared/vertex.ts';
 import {
@@ -47,8 +47,7 @@ function cleanContext(raw: unknown): PromptContext {
   return out;
 }
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
+serve(async (req) => {
   if (req.method !== 'POST') return fail(405, 'METHOD', 'POST만 받아요.');
   if (!vertexConfigured())
     return fail(503, 'NOT_CONFIGURED', '프롬프트 도우미(Gemini) 키가 아직 설정되지 않았어요.');

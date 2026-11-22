@@ -3,7 +3,7 @@
 //       { setPassword: { email, password } }  그 이메일 계정의 비밀번호를 바꿔 준다 (메일 서버 없이) → { email }
 // 응답: { admin: true, characters: [{ owner, data, savedAt }] }  운영자가 아니면 403
 import type { SupabaseClient, User } from 'npm:@supabase/supabase-js@2';
-import { admin, CORS, currentUser, fail, ok, readJson } from '../_shared/http.ts';
+import { admin, serve, currentUser, fail, ok, readJson } from '../_shared/http.ts';
 
 const LIMIT = 500;
 
@@ -13,8 +13,7 @@ interface Owner {
   anonymous: boolean;
 }
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
+serve(async (req) => {
   if (req.method !== 'POST') return fail(405, 'METHOD', 'POST만 받아요.');
   const user = await currentUser(req);
   if (!user) return fail(401, 'NOT_SIGNED_IN', '로그인이 필요해요.');

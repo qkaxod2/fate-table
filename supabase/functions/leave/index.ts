@@ -1,10 +1,9 @@
 // 방에서 나가기. 참가자 자리를 지우고, 남은 사람에게 퇴장을 알린다. 캐릭터는 방에 남는다.
 // GM은 혼자 나갈 수 없다 (GM이 없는 방이 되므로). 방을 없애려면 close를 쓴다.
 // 요청: { roomId }  응답: { left: true }
-import { admin, appendEvents, CORS, currentUser, fail, ok, readJson } from '../_shared/http.ts';
+import { admin, appendEvents, serve, currentUser, fail, ok, readJson } from '../_shared/http.ts';
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
+serve(async (req) => {
   if (req.method !== 'POST') return fail(405, 'METHOD', 'POST만 받아요.');
   const user = await currentUser(req);
   if (!user) return fail(401, 'NOT_SIGNED_IN', '로그인이 필요해요.');

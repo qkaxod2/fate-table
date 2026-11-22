@@ -4,15 +4,14 @@ import {
   admin,
   appendEvents,
   cleanNickname,
-  CORS,
+  serve,
   currentUser,
   fail,
   ok,
   readJson,
 } from '../_shared/http.ts';
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
+serve(async (req) => {
   if (req.method !== 'POST') return fail(405, 'METHOD', 'POST만 받아요.');
   const user = await currentUser(req);
   if (!user) return fail(401, 'NOT_SIGNED_IN', '로그인이 필요해요.');
@@ -26,7 +25,8 @@ Deno.serve(async (req) => {
 
   const db = admin();
   const { data: room } = await db.from('rooms').select('id').eq('invite_code', code).maybeSingle();
-  if (!room) return fail(404, 'NOT_FOUND', '초대 코드에 맞는 방이 없어요. 코드를 다시 확인해 주세요.');
+  if (!room)
+    return fail(404, 'NOT_FOUND', '초대 코드에 맞는 방이 없어요. 코드를 다시 확인해 주세요.');
 
   const { data: existing } = await db
     .from('room_members')

@@ -1,9 +1,8 @@
 // 익명으로 쓰던 기록(방·캐릭터)을 방금 로그인한 계정으로 옮기고, 빈 익명 사용자는 지운다.
 // 요청: { anonToken }  (로그인 전에 쓰던 익명 세션의 access token)  응답: { rooms }
-import { admin, CORS, currentUser, fail, ok, readJson } from '../_shared/http.ts';
+import { admin, serve, currentUser, fail, ok, readJson } from '../_shared/http.ts';
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
+serve(async (req) => {
   if (req.method !== 'POST') return fail(405, 'METHOD', 'POST만 받아요.');
   const user = await currentUser(req);
   if (!user) return fail(401, 'NOT_SIGNED_IN', '로그인이 필요해요.');
