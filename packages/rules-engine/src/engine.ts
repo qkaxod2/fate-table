@@ -117,6 +117,7 @@ const GM_ONLY: ReadonlySet<CommandType> = new Set<CommandType>([
   'zone.update',
   'zone.remove',
   'gm.note',
+  'dice.secret',
   'narration.post',
   'sfx.play',
   'stage.fx',
@@ -813,8 +814,27 @@ const resolvers: Resolvers = {
     if (p.as && a.role !== 'gm') throw new CommandError('FORBIDDEN_ROLE');
     if (a.role !== 'gm' && hasGmMarks(p.text))
       throw new CommandError('FORBIDDEN_ROLE', 'glitch/flip effects are GM only');
+    if (p.whisper) {
+      if (a.role === 'spectator') throw new CommandError('FORBIDDEN_ROLE');
+      // 귓속말은 한 사람(owner)과 GM만 본다. GM이 보내면 받는 사람, 플레이어가 보내면 보낸 사람이 owner
+      const owner = a.role === 'gm' ? p.whisper : a.userId;
+      return one(ev('chat.posted', a, p, 'owner', owner));
+    }
     return one(ev('chat.posted', a, p));
   },
+  'dice.secret': (_s, p, a, ctx) =>
+    one(
+      ev(
+        'dice.secret_rolled',
+        a,
+        {
+          dice: rollFateDice(ctx.rng),
+          modifier: p.modifier,
+          ...(p.label ? { label: p.label } : {}),
+        },
+        'gm',
+      ),
+    ),
   'gm.note': (_s, p, a) => one(ev('gm.note', a, p, 'gm')),
   'narration.post': (_s, p, a) => one(ev('narration.posted', a, p)),
   'sfx.play': (_s, p, a) => one(ev('sfx.played', a, p)),

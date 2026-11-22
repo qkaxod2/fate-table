@@ -184,6 +184,7 @@ export const StoryLog = memo(function StoryLog({
               kind={l.kind}
               text={l.text}
               fx={l.fx}
+              tag={l.tag}
               book={variant === 'book'}
               open={
                 variant === 'book' &&
@@ -220,6 +221,7 @@ const Line = memo(function Line({
   kind,
   text,
   fx,
+  tag,
   book,
   open,
   typing,
@@ -230,6 +232,7 @@ const Line = memo(function Line({
   kind: LogLine['kind'];
   text: string;
   fx: LogLine['fx'];
+  tag?: LogLine['tag'];
   book: boolean;
   open: boolean;
   typing: boolean;
@@ -244,7 +247,16 @@ const Line = memo(function Line({
       data-kind={kind}
       data-open={open || undefined}
       data-far={far || undefined}
+      data-tag={tag}
+      title={
+        tag === 'whisper' ? '귓속말: 나와 GM만 봄' : tag === 'ooc' ? '잡담 (캐릭터 밖)' : undefined
+      }
     >
+      {tag && (
+        <span className={styles.tag} aria-hidden>
+          {tag === 'whisper' ? '귓속말' : '잡담'}
+        </span>
+      )}
       {book ? (
         <BookLine line={line} typing={typing} />
       ) : (

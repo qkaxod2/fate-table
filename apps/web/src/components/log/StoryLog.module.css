@@ -426,3 +426,25 @@
   margin-left: auto;
   font-weight: 500;
 }
+
+/* 잡담(OOC)·귓속말: 책 본문과 구분되게 작고 옅게, 앞에 작은 꼬리표 */
+.line[data-tag] {
+  font-size: 0.88em;
+  opacity: 0.78;
+}
+
+.line[data-tag='whisper'] {
+  font-style: italic;
+}
+
+.tag {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 0 6px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font: 600 10.5px / 1.6 var(--f-ui);
+  font-style: normal;
+  opacity: 0.8;
+  vertical-align: 0.1em;
+}

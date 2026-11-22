@@ -645,11 +645,38 @@ export function RoomTable({
   const [speakAs, setSpeakAs] = useState('');
   const voices = isGm ? party.filter((c) => c.isNpc && !c.takenOut) : [];
   const as = voices.some((c) => c.name === speakAs) ? speakAs : '';
+  // 귓속말 받을 사람 (GM은 참가자 하나, 플레이어는 'gm'), 잡담(OOC)
+  const [whisperTo, setWhisperTo] = useState('');
+  const [ooc, setOoc] = useState(false);
+  const whisperTargets = isGm
+    ? Object.entries(state.members).filter(([id, m]) => id !== room.userId && m.role === 'player')
+    : [];
+  const whisper =
+    whisperTo === 'gm' || whisperTargets.some(([id]) => id === whisperTo) ? whisperTo : '';
   const sendChat = async (text: string) => {
+    // GM 비밀 굴림: "/굴림 +2 경비가 눈치챘나" (보정과 이름은 생략 가능)
+    const secret = isGm ? /^\/(?:굴림|roll)\s*([+-]?\d+)?\s*(.*)$/i.exec(text) : null;
+    if (secret) {
+      const modifier = Math.max(-10, Math.min(10, Number(secret[1] ?? 0)));
+      const label = secret[2]?.trim().slice(0, 200);
+      const evs = await run({
+        type: 'dice.secret',
+        payload: { modifier, ...(label ? { label } : {}) },
+      });
+      return evs.length > 0;
+    }
     const id = ++sendIds.current;
     const who = as || myNick;
     setSending((x) => [...x, { id, text: who ? `${who}: ${text}` : text, fx: isGm }]);
-    const evs = await run({ type: 'chat.post', payload: as ? { text, as } : { text } });
+    const evs = await run({
+      type: 'chat.post',
+      payload: {
+        text,
+        ...(as && !whisper ? { as } : {}),
+        ...(whisper ? { whisper } : {}),
+        ...(ooc ? { ooc: true } : {}),
+      },
+    });
     setSending((x) => x.filter((m) => m.id !== id));
     return evs.length > 0;
   };
@@ -1673,6 +1700,35 @@ export function RoomTable({
                       ))}
                     </select>
                   )}
+                  <span className={styles.chan}>
+                    <select
+                      className={styles.voice}
+                      value={whisper}
+                      onChange={(e) => setWhisperTo(e.target.value)}
+                      aria-label="받는 사람"
+                      title="귓속말은 받는 사람과 GM만 본다"
+                    >
+                      <option value="">모두에게</option>
+                      {isGm ? (
+                        whisperTargets.map(([id, m]) => (
+                          <option key={id} value={id}>
+                            {m.nickname}에게 귓속말
+                          </option>
+                        ))
+                      ) : (
+                        <option value="gm">GM에게 귓속말</option>
+                      )}
+                    </select>
+                    <button
+                      type="button"
+                      className={styles.oocToggle}
+                      aria-pressed={ooc}
+                      onClick={() => setOoc((o) => !o)}
+                      title="잡담(OOC): 캐릭터 밖 이야기. 기록 내보내기에서 빠진다"
+                    >
+                      잡담
+                    </button>
+                  </span>
                   <input
                     ref={chatField}
                     value={chat}
@@ -1685,7 +1741,15 @@ export function RoomTable({
                       if (e.key === 'Escape') e.currentTarget.blur();
                     }}
                     maxLength={500}
-                    placeholder={as ? `${josa(as, '으로/로')} 말하기… (Enter)` : '말하기… (Enter)'}
+                    placeholder={
+                      whisper
+                        ? '귓속말… (Enter)'
+                        : as
+                          ? `${josa(as, '으로/로')} 말하기… (Enter)`
+                          : isGm
+                            ? '말하기… (/굴림 +2 이름: 비밀 굴림)'
+                            : '말하기… (Enter)'
+                    }
                     aria-label="채팅"
                   />
                   <FormatBar field={chatField} value={chat} onChange={setChat} gm={isGm} />

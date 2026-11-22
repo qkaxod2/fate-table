@@ -52,6 +52,8 @@ export interface LogLine {
   undoable?: false;
   /** GM이 쓴 줄: 글리치·뒤집기 연출을 살린다 */
   fx?: true;
+  /** 잡담(OOC)이나 귓속말: 책 본문과 달리 작게 따로 보인다 */
+  tag?: 'ooc' | 'whisper';
 }
 
 /** 이벤트 하나를 로그 문장으로 바꾼다. 로그에 남길 필요 없는 이벤트는 null. */
@@ -138,9 +140,31 @@ export function describe(e: RoomEvent, state: RoomState): LogLine | null {
       return { ...line('gm', e.payload.text), fx: true };
     case 'chat.posted': {
       const member = e.actorId ? state.members[e.actorId] : undefined;
-      const who = e.payload.as ?? member?.nickname;
+      let who = e.payload.as ?? member?.nickname;
+      if (e.payload.whisper && who) {
+        // GM이 보낸 귓속말은 받는 사람을, 플레이어가 보낸 것은 GM에게 간 것으로 적는다
+        const to =
+          member?.role === 'gm' ? (state.members[e.payload.whisper]?.nickname ?? '누군가') : 'GM';
+        who = `${who} → ${to}`;
+      }
       const l = line('chat', who ? `${who}: ${e.payload.text}` : e.payload.text);
-      return member?.role === 'gm' ? { ...l, fx: true } : l;
+      const tagged: LogLine = e.payload.whisper
+        ? { ...l, tag: 'whisper' }
+        : e.payload.ooc
+          ? { ...l, tag: 'ooc' }
+          : l;
+      return member?.role === 'gm' ? { ...tagged, fx: true } : tagged;
+    }
+    case 'dice.secret_rolled': {
+      const sum = e.payload.dice.reduce<number>((n, d) => n + d, 0) + e.payload.modifier;
+      const faces = e.payload.dice.map((d) => (d > 0 ? '＋' : d < 0 ? '－' : '○')).join('');
+      return {
+        ...line(
+          'roll',
+          `비밀 굴림${e.payload.label ? ` · ${e.payload.label}` : ''}: ${faces}${e.payload.modifier ? ` ${e.payload.modifier > 0 ? '+' : ''}${e.payload.modifier}` : ''} = ${sum >= 0 ? '+' : ''}${sum}`,
+        ),
+        tag: 'whisper',
+      };
     }
     case 'room.member_joined':
       return {

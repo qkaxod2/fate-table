@@ -158,7 +158,9 @@ export interface EventPayloads {
   'zone.updated': { zoneId: string; name?: string; x?: number; y?: number };
   'zone.unlinked': { from: string; to: string };
   'token.moved': { characterId: string; zoneId: string | null };
-  'chat.posted': { text: string; as?: string };
+  'chat.posted': { text: string; as?: string; whisper?: string; ooc?: boolean };
+  /** GM만 보는 비밀 굴림 */
+  'dice.secret_rolled': { dice: Dice; modifier: number; label?: string };
   'gm.note': { text: string };
   'narration.posted': { text: string };
   'sfx.played': { assetId: string };

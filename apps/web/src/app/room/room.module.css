@@ -565,10 +565,10 @@
  */
 .composer[data-gm] {
   display: grid;
-  grid-template-columns: auto auto auto minmax(0, 1fr) auto;
+  grid-template-columns: auto auto auto auto minmax(0, 1fr) auto;
   grid-template-areas:
-    'field field field field field'
-    'tabs fxm voice fmt send';
+    'field field field field field field'
+    'tabs fxm voice chan fmt send';
   gap: 6px var(--s-2);
   align-items: center;
   padding-top: var(--s-2);
@@ -595,7 +595,7 @@
     grid-template-areas:
       'field field field field'
       'tabs fxm voice send'
-      'fmt fmt fmt fmt';
+      'chan chan fmt fmt';
   }
   .composer[data-gm] .voice {
     max-width: 100%;
@@ -606,6 +606,36 @@
 .composer[data-gm] button[type='submit'] {
   grid-area: send;
   min-height: 32px;
+}
+
+/* 받는 사람(귓속말)과 잡담(OOC) 켜기 */
+.chan {
+  grid-area: chan;
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.chan .voice {
+  grid-area: auto;
+}
+
+.chat .oocToggle,
+.oocToggle {
+  min-height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--r-token);
+  background: transparent;
+  color: var(--ink-2);
+  font: 600 12.5px var(--f-ui);
+}
+
+.chat .oocToggle[aria-pressed='true'],
+.oocToggle[aria-pressed='true'] {
+  border-color: var(--seal);
+  background: var(--seal);
+  color: var(--seal-ink);
 }
 
 /* GM 말하기: 누구 목소리로 말할지 (GM 자신 또는 NPC) */

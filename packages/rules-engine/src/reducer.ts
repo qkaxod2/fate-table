@@ -609,6 +609,7 @@ const handlers: Handlers = {
 
   // 로그·미디어 전용 이벤트는 방 상태를 바꾸지 않는다 (StoryLog가 이벤트 목록에서 직접 그림)
   'chat.posted': (s) => s,
+  'dice.secret_rolled': (s) => s,
   'gm.note': (s) => s,
   'narration.posted': (s) => s,
   'sfx.played': (s) => s,
