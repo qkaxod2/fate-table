@@ -36,6 +36,39 @@ const NEAR_LINES = 40;
 
 const NO_SENDING: NonNullable<Props['sending']> = [];
 
+/** 알림 탭은 이만큼만 그리고 그 앞은 "이전 알림"으로 접는다 */
+const SYSTEM_KEEP = 150;
+
+export type LogItem = { line: LogLine } | { fold: { id: number; title: string; count: number } };
+
+/**
+ * 지난 장면은 한 줄로 접는다. 기록이 수천 줄로 길어져도 지금 장면만 실제로 그린다.
+ * 장면은 '장면 시작' 줄에서 나뉜다. 펼친 장면(open)과 마지막 장면은 그대로 둔다.
+ */
+export function foldScenes(lines: readonly LogLine[], open: ReadonlySet<number>): LogItem[] {
+  const starts: number[] = [];
+  lines.forEach((l, i) => {
+    if (l.kind === 'scene' && l.text.startsWith('장면 시작')) starts.push(i);
+  });
+  if (starts.length < 2) return lines.map((line) => ({ line }));
+  const out: LogItem[] = [];
+  // 첫 장면 앞(세션 시작 등)은 첫 장면과 함께 접는다
+  const bounds = [0, ...starts.slice(1), lines.length];
+  for (let b = 0; b < bounds.length - 1; b++) {
+    const part = lines.slice(bounds[b], bounds[b + 1]);
+    const head = part.find((l) => l.kind === 'scene' && l.text.startsWith('장면 시작'));
+    const id = (head ?? part[0])!.seq;
+    const last = b === bounds.length - 2;
+    if (last || open.has(id)) {
+      for (const line of part) out.push({ line });
+      continue;
+    }
+    const title = head ? head.text.replace(/^장면 시작:\s*/, '') : '장면 전';
+    out.push({ fold: { id, title, count: part.length } });
+  }
+  return out;
+}
+
 /**
  * 기록이 수백 줄로 길어져도 입력할 때마다 다시 그리지 않게 memo로 감싼다.
  * 부모는 lines·sending·onUndo를 바뀔 때만 새로 넘긴다
@@ -48,6 +81,9 @@ export const StoryLog = memo(function StoryLog({
   variant = 'panel',
 }: Props) {
   const [tab, setTab] = useState<Tab>('story');
+  // 펼쳐 본 지난 장면 (장면 첫 줄의 seq)
+  const [openScenes, setOpenScenes] = useState<ReadonlySet<number>>(() => new Set());
+  const [allSystem, setAllSystem] = useState(false);
   const [seen, setSeen] = useState<Record<Tab, number>>({ story: 0, system: 0 });
   const live = lines.filter((l) => !undone?.has(l.seq));
   const byTab: Record<Tab, LogLine[]> = {
@@ -55,6 +91,19 @@ export const StoryLog = memo(function StoryLog({
     system: live.filter((l) => l.kind === 'system'),
   };
   const shown = byTab[tab];
+  const items: LogItem[] =
+    tab === 'story'
+      ? foldScenes(shown, openScenes)
+      : [
+          ...(!allSystem && shown.length > SYSTEM_KEEP
+            ? [{ fold: { id: -1, title: '이전 알림', count: shown.length - SYSTEM_KEEP } }]
+            : []),
+          ...(allSystem ? shown : shown.slice(-SYSTEM_KEEP)).map((line) => ({ line })),
+        ];
+  const unfold = (id: number) => {
+    if (id === -1) setAllSystem(true);
+    else setOpenScenes((cur) => new Set(cur).add(id));
+  };
   const lastSeq = (t: Tab) => byTab[t].at(-1)?.seq ?? 0;
   const other: Tab = tab === 'story' ? 'system' : 'story';
   const unread = byTab[other].filter((l) => l.seq > seen[other]).length;
@@ -111,20 +160,44 @@ export const StoryLog = memo(function StoryLog({
         </p>
       )}
       <ol className={styles.list}>
-        {shown.map((l, i) => (
-          <Line
-            key={l.seq}
-            seq={l.seq}
-            kind={l.kind}
-            text={l.text}
-            fx={l.fx}
-            book={variant === 'book'}
-            open={variant === 'book' && l.kind === 'gm' && shown[i - 1]?.kind === 'scene'}
-            typing={variant === 'book' && l.kind === 'gm' && i === shown.length - 1}
-            far={i < shown.length - NEAR_LINES}
-            onUndo={l.undoable !== false ? onUndo : undefined}
-          />
-        ))}
+        {items.map((it, i) => {
+          if ('fold' in it)
+            return (
+              <li key={`f${it.fold.id}`} className={styles.fold}>
+                <button
+                  type="button"
+                  onClick={() => unfold(it.fold.id)}
+                  title="눌러서 펼치기"
+                  aria-label={`${it.fold.title} 펼치기, ${it.fold.count}줄`}
+                >
+                  <span aria-hidden>▸</span> {it.fold.title}
+                  <small>{it.fold.count}줄</small>
+                </button>
+              </li>
+            );
+          const l = it.line;
+          const prev = items[i - 1];
+          return (
+            <Line
+              key={l.seq}
+              seq={l.seq}
+              kind={l.kind}
+              text={l.text}
+              fx={l.fx}
+              book={variant === 'book'}
+              open={
+                variant === 'book' &&
+                l.kind === 'gm' &&
+                !!prev &&
+                'line' in prev &&
+                prev.line.kind === 'scene'
+              }
+              typing={variant === 'book' && l.kind === 'gm' && i === items.length - 1}
+              far={i < items.length - NEAR_LINES}
+              onUndo={l.undoable !== false ? onUndo : undefined}
+            />
+          );
+        })}
         {tab === 'story' &&
           sending.map((m) => (
             <li key={`s${m.id}`} className={styles.line} data-kind="chat" data-sending>
