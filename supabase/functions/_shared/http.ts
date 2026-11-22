@@ -1,16 +1,58 @@
-// Edge Function 공용: CORS, 응답 형식, 로그인 사용자, 서비스 클라이언트, 이벤트 기록
+// Edge Function 공용: serve(CORS 화이트리스트), 응답 형식, 로그인 사용자, 서비스 클라이언트, 이벤트 기록
 import { createClient, type SupabaseClient, type User } from 'npm:@supabase/supabase-js@2';
 
-export const CORS = {
-  'Access-Control-Allow-Origin': '*',
+const CORS_BASE = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  Vary: 'Origin',
 };
+
+/**
+ * 부를 수 있는 사이트. 함수 시크릿 ALLOWED_ORIGINS(쉼표로 구분, 예: https://me.github.io,http://localhost:3000)가
+ * 있으면 그 목록만, 없으면 어디서나(로컬 개발). 배포 워크플로가 GitHub Pages 주소로 채운다.
+ */
+export function allowedOrigins(raw = Deno.env.get('ALLOWED_ORIGINS') ?? ''): string[] | null {
+  const list = raw
+    .split(',')
+    .map((s) => s.trim().replace(/\/+$/, ''))
+    .filter(Boolean);
+  return list.length > 0 ? list : null;
+}
+
+/** 이 요청에 돌려줄 CORS 헤더. 목록에 없는 사이트면 Allow-Origin을 빼서 브라우저가 막게 한다 */
+export function corsFor(origin: string | null, allowed = allowedOrigins()): Record<string, string> {
+  if (!allowed) return { ...CORS_BASE, 'Access-Control-Allow-Origin': '*' };
+  if (origin && allowed.includes(origin))
+    return { ...CORS_BASE, 'Access-Control-Allow-Origin': origin };
+  return { ...CORS_BASE };
+}
+
+/**
+ * Deno.serve 대신 쓴다. OPTIONS(사전 요청)에 답하고, 모든 응답에 그 요청의 CORS 헤더를 붙이며,
+ * 처리 중 예외가 나도 CORS가 붙은 500으로 돌려준다 (브라우저에서 원인이 CORS 오류로 가려지지 않게).
+ */
+export function serve(handler: (req: Request) => Promise<Response> | Response): void {
+  Deno.serve(async (req) => {
+    const cors = corsFor(req.headers.get('Origin'));
+    if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
+    let res: Response;
+    try {
+      res = await handler(req);
+    } catch (e) {
+      console.error(e);
+      res = fail(500, 'SERVER', '서버에서 문제가 생겼어요. 잠시 뒤 다시 시도해 주세요.');
+    }
+    // 헤더를 못 바꾸는 응답(fetch 결과 그대로 등)이면 새로 감싼다
+    const out = new Response(res.body, res);
+    for (const [k, v] of Object.entries(cors)) out.headers.set(k, v);
+    return out;
+  });
+}
 
 export function reply(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...CORS, 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json' },
   });
 }
 

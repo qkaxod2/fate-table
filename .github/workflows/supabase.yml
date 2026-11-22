@@ -39,6 +39,10 @@ jobs:
       - name: 함수 시크릿
         run: |
           supabase secrets set --project-ref "$PROJECT_REF" NAI_API_KEY="$NAI_API_KEY"
+          # 함수를 부를 수 있는 사이트: GitHub Pages + 로컬 개발 (+ 저장소 변수 EXTRA_ALLOWED_ORIGINS)
+          origins="$PAGES_ORIGIN,http://localhost:3000"
+          if [ -n "$EXTRA_ALLOWED_ORIGINS" ]; then origins="$origins,$EXTRA_ALLOWED_ORIGINS"; fi
+          supabase secrets set --project-ref "$PROJECT_REF" ALLOWED_ORIGINS="$origins"
           if [ -n "$ELEVENLABS_API_KEY" ]; then
             supabase secrets set --project-ref "$PROJECT_REF" ELEVENLABS_API_KEY="$ELEVENLABS_API_KEY"
           fi
@@ -50,6 +54,8 @@ jobs:
           done
         env:
           NAI_API_KEY: ${{ secrets.NAI_API_KEY }}
+          PAGES_ORIGIN: https://${{ github.repository_owner }}.github.io
+          EXTRA_ALLOWED_ORIGINS: ${{ vars.EXTRA_ALLOWED_ORIGINS }}
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
           VERTEX_API_KEY: ${{ secrets.VERTEX_API_KEY }}
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}

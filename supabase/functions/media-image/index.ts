@@ -16,6 +16,7 @@ import {
   findPreset,
   matteBackground,
 } from '../_shared/portrait.js';
+import { fail, reply, serve } from '../_shared/http.ts';
 import { withUsage } from '../_shared/quota.ts';
 
 const NAI_URL = 'https://image.novelai.net/ai/generate-image';
@@ -27,21 +28,6 @@ const DAILY_LIMIT = Number(
 const IMAGE_KINDS = ['portrait', 'npc', 'standing', 'expression', 'scene'];
 
 type Kind = (typeof MEDIA_KINDS)[number];
-
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
-
-function reply(status: number, body: unknown) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...CORS, 'Content-Type': 'application/json' },
-  });
-}
-const fail = (status: number, code: string, message: string) =>
-  reply(status, { ok: false, error: { code, message } });
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -75,8 +61,7 @@ function cutOut(png: Uint8Array): Uint8Array {
   return encode({ width: out.width, height: out.height, data: out.data, channels: 4, depth: 8 });
 }
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
+serve(async (req) => {
   if (req.method !== 'POST') return fail(405, 'METHOD', 'POST만 받아요.');
 
   const url = Deno.env.get('SUPABASE_URL')!;
@@ -177,7 +162,11 @@ Deno.serve(async (req) => {
       console.error('nai', kind, res.status, (await res.text()).slice(0, 300));
       // 키가 틀리거나 만료됐을 때. GitHub 시크릿만 바꾸면 Supabase 워크플로가 다시 돌아야 함수에 반영된다
       if (res.status === 401 || res.status === 403)
-        return fail(503, 'NAI_KEY_REJECTED', '이미지 생성 키가 거절됐어요. 관리자가 키를 확인해야 해요.');
+        return fail(
+          503,
+          'NAI_KEY_REJECTED',
+          '이미지 생성 키가 거절됐어요. 관리자가 키를 확인해야 해요.',
+        );
       if (res.status === 402)
         return fail(503, 'NAI_NO_CREDIT', '이미지 생성 계정의 구독이나 Anlas가 부족해요.');
       return fail(502, 'NAI_FAILED', '그림을 만들지 못했어요. 잠시 뒤 다시 시도해 주세요.');

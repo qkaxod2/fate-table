@@ -5,7 +5,7 @@ import {
   admin,
   appendEvents,
   cleanNickname,
-  CORS,
+  serve,
   currentUser,
   fail,
   ok,
@@ -20,8 +20,7 @@ function inviteCode(): string {
   return Array.from(bytes, (b) => CODE_CHARS[b % CODE_CHARS.length]).join('');
 }
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
+serve(async (req) => {
   if (req.method !== 'POST') return fail(405, 'METHOD', 'POST만 받아요.');
   const user = await currentUser(req);
   if (!user) return fail(401, 'NOT_SIGNED_IN', '로그인이 필요해요.');

@@ -1,12 +1,11 @@
 // 방 지우기: GM만 할 수 있다. 접속 중인 사람에게 닫혔다고 알린 뒤 방과 모든 기록을 지운다.
 // 요청: { roomId }  응답: { closed: true }
-import { admin, appendEvents, CORS, currentUser, fail, ok, readJson } from '../_shared/http.ts';
+import { admin, appendEvents, serve, currentUser, fail, ok, readJson } from '../_shared/http.ts';
 
 /** 알림이 다른 사람 화면에 닿을 틈. 지운 뒤에는 RLS가 이벤트를 더는 보여 주지 않는다 */
 const NOTICE_MS = 1500;
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
+serve(async (req) => {
   if (req.method !== 'POST') return fail(405, 'METHOD', 'POST만 받아요.');
   const user = await currentUser(req);
   if (!user) return fail(401, 'NOT_SIGNED_IN', '로그인이 필요해요.');
