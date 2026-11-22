@@ -1,11 +1,13 @@
 'use client';
 
 import {
+  MUSIC_TRACKS,
   SCENE_CONDITIONS,
   SCENE_SOUNDS,
   SCENE_TIMES,
   SCENE_WEATHERS,
   type Command,
+  type Music,
   type RoomEvent,
   type Scene,
 } from '@fate/rules-engine';
@@ -20,6 +22,7 @@ import {
   WEATHER_LABELS,
 } from '@/lib/ambience';
 import { autoBed } from '@/fx/ambience';
+import { TRACK_LABELS } from '@/fx/music';
 import styles from './MoodPanel.module.css';
 
 type Run = (cmd: Command) => Promise<RoomEvent[]>;
@@ -31,10 +34,13 @@ type Mood = Extract<Command, { type: 'scene.mood' }>['payload'];
  */
 export function MoodPanel({
   scene,
+  music,
   run,
   onClose,
 }: {
   scene: Scene;
+  /** 방에 흐르는 음악 (장면이 바뀌어도 이어진다) */
+  music?: Music | undefined;
   run: Run;
   onClose: () => void;
 }) {
@@ -178,6 +184,84 @@ export function MoodPanel({
           끄기
         </button>
       </div>
+
+      <MusicPicker music={music} run={run} />
     </section>
+  );
+}
+
+/** 배경 음악: 기본 곡이나 음악 파일 주소. 장면이 바뀌어도 바꿀 때까지 이어진다 */
+function MusicPicker({ music, run }: { music: Music | undefined; run: Run }) {
+  const [url, setUrl] = useState('');
+  const [title, setTitle] = useState('');
+  const [bad, setBad] = useState(false);
+  const set = (payload: Extract<Command, { type: 'music.set' }>['payload']) =>
+    void run({ type: 'music.set', payload });
+  const track = music && 'track' in music ? music.track : undefined;
+  return (
+    <>
+      <h3 className={styles.label}>음악 · 장면이 바뀌어도 이어진다</h3>
+      <div className={styles.chips} role="radiogroup" aria-label="음악">
+        <button type="button" role="radio" aria-checked={!music} onClick={() => music && set({})}>
+          없음
+        </button>
+        {MUSIC_TRACKS.map((t) => (
+          <button
+            key={t}
+            type="button"
+            role="radio"
+            aria-checked={track === t}
+            onClick={() => track !== t && set({ track: t })}
+          >
+            {TRACK_LABELS[t]}
+          </button>
+        ))}
+        {music && 'url' in music && (
+          <button type="button" role="radio" aria-checked>
+            {music.title ?? '음악 파일'}
+          </button>
+        )}
+      </div>
+      <form
+        className={styles.musicUrl}
+        onSubmit={(e) => {
+          e.preventDefault();
+          const u = url.trim();
+          if (!/^https:\/\/\S+$/.test(u)) {
+            setBad(true);
+            return;
+          }
+          set({ url: u, ...(title.trim() ? { title: title.trim() } : {}) });
+          setUrl('');
+          setTitle('');
+          setBad(false);
+        }}
+      >
+        <input
+          type="url"
+          placeholder="음악 파일 주소 (https://….mp3)"
+          aria-label="음악 파일 주소"
+          aria-invalid={bad || undefined}
+          value={url}
+          maxLength={500}
+          onChange={(e) => setUrl(e.target.value)}
+        />
+        <input
+          placeholder="곡 이름 (선택)"
+          aria-label="곡 이름"
+          value={title}
+          maxLength={80}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+        <button type="submit" disabled={!url.trim()}>
+          틀기
+        </button>
+      </form>
+      <p className={styles.note}>
+        {bad
+          ? 'https로 시작하는 음악 파일 주소만 틀 수 있다'
+          : '바로 재생되는 mp3 · ogg 주소만 된다 (유튜브 같은 페이지 주소는 안 됨)'}
+      </p>
+    </>
   );
 }

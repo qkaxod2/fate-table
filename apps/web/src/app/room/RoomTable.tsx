@@ -67,6 +67,7 @@ import {
 } from '@/components/scene/stageBeat';
 import { StageFx } from '@/components/scene/StageFx';
 import { MoodPanel } from '@/components/ambience/MoodPanel';
+import { useMusic } from '@/fx/music';
 import { SceneAmbience } from '@/components/ambience/SceneAmbience';
 import { sceneImage } from '@/lib/ambience';
 import { StageFxMenu } from './StageFxMenu';
@@ -562,6 +563,8 @@ export function RoomTable({
   // ---------- 효과음 ----------
   // 장소·날씨·불길에 맞는 배경음이 낮게 깔린다 (설정에서 끄거나 줄인다)
   useSceneAmbience(state.scene);
+  // GM이 고른 음악은 장면이 바뀌어도 이어진다
+  useMusic(state.music);
   const heard = useRef<number | null>(null);
   useEffect(() => {
     const last = events.at(-1)?.seq ?? 0;
@@ -1986,7 +1989,12 @@ export function RoomTable({
       </Presence>
 
       {isGm && moodOpen && state.scene && (
-        <MoodPanel scene={state.scene} run={run} onClose={() => setMoodOpen(false)} />
+        <MoodPanel
+          scene={state.scene}
+          music={state.music}
+          run={run}
+          onClose={() => setMoodOpen(false)}
+        />
       )}
 
       <TableView

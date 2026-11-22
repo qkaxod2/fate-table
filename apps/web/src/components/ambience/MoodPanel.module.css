@@ -166,3 +166,47 @@
     grid-template-columns: repeat(4, 1fr);
   }
 }
+
+.musicUrl {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
+  gap: 6px;
+}
+
+.musicUrl input {
+  min-width: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--table-line);
+  border-radius: 8px;
+  background: none;
+  color: var(--on-table);
+  font: 500 13px var(--f-ui);
+}
+
+.musicUrl input[aria-invalid='true'] {
+  border-color: var(--seal-on-table);
+}
+
+.musicUrl button {
+  padding: 5px 13px;
+  border: 1px solid var(--table-line);
+  border-radius: 999px;
+  background: none;
+  color: var(--on-table-2);
+  font: 600 13px var(--f-ui);
+  cursor: pointer;
+}
+
+.musicUrl button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+@media (max-width: 560px) {
+  .musicUrl {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .musicUrl input:first-child {
+    grid-column: 1 / -1;
+  }
+}

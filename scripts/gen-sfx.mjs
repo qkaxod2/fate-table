@@ -63,6 +63,17 @@ export const AMB = {
   fire: ['a large fire burning and crackling, wood popping, roaring flames ambience', 14],
 };
 
+/** 배경 음악 (public/bgm/). 짧게 이어지는 반복 곡 */
+export const BGM = {
+  calm: ['gentle calm instrumental background music loop, warm fingerpicked acoustic guitar with soft piano, slow peaceful melody, no vocals', 22],
+  adventure: ['uplifting adventurous instrumental background music loop, light orchestral strings and flute, steady walking tempo, hopeful journey, no vocals', 22],
+  tense: ['tense suspenseful instrumental background music loop, low pulsing strings ostinato, quiet ticking percussion, uneasy, no vocals', 22],
+  battle: ['energetic battle instrumental music loop, driving taiko drums and fast staccato strings, heroic brass hits, intense combat, no vocals', 22],
+  mystery: ['mysterious instrumental background music loop, soft music box and celesta, airy dark pads, curious and eerie, slow, no vocals', 22],
+  sad: ['sad melancholic instrumental music loop, slow solo piano with soft cello, gentle and emotional, no vocals', 22],
+  festive: ['cheerful festive folk instrumental music loop, lively fiddle and accordion with hand drum, tavern celebration dance, no vocals', 22],
+};
+
 const args = process.argv.slice(2);
 const force = args.includes('--force');
 const only = args.filter((a) => !a.startsWith('--'));
@@ -71,6 +82,7 @@ const key = process.env.ELEVENLABS_API_KEY;
 const jobs = [
   ...Object.entries(SFX).map(([n, [t, d]]) => ['apps/web/public/sfx', n, t, d, false]),
   ...Object.entries(AMB).map(([n, [t, d]]) => ['apps/web/public/amb', n, t, d, true]),
+  ...Object.entries(BGM).map(([n, [t, d]]) => ['apps/web/public/bgm', n, t, d, true]),
 ];
 for (const [out, name, text, duration, loop] of jobs) {
   if (only.length && !only.includes(name)) continue;
@@ -91,6 +103,7 @@ for (const [out, name, text, duration, loop] of jobs) {
   writeFileSync(file, Buffer.from(await res.arrayBuffer()));
   console.log('saved', file);
 }
+// 배경 음악(public/bgm/)도 같은 방법(loop, 22초)으로 만들고 -24 LUFS · 64k로 맞췄다. Music API는 유료 요금제가 필요하다.
 // 만든 뒤 ffmpeg로 크기를 맞춘다: 효과음 -18 LUFS, GM 소리 -16 LUFS, 배경음 -24 LUFS(64k). 효과음은 앞의 빈칸을 잘라 낸다.
 //   예: ffmpeg -i x.mp3 -af "volume=<목표-측정>dB,alimiter=limit=0.95" -b:a 64k y.mp3
 // 배경음은 오래 깔리므로 귀를 찌르는 고음을 먼저 깎는다 (풀벌레 10kHz · 새소리 7kHz · 빗소리 쉿 소리가 문제였다):

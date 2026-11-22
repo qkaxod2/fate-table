@@ -7,18 +7,20 @@ import {
   setAmbienceEnabled,
   setAmbienceVolume,
 } from '@/fx/ambience';
+import { musicVolume, setMusicVolume } from '@/fx/music';
 import { playSfx, setSfxEnabled, sfxEnabled, setSfxVolume, sfxVolume } from '@/fx/sfx';
 import styles from '@/app/room/RoomSettings.module.css';
 
 /**
  * 머리글의 스피커 단추. 누르면 아래로 쪽지가 펼쳐져 소리 전체를 끄고 켜거나,
- * 효과음과 장면 배경음 크기를 따로 맞춘다. 방과 튜토리얼이 같이 쓴다.
+ * 효과음 · 장면 배경음 · 음악 크기를 따로 맞춘다. 방과 튜토리얼이 같이 쓴다.
  */
 export function SoundControl({ onChange }: { onChange?: (on: boolean) => void }) {
   const [open, setOpen] = useState(false);
   const [on, setOn] = useState(sfxEnabled);
   const [sfx, setSfx] = useState(sfxVolume);
   const [amb, setAmb] = useState(() => (ambienceEnabled() ? ambienceVolume() : 0));
+  const [mus, setMus] = useState(musicVolume);
   const wrap = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -45,7 +47,7 @@ export function SoundControl({ onChange }: { onChange?: (on: boolean) => void })
     setOn(v);
     onChange?.(v);
   };
-  const quiet = !on || (sfx === 0 && amb === 0);
+  const quiet = !on || (sfx === 0 && amb === 0 && mus === 0);
   const pct = (v: number) => Math.round(v * 100);
 
   return (
@@ -122,6 +124,24 @@ export function SoundControl({ onChange }: { onChange?: (on: boolean) => void })
                 setAmb(v);
                 if (v > 0) setAmbienceVolume(v);
                 setAmbienceEnabled(v > 0);
+              }}
+            />
+          </label>
+          <label className={styles.row} data-sub="" data-off={!on || undefined}>
+            <span>음악</span>
+            <input
+              type="range"
+              className={styles.volume}
+              min={0}
+              max={100}
+              step={5}
+              value={pct(mus)}
+              disabled={!on}
+              aria-valuetext={mus === 0 ? '꺼짐' : `${pct(mus)}%`}
+              onChange={(e) => {
+                const v = Number(e.target.value) / 100;
+                setMus(v);
+                setMusicVolume(v);
               }}
             />
           </label>

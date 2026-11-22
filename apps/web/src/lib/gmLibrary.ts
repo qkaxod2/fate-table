@@ -5,6 +5,7 @@ import type {
   Backdrop,
   Character,
   Command,
+  Music,
   RoomEvent,
   RoomState,
   SceneCondition,
@@ -35,6 +36,8 @@ export interface ScenePreset {
     sound?: SceneSound | null;
   };
   npcs: NpcPayload[];
+  /** 열 때 틀 음악 (없으면 흐르던 음악을 그대로 둔다) */
+  music?: Music;
   /** 강요 아이디어 · 진행 메모 (꺼낼 때 GM 메모로 남는다) */
   memo?: string;
 }
@@ -144,6 +147,7 @@ export function presetFromScene(state: RoomState): Omit<ScenePreset, 'key' | 'sa
       ...(scene.sound ? { sound: scene.sound } : {}),
     },
     npcs,
+    ...(state.music ? { music: state.music } : {}),
   };
 }
 
@@ -160,6 +164,7 @@ export async function openPreset(
   });
   if (!started.length) return false;
   if (p.mood && Object.keys(p.mood).length > 0) await run({ type: 'scene.mood', payload: p.mood });
+  if (p.music) await run({ type: 'music.set', payload: p.music });
   // 이미 같은 이름의 NPC가 무대에 있으면 또 만들지 않는다
   const here = new Set(
     Object.values(state.characters)
