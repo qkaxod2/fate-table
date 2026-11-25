@@ -182,7 +182,7 @@
 }
 
 .scene b {
-  font: 700 21px var(--f-story);
+  font: 700 21px var(--f-ui);
 }
 
 .scene small {

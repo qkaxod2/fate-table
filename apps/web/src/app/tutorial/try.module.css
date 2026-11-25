@@ -123,7 +123,7 @@
 }
 
 .pickName {
-  font: 700 30px / 1.1 var(--f-story);
+  font: 700 30px / 1.1 var(--f-ui);
   letter-spacing: -0.03em;
 }
 
@@ -254,7 +254,7 @@
 
 .sceneName {
   margin: 0;
-  font-family: var(--f-story);
+  font-family: var(--f-ui);
   font-size: clamp(22px, 2.4vw, 34px);
   text-shadow: 0 2px 12px rgb(0 0 0 / 0.8);
 }
@@ -630,7 +630,7 @@
   padding: 0 var(--s-4) 2px 0;
   border-bottom: 2px solid var(--gold);
   color: var(--gold-hi);
-  font-family: var(--f-story);
+  font-family: var(--f-ui);
   font-size: var(--fs-lg);
   font-weight: 700;
   letter-spacing: 0.06em;

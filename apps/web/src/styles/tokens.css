@@ -123,7 +123,7 @@
   --dice-table: #dcd8cf;
 
   /* type */
-  --f-ui: 'IBM Plex Sans KR', system-ui, sans-serif;
+  --f-ui: var(--f-mabinogi), 'IBM Plex Sans KR', system-ui, sans-serif;
   --f-story: 'Noto Serif KR', serif;
   --f-pop: 'Cinzel', serif;
   --f-deco: 'Cinzel Decorative', 'Cinzel', serif;
