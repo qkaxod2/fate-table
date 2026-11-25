@@ -70,7 +70,7 @@
    * 글꼴은 둘만 쓴다: 화면 전체는 IBM Plex Sans KR, 이야기 본문만 Noto Serif KR.
    * 제목·책 본문·손글씨·숫자용 이름은 옛 코드가 읽으니 남겨 두고 같은 글꼴을 가리킨다.
    */
-  --f-head: var(--f-ui);
+  --f-head: var(--f-display);
   --f-book: var(--f-ui);
   --f-hand: var(--f-ui);
   --f-fig: var(--f-ui);
@@ -123,8 +123,10 @@
   --dice-table: #dcd8cf;
 
   /* type */
-  --f-ui: 'IBM Plex Sans KR', system-ui, sans-serif;
-  --f-story: 'Noto Serif KR', serif;
+  --f-ui: 'Pretendard Variable', Pretendard, system-ui, sans-serif;
+  /* 제목 · 이름 · 판정 글자: 함렛(가변 굵기, 한국어 조각만 받음) */
+  --f-display: 'Hahmlet Variable', var(--f-ui);
+  --f-story: var(--f-maruburi), 'Noto Serif KR', serif;
   --f-pop: 'Cinzel', serif;
   --f-deco: 'Cinzel Decorative', 'Cinzel', serif;
   --f-num: 'IBM Plex Mono', ui-monospace, monospace;

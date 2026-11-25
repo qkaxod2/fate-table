@@ -5,7 +5,7 @@ import { MyGallery } from '@/components/media/MyGallery';
 import { ClientOnly } from '@/components/ui/ClientOnly';
 import styles from '../rooms/lobby.module.css';
 
-export const metadata: Metadata = { title: '내 그림 · 운명점 테이블' };
+export const metadata: Metadata = { title: '내 그림 · NC ROOM' };
 
 export default function MyGalleryPage() {
   return (

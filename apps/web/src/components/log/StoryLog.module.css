@@ -145,7 +145,7 @@
 .line[data-kind='scene'] {
   border-color: var(--gold);
   color: var(--gold-hi);
-  font-family: var(--f-story);
+  font-family: var(--f-display);
   font-weight: 700;
 }
 

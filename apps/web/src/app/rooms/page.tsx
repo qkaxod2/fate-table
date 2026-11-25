@@ -7,7 +7,7 @@ import { ClientOnly } from '@/components/ui/ClientOnly';
 import styles from './lobby.module.css';
 import { AccountHint, MyRoomsList } from './MyRoomsList';
 
-export const metadata: Metadata = { title: '내 방 · 운명점 테이블' };
+export const metadata: Metadata = { title: '내 방 · NC ROOM' };
 
 export default function MyRoomsPage() {
   return (

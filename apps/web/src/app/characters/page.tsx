@@ -9,7 +9,7 @@ import { AdminLink } from './AdminLink';
 import { CharacterShelf } from './CharacterShelf';
 import own from './characters.module.css';
 
-export const metadata: Metadata = { title: '내 캐릭터 · 운명점 테이블' };
+export const metadata: Metadata = { title: '내 캐릭터 · NC ROOM' };
 
 export default function MyCharactersPage() {
   return (

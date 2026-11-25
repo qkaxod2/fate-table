@@ -41,7 +41,7 @@ export function logToMarkdown(lines: readonly LogLine[], opts: ExportOptions): s
     month: 'long',
     day: 'numeric',
   });
-  const out: string[] = [`# ${opts.title}`, '', `_${date} · 운명점 테이블 기록_`, ''];
+  const out: string[] = [`# ${opts.title}`, '', `_${date} · NC ROOM 기록_`, ''];
   let notes: string[] = [];
   const flush = () => {
     if (notes.length === 0) return;

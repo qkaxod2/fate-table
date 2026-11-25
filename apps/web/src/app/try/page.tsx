@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: '튜토리얼로 이동 · 운명점 테이블',
+  title: '튜토리얼로 이동 · NC ROOM',
   robots: { index: false },
 };
 

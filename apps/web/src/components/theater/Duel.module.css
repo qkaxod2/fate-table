@@ -45,7 +45,7 @@
 
 .total {
   color: var(--on-table);
-  font: 800 46px / 1.1 var(--f-ui);
+  font: 800 46px / 1.1 var(--f-display);
   letter-spacing: -0.03em;
 }
 
@@ -122,7 +122,7 @@
 }
 
 .verdict b {
-  font: 800 22px var(--f-ui);
+  font: 800 22px var(--f-display);
 }
 .verdict b[data-tone='miss'] {
   color: var(--miss-hi);
