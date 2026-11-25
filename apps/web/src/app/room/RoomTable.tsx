@@ -674,15 +674,21 @@ export function RoomTable({
     const id = ++sendIds.current;
     const who = as || myNick;
     setSending((x) => [...x, { id, text: who ? `${who}: ${text}` : text, fx: isGm }]);
-    const evs = await run({
-      type: 'chat.post',
-      payload: {
-        text,
-        ...(as && !whisper ? { as } : {}),
-        ...(whisper ? { whisper } : {}),
-        ...(ooc ? { ooc: true } : {}),
-      },
-    });
+    const payload = {
+      text,
+      ...(as && !whisper ? { as } : {}),
+      ...(whisper ? { whisper } : {}),
+      ...(ooc ? { ooc: true } : {}),
+    };
+    // 서버 답(0.5초 남짓)을 기다리지 않고 내 무대에 말풍선부터 띄운다. 돌아온 이벤트는 같은 말이면 건너뛴다
+    const early = beatOf(
+      { seq: -id, type: 'chat.posted', actorId: room.userId, payload, visibility: 'public' },
+      state,
+      liveEvents,
+      { userId: room.userId, character: me },
+    );
+    if (early) showBeat(early);
+    const evs = await run({ type: 'chat.post', payload });
     setSending((x) => x.filter((m) => m.id !== id));
     return evs.length > 0;
   };
@@ -823,6 +829,20 @@ export function RoomTable({
   const dialogueEl = useDialogueTop<HTMLElement>();
   // 무대 전체 효과 (흔들림 · 번쩍 · 어둠 · 맞음 · 쓰러짐 · 갈등 시작)
   const [stageFx, setStageFx] = useState<{ seq: number; kind: StageFxKind } | null>(null);
+  const showBeat = (b: StageBeat) => {
+    setBeat(b);
+    if (b.kind !== 'say') return;
+    const x = b.characterId;
+    const home = (turnChar ?? me)?.id;
+    const ids = talk?.ids;
+    let next: [string, string | null];
+    if (ids && (ids[0] === x || ids[1] === x)) next = ids;
+    // 지금 말하던 사람은 제자리에 두고, 다른 자리에 새로 말한 사람을 세운다
+    else if (ids) next = talk.focus === ids[1] ? [x, ids[1]] : [ids[0], x];
+    else if (home && home !== x) next = [home, x];
+    else next = [x, null];
+    setTalk({ ids: next, focus: x });
+  };
   if (newestSeq !== beatFrom) {
     setBeatFrom(newestSeq);
     let b: StageBeat | null = null;
@@ -840,21 +860,14 @@ export function RoomTable({
       }
     }
     if (f) setStageFx(f);
-    if (b) {
-      setBeat(b);
-      if (b.kind === 'say') {
-        const x = b.characterId;
-        const home = (turnChar ?? me)?.id;
-        const ids = talk?.ids;
-        let next: [string, string | null];
-        if (ids && (ids[0] === x || ids[1] === x)) next = ids;
-        // 지금 말하던 사람은 제자리에 두고, 다른 자리에 새로 말한 사람을 세운다
-        else if (ids) next = talk.focus === ids[1] ? [x, ids[1]] : [ids[0], x];
-        else if (home && home !== x) next = [home, x];
-        else next = [x, null];
-        setTalk({ ids: next, focus: x });
-      }
-    }
+    // 내가 먼저 띄운 말풍선(seq < 0)과 같은 말이 서버에서 돌아오면 다시 띄우지 않는다
+    const echoed =
+      b?.kind === 'say' &&
+      beat?.kind === 'say' &&
+      beat.seq < 0 &&
+      beat.characterId === b.characterId &&
+      beat.text === b.text;
+    if (b && !echoed) showBeat(b);
   }
   useEffect(() => {
     if (!beat) return;
