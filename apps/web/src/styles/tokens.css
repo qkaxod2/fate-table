@@ -124,8 +124,8 @@
 
   /* type */
   --f-ui: 'Pretendard Variable', Pretendard, system-ui, sans-serif;
-  /* 제목 · 이름 · 판정 글자: 마비옛체. 굵기가 하나라 위계는 크기와 색으로 */
-  --f-display: var(--f-mabinogi), var(--f-ui);
+  /* 제목 · 이름 · 판정 글자: 함렛(가변 굵기, 한국어 조각만 받음) */
+  --f-display: 'Hahmlet Variable', var(--f-ui);
   --f-story: var(--f-maruburi), 'Noto Serif KR', serif;
   --f-pop: 'Cinzel', serif;
   --f-deco: 'Cinzel Decorative', 'Cinzel', serif;
