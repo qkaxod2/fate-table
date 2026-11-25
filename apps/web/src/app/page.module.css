@@ -183,6 +183,15 @@
   white-space: nowrap;
 }
 
+/* 표지: 제목 위에 놓인 세로 짝. 크기는 제목 글자에 맞춘다 */
+.mark {
+  display: block;
+  width: 0.92em;
+  height: 0.92em;
+  margin: 0 0 0.16em -0.04em;
+  filter: drop-shadow(0 4px 18px rgb(0 0 0 / 0.55));
+}
+
 .glyph {
   display: inline-block;
 }
@@ -209,6 +218,7 @@
 /* 스크립트가 재기 전: 모두 가려 둔다 (제목은 자리를 재야 하니 옮기지 않는다) */
 :global(html[data-intro='wait']) .scene,
 :global(html[data-intro='wait']) .glyph,
+:global(html[data-intro='wait']) .mark,
 :global(html[data-intro='wait']) .front > :not(.name),
 :global(html[data-intro='wait']) .title > :not(.scene, .front) {
   opacity: 0;
@@ -218,6 +228,20 @@
 /* 1. 제목: 가운데에서 한 글자씩 초점이 맞으며, 벌어져 있던 글자가 모인다 */
 :global(html[data-intro='run']) .glyph {
   animation: intro-glyph 1000ms var(--ease-out) calc(220ms + var(--i) * 85ms) both;
+}
+
+/* 1-1. 표지: 주사위의 세 면에 차례로 불이 들어온다 (위 → + → −) */
+:global(html[data-intro='run']) .mark path {
+  animation: intro-face 700ms var(--ease-out) both;
+}
+:global(html[data-intro='run']) .mark path[data-face='top'] {
+  animation-delay: 120ms;
+}
+:global(html[data-intro='run']) .mark path[data-face='left'] {
+  animation-delay: 300ms;
+}
+:global(html[data-intro='run']) .mark path[data-face='right'] {
+  animation-delay: 480ms;
 }
 
 /* 2. 가운데에서 잠깐 머문 뒤 제자리로 내려앉는다 */
@@ -271,6 +295,13 @@
     opacity: 0;
     filter: blur(12px);
     translate: calc((var(--i) - 2.5) * 0.09em) 0.12em;
+  }
+}
+
+@keyframes intro-face {
+  from {
+    opacity: 0;
+    translate: 0 -6%;
   }
 }
 

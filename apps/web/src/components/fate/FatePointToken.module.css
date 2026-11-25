@@ -139,3 +139,18 @@
   color: inherit;
   white-space: nowrap;
 }
+
+/* 동전에 찍힌 표지: 놋쇠보다 조금 짙게 눌러 찍은 정도. 빈 토큰에는 없다 */
+.token::before {
+  content: '';
+  position: absolute;
+  inset: 22%;
+  background: var(--mark-3);
+  mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'><path fill-rule='evenodd' d='M128.0 25.4L208.7 72.0L128.0 118.6L47.3 72.0ZM38.3 87.6L119.0 134.2L119.0 227.4L38.3 180.8ZM67.4 121.0L89.9 134.0L89.9 151.0L104.6 159.5L104.6 185.5L89.9 177.0L89.9 194.0L67.4 181.0L67.4 164.0L52.7 155.5L52.7 129.5L67.4 138.0ZM137.0 134.2L217.7 87.6L217.7 180.8L137.0 227.4ZM151.4 159.5L203.3 129.5L203.3 155.5L151.4 185.5Z'/></svg>")
+    center / contain no-repeat;
+  opacity: 0.75;
+}
+
+.token[data-empty]::before {
+  content: none;
+}

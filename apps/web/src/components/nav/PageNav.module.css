@@ -42,3 +42,21 @@
 .dot {
   opacity: 0.6;
 }
+
+/* 로비 = 표지가 붙은 집 단추. 표지는 글자 기준선에 맞춰 살짝 내린다 */
+.home {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  align-self: center;
+}
+
+.mark {
+  flex: none;
+  transition: rotate var(--dur-hover) var(--ease-spring);
+}
+
+.home:hover .mark,
+.home:focus-visible .mark {
+  rotate: -8deg;
+}

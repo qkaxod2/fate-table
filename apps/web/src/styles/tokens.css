@@ -59,6 +59,10 @@
   --brass: #b8914a;
   --brass-hi: #e2c27e;
   --brass-ink: #6e5520;
+  /* 표지(BrandMark)의 세 면: 빛 받는 위 · 왼쪽 · 그늘진 오른쪽. 놋쇠 한 가지의 명암이다 */
+  --mark-1: #f0d496;
+  --mark-2: #c9a159;
+  --mark-3: #8a6a2e;
   /* 그림자·어둠의 바탕색 (rgb 값만 섞어 쓴다) */
   --shade: #0e0d0b;
   --rule-blue: var(--paper-edge);

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { BrandMark } from '@/components/brand/BrandMark';
 import { historyDepth } from './history';
 import styles from './PageNav.module.css';
 
@@ -35,7 +36,9 @@ export function PageNav({
       <span className={styles.dot} aria-hidden>
         ·
       </span>
-      <Link href="/" className={styles.link}>
+      <Link href="/" className={`${styles.link} ${styles.home}`}>
+        {/* 종이 위에서는 먹 한 색, 어두운 무대 위에서는 놋쇠 */}
+        <BrandMark size={16} tone={tone === 'stage' ? 'brass' : 'mono'} className={styles.mark} />
         로비
       </Link>
     </nav>

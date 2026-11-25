@@ -1,0 +1,17 @@
+/* WebGL 주사위 판. 종이(--felt) 위에 놓이고, 캔버스는 판을 가득 채운다 */
+.stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 7;
+  border-radius: var(--r-2, 10px);
+  background:
+    radial-gradient(90% 120% at 40% 0%, rgb(255 240 210 / 0.5), transparent 60%),
+    var(--felt, var(--dice-table));
+  overflow: hidden;
+}
+
+.stage canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}

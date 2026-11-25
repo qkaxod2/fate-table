@@ -2,6 +2,7 @@ import { term } from '@fate/glossary';
 import Link from 'next/link';
 import { Fragment } from 'react';
 import { AccountChip } from '@/components/account/AccountChip';
+import { BrandMark } from '@/components/brand/BrandMark';
 import { ClientOnly } from '@/components/ui/ClientOnly';
 import { asset } from '@/lib/asset';
 import styles from './page.module.css';
@@ -49,6 +50,8 @@ export default function Landing() {
       <div className={styles.front}>
         <h1 className={styles.name} aria-label={TITLE}>
           <span id="title-call" className={styles.call} aria-hidden>
+            {/* 표지는 제목과 한 덩어리(세로 짝)로 움직인다 */}
+            <BrandMark size={80} className={styles.mark} />
             {/* 낱말 안에서는 줄이 바뀌지 않게 낱말마다 묶는다 */}
             {TITLE.split(' ').map((word, w, words) => {
               const start = words.slice(0, w).join(' ').length + (w ? 1 : 0);
