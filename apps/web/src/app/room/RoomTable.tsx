@@ -56,7 +56,7 @@ import {
 } from '@/components/theater/tableKit';
 import { DialogueGrip } from '@/components/theater/DialogueGrip';
 import { useDialogueTop } from '@/components/theater/useDialogueTop';
-import { SceneFade } from '@/components/scene/SceneFade';
+import { SceneFade, useLoadedImage } from '@/components/scene/SceneFade';
 import { OUTCOME_FACES, pickFace, StageCast, type CastMember } from '@/components/scene/StageCast';
 import {
   beatOf,
@@ -928,7 +928,7 @@ export function RoomTable({
   const [tableOpen, setTableOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
   const [rerollMode, setRerollMode] = useState(false);
-  const sceneArt = sceneImage(state.scene);
+  const sceneArt = useLoadedImage(sceneImage(state.scene));
   const [moodOpen, setMoodOpen] = useState(false);
   // 굴리는 중이거나 판정이 펼쳐져 있으면 판정 화면 (장면이 어두워지고 판정판이 내려온다)
   const rollMode = !!rolling || showRoll;
