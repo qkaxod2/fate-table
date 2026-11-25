@@ -175,12 +175,25 @@
  * 끝난 모습은 평소 화면과 똑같아서, 재생이 끝나 애니메이션을 떼도 아무것도 튀지 않는다.
  */
 .call {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.26em;
   transform-origin: 50% 50%;
+  color: var(--card);
+  filter: drop-shadow(0 4px 24px rgb(0 0 0 / 0.55));
 }
 
-.word {
-  white-space: nowrap;
+/* 기호는 글자 높이의 1.6배: 나란히 놓으면 무게가 맞는다 */
+.mark svg {
+  display: block;
+  width: 0.8em;
+  height: 0.8em;
+}
+
+.word svg {
+  display: block;
+  width: calc(0.5em * 7.22);
+  height: 0.5em;
 }
 
 .glyph {

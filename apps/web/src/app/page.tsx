@@ -1,6 +1,6 @@
 import { term } from '@fate/glossary';
 import Link from 'next/link';
-import { Fragment } from 'react';
+import { BrandSymbol, BrandWordmark } from '@/components/brand/BrandLogo';
 import { AccountChip } from '@/components/account/AccountChip';
 import { ClientOnly } from '@/components/ui/ClientOnly';
 import { asset } from '@/lib/asset';
@@ -21,7 +21,7 @@ const MENU = [
   { href: '/create/', label: '캐릭터 만들기', note: '컨셉과 약점 한 줄씩' },
 ];
 
-const TITLE = '운명점 테이블';
+const TITLE = 'NC ROOM';
 
 const SHELF = [
   { href: '/characters/', label: '내 캐릭터' },
@@ -49,26 +49,19 @@ export default function Landing() {
       <div className={styles.front}>
         <h1 className={styles.name} aria-label={TITLE}>
           <span id="title-call" className={styles.call} aria-hidden>
-            {/* 낱말 안에서는 줄이 바뀌지 않게 낱말마다 묶는다 */}
-            {TITLE.split(' ').map((word, w, words) => {
-              const start = words.slice(0, w).join(' ').length + (w ? 1 : 0);
-              return (
-                <Fragment key={w}>
-                  {w > 0 && ' '}
-                  <span className={styles.word}>
-                    {[...word].map((c, i) => (
-                      <span
-                        key={i}
-                        className={styles.glyph}
-                        style={{ '--i': start + i } as React.CSSProperties}
-                      >
-                        {c}
-                      </span>
-                    ))}
-                  </span>
-                </Fragment>
-              );
-            })}
+            {/* 기호 → 글자 순서로 초점이 맞는다 */}
+            <span
+              className={`${styles.glyph} ${styles.mark}`}
+              style={{ '--i': 0 } as React.CSSProperties}
+            >
+              <BrandSymbol />
+            </span>
+            <span
+              className={`${styles.glyph} ${styles.word}`}
+              style={{ '--i': 3 } as React.CSSProperties}
+            >
+              <BrandWordmark />
+            </span>
           </span>
         </h1>
         <p className={styles.lead}>

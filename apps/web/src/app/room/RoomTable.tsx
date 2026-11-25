@@ -752,7 +752,7 @@ export function RoomTable({
             ? '내 차례'
             : null;
   useEffect(() => {
-    const base = `${state.scene?.name ?? name} · 운명점 테이블`;
+    const base = `${state.scene?.name ?? name} · NC ROOM`;
     document.title = myCall ? `● ${myCall} · ${base}` : base;
   }, [myCall, state.scene?.name, name]);
   // 차례가 오면 작은 손종이 한 번 울린다. 다른 탭을 보고 있으면 조금 크게, 방어·피해처럼

@@ -17,7 +17,7 @@ const maruBuri = localFont({
 });
 
 export const metadata: Metadata = {
-  title: '운명점 테이블',
+  title: 'NC ROOM',
   description: '기동형 페이트 전용 온라인 TRPG 테이블',
 };
 

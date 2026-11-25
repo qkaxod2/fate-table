@@ -7,7 +7,7 @@ import styles from '../../rooms/lobby.module.css';
 import { AllCharacters } from './AllCharacters';
 
 export const metadata: Metadata = {
-  title: '전체 캐릭터 · 운명점 테이블',
+  title: '전체 캐릭터 · NC ROOM',
   robots: { index: false, follow: false },
 };
 

@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 import { ClientOnly } from '@/components/ui/ClientOnly';
 import { ReplayLoader } from './ReplayView';
 
-export const metadata: Metadata = { title: '리플레이 · 운명점 테이블' };
+export const metadata: Metadata = { title: '리플레이 · NC ROOM' };
 
 export default function ReplayPage() {
   return (
