@@ -142,7 +142,7 @@
 
 .top h1 {
   margin: 0;
-  font: 700 30px / 1.2 var(--f-ui);
+  font: 700 30px / 1.2 var(--f-display);
   letter-spacing: -0.02em;
   text-shadow: 0 2px 14px #000;
 }

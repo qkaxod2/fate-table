@@ -4,3 +4,8 @@
 - 넥슨 무료 글꼴: 개인 · 기업 모두 무료, 상업적 용도 사용 가능, 웹 · 앱 임베딩 가능.
 - 금지: 글꼴 파일을 임의로 수정 · 편집해 재배포하는 것, 글꼴 자체를 유료로 판매하는 것.
 - 확인한 곳: https://www.sandollcloud.com/free-font/17606/MabinogiClassicOTFR
+
+# 마루 부리 (MaruBuri)
+
+- 저작권: NAVER Corp., NAVER Cultural Foundation. SIL Open Font License 1.1.
+- 원본 TTF(@kfonts/maruburi 0.1.0)를 woff2로 형식만 바꿨다. 글리프는 손대지 않았다.
