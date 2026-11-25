@@ -93,6 +93,9 @@ export function MoodPanel({
             aria-checked={scene.backdrop === b}
             className={styles.backdrop}
             onClick={() => set({ backdrop: scene.backdrop === b ? null : b })}
+            // 고르기 전에 큰 그림을 미리 받아 둔다. 누르는 순간 무대가 바로 바뀐다
+            onPointerEnter={() => void (new Image().src = backdropUrl(b))}
+            onFocus={() => void (new Image().src = backdropUrl(b))}
           >
             <img src={backdropUrl(b, true)} alt="" loading="lazy" />
             <span>{BACKDROP_LABELS[b]}</span>
