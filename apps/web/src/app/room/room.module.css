@@ -490,7 +490,7 @@
 @media (max-width: 1100px) {
   .book > div:has(> section[aria-label='이야기 기록']) {
     flex: none;
-    height: max(320px, 55dvh);
+    height: max(320px, calc(55dvh / var(--z, 1)));
   }
 }
 
@@ -1030,7 +1030,7 @@
  */
 @media (max-width: 700px) {
   .stage:has([data-top-stack] [data-map]:not([data-compact])) {
-    height: max(740px, 88dvh);
+    height: max(740px, calc(88dvh / var(--z, 1)));
   }
 }
 
@@ -1156,7 +1156,10 @@
   .shell[data-tab='stage'] > .stage {
     height: max(
       480px,
-      calc(100dvh - var(--tabs-h) - var(--dock-h, 0px) - env(safe-area-inset-bottom))
+      calc(
+        calc(100dvh / var(--z, 1)) - var(--tabs-h) - var(--dock-h, 0px) -
+          env(safe-area-inset-bottom)
+      )
     );
   }
   .shell[data-tab='stage'] > .book {
@@ -1170,7 +1173,7 @@
     display: none;
   }
   .shell:not([data-tab='stage']) > .book {
-    min-height: calc(100dvh - var(--tabs-h) - env(safe-area-inset-bottom));
+    min-height: calc(calc(100dvh / var(--z, 1)) - var(--tabs-h) - env(safe-area-inset-bottom));
     border-top: 0;
   }
 
@@ -1178,7 +1181,7 @@
     display: none;
   }
   .shell[data-tab='story'] > .book {
-    height: calc(100dvh - var(--tabs-h) - env(safe-area-inset-bottom));
+    height: calc(calc(100dvh / var(--z, 1)) - var(--tabs-h) - env(safe-area-inset-bottom));
   }
   .shell[data-tab='story'] .book > div:has(> section[aria-label='이야기 기록']) {
     flex: 1 1 0;

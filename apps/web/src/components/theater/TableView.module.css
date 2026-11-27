@@ -30,8 +30,8 @@
   left: 50%;
   display: grid;
   gap: 22px;
-  width: min(1240px, calc(100vw - 48px));
-  max-height: calc(100dvh - 48px);
+  width: min(1240px, calc(calc(100vw / var(--z, 1)) - 48px));
+  max-height: calc(calc(100dvh / var(--z, 1)) - 48px);
   padding: 20px 32px 28px;
   overflow: auto;
   border-radius: 18px;
@@ -263,8 +263,8 @@
 
 @media (max-width: 760px) {
   .felt {
-    width: calc(100vw - 16px);
-    max-height: calc(100dvh - 16px);
+    width: calc(calc(100vw / var(--z, 1)) - 16px);
+    max-height: calc(calc(100dvh / var(--z, 1)) - 16px);
     padding: 16px;
   }
   .top {
