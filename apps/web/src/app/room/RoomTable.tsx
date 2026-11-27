@@ -933,9 +933,10 @@ export function RoomTable({
 
   const overlayOpen = !!(prompt || (compel && state.aspects[compel.aspectId]) || damage || iDefend);
 
-  // 오른쪽 이름표: 맞서는 상대 → 갈등 차례의 NPC → 첫 NPC (내 캐릭터는 왼쪽에 있으니 뺀다)
+  // 오른쪽 이름표: 오른쪽에 선 사람(맞서는 상대 · 대화 상대) → 갈등 차례의 NPC → 첫 NPC (내 캐릭터는 왼쪽에 있으니 뺀다)
   const foe = [
     castRight,
+    partner,
     showRoll ? activeChar : undefined,
     turnChar?.isNpc ? turnChar : undefined,
     party.find((c) => c.isNpc && !c.takenOut),
@@ -1235,7 +1236,7 @@ export function RoomTable({
       </aside>
 
       {me && (
-        <div className={th.myPlate}>
+        <div className={`${th.myPlate} ${rt.plateL}`}>
           <button
             type="button"
             className={rt.plateBtn}
@@ -1247,7 +1248,7 @@ export function RoomTable({
         </div>
       )}
       {foe && (
-        <div className={th.foePlate}>
+        <div className={`${th.foePlate} ${rt.plateR}`}>
           <button
             type="button"
             className={rt.plateBtn}
