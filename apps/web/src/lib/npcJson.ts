@@ -47,3 +47,22 @@ export function readNpcs(data: unknown): NpcPayload[] {
 export function sameNpc(a: NpcPayload, b: NpcPayload): boolean {
   return a.name.trim() === b.name.trim() && a.highConcept.trim() === b.highConcept.trim();
 }
+
+/**
+ * 올린 NPC를 보관함과 맞춰 본다. 처음 보는 NPC는 새로 담고,
+ * 이미 있는데 초상화가 없던 NPC는 올린 초상화만 덧입힌다 (같은 키로 다시 저장).
+ */
+export function mergeNpcs(
+  items: SavedNpc[],
+  got: NpcPayload[],
+): { fresh: NpcPayload[]; portraits: SavedNpc[] } {
+  const fresh: NpcPayload[] = [];
+  const portraits: SavedNpc[] = [];
+  for (const n of got) {
+    const old = items.find((x) => sameNpc(x.npc, n));
+    if (!old) fresh.push(n);
+    else if (n.portraitUrl && !old.npc.portraitUrl)
+      portraits.push({ ...old, npc: { ...old.npc, portraitUrl: n.portraitUrl } });
+  }
+  return { fresh, portraits };
+}
