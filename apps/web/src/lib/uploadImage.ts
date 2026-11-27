@@ -24,14 +24,22 @@ interface Shrunk {
 const toBlob = (c: HTMLCanvasElement, type: string, q: number) =>
   new Promise<Blob | null>((r) => c.toBlob(r, type, q));
 
-async function shrink(file: File): Promise<Shrunk> {
+/** 무대 배경은 화면 전체를 덮으니 더 크게 둔다 */
+export const BACKDROP_UPLOAD = { edge: 1920, max: 2 * 1024 * 1024 } as const;
+
+interface Size {
+  edge: number;
+  max: number;
+}
+
+async function shrink(file: File, size: Size): Promise<Shrunk> {
   let bmp: ImageBitmap;
   try {
     bmp = await createImageBitmap(file);
   } catch {
     throw new UploadError('그림 파일을 읽지 못함. PNG · JPG · WEBP 파일을 골라 주기');
   }
-  const { w, h } = fitWithin(bmp.width, bmp.height);
+  const { w, h } = fitWithin(bmp.width, bmp.height, size.edge);
   const canvas = document.createElement('canvas');
   canvas.width = w;
   canvas.height = h;
@@ -44,7 +52,7 @@ async function shrink(file: File): Promise<Shrunk> {
     const blob = await toBlob(canvas, 'image/webp', q);
     // WEBP로 못 줄이는 브라우저(Safari)는 PNG를 돌려준다. 그러면 JPG로 넘어간다
     if (!blob || blob.type !== 'image/webp') break;
-    if (blob.size <= UPLOAD_MAX) {
+    if (blob.size <= size.max) {
       bmp.close();
       return { blob, ext: 'webp' };
     }
@@ -57,21 +65,24 @@ async function shrink(file: File): Promise<Shrunk> {
   for (const q of [0.88, 0.75, 0.6]) {
     const blob = await toBlob(canvas, 'image/jpeg', q);
     if (!blob) break;
-    if (blob.size <= UPLOAD_MAX) return { blob, ext: 'jpg' };
+    if (blob.size <= size.max) return { blob, ext: 'jpg' };
   }
   throw new UploadError('그림이 너무 큼. 더 작은 파일로 다시 시도');
 }
 
 /**
- * 내 기기에 있는 그림을 올리고 공개 주소를 돌려준다. 긴 변 1024px WEBP(안 되면 JPG)로 줄여서
+ * 내 기기에 있는 그림을 올리고 공개 주소를 돌려준다. 긴 변 1024px(배경은 1920px) WEBP(안 되면 JPG)로 줄여서
  * portraits 버킷의 uploads/<내 id>/ 아래에 둔다.
  */
-export async function uploadImage(file: File): Promise<string> {
+export async function uploadImage(
+  file: File,
+  size: Size = { edge: UPLOAD_EDGE, max: UPLOAD_MAX },
+): Promise<string> {
   const sb = getSupabase();
   if (!sb) throw new UploadError('서버 미연결이라 그림을 올릴 수 없음');
   if (!file.type.startsWith('image/')) throw new UploadError('그림 파일만 올릴 수 있음');
   if (file.size > UPLOAD_SOURCE_MAX) throw new UploadError('20MB보다 작은 그림을 골라 주기');
-  const { blob, ext } = await shrink(file);
+  const { blob, ext } = await shrink(file, size);
   await ensureSession(sb);
   const { data } = await sb.auth.getSession();
   const uid = data.session?.user.id;

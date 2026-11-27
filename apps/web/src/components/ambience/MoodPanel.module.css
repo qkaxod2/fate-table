@@ -304,3 +304,63 @@
 .trackRemove:hover {
   color: var(--seal-on-table);
 }
+
+/* 내 배경 */
+.upload {
+  margin-left: auto;
+  padding: 4px 10px;
+  border: 1px solid var(--table-line-hi);
+  border-radius: 999px;
+  background: none;
+  color: var(--on-table);
+  font: 600 11.5px var(--f-ui);
+  cursor: pointer;
+}
+
+.upload:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.mine {
+  position: relative;
+  min-width: 0;
+}
+
+.mine .backdrop {
+  width: 100%;
+}
+
+.mine .backdrop span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mineRemove {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.6);
+  color: #fff;
+  font: 600 13px/20px var(--f-ui);
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.mine:hover .mineRemove,
+.mineRemove:focus-visible {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .mineRemove {
+    opacity: 1;
+  }
+}

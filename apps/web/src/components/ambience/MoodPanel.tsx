@@ -32,6 +32,15 @@ import {
   setPlaylist,
   type PlaylistItem,
 } from '@/lib/playlist';
+import {
+  backdropName,
+  deleteBackdrop,
+  listBackdrops,
+  saveBackdrop,
+  type SavedBackdrop,
+} from '@/lib/gmLibrary';
+import { portraitAvailable } from '@/lib/portraitApi';
+import { BACKDROP_UPLOAD, UploadError, uploadImage } from '@/lib/uploadImage';
 import { usePlaylist } from './usePlaylist';
 import styles from './MoodPanel.module.css';
 
@@ -113,8 +122,10 @@ export function MoodPanel({
         ))}
       </div>
       {scene.backgroundUrl && (
-        <p className={styles.note}>지금은 그린 배경을 쓰는 중. 고르면 바뀐다</p>
+        <p className={styles.note}>지금은 그린 배경이나 내 배경을 쓰는 중. 고르면 바뀐다</p>
       )}
+
+      <MyBackdrops scene={scene} run={run} />
 
       <h3 className={styles.label}>시간</h3>
       <div className={styles.chips} role="radiogroup" aria-label="시간">
@@ -200,6 +211,129 @@ export function MoodPanel({
 
       <MusicPicker music={music} run={run} />
     </section>
+  );
+}
+
+/**
+ * 내 배경: 가진 그림을 올려 계정 보관함에 모아 두고, 어느 방에서나 눌러서 무대 배경으로 쓴다.
+ * 한 장만 올리면 바로 무대에 건다. 여러 장은 보관함에만 담는다.
+ */
+function MyBackdrops({ scene, run }: { scene: Scene; run: Run }) {
+  const [items, setItems] = useState<SavedBackdrop[] | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+  const file = useRef<HTMLInputElement>(null);
+  const online = portraitAvailable();
+  useEffect(() => {
+    if (!online) return;
+    listBackdrops()
+      .then(setItems)
+      .catch(() => setItems([]));
+  }, [online]);
+  const apply = (url: string) =>
+    run({ type: 'media.attach', payload: { kind: 'scene', target: scene.id, url } });
+
+  async function take(files: File[]) {
+    if (!files.length || busy) return;
+    setNote(null);
+    let done = 0;
+    let last: SavedBackdrop | null = null;
+    for (const [i, f] of files.entries()) {
+      setBusy(files.length > 1 ? `올리는 중… ${i + 1}/${files.length}` : '올리는 중…');
+      try {
+        const url = await uploadImage(f, BACKDROP_UPLOAD);
+        last = await saveBackdrop(backdropName(f.name), url);
+        setItems((xs) => [last!, ...(xs ?? [])]);
+        done++;
+      } catch (e) {
+        setNote(
+          `${f.name}: ${e instanceof UploadError ? e.message : '보관함에 담지 못함. 잠시 뒤 다시 시도'}`,
+        );
+      }
+    }
+    setBusy(null);
+    if (files.length === 1 && last) await apply(last.url);
+    else if (done) setNote((n) => n ?? `${done}장을 내 배경에 담았다. 누르면 무대에 건다`);
+  }
+
+  async function remove(b: SavedBackdrop) {
+    setItems((xs) => xs?.filter((x) => x.key !== b.key) ?? null);
+    try {
+      await deleteBackdrop(b.key);
+    } catch {
+      setItems((xs) => [b, ...(xs ?? [])]);
+      setNote('지우지 못함. 잠시 뒤 다시 시도');
+    }
+  }
+
+  return (
+    <div
+      onDragOver={(e) => online && e.preventDefault()}
+      onDrop={(e) => {
+        if (!online) return;
+        e.preventDefault();
+        void take([...e.dataTransfer.files].filter((f) => f.type.startsWith('image/')));
+      }}
+    >
+      <div className={styles.genreRow}>
+        <h3 className={styles.label}>내 배경 · 계정에 남아 어느 방에서나 쓴다</h3>
+        <button
+          type="button"
+          className={styles.upload}
+          disabled={!online || !!busy}
+          onClick={() => file.current?.click()}
+        >
+          {busy ?? '그림 올리기'}
+        </button>
+        <input
+          ref={file}
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          multiple
+          hidden
+          onChange={(e) => {
+            const fs = [...(e.target.files ?? [])];
+            e.target.value = '';
+            void take(fs);
+          }}
+        />
+      </div>
+      {items && items.length > 0 && (
+        <div className={styles.backdrops} role="radiogroup" aria-label="내 배경">
+          {items.map((b) => (
+            <div key={b.key} className={styles.mine}>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={scene.backgroundUrl === b.url}
+                className={styles.backdrop}
+                onClick={() => scene.backgroundUrl !== b.url && void apply(b.url)}
+                title={b.name}
+              >
+                <img src={b.url} alt="" loading="lazy" />
+                <span>{b.name}</span>
+              </button>
+              <button
+                type="button"
+                className={styles.mineRemove}
+                aria-label={`${b.name} 보관함에서 빼기`}
+                onClick={() => void remove(b)}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      <p className={styles.note}>
+        {!online
+          ? '서버 연결 후 사용 가능'
+          : (note ??
+            (items?.length
+              ? '누르면 무대 배경이 바뀐다. 여러 장을 한꺼번에 골라도 된다'
+              : 'PNG · JPG · WEBP. 긴 변 1920px로 줄여서 올린다. 여기로 끌어다 놓아도 된다'))}
+      </p>
+    </div>
   );
 }
 

@@ -42,7 +42,15 @@ export interface ScenePreset {
   memo?: string;
 }
 
-type Kind = 'npc' | 'scene';
+/** 직접 올린 배경 그림 (주소는 portraits 버킷 uploads/<내 id>/ 아래) */
+export interface SavedBackdrop {
+  key: string;
+  savedAt: string;
+  name: string;
+  url: string;
+}
+
+type Kind = 'npc' | 'scene' | 'backdrop';
 
 async function client() {
   const sb = getSupabase();
@@ -84,6 +92,28 @@ export const listNpcs = () => list<SavedNpc>('npc');
 export const listScenes = () => list<ScenePreset>('scene');
 export const deleteNpc = (key: string) => remove('npc', key);
 export const deleteScene = (key: string) => remove('scene', key);
+
+export const listBackdrops = () => list<SavedBackdrop>('backdrop');
+export const deleteBackdrop = (key: string) => remove('backdrop', key);
+
+export function saveBackdrop(name: string, url: string): Promise<SavedBackdrop> {
+  const item: SavedBackdrop = {
+    key: crypto.randomUUID(),
+    savedAt: new Date().toISOString(),
+    name: name.trim().slice(0, 40) || '내 배경',
+    url,
+  };
+  return save('backdrop', item.key, item).then(() => item);
+}
+
+/** 파일 이름에서 배경 이름을 뽑는다: 확장자·앞 번호·밑줄을 덜어낸다 */
+export function backdropName(file: string): string {
+  return file
+    .replace(/\.[a-z0-9]+$/i, '')
+    .replace(/^\d+[-_.\s]+/, '')
+    .replace(/[-_]+/g, ' ')
+    .trim();
+}
 
 export function saveNpc(npc: NpcPayload, key: string = crypto.randomUUID()): Promise<void> {
   const item: SavedNpc = { key, savedAt: new Date().toISOString(), npc };
