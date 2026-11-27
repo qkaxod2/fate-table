@@ -327,6 +327,42 @@ describe('character creation', () => {
   });
 });
 
+describe('dismissing an NPC', () => {
+  const withNpcAspect = () =>
+    new Table((s) => ({
+      ...withCharacters(pc('a', 'u1'), pc('npc', 'gm', { isNpc: true, ownerId: null }))(s),
+      aspects: { na: aspect('na', { ownerType: 'character', ownerId: 'npc', kind: 'high' }) },
+      tokens: { npc: 'z1' },
+    }));
+
+  it('lets the GM send an NPC away with its aspects and token', () => {
+    const t = withNpcAspect();
+    t.run(GM, { type: 'character.dismiss', payload: { id: 'npc' } });
+    expect(t.state.characters.npc).toBeUndefined();
+    expect(t.state.aspects.na).toBeUndefined();
+    expect(t.state.tokens.npc).toBeUndefined();
+    expect(t.state.characters.a).toBeDefined();
+  });
+
+  it('is GM-only and never removes a PC', () => {
+    const t = withNpcAspect();
+    expect(() => t.run(P1, { type: 'character.dismiss', payload: { id: 'npc' } })).toThrow();
+    expect(() => t.run(GM, { type: 'character.dismiss', payload: { id: 'a' } })).toThrow('only NPCs');
+  });
+
+  it('waits until a conflict with the NPC is over', () => {
+    const t = withNpcAspect();
+    t.run(GM, { type: 'scene.start', payload: { name: '항구' } });
+    t.run(GM, {
+      type: 'conflict.start',
+      payload: { kind: 'physical', participantIds: ['a', 'npc'] },
+    });
+    expect(() => t.run(GM, { type: 'character.dismiss', payload: { id: 'npc' } })).toThrow(
+      'CHARACTER_IN_PLAY',
+    );
+  });
+});
+
 describe('contest', () => {
   it('ends when a side reaches three victories', () => {
     const t = table();

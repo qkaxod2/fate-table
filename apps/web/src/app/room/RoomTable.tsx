@@ -126,6 +126,7 @@ const DONE_COPY: Partial<Record<Command['type'], string>> = {
   'aspect.remove': '특성 지움',
   'aspect.reveal': '특성 공개',
   'character.create': '캐릭터 생성',
+  'character.dismiss': 'NPC 돌려보냄',
   'scene.start': '장면 열림',
   'scene.end': '장면 닫힘',
   'compel.offer': '강요 제안',

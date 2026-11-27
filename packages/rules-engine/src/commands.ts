@@ -96,6 +96,8 @@ export const CommandSchema = z.discriminatedUnion('type', [
       backstory: backstory.optional(),
     }),
   }),
+  /** GM이 불러온 NPC를 방에서 내보낸다 (보관함 사본은 그대로) */
+  cmd('character.dismiss', { id }),
   cmd('milestone.grant', {
     characterIds: z.array(id).min(1),
     size: z.enum(['minor', 'significant', 'major']),

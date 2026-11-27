@@ -32,7 +32,8 @@ export type CommandErrorCode =
   | 'ROLL_NOT_OPEN'
   | 'AWAITING_DEFENSE'
   | 'NO_ACTIVE_SESSION'
-  | 'NO_ACTIVE_SCENE';
+  | 'NO_ACTIVE_SCENE'
+  | 'CHARACTER_IN_PLAY';
 
 export class CommandError extends Error {
   constructor(
@@ -99,6 +100,7 @@ const GM_ONLY: ReadonlySet<CommandType> = new Set<CommandType>([
   'scene.end',
   'scene.mood',
   'milestone.grant',
+  'character.dismiss',
   'aspect.reveal',
   'fate.adjust',
   'compel.offer',
@@ -335,6 +337,23 @@ const resolvers: Resolvers = {
     return one(
       ev('character.updated', a, { id: c.id, patch, ...(growth ? { milestoneUsed: true } : {}) }),
     );
+  },
+  'character.dismiss': (s, p, a) => {
+    const c = need(s.characters[p.id], 'character');
+    if (!c.isNpc) throw new CommandError('INVALID', 'only NPCs can be dismissed');
+    // 굴림·피해·갈등·대결 한가운데서 빠지면 그 흐름이 끊기니, 끝난 뒤에 내보낸다
+    const live = (r: RollState) => r.status === 'open' || r.status === 'awaiting_defense';
+    const inPlay =
+      Object.values(s.rolls).some(
+        (r) =>
+          live(r) &&
+          (r.active.characterId === c.id || r.defense?.characterId === c.id || r.targetId === c.id),
+      ) ||
+      Object.values(s.pendingDamage).some((d) => d.targetId === c.id || d.attackerId === c.id) ||
+      !!s.conflict?.order.includes(c.id) ||
+      !!s.contest?.sides.includes(c.id);
+    if (inPlay) throw new CommandError('CHARACTER_IN_PLAY');
+    return one(ev('character.dismissed', a, { id: c.id, name: c.name }));
   },
   'milestone.grant': (s, p, a) => {
     for (const id of p.characterIds) need(s.characters[id], 'character');
