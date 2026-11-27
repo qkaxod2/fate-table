@@ -51,7 +51,8 @@ export const fanOf = (i: number, n: number) => {
 export function invokableAspects(state: RoomState, roll: RollState): Aspect[] {
   return Object.values(state.aspects).filter(
     (a) =>
-      !a.hidden &&
+      // 숨긴 캐릭터 특성은 GM 화면에만 있다 (NPC 자신이 발동하면 공개)
+      (!a.hidden || a.ownerType === 'character') &&
       (a.ownerType !== 'character' ||
         a.ownerId === roll.active.characterId ||
         (!!roll.defense && a.ownerId === roll.defense.characterId)),

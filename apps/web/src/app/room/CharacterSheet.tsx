@@ -312,6 +312,18 @@ export function CharacterSheet({
                         {term('compel')} 제안
                       </button>
                     )}
+                    {isGm && a.hidden && (
+                      <button
+                        type="button"
+                        title="지금은 GM만 봐요. 눌러서 모두에게 공개"
+                        disabled={pending}
+                        onClick={() =>
+                          void run({ type: 'aspect.reveal', payload: { aspectId: a.id } })
+                        }
+                      >
+                        공개
+                      </button>
+                    )}
                     {canEdit && (
                       <button
                         type="button"

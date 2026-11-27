@@ -981,7 +981,7 @@ export function RoomTable({
   const ownAspects = (id: string | undefined) =>
     Object.values(state.aspects).filter(
       (a) =>
-        !a.hidden &&
+        (!a.hidden || isGm) &&
         a.ownerType === 'character' &&
         a.ownerId === id &&
         (a.kind === 'high' || a.kind === 'normal' || a.kind === 'trouble'),
@@ -1042,7 +1042,8 @@ export function RoomTable({
     a.ownerType === 'character' ? state.characters[a.ownerId]?.name : undefined;
   const highOf = (id: string) =>
     Object.values(state.aspects).find(
-      (a) => !a.hidden && a.ownerType === 'character' && a.ownerId === id && a.kind === 'high',
+      (a) =>
+        (!a.hidden || isGm) && a.ownerType === 'character' && a.ownerId === id && a.kind === 'high',
     )?.text;
   const seatOf = (c: Character): Seat => ({
     character: c,
