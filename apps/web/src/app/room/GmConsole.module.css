@@ -198,7 +198,7 @@
     right: 0;
     bottom: 0;
     left: 0;
-    max-height: 72dvh;
+    max-height: calc(72dvh / var(--z, 1));
     overflow-y: auto;
     padding: var(--s-3) var(--s-3) calc(var(--s-3) + env(safe-area-inset-bottom));
     border-radius: 14px 14px 0 0;

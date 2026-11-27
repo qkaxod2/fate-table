@@ -46,10 +46,10 @@
 /* 그보다 좁은 데스크톱은 대사창 옆자리가 없으니 예전처럼 대사창 위에 세운다 (얼굴이 이름표·대사창에 가리지 않게) */
 @media (min-width: 1101px) {
   .cast [data-side='left']:not([data-cutout]) {
-    left: 1vw;
+    left: calc(1vw / var(--z, 1));
   }
   .cast [data-side='right']:not([data-cutout]) {
-    right: 1vw;
+    right: calc(1vw / var(--z, 1));
   }
   /* 말풍선이 왼쪽 위 GM 도구 줄·명단 밑으로 숨지 않게 조금 내려 띄운다 */
   .cast [data-side] > p {
@@ -224,8 +224,8 @@
   display: grid;
   justify-items: center;
   gap: 10px;
-  width: min(560px, calc(100vw - 32px));
-  max-height: calc(100dvh - 84px - 260px);
+  width: min(560px, calc(calc(100vw / var(--z, 1)) - 32px));
+  max-height: calc(calc(100dvh / var(--z, 1)) - 84px - 260px);
   overflow: auto;
   translate: -50% 0;
   scrollbar-width: none;
@@ -355,12 +355,12 @@
 
 @media (max-width: 760px) {
   .cast {
-    inset: 46px 0 min(var(--dlg, 46dvh), 46dvh);
+    inset: 46px 0 min(var(--dlg, calc(46dvh / var(--z, 1))), calc(46dvh / var(--z, 1)));
   }
   .roster {
     top: 84px;
     left: 10px;
-    max-width: 46vw;
+    max-width: calc(46vw / var(--z, 1));
   }
   .roster ul {
     display: flex;
@@ -372,7 +372,7 @@
   }
   .center {
     top: 100px;
-    max-height: calc(54dvh - 110px);
+    max-height: calc(calc(54dvh / var(--z, 1)) - 110px);
   }
   .menu {
     order: 3;
@@ -398,10 +398,10 @@
     bottom: 22px;
   }
   :global([data-mode='story']) > .plateL {
-    left: max(2vw, 24px);
+    left: max(calc(2vw / var(--z, 1)), 24px);
   }
   :global([data-mode='story']) > .plateR {
-    right: max(2vw, 24px);
+    right: max(calc(2vw / var(--z, 1)), 24px);
   }
 }
 
