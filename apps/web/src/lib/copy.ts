@@ -160,6 +160,11 @@ export function describe(e: RoomEvent, state: RoomState): LogLine | null {
       const name = musicLabel(e.payload.music ?? undefined);
       return line('system', name ? `음악: ${name}` : '음악을 껐다');
     }
+    case 'music.paused': {
+      const m = e.payload.music;
+      const paused = 'youtube' in m && m.pausedAt !== undefined;
+      return line('system', paused ? '음악을 잠시 멈췄다' : `음악을 다시 틀었다: ${musicLabel(m)}`);
+    }
     case 'dice.secret_rolled': {
       const sum = e.payload.dice.reduce<number>((n, d) => n + d, 0) + e.payload.modifier;
       const faces = e.payload.dice.map((d) => (d > 0 ? '＋' : d < 0 ? '－' : '○')).join('');

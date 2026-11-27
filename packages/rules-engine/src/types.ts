@@ -79,7 +79,13 @@ export type Music =
   | { track: MusicTrack }
   | { url: string; title?: string }
   /** 유튜브: 영상 id와 서버가 튼 시각(ms). 늦게 들어온 사람은 그만큼 넘겨서 같은 곳을 듣는다 */
-  | { youtube: string; title?: string; at: number };
+  | {
+      youtube: string;
+      title?: string;
+      at: number;
+      /** 잠시 멈춘 시각(ms). 다시 틀면 멈춘 동안만큼 at을 뒤로 민다 */
+      pausedAt?: number;
+    };
 export type SceneTime = (typeof SCENE_TIMES)[number];
 export type SceneWeather = (typeof SCENE_WEATHERS)[number];
 export type SceneCondition = (typeof SCENE_CONDITIONS)[number];

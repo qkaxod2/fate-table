@@ -56,6 +56,8 @@ export class Table {
   /** command_log 흉내: 명령마다 [first, last] */
   groups: Array<[number, number]> = [];
   private ids = 0;
+  /** 서버 시각 (테스트가 바꿔 끼운다) */
+  now: () => number = () => 1_700_000_000_000;
   private dice: number[] = [0];
 
   private base: RoomState;
@@ -82,7 +84,7 @@ export class Table {
       rng: scriptedRng(this.dice),
       newId: () => `id${++this.ids}`,
       animSeed: () => 42,
-      now: () => 1_700_000_000_000,
+      now: () => this.now(),
       sealed: (rollId) => this.sealed.get(rollId),
       history: this.log,
       groupOf: (seq) => this.groups.find(([f, l]) => f <= seq && seq <= l),

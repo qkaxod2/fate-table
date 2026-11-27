@@ -120,6 +120,7 @@ const GM_ONLY: ReadonlySet<CommandType> = new Set<CommandType>([
   'zone.remove',
   'gm.note',
   'music.set',
+  'music.pause',
   'dice.secret',
   'narration.post',
   'sfx.play',
@@ -850,6 +851,15 @@ const resolvers: Resolvers = {
               : null,
       }),
     ),
+  'music.pause': (s, p, a, ctx) => {
+    const m = s.music;
+    if (!m || !('youtube' in m)) throw new CommandError('INVALID', 'no youtube music');
+    if (p.paused === (m.pausedAt !== undefined)) throw new CommandError('INVALID', 'already');
+    const now = ctx.now?.() ?? 0;
+    if (p.paused) return one(ev('music.paused', a, { music: { ...m, pausedAt: now } }));
+    const { pausedAt, ...rest } = m;
+    return one(ev('music.paused', a, { music: { ...rest, at: m.at + (now - (pausedAt ?? now)) } }));
+  },
   'gm.note': (_s, p, a) => one(ev('gm.note', a, p, 'gm')),
   'narration.post': (_s, p, a) => one(ev('narration.posted', a, p)),
   'sfx.play': (_s, p, a) => one(ev('sfx.played', a, p)),
