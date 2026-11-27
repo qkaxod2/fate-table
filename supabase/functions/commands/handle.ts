@@ -138,6 +138,7 @@ export async function handleCommand(
         rng: rand.int,
         newId: rand.uuid,
         animSeed: () => rand.int(2 ** 32),
+        now: Date.now,
       });
     } catch (e) {
       if (!(e instanceof CommandError)) throw e;
@@ -168,6 +169,7 @@ export async function handleCommand(
         rng: rand.int,
         newId: rand.uuid,
         animSeed: () => rand.int(2 ** 32),
+        now: Date.now,
         sealed: (id: string) => (id === defendId && seal != null ? seal : undefined) as never,
         history,
         groupOf: () => group ?? undefined,

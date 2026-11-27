@@ -74,8 +74,12 @@ export const MUSIC_TRACKS = [
   'festive',
 ] as const;
 export type MusicTrack = (typeof MUSIC_TRACKS)[number];
-/** 지금 흐르는 음악: 기본 곡이나 GM이 붙인 음악 파일 주소 */
-export type Music = { track: MusicTrack } | { url: string; title?: string };
+/** 지금 흐르는 음악: 기본 곡, GM이 붙인 음악 파일 주소, 또는 유튜브 영상 */
+export type Music =
+  | { track: MusicTrack }
+  | { url: string; title?: string }
+  /** 유튜브: 영상 id와 서버가 튼 시각(ms). 늦게 들어온 사람은 그만큼 넘겨서 같은 곳을 듣는다 */
+  | { youtube: string; title?: string; at: number };
 export type SceneTime = (typeof SCENE_TIMES)[number];
 export type SceneWeather = (typeof SCENE_WEATHERS)[number];
 export type SceneCondition = (typeof SCENE_CONDITIONS)[number];

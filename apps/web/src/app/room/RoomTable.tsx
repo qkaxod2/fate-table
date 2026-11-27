@@ -67,6 +67,7 @@ import {
 } from '@/components/scene/stageBeat';
 import { StageFx } from '@/components/scene/StageFx';
 import { MoodPanel } from '@/components/ambience/MoodPanel';
+import { usePlaylistChain } from '@/components/ambience/usePlaylist';
 import { DiscordDialog } from './DiscordDialog';
 import { useMusic } from '@/fx/music';
 import { SceneAmbience } from '@/components/ambience/SceneAmbience';
@@ -566,6 +567,8 @@ export function RoomTable({
   useSceneAmbience(state.scene);
   // GM이 고른 음악은 장면이 바뀌어도 이어진다
   useMusic(state.music);
+  // GM: 유튜브 목록의 곡이 끝나면 다음 곡을 모두에게 튼다
+  usePlaylistChain(isGm, state.music, run);
   const heard = useRef<number | null>(null);
   useEffect(() => {
     const last = events.at(-1)?.seq ?? 0;

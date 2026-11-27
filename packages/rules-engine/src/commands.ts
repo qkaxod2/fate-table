@@ -223,9 +223,13 @@ export const CommandSchema = z.discriminatedUnion('type', [
     modifier: z.number().int().min(-10).max(10).default(0),
     label: text.optional(),
   }),
-  /** 배경 음악: 기본 곡(track)이나 음악 파일 주소(url). 둘 다 없으면 끈다 */
+  /** 배경 음악: 기본 곡(track), 음악 파일 주소(url), 유튜브 영상 id(youtube). 모두 없으면 끈다 */
   cmd('music.set', {
     track: z.enum(MUSIC_TRACKS).optional(),
+    youtube: z
+      .string()
+      .regex(/^[\w-]{11}$/)
+      .optional(),
     url: z
       .string()
       .url()

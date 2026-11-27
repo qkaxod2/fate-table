@@ -54,6 +54,8 @@ export interface ResolveContext {
   history?: readonly RoomEvent[];
   /** 되돌리기: 이 seq를 만든 명령의 이벤트 범위 [first, last] (command_log) */
   groupOf?: (seq: number) => readonly [number, number] | undefined;
+  /** 서버 시각 (ms). 유튜브 음악을 모두 같은 곳에서 듣게 맞출 때 쓴다 */
+  now?: () => number;
 }
 
 /**
@@ -836,14 +838,16 @@ const resolvers: Resolvers = {
         'gm',
       ),
     ),
-  'music.set': (_s, p, a) =>
+  'music.set': (_s, p, a, ctx) =>
     one(
       ev('music.set', a, {
         music: p.track
           ? { track: p.track }
-          : p.url
-            ? { url: p.url, ...(p.title ? { title: p.title } : {}) }
-            : null,
+          : p.youtube
+            ? { youtube: p.youtube, ...(p.title ? { title: p.title } : {}), at: ctx.now?.() ?? 0 }
+            : p.url
+              ? { url: p.url, ...(p.title ? { title: p.title } : {}) }
+              : null,
       }),
     ),
   'gm.note': (_s, p, a) => one(ev('gm.note', a, p, 'gm')),
