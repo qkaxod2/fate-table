@@ -509,6 +509,23 @@
   font-size: 13px;
 }
 
+.libraryFile {
+  display: flex;
+  gap: 6px;
+  margin: 0 0 var(--s-3);
+}
+
+.help + .libraryFile {
+  margin-top: var(--s-2);
+}
+
+.libraryFile .ghost {
+  width: auto;
+  margin: 0;
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
 .row {
   display: flex;
   gap: 6px;
