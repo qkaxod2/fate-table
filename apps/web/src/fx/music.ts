@@ -50,7 +50,10 @@ interface Playing {
 let current: Playing | null = null;
 let wanted: Music | undefined;
 
-const level = () => (sfxEnabled() ? musicVolume() * 0.6 : 0);
+/** 귀는 크기를 로그로 느끼므로 막대 값을 제곱해서 쓴다 (낮은 쪽을 더 잘게 맞춘다) */
+const level = () => (sfxEnabled() ? musicVolume() ** 2 * 0.6 : 0);
+/** 음량 막대를 움직일 때는 바로 들리게 짧게만 바꾼다 (곡이 바뀔 때만 천천히) */
+const NUDGE = 0.15;
 
 function startTrack(track: MusicTrack): Playing | null {
   const c = audio();
@@ -74,7 +77,12 @@ function startTrack(track: MusicTrack): Playing | null {
   });
   return {
     key: `t:${track}`,
-    setLevel: (v) => gain.gain.setTargetAtTime(v, c.currentTime, 0.3),
+    setLevel: (v) => {
+      const t = c.currentTime;
+      gain.gain.cancelScheduledValues(t);
+      gain.gain.setValueAtTime(gain.gain.value, t);
+      gain.gain.linearRampToValueAtTime(v, t + NUDGE);
+    },
     stop: () => {
       stopped = true;
       const t = c.currentTime;
@@ -93,12 +101,12 @@ function startUrl(url: string): Playing {
   el.volume = 0;
   let target = level();
   let timer: ReturnType<typeof setInterval> | null = null;
-  const fadeTo = (v: number, then?: () => void) => {
+  const fadeTo = (v: number, then?: () => void, secs = FADE) => {
     if (timer) clearInterval(timer);
     const from = el.volume;
     const t0 = performance.now();
     timer = setInterval(() => {
-      const k = Math.min(1, (performance.now() - t0) / (FADE * 1000));
+      const k = Math.min(1, (performance.now() - t0) / (secs * 1000));
       el.volume = Math.min(1, Math.max(0, from + (v - from) * k));
       if (k >= 1) {
         if (timer) clearInterval(timer);
@@ -116,7 +124,7 @@ function startUrl(url: string): Playing {
     key: `u:${url}`,
     setLevel: (v) => {
       target = v;
-      fadeTo(target);
+      fadeTo(target, undefined, NUDGE);
     },
     stop: () => {
       document.removeEventListener('pointerdown', play);
@@ -209,7 +217,7 @@ function startYoutube(id: string, at: number): Playing {
   let stopped = false;
   let target = level();
   let timer: ReturnType<typeof setInterval> | null = null;
-  const fadeTo = (v: number, then?: () => void) => {
+  const fadeTo = (v: number, then?: () => void, secs = FADE) => {
     if (timer) clearInterval(timer);
     timer = null;
     const p = player;
@@ -217,7 +225,7 @@ function startYoutube(id: string, at: number): Playing {
     const from = p.getVolume() / 100;
     const t0 = performance.now();
     timer = setInterval(() => {
-      const k = Math.min(1, (performance.now() - t0) / (FADE * 1000));
+      const k = Math.min(1, (performance.now() - t0) / (secs * 1000));
       p.setVolume(Math.round(Math.min(1, Math.max(0, from + (v - from) * k)) * 100));
       if (k >= 1) {
         if (timer) clearInterval(timer);
@@ -294,7 +302,7 @@ function startYoutube(id: string, at: number): Playing {
     key: `y:${id}:${at}`,
     setLevel: (v) => {
       target = v;
-      fadeTo(target);
+      fadeTo(target, undefined, NUDGE);
     },
     stop: () => {
       stopped = true;
