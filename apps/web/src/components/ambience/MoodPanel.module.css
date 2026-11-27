@@ -210,3 +210,97 @@
     grid-column: 1 / -1;
   }
 }
+
+.musicUrl[data-row] {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.playlist {
+  display: grid;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.playlistHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.chain {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--on-table-2);
+  font: 500 12px var(--f-ui);
+  cursor: pointer;
+}
+
+.tracks {
+  display: grid;
+  gap: 2px;
+  max-height: 180px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.tracks li {
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+}
+
+.tracks li[aria-current='true'] {
+  background: color-mix(in srgb, var(--seal) 22%, transparent);
+}
+
+.trackPlay {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 0;
+  background: none;
+  color: var(--on-table);
+  font: 500 13px var(--f-ui);
+  text-align: left;
+  cursor: pointer;
+}
+
+.trackPlay:hover {
+  color: var(--on-table);
+  text-decoration: underline;
+}
+
+.trackName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trackBad {
+  flex: none;
+  color: var(--seal-on-table);
+  font-size: 11px;
+}
+
+.trackRemove {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  background: none;
+  color: var(--on-table-2);
+  font: 600 16px var(--f-ui);
+  cursor: pointer;
+}
+
+.trackRemove:hover {
+  color: var(--seal-on-table);
+}

@@ -11,7 +11,7 @@ import {
   type RoomEvent,
   type Scene,
 } from '@fate/rules-engine';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   BACKDROP_GENRES,
   BACKDROP_LABELS,
@@ -22,7 +22,17 @@ import {
   WEATHER_LABELS,
 } from '@/lib/ambience';
 import { autoBed } from '@/fx/ambience';
-import { TRACK_LABELS } from '@/fx/music';
+import { musicLabel, onYoutube, TRACK_LABELS } from '@/fx/music';
+import {
+  getPlaylist,
+  mergePlaylist,
+  parseYoutube,
+  playlistJson,
+  readPlaylist,
+  setPlaylist,
+  type PlaylistItem,
+} from '@/lib/playlist';
+import { usePlaylist } from './usePlaylist';
 import styles from './MoodPanel.module.css';
 
 type Run = (cmd: Command) => Promise<RoomEvent[]>;
@@ -193,14 +203,33 @@ export function MoodPanel({
   );
 }
 
-/** 배경 음악: 기본 곡이나 음악 파일 주소. 장면이 바뀌어도 바꿀 때까지 이어진다 */
+/** 배경 음악: 기본 곡, 음악 파일 주소, 유튜브. 장면이 바뀌어도 바꿀 때까지 이어진다 */
 function MusicPicker({ music, run }: { music: Music | undefined; run: Run }) {
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
   const [bad, setBad] = useState(false);
   const set = (payload: Extract<Command, { type: 'music.set' }>['payload']) =>
     void run({ type: 'music.set', payload });
+  const nowId = music && 'youtube' in music ? music.youtube : undefined;
   const track = music && 'track' in music ? music.track : undefined;
+  const submit = (play: boolean) => {
+    const u = url.trim();
+    const yt = parseYoutube(u);
+    if (!yt && (!play || !/^https:\/\/\S+$/.test(u))) {
+      setBad(true);
+      return;
+    }
+    const name = title.trim();
+    if (yt) {
+      const { items } = getPlaylist();
+      setPlaylist({ items: mergePlaylist(items, [{ id: yt, ...(name ? { title: name } : {}) }]) });
+      if (play) set({ youtube: yt, ...(name ? { title: name } : {}) });
+    } else set({ url: u, ...(name ? { title: name } : {}) });
+    setUrl('');
+    setTitle('');
+    setBad(false);
+  };
+  const isYt = !!parseYoutube(url);
   return (
     <>
       <h3 className={styles.label}>음악 · 장면이 바뀌어도 이어진다</h3>
@@ -219,9 +248,9 @@ function MusicPicker({ music, run }: { music: Music | undefined; run: Run }) {
             {TRACK_LABELS[t]}
           </button>
         ))}
-        {music && 'url' in music && (
+        {music && !('track' in music) && (
           <button type="button" role="radio" aria-checked>
-            {music.title ?? '음악 파일'}
+            {musicLabel(music)}
           </button>
         )}
       </div>
@@ -229,21 +258,13 @@ function MusicPicker({ music, run }: { music: Music | undefined; run: Run }) {
         className={styles.musicUrl}
         onSubmit={(e) => {
           e.preventDefault();
-          const u = url.trim();
-          if (!/^https:\/\/\S+$/.test(u)) {
-            setBad(true);
-            return;
-          }
-          set({ url: u, ...(title.trim() ? { title: title.trim() } : {}) });
-          setUrl('');
-          setTitle('');
-          setBad(false);
+          submit(true);
         }}
       >
         <input
           type="url"
-          placeholder="음악 파일 주소 (https://….mp3)"
-          aria-label="음악 파일 주소"
+          placeholder="유튜브 링크나 음악 파일 주소"
+          aria-label="유튜브 링크나 음악 파일 주소"
           aria-invalid={bad || undefined}
           value={url}
           maxLength={500}
@@ -259,12 +280,128 @@ function MusicPicker({ music, run }: { music: Music | undefined; run: Run }) {
         <button type="submit" disabled={!url.trim()}>
           틀기
         </button>
+        {isYt && (
+          <button type="button" onClick={() => submit(false)}>
+            담기
+          </button>
+        )}
       </form>
       <p className={styles.note}>
         {bad
-          ? 'https로 시작하는 음악 파일 주소만 틀 수 있다'
-          : '바로 재생되는 mp3 · ogg 주소만 된다 (유튜브 같은 페이지 주소는 안 됨)'}
+          ? '유튜브 링크나 https로 시작하는 음악 파일 주소만 틀 수 있다'
+          : '유튜브는 모두가 같은 곳을 함께 듣는다. 음악 파일은 바로 재생되는 mp3 · ogg 주소만 된다'}
       </p>
+      <Playlist
+        nowId={nowId}
+        play={(t) => set({ youtube: t.id, ...(t.title ? { title: t.title } : {}) })}
+      />
     </>
+  );
+}
+
+/** 틀 수 없다고 알려 온 유튜브 영상 (GM 판에 표시) */
+function useYoutubeFailed() {
+  const [failed, setFailed] = useState<string | null>(null);
+  useEffect(() => onYoutube((n) => n.kind === 'error' && setFailed(n.id)), []);
+  return failed;
+}
+
+/** GM의 유튜브 목록: 누르면 모두에게 틀고, JSON으로 내려받거나 올린다 */
+function Playlist({ nowId, play }: { nowId: string | undefined; play: (t: PlaylistItem) => void }) {
+  const { items, chain } = usePlaylist();
+  const failed = useYoutubeFailed();
+  const importItems = (more: PlaylistItem[]) =>
+    setPlaylist({ items: mergePlaylist(getPlaylist().items, more) });
+  const remove = (id: string) =>
+    setPlaylist({ items: getPlaylist().items.filter((t) => t.id !== id) });
+  const file = useRef<HTMLInputElement>(null);
+  const [note, setNote] = useState<string | null>(null);
+  const download = () => {
+    const blob = new Blob([playlistJson(items)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'playlist.json';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+  const upload = async (f: File) => {
+    try {
+      const got = readPlaylist(JSON.parse(await f.text()));
+      if (!got.length) {
+        setNote('이 파일에서 유튜브 곡을 찾지 못했다');
+        return;
+      }
+      const fresh = got.filter((t) => !items.some((x) => x.id === t.id)).length;
+      importItems(got);
+      setNote(fresh ? `${fresh}곡을 목록에 더했다` : '모두 이미 목록에 있는 곡이다');
+    } catch {
+      setNote('JSON 파일을 읽지 못했다');
+    }
+  };
+  return (
+    <div className={styles.playlist}>
+      <div className={styles.playlistHead}>
+        <h3 className={styles.label}>유튜브 목록 · {items.length}곡</h3>
+        <label className={styles.chain}>
+          <input
+            type="checkbox"
+            checked={chain}
+            onChange={(e) => setPlaylist({ chain: e.target.checked })}
+          />
+          이어 틀기
+        </label>
+      </div>
+      {items.length > 0 && (
+        <ol className={styles.tracks}>
+          {items.map((t) => (
+            <li key={t.id} aria-current={t.id === nowId || undefined}>
+              <button
+                type="button"
+                className={styles.trackPlay}
+                onClick={() => t.id !== nowId && play(t)}
+                title={t.id === nowId ? '지금 흐르는 곡' : '모두에게 틀기'}
+              >
+                <span aria-hidden>{t.id === nowId ? '♪' : '▶'}</span>
+                <span className={styles.trackName}>{t.title ?? t.id}</span>
+                {failed === t.id && <span className={styles.trackBad}>틀 수 없는 영상</span>}
+              </button>
+              <button
+                type="button"
+                className={styles.trackRemove}
+                aria-label={`${t.title ?? t.id} 빼기`}
+                onClick={() => remove(t.id)}
+              >
+                ×
+              </button>
+            </li>
+          ))}
+        </ol>
+      )}
+      <div className={styles.musicUrl} data-row>
+        <button type="button" onClick={() => file.current?.click()}>
+          JSON 올리기
+        </button>
+        <button type="button" disabled={!items.length} onClick={download}>
+          JSON 내려받기
+        </button>
+        <input
+          ref={file}
+          type="file"
+          accept="application/json,.json"
+          hidden
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = '';
+            if (f) void upload(f);
+          }}
+        />
+      </div>
+      <p className={styles.note}>
+        {note ??
+          (items.length
+            ? '곡을 누르면 모두에게 튼다. 목록은 이 브라우저에 남는다'
+            : '유튜브 링크를 틀거나 담으면 여기에 모인다')}
+      </p>
+    </div>
   );
 }

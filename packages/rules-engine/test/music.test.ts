@@ -26,6 +26,22 @@ describe('background music', () => {
     ).toBe(false);
   });
 
+  it('plays a YouTube video stamped with the server time so everyone hears the same moment', () => {
+    const t = new Table(withCharacters());
+    t.run(GM, { type: 'music.set', payload: { youtube: 'dQw4w9WgXcQ', title: '여름 밤' } });
+    expect(t.state.music).toEqual({
+      youtube: 'dQw4w9WgXcQ',
+      title: '여름 밤',
+      at: 1_700_000_000_000,
+    });
+    t.run(GM, { type: 'music.set', payload: { track: 'calm' } });
+    expect(t.state.music).toEqual({ track: 'calm' });
+    expect(
+      CommandSchema.safeParse({ type: 'music.set', payload: { youtube: 'not a video id' } })
+        .success,
+    ).toBe(false);
+  });
+
   it('players cannot change the music', () => {
     const t = new Table(withCharacters());
     expect(() => t.run(P1, { type: 'music.set', payload: { track: 'calm' } })).toThrow(

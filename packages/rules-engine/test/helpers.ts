@@ -82,6 +82,7 @@ export class Table {
       rng: scriptedRng(this.dice),
       newId: () => `id${++this.ids}`,
       animSeed: () => 42,
+      now: () => 1_700_000_000_000,
       sealed: (rollId) => this.sealed.get(rollId),
       history: this.log,
       groupOf: (seq) => this.groups.find(([f, l]) => f <= seq && seq <= l),

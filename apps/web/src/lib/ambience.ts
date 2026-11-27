@@ -112,6 +112,7 @@ export const TRACK_LABELS: Record<MusicTrack, string> = {
 export function musicLabel(m: Music | undefined): string | null {
   if (!m) return null;
   if ('track' in m) return TRACK_LABELS[m.track];
+  if ('youtube' in m) return m.title ?? '유튜브 음악';
   return m.title ?? '음악 파일';
 }
 
