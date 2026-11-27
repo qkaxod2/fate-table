@@ -18,7 +18,7 @@ import {
   type SavedNpc,
   type ScenePreset,
 } from '@/lib/gmLibrary';
-import { npcsJson, readNpcs, sameNpc } from '@/lib/npcJson';
+import { mergeNpcs, npcsJson, readNpcs } from '@/lib/npcJson';
 import styles from './GmConsole.module.css';
 
 type Run = (cmd: Command) => Promise<RoomEvent[]>;
@@ -69,15 +69,20 @@ export function NpcLibrary({ run, pending }: { run: Run; pending: boolean }) {
       setNote('이 파일에서 NPC를 찾지 못했다');
       return;
     }
-    const fresh = got.filter((n) => !items.some((x) => sameNpc(x.npc, n)));
+    const { fresh, portraits } = mergeNpcs(items, got);
     try {
       for (const n of fresh) await saveNpc(n);
+      for (const x of portraits) await saveNpc(x.npc, x.key);
     } catch {
       setNote('보관함에 저장하지 못했다. 잠시 뒤 다시');
       void reload();
       return;
     }
-    setNote(fresh.length ? `NPC ${fresh.length}명을 보관함에 더했다` : '모두 이미 보관함에 있다');
+    const said = [
+      fresh.length ? `NPC ${fresh.length}명을 보관함에 더했다` : '',
+      portraits.length ? `${portraits.length}명에게 초상화를 입혔다` : '',
+    ].filter(Boolean);
+    setNote(said.length ? said.join(', ') : '모두 이미 보관함에 있다');
     void reload();
   };
   return (

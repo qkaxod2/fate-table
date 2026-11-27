@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SavedNpc } from '@/lib/gmLibrary';
-import { npcsJson, readNpcs } from '@/lib/npcJson';
+import { mergeNpcs, npcsJson, readNpcs } from '@/lib/npcJson';
 
 const base = {
   name: '부두의 밀수꾼',
@@ -46,5 +46,26 @@ describe('npc json', () => {
 
   it('방에 묶인 값은 떼어 낸다', () => {
     expect(readNpcs({ ...base, ownerId: 'u1', sourceKey: 'k1' })).toEqual([base]);
+  });
+
+  it('이미 있는 NPC에는 초상화만 덧입히고, 새 NPC는 새로 담는다', () => {
+    const url = 'https://example.com/a.webp';
+    const items: SavedNpc[] = [
+      { key: 'a', savedAt: '2026-11-27T00:00:00Z', npc: base },
+      {
+        key: 'b',
+        savedAt: '2026-11-27T00:00:00Z',
+        npc: { ...base, name: '경비대장', portraitUrl: 'https://example.com/old.webp' },
+      },
+    ];
+    const other = { ...base, name: '새 얼굴' };
+    const got = readNpcs([
+      { ...base, portraitUrl: url },
+      { ...base, name: '경비대장', portraitUrl: url },
+      other,
+    ]);
+    const { fresh, portraits } = mergeNpcs(items, got);
+    expect(fresh).toEqual([other]);
+    expect(portraits).toEqual([{ ...items[0], npc: { ...base, portraitUrl: url } }]);
   });
 });
