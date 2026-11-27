@@ -2,6 +2,7 @@ import { term } from '@fate/glossary';
 import type { Action, Outcome, RoomEvent, RoomState } from '@fate/rules-engine';
 import { josa } from '@/lib/josa';
 import { musicLabel } from '@/lib/ambience';
+import { speakerOf } from '@/components/scene/stageBeat';
 
 /** 판정 연출 (design-system.md 17·21절). 크게 찍는 글자는 한국어 결과(word)다. */
 export const JUDGE: Record<Outcome, { word: string; tone: 'perfect' | 'great' | 'good' | 'miss' }> =
@@ -141,7 +142,12 @@ export function describe(e: RoomEvent, state: RoomState): LogLine | null {
       return { ...line('gm', e.payload.text), fx: true };
     case 'chat.posted': {
       const member = e.actorId ? state.members[e.actorId] : undefined;
-      let who = e.payload.as ?? member?.nickname;
+      // 캐릭터로 한 말은 캐릭터 이름으로, 잡담·귓속말은 닉네임으로 적는다 (무대에 서는 캐릭터와 같다)
+      const inCharacter = !e.payload.ooc && !e.payload.whisper;
+      const speaker = inCharacter
+        ? speakerOf(e as RoomEvent<'chat.posted'>, state, { userId: '', character: null })
+        : undefined;
+      let who = e.payload.as ?? speaker?.name ?? member?.nickname;
       if (e.payload.whisper && who) {
         // GM이 보낸 귓속말은 받는 사람을, 플레이어가 보낸 것은 GM에게 간 것으로 적는다
         const to =
