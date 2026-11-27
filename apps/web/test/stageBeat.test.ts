@@ -42,6 +42,19 @@ describe('무대의 박자', () => {
     expect(beatOf(chat(2, 'gm', '다들 준비됐나요?'), room(), [], nobody)).toBeNull();
   });
 
+  it('잡담(OOC)과 귓속말은 무대에 말풍선을 띄우지 않는다', () => {
+    const ooc = {
+      ...chat(1, 'p1', '잠깐 화장실 ㅋㅋ'),
+      payload: { text: '잠깐', ooc: true },
+    } as RoomEvent;
+    const whisper = {
+      ...chat(2, 'p1', '몰래'),
+      payload: { text: '몰래', whisper: 'gm' },
+    } as RoomEvent;
+    expect(beatOf(ooc, room(), [], nobody)).toBeNull();
+    expect(beatOf(whisper, room(), [], nobody)).toBeNull();
+  });
+
   it('강요 수락은 강요받은 캐릭터의 박자', () => {
     const offer = {
       seq: 1,

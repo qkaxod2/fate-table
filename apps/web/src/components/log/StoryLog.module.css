@@ -437,7 +437,9 @@
   font-style: italic;
 }
 
-.tag {
+.line > .tag {
+  /* 줄이 flex라 .line > span의 flex: 1을 받지 않게: 꼬리표는 글자만큼만 */
+  flex: none;
   display: inline-block;
   margin-right: 6px;
   padding: 0 6px;

@@ -26,6 +26,13 @@
   height: 100%;
 }
 
+/* 말풍선이 왼쪽 위 GM 도구 줄·명단 밑으로 숨지 않게 조금 내려 띄운다 */
+@media (min-width: 1101px) {
+  .cast [data-side] > p {
+    top: max(9%, 104px);
+  }
+}
+
 :global([data-mode='roll']) > .cast {
   filter: brightness(0.6) var(--grade);
 }

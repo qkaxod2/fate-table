@@ -63,6 +63,8 @@ export function beatOf(
 ): StageBeat | null {
   switch (e.type) {
     case 'chat.posted': {
+      // 잡담(OOC)은 캐릭터 밖 이야기, 귓속말은 비밀이라 무대에서 소리 내어 말하지 않는다
+      if (e.payload.ooc || e.payload.whisper) return null;
       const c = speakerOf(e, state, mine);
       if (!c) return null;
       const text = e.payload.text;
