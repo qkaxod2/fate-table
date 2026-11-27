@@ -254,6 +254,22 @@ function MusicPicker({ music, run }: { music: Music | undefined; run: Run }) {
           </button>
         )}
       </div>
+      {music && 'youtube' in music && (
+        <div className={styles.musicUrl} data-row>
+          <button
+            type="button"
+            aria-pressed={music.pausedAt !== undefined}
+            onClick={() =>
+              void run({ type: 'music.pause', payload: { paused: music.pausedAt === undefined } })
+            }
+          >
+            {music.pausedAt !== undefined ? '▶ 다시 재생' : '❚❚ 잠시 멈춤'}
+          </button>
+          <span className={styles.note}>
+            {music.pausedAt !== undefined ? '모두에게 멈춰 있다' : '모두에게 같이 멈춘다'}
+          </span>
+        </div>
+      )}
       <form
         className={styles.musicUrl}
         onSubmit={(e) => {

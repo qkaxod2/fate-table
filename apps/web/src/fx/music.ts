@@ -34,18 +34,14 @@ export function setMusicVolume(v: number): void {
 
 const FADE = 3;
 const keyOf = (m: Music | undefined) =>
-  !m
-    ? ''
-    : 'track' in m
-      ? `t:${m.track}`
-      : 'youtube' in m
-        ? `y:${m.youtube}:${m.at}`
-        : `u:${m.url}`;
+  !m ? '' : 'track' in m ? `t:${m.track}` : 'youtube' in m ? `y:${m.youtube}` : `u:${m.url}`;
 
 interface Playing {
   key: string;
   stop: () => void;
   setLevel: (v: number) => void;
+  /** 같은 곡이 이어질 때 새 값을 받는다 (유튜브: 다시 틀기 · 잠시 멈춤) */
+  update?: (m: Music) => void;
 }
 let current: Playing | null = null;
 let wanted: Music | undefined;
@@ -204,7 +200,8 @@ const ENDED = 0;
 const PLAYING = 1;
 
 /** 숨긴 유튜브 플레이어로 튼다. 서버가 튼 시각(at)부터 지난 만큼 넘겨서 모두 같은 곳을 듣는다 */
-function startYoutube(id: string, at: number): Playing {
+function startYoutube(id: string, first: { at: number; pausedAt?: number | undefined }): Playing {
+  let { at, pausedAt } = first;
   const host = document.createElement('div');
   host.setAttribute('aria-hidden', 'true');
   host.style.cssText =
@@ -237,18 +234,24 @@ function startYoutube(id: string, at: number): Playing {
   /** 지금 들어야 할 곳 (초). 곡 길이를 알면 그 안으로 돌린다 (끝나면 처음부터 반복하므로) */
   const offset = () => {
     const d = player?.getDuration() ?? 0;
-    const t = at > 0 ? Math.max(0, (Date.now() - at) / 1000) : 0;
+    const t = at > 0 ? Math.max(0, ((pausedAt ?? Date.now()) - at) / 1000) : 0;
     return d > 1 ? t % d : t;
   };
-  const sync = () => {
+  /** 들어야 할 곳으로 옮기고 틀거나 멈춘다. force가 아니면 이미 도는 플레이어는 두고 본다 */
+  const sync = (force = false) => {
     if (!player || stopped) return;
-    if (player.getPlayerState() === PLAYING) return;
+    if (pausedAt !== undefined) {
+      player.seekTo(offset(), true);
+      player.pauseVideo();
+      return;
+    }
+    if (!force && player.getPlayerState() === PLAYING) return;
     player.seekTo(offset(), true);
     player.playVideo();
   };
   // 자동 재생이 막히면 다음에 화면을 누를 때 다시 시도한다
   const retry = () => {
-    if (stopped || !player) return;
+    if (stopped || !player || pausedAt !== undefined) return;
     if (player.getPlayerState() !== PLAYING) {
       sync();
       document.addEventListener('pointerdown', retry, { once: true });
@@ -284,7 +287,7 @@ function startYoutube(id: string, at: number): Playing {
             tell({ kind: 'ended', id });
             // GM이 다음 곡을 틀면 이 플레이어는 곧 멈춘다. 아무도 안 바꾸면 처음부터 다시
             setTimeout(() => {
-              if (stopped || !player) return;
+              if (stopped || !player || pausedAt !== undefined) return;
               player.seekTo(0, true);
               player.playVideo();
             }, 2500);
@@ -299,7 +302,13 @@ function startYoutube(id: string, at: number): Playing {
     });
 
   return {
-    key: `y:${id}:${at}`,
+    key: `y:${id}`,
+    update: (m) => {
+      if (!('youtube' in m) || (m.at === at && m.pausedAt === pausedAt)) return;
+      ({ at, pausedAt } = m);
+      sync(true);
+      if (pausedAt === undefined) retry();
+    },
     setLevel: (v) => {
       target = v;
       fadeTo(target, undefined, NUDGE);
@@ -315,6 +324,7 @@ function apply(): void {
   const key = level() > 0 ? keyOf(wanted) : '';
   if (current && current.key === key) {
     current.setLevel(level());
+    if (wanted) current.update?.(wanted);
     return;
   }
   current?.stop();
@@ -324,13 +334,17 @@ function apply(): void {
     'track' in wanted
       ? startTrack(wanted.track)
       : 'youtube' in wanted
-        ? startYoutube(wanted.youtube, wanted.at)
+        ? startYoutube(wanted.youtube, wanted)
         : startUrl(wanted.url);
 }
 
 /** 방의 배경 음악을 튼다. 화면을 떠나면 멈춘다 */
 export function useMusic(music: Music | undefined): void {
-  const key = keyOf(music);
+  // 같은 곡이라도 다시 틀기 · 잠시 멈춤은 알아야 한다
+  const key =
+    music && 'youtube' in music
+      ? `${keyOf(music)}:${music.at}:${music.pausedAt ?? ''}`
+      : keyOf(music);
   const [changed, bump] = useState(0);
   useEffect(() => onSoundChange(() => bump((n) => n + 1)), []);
   useEffect(() => {

@@ -163,6 +163,8 @@ export interface EventPayloads {
   /** GM만 보는 비밀 굴림 */
   /** 배경 음악 (null이면 끔) */
   'music.set': { music: Music | null };
+  /** 유튜브 음악 잠시 멈춤 · 다시 틀기 (바뀐 음악을 통째로 싣는다) */
+  'music.paused': { music: Music };
   'dice.secret_rolled': { dice: Dice; modifier: number; label?: string };
   'gm.note': { text: string };
   'narration.posted': { text: string };

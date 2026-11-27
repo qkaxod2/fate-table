@@ -615,6 +615,7 @@ const handlers: Handlers = {
     const { music: _m, ...rest } = s;
     return rest;
   },
+  'music.paused': (s, p) => ({ ...s, music: p.music }),
   'gm.note': (s) => s,
   'narration.posted': (s) => s,
   'sfx.played': (s) => s,

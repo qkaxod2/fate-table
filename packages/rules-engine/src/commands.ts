@@ -238,6 +238,8 @@ export const CommandSchema = z.discriminatedUnion('type', [
       .optional(),
     title: visible(80).optional(),
   }),
+  /** 유튜브 음악을 모두에게 잠시 멈추거나 다시 튼다 */
+  cmd('music.pause', { paused: z.boolean() }),
   cmd('gm.note', { text: visible(4000) }),
   cmd('narration.post', { text: visible(4000) }),
   cmd('sfx.play', { assetId: id }),
