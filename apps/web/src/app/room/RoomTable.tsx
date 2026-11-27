@@ -676,7 +676,7 @@ export function RoomTable({
       return evs.length > 0;
     }
     const id = ++sendIds.current;
-    const who = as || myNick;
+    const who = as || (!ooc && !whisper && me && !me.isNpc ? me.name : '') || myNick;
     setSending((x) => [...x, { id, text: who ? `${who}: ${text}` : text, fx: isGm }]);
     const payload = {
       text,
