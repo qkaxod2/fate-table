@@ -17,12 +17,13 @@ import {
  * 기본 곡은 public/bgm/ (짧게 이어지는 반복 곡), GM이 붙인 음악 파일은 <audio>로,
  * 유튜브는 숨긴 IFrame 플레이어로 튼다. 한 번에 하나만 흐르므로 서로 겹치지 않는다.
  */
-const VOL_KEY = 'fate.music.volume';
+// 기본 크기를 낮추며 키를 바꿨다 (예전에 저장된 큰 값은 버리고 새 기본에서 시작한다)
+const VOL_KEY = 'fate.music.volume.v2';
 let vol: number | undefined;
 
 /** 0이면 음악을 끈 것이다 */
 export function musicVolume(): number {
-  if (vol === undefined) vol = readSoundNumber(VOL_KEY, 0.4);
+  if (vol === undefined) vol = readSoundNumber(VOL_KEY, 0.2);
   return vol;
 }
 
@@ -48,6 +49,12 @@ let wanted: Music | undefined;
 
 /** 귀는 크기를 로그로 느끼므로 막대 값을 제곱해서 쓴다 (낮은 쪽을 더 잘게 맞춘다) */
 const level = () => (sfxEnabled() ? musicVolume() ** 2 * 0.6 : 0);
+/**
+ * 유튜브 플레이어의 음량(0~1)은 이미 귀에 맞춘 곡선이라 막대 값을 그대로 쓰고,
+ * 유튜브 음원은 보통 크게 마스터링되어 있어 더 낮춘다 (기본 20%면 플레이어 7)
+ */
+const ytLevel = () => (sfxEnabled() ? musicVolume() * 0.35 : 0);
+const levelOf = (key: string) => (key.startsWith('y:') ? ytLevel() : level());
 /** 음량 막대를 움직일 때는 바로 들리게 짧게만 바꾼다 (곡이 바뀔 때만 천천히) */
 const NUDGE = 0.15;
 
@@ -212,18 +219,22 @@ function startYoutube(id: string, first: { at: number; pausedAt?: number | undef
 
   let player: YtPlayer | null = null;
   let stopped = false;
-  let target = level();
+  let target = ytLevel();
+  // 플레이어의 getVolume()은 setVolume 직후에도 예전 값(보통 100)을 돌려준다.
+  // 그 값에서 페이드를 시작하면 처음에 크게 터졌다가 줄어든다. 그래서 크기는 여기서 따로 센다
+  let vol = 0;
   let timer: ReturnType<typeof setInterval> | null = null;
   const fadeTo = (v: number, then?: () => void, secs = FADE) => {
     if (timer) clearInterval(timer);
     timer = null;
     const p = player;
     if (!p) return then?.();
-    const from = p.getVolume() / 100;
+    const from = vol;
     const t0 = performance.now();
     timer = setInterval(() => {
       const k = Math.min(1, (performance.now() - t0) / (secs * 1000));
-      p.setVolume(Math.round(Math.min(1, Math.max(0, from + (v - from) * k)) * 100));
+      vol = Math.min(1, Math.max(0, from + (v - from) * k));
+      p.setVolume(Math.round(vol * 100));
       if (k >= 1) {
         if (timer) clearInterval(timer);
         timer = null;
@@ -271,10 +282,12 @@ function startYoutube(id: string, first: { at: number; pausedAt?: number | undef
         videoId: id,
         width: 200,
         height: 200,
-        playerVars: { autoplay: 1, controls: 0, disablekb: 1, playsinline: 1, rel: 0 },
+        // 스스로 틀지 않게 둔다. 소리를 0으로 맞춘 뒤 onReady에서 튼다
+        playerVars: { autoplay: 0, controls: 0, disablekb: 1, playsinline: 1, rel: 0 },
         events: {
           onReady: ({ target: p }) => {
             if (stopped) return destroy();
+            vol = 0;
             p.setVolume(0);
             sync();
             fadeTo(target);
@@ -323,7 +336,7 @@ function startYoutube(id: string, first: { at: number; pausedAt?: number | undef
 function apply(): void {
   const key = level() > 0 ? keyOf(wanted) : '';
   if (current && current.key === key) {
-    current.setLevel(level());
+    current.setLevel(levelOf(key));
     if (wanted) current.update?.(wanted);
     return;
   }

@@ -60,14 +60,15 @@ const VARY = new Set<SfxName>([
 ]);
 
 const KEY = 'fate.sfx';
-const VOL_KEY = 'fate.sfx.volume';
+// 기본 크기를 낮추며 키를 바꿨다 (예전 값은 버리고 새 기본에서 시작한다)
+const VOL_KEY = 'fate.sfx.volume.v2';
 let enabled: boolean | undefined;
 let master: number | undefined;
 
 /** 효과음 전체 크기 (0~1). 설정 창의 볼륨 막대 */
 export function sfxVolume(): number {
   if (master !== undefined) return master;
-  master = readNumber(VOL_KEY, 1);
+  master = readNumber(VOL_KEY, 0.6);
   return master;
 }
 
