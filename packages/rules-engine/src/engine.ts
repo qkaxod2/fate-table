@@ -303,7 +303,8 @@ const resolvers: Resolvers = {
       kind,
       text,
       freeInvokes: 0,
-      hidden: false,
+      // NPC 특성(핵심 컨셉·문제·그 밖)은 GM만 본다. 공개하거나 GM이 발동하면 모두에게 보인다
+      hidden: p.isNpc,
     });
     const aspects = [
       mk('high', p.highConcept),
@@ -460,6 +461,8 @@ const resolvers: Resolvers = {
     const reroll =
       p.mode === 'reroll' ? { newDice: rollFateDice(ctx.rng), newAnimSeed: ctx.animSeed() } : {};
     const events: NewEvent[] = [
+      // 숨긴 NPC 특성을 발동하면 그 자리에서 드러난다 (플레이어 화면도 발동을 따라가려면 먼저 알아야 한다)
+      ...(asp.hidden ? [ev('aspect.revealed', a, { aspect: { ...asp, hidden: false } })] : []),
       ev('invoke.applied', a, {
         rollId: r.id,
         side: p.side,

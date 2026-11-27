@@ -35,6 +35,7 @@ function sideOf(roll: RollState, side: InvokeSide): RollSide | null {
 /**
  * 규칙: 같은 굴림에서 같은 특성은 운명점으로 한 번만 발동할 수 있다.
  * 무료 발동은 예외로 겹쳐 쓸 수 있다. 숨겨진 특성은 발동할 수 없다.
+ * 다만 자기 캐릭터의 숨긴 특성(GM이 숨겨 둔 NPC 특성)은 발동할 수 있고, 발동하면 공개된다.
  */
 export function canInvoke(
   roll: RollState,
@@ -45,7 +46,8 @@ export function canInvoke(
 ): { ok: true } | { ok: false; code: InvokeError } {
   const s = sideOf(roll, side);
   if (roll.status !== 'open' || !s) return { ok: false, code: 'ROLL_NOT_OPEN' };
-  if (aspect.hidden) return { ok: false, code: 'HIDDEN' };
+  const own = aspect.ownerType === 'character' && aspect.ownerId === payer.characterId;
+  if (aspect.hidden && !own) return { ok: false, code: 'HIDDEN' };
   if (paidWith === 'free_invoke') {
     return aspect.freeInvokes > 0 ? { ok: true } : { ok: false, code: 'NO_FREE_INVOKES' };
   }
