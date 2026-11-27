@@ -137,6 +137,16 @@
   --away: 1;
 }
 
+/* 무대에서 내려간다: 들어온 쪽(바깥)으로 물러나며 흐려진다. 새로 서는 사람과 잠깐 겹쳐 자연스럽게 바뀐다 */
+.sprite[data-leaving] {
+  animation: castOut 420ms var(--ease-out) forwards;
+}
+
+.sprite[data-leaving] .bubble,
+.sprite[data-leaving] .name {
+  display: none;
+}
+
 /* 쓰러졌다: 빛이 빠지고 조금 가라앉는다 */
 .sprite[data-down] {
   filter: grayscale(1) brightness(0.5);
@@ -279,6 +289,13 @@
   }
 }
 
+@keyframes castOut {
+  to {
+    opacity: 0;
+    translate: var(--from) 0;
+  }
+}
+
 @keyframes faceIn {
   from {
     opacity: 0;
@@ -315,8 +332,9 @@
   .sprite[data-focus] img {
     opacity: 0.6;
   }
+  /* 듣는 쪽 오른편은 숨기되, 뚝 끊기지 않게 흐려지며 사라진다 */
   .sprite[data-side='right']:not([data-focus]) {
-    display: none;
+    opacity: 0;
   }
   /* 그림이 화면보다 넓을 수 있으니 말풍선은 화면 가장자리에 맞춰 가슴께에 띄운다 */
   .bubble {
@@ -339,7 +357,8 @@
     animation: none !important;
     transition: none;
   }
-  .sprite img.leaving {
+  .sprite img.leaving,
+  .sprite[data-leaving] {
     display: none;
   }
   .bubble {

@@ -45,22 +45,68 @@ export function pickFace(c: Character, wants: readonly string[]): string | null 
  * 라이트노벨풍 스탠딩. 왼쪽은 지금 움직이는 캐릭터, 오른쪽은 상대(굴림 상대나 대화 상대).
  * 말하는 쪽은 밝고 크게, 듣는 쪽은 살짝 어둡게. 표정이 바뀌면 그림이 부드럽게 바뀐다.
  * 말을 하면 머리 옆에 말풍선이 뜨고, 쓰러진 캐릭터는 빛이 빠진 채 가라앉는다.
+ * 무대에서 내려가는 사람은 뚝 사라지지 않고 바깥쪽으로 물러나며 흐려진다.
  */
 export function StageCast({ left, right }: { left?: CastMember; right?: CastMember }) {
   return (
     <div className={styles.cast} aria-hidden>
-      {left && <Sprite key={left.character.id} m={left} side="left" />}
-      {right && right.character.id !== left?.character.id && (
-        <Sprite key={right.character.id} m={right} side="right" />
-      )}
+      <Side m={left} side="left" />
+      <Side
+        m={right && right.character.id !== left?.character.id ? right : undefined}
+        side="right"
+      />
     </div>
+  );
+}
+
+/** 내려가는 그림이 물러나며 흐려지는 시간 (CSS의 castOut과 맞춘다) */
+const LEAVE_MS = 420;
+
+/** 한쪽 자리: 지금 선 사람 + 막 내려가는 사람(들) */
+function Side({ m, side }: { m: CastMember | undefined; side: 'left' | 'right' }) {
+  const [shown, setShown] = useState(m);
+  const [gone, setGone] = useState<CastMember[]>([]);
+  // 자리의 주인이 바뀌면 앞사람을 '내려가는 중'으로 잠깐 남긴다 (말풍선·움직임은 떼고)
+  if (m !== shown) {
+    const was = shown;
+    const id = m?.character.id;
+    if (was && was.character.id !== id) {
+      setGone((g) => [
+        ...g.filter((x) => x.character.id !== was.character.id && x.character.id !== id),
+        { ...was, say: null, motion: null, hit: false },
+      ]);
+    } else if (id && gone.some((x) => x.character.id === id)) {
+      setGone((g) => g.filter((x) => x.character.id !== id));
+    }
+    setShown(m);
+  }
+  useEffect(() => {
+    if (!gone.length) return;
+    const t = window.setTimeout(() => setGone([]), LEAVE_MS);
+    return () => window.clearTimeout(t);
+  }, [gone]);
+  return (
+    <>
+      {gone.map((g) => (
+        <Sprite key={`gone:${g.character.id}`} m={g} side={side} leaving />
+      ))}
+      {m && <Sprite key={m.character.id} m={m} side={side} />}
+    </>
   );
 }
 
 /** 표정이 바뀌면 앞 그림을 잠깐 남겨 두고 새 그림과 겹쳐서 바꾼다 */
 const CROSSFADE_MS = 320;
 
-function Sprite({ m, side }: { m: CastMember; side: 'left' | 'right' }) {
+function Sprite({
+  m,
+  side,
+  leaving,
+}: {
+  m: CastMember;
+  side: 'left' | 'right';
+  leaving?: boolean;
+}) {
   const c = m.character;
   const url = spriteOf(c, m.face) ?? (m.portraitFallback ? c.portraitUrl : undefined);
   const [shown, setShown] = useState(url);
@@ -76,7 +122,7 @@ function Sprite({ m, side }: { m: CastMember; side: 'left' | 'right' }) {
   }, [prev]);
   if (!url) return null;
   const cutout = !!c.standing;
-  return <Figure m={m} side={side} url={url} prev={prev} cutout={cutout} />;
+  return <Figure m={m} side={side} url={url} prev={prev} cutout={cutout} leaving={leaving} />;
 }
 
 function Figure({
@@ -85,12 +131,14 @@ function Figure({
   url,
   prev,
   cutout,
+  leaving,
 }: {
   m: CastMember;
   side: 'left' | 'right';
   url: string;
   prev: string | undefined;
   cutout: boolean;
+  leaving?: boolean | undefined;
 }) {
   const c = m.character;
   const fig = useRef<HTMLElement>(null);
@@ -149,6 +197,7 @@ function Figure({
       data-cutout={cutout || undefined}
       data-hit={m.hit || undefined}
       data-down={c.takenOut || undefined}
+      data-leaving={leaving || undefined}
     >
       {prev && prev !== url && (
         <img key={`was:${prev}`} className={styles.leaving} src={prev} alt="" draggable={false} />
