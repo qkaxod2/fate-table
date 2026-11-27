@@ -98,7 +98,8 @@ export function ambLayers(scene: Scene | null | undefined): AmbLayer[] {
 }
 
 const ON_KEY = 'fate.amb';
-const VOL_KEY = 'fate.amb.volume';
+// 기본 크기를 낮추며 키를 바꿨다 (예전 값은 버리고 새 기본에서 시작한다)
+const VOL_KEY = 'fate.amb.volume.v2';
 let ambOn: boolean | undefined;
 let ambVol: number | undefined;
 
@@ -119,7 +120,7 @@ export function setAmbienceEnabled(on: boolean): void {
 }
 
 export function ambienceVolume(): number {
-  if (ambVol === undefined) ambVol = readSoundNumber(VOL_KEY, 0.5);
+  if (ambVol === undefined) ambVol = readSoundNumber(VOL_KEY, 0.3);
   return ambVol;
 }
 
