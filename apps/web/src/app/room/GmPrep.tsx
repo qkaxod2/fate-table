@@ -4,7 +4,7 @@
 // NPC 보관함: 자주 쓰는 졸개·조연·보스를 계정에 두고 어느 방에서나 바로 부른다.
 import { term } from '@fate/glossary';
 import { hasVisibleText, type Command, type RoomEvent, type RoomState } from '@fate/rules-engine';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   deleteNpc,
   deleteScene,
@@ -12,11 +12,13 @@ import {
   listScenes,
   openPreset,
   presetFromScene,
+  saveNpc,
   saveScene,
   type NpcPayload,
   type SavedNpc,
   type ScenePreset,
 } from '@/lib/gmLibrary';
+import { npcsJson, readNpcs, sameNpc } from '@/lib/npcJson';
 import styles from './GmConsole.module.css';
 
 type Run = (cmd: Command) => Promise<RoomEvent[]>;
@@ -38,49 +40,110 @@ function useLibrary<T>(load: () => Promise<T[]>) {
   return { items, error, reload };
 }
 
-/** NPC 보관함: 눌러서 이 방에 부르기, 지우기 */
+/** NPC 보관함: 눌러서 이 방에 부르기, 지우기, JSON으로 내려받거나 올리기 */
 export function NpcLibrary({ run, pending }: { run: Run; pending: boolean }) {
   const { items, error, reload } = useLibrary<SavedNpc>(listNpcs);
   const [busy, setBusy] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+  const file = useRef<HTMLInputElement>(null);
   if (error) return <p className={styles.help}>보관함을 읽지 못함. 잠시 뒤 다시</p>;
   if (!items) return <p className={styles.help}>보관함 읽는 중…</p>;
-  if (items.length === 0)
-    return (
-      <p className={styles.help}>
-        보관한 NPC 없음. NPC 시트의 &lsquo;NPC 보관&rsquo;이나 아래 만들기에서 저장할 수 있다.
-      </p>
-    );
+  const download = () => {
+    const blob = new Blob([npcsJson(items)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'npcs.json';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+  const upload = async (f: File) => {
+    setNote('올리는 중…');
+    let got;
+    try {
+      got = readNpcs(JSON.parse(await f.text()));
+    } catch {
+      setNote('JSON 파일을 읽지 못했다');
+      return;
+    }
+    if (!got.length) {
+      setNote('이 파일에서 NPC를 찾지 못했다');
+      return;
+    }
+    const fresh = got.filter((n) => !items.some((x) => sameNpc(x.npc, n)));
+    try {
+      for (const n of fresh) await saveNpc(n);
+    } catch {
+      setNote('보관함에 저장하지 못했다. 잠시 뒤 다시');
+      void reload();
+      return;
+    }
+    setNote(fresh.length ? `NPC ${fresh.length}명을 보관함에 더했다` : '모두 이미 보관함에 있다');
+    void reload();
+  };
   return (
-    <ul className={styles.library}>
-      {items.map((n) => (
-        <li key={n.key}>
-          <span>
-            <b>{n.npc.name}</b>
-            <small>{n.npc.highConcept}</small>
-          </span>
-          <button
-            type="button"
-            className={styles.ghost}
-            disabled={pending || busy === n.key}
-            onClick={async () => {
-              setBusy(n.key);
-              await run({ type: 'character.create', payload: { ...n.npc, isNpc: true } });
-              setBusy(null);
-            }}
-          >
-            부르기
-          </button>
-          <button
-            type="button"
-            className={styles.ghost}
-            aria-label={`${n.npc.name} 보관함에서 지우기`}
-            onClick={() => void deleteNpc(n.key).then(reload)}
-          >
-            지우기
-          </button>
-        </li>
-      ))}
-    </ul>
+    <>
+      {items.length === 0 ? (
+        <p className={styles.help}>
+          보관한 NPC 없음. NPC 시트의 &lsquo;NPC 보관&rsquo;이나 아래 만들기, JSON 올리기로 저장할
+          수 있다.
+        </p>
+      ) : (
+        <ul className={styles.library}>
+          {items.map((n) => (
+            <li key={n.key}>
+              <span>
+                <b>{n.npc.name}</b>
+                <small>{n.npc.highConcept}</small>
+              </span>
+              <button
+                type="button"
+                className={styles.ghost}
+                disabled={pending || busy === n.key}
+                onClick={async () => {
+                  setBusy(n.key);
+                  await run({ type: 'character.create', payload: { ...n.npc, isNpc: true } });
+                  setBusy(null);
+                }}
+              >
+                부르기
+              </button>
+              <button
+                type="button"
+                className={styles.ghost}
+                aria-label={`${n.npc.name} 보관함에서 지우기`}
+                onClick={() => void deleteNpc(n.key).then(reload)}
+              >
+                지우기
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className={styles.libraryFile}>
+        <button type="button" className={styles.ghost} onClick={() => file.current?.click()}>
+          JSON 올리기
+        </button>
+        <button type="button" className={styles.ghost} disabled={!items.length} onClick={download}>
+          JSON 내려받기
+        </button>
+        <input
+          ref={file}
+          type="file"
+          accept="application/json,.json"
+          hidden
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = '';
+            if (f) void upload(f);
+          }}
+        />
+      </div>
+      {note && (
+        <p className={styles.help} role="status">
+          {note}
+        </p>
+      )}
+    </>
   );
 }
 
