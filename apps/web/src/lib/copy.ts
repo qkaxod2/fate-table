@@ -190,6 +190,8 @@ export function describe(e: RoomEvent, state: RoomState): LogLine | null {
       return { ...line('system', 'GM이 방을 닫았다'), undoable: false };
     case 'character.created':
       return line('system', `새 캐릭터: ${e.payload.character.name}`);
+    case 'character.dismissed':
+      return line('system', `${josa(e.payload.name, '이/가')} 방을 떠났다`);
     case 'scene.ended':
       return line('scene', '장면이 끝났다. 스트레스가 모두 회복된다');
     case 'session.started':
@@ -301,6 +303,7 @@ export const ERROR_COPY: Record<string, string> = {
   FORBIDDEN_ROLE: 'GM 전용',
   INVALID_CHARACTER: '캐릭터 시트에 고칠 곳 있음',
   DUPLICATE_CHARACTER: '이미 이 방에 데려온 캐릭터',
+  CHARACTER_IN_PLAY: '굴림·갈등·대결이 끝난 뒤에 돌려보내기',
   QUOTA_EXCEEDED: '이번 달 생성 한도 소진',
   NOT_MEMBER: '이 방의 참가자가 아님',
 };

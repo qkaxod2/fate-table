@@ -171,6 +171,23 @@ const handlers: Handlers = {
       const { milestone: _used, ...rest } = next;
       return rest;
     }),
+  'character.dismissed': (s, p) => {
+    const gone = new Set(
+      Object.values(s.aspects)
+        .filter((x) => x.ownerType === 'character' && x.ownerId === p.id)
+        .map((x) => x.id),
+    );
+    return {
+      ...s,
+      characters: withoutKey(s.characters, p.id),
+      aspects: Object.fromEntries(Object.entries(s.aspects).filter(([k]) => !gone.has(k))),
+      tokens: withoutKey(s.tokens, p.id),
+      compels: Object.fromEntries(
+        Object.entries(s.compels).filter(([, x]) => x.targetId !== p.id && !gone.has(x.aspectId)),
+      ),
+      scene: s.scene ? { ...s.scene, pcIds: s.scene.pcIds.filter((x) => x !== p.id) } : s.scene,
+    };
+  },
   'milestone.granted': (s, p) =>
     p.characterIds.reduce(
       (acc, id) => patchCharacter(acc, id, (c) => ({ ...c, milestone: p.size })),

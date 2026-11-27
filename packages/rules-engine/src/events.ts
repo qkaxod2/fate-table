@@ -66,6 +66,7 @@ export interface EventPayloads {
     /** 플레이어가 이정표로 성장했으면 이정표를 쓴 것으로 처리 */
     milestoneUsed?: boolean;
   };
+  'character.dismissed': { id: string; name: string };
   'milestone.granted': { characterIds: string[]; size: 'minor' | 'significant' | 'major' };
 
   'aspect.added': { aspect: Aspect };

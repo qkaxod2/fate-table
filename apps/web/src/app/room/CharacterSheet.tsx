@@ -647,6 +647,22 @@ export function CharacterSheet({
               ))}
             </span>
           )}
+          {isGm && c.isNpc && (
+            <button
+              type="button"
+              className={styles.ghost}
+              disabled={pending}
+              title="이 방에서 NPC를 내보낸다. 보관함에 저장해 둔 것은 그대로 남고, 알림의 되돌리기로 다시 불러올 수 있다."
+              onClick={() => {
+                if (
+                  window.confirm(`${josa(c.name, '을/를')} 방에서 돌려보낸다. 확인을 누르면 진행`)
+                )
+                  void run({ type: 'character.dismiss', payload: { id: c.id } });
+              }}
+            >
+              돌려보내기
+            </button>
+          )}
         </footer>
       )}
     </Leaf>
