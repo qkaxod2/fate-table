@@ -559,3 +559,26 @@
   color: var(--ink-2);
   font: 500 13px var(--f-ui);
 }
+
+/* 오른쪽 패널에 붙인 GM 도구: 막대는 줄을 바꿔 쌓고, 도구 목록은 늘 펼친 채 한 줄에 하나 */
+.gm[data-docked] {
+  padding: 0;
+}
+
+.gm[data-docked] .bar {
+  flex-wrap: wrap;
+}
+
+.gm[data-docked] .drawer {
+  position: static;
+  margin-top: 8px;
+  animation: none;
+}
+
+.gm[data-docked] .index {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.gm[data-docked] .drawerBtn {
+  display: none;
+}

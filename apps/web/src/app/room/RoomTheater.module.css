@@ -469,3 +469,212 @@
 .sound.sound.sound {
   display: contents;
 }
+
+/* ---------- 넓은 화면(1101px 이상): 오른쪽 세로 패널 + 가운데 비주얼 노벨 대사창 ----------
+ * 무대(main)는 왼쪽을 다 쓰고, 입력 · 기록 · GM 도구는 오른쪽 패널 한 곳에 모은다.
+ * 가운데 아래에는 대사창(VnBox)과 행동 버튼만 남는다.
+ */
+.shell {
+  display: flex;
+  height: 100dvh;
+}
+
+.shell > main {
+  flex: 1;
+  min-width: 0;
+}
+
+.rail {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: 360px;
+  height: 100dvh;
+  border-left: 1px solid var(--table-line);
+  background: rgb(21 20 18);
+  color: var(--on-table);
+}
+
+.railHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--table-line);
+}
+
+.railTitle {
+  font: 800 14px var(--f-ui);
+}
+
+.railToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  color: var(--on-table-2);
+  font: 600 12px var(--f-ui);
+  cursor: pointer;
+}
+
+/* 켜고 끄기 스위치 */
+.railToggle input {
+  position: relative;
+  width: 38px;
+  height: 22px;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--table-3);
+  appearance: none;
+  cursor: pointer;
+  transition: background var(--dur-hover) var(--ease);
+}
+
+.railToggle input::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--on-table-2);
+  transition: translate var(--dur-hover) var(--ease-spring);
+}
+
+.railToggle input:checked {
+  background: var(--seal-fill);
+}
+
+.railToggle input:checked::after {
+  translate: 16px 0;
+  background: #fff;
+}
+
+/* 테이블의 캐릭터: 한 줄로 작게 (넘치면 줄바꿈) */
+.railParty {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--table-line);
+}
+
+.railParty ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.railParty .member {
+  font-size: 12px;
+}
+
+.railLog,
+.railGm {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.railLog {
+  padding: 0 4px;
+}
+
+.railGm {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: 10px;
+  padding: 14px;
+}
+
+.railBtn {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--table-line);
+  border-radius: 8px;
+  background: none;
+  color: var(--on-table);
+  font: 600 13px var(--f-ui);
+  cursor: pointer;
+}
+
+.railBtn:hover,
+.railBtn[aria-pressed='true'] {
+  border-color: var(--brass-hi);
+}
+
+.railInput {
+  padding: 10px 12px 12px;
+  border-top: 1px solid var(--table-line);
+}
+
+/* 입력 칸은 패널 폭에 맞춰 줄을 바꿔 쌓는다 */
+.railInput form {
+  flex-wrap: wrap;
+}
+
+.railInput input[aria-label='채팅'] {
+  flex: 1 1 100%;
+  order: -1;
+}
+
+/* 가운데 대사창: 오른쪽 행동 칸 없이 한 칸, 행동 버튼은 아래 한 줄 */
+.shell[data-wide] :is(section[data-vn]) {
+  grid-template-columns: minmax(0, 1fr);
+  width: min(880px, calc(100% - 48px));
+  min-height: 0;
+}
+
+.shell[data-wide] section[data-vn] > .menu {
+  border-top: 1px solid var(--table-line);
+  border-left: 0;
+}
+
+.shell[data-wide] section[data-vn] > .menu ol {
+  display: flex;
+  gap: 6px;
+}
+
+.shell[data-wide] section[data-vn] > .menu ol > li {
+  flex: 1;
+}
+
+.shell[data-wide] section[data-vn] > .menu ol button {
+  grid-template-columns: auto auto;
+  justify-content: center;
+}
+
+/* 행동 줄의 긴 설명은 넓은 화면 한 줄에선 뺀다 (단축키 숫자는 남긴다) */
+.shell[data-wide] section[data-vn] > .menu ol button > :nth-child(2) {
+  display: none;
+}
+
+/* 패널 폭에서는 입력 칸을 맨 위 한 줄로, 종류 · 연출 · 서식 단추는 그 아래로 */
+.railInput > .composer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  row-gap: 8px;
+  margin: 0;
+}
+
+.railInput > .composer > :last-child {
+  flex: 1 1 100%;
+  order: -1;
+}
+
+.railInput > .composer [role='tablist'] {
+  flex-direction: row;
+}
+
+.railInput form > textarea {
+  flex: 1 1 100%;
+}
+
+.railInput form > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
