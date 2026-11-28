@@ -16,12 +16,12 @@ import th from './theater.module.css';
 
 /** 장면 특성 카드가 서는 자리 (무대 기준 %) */
 export const TAG_SPOTS: ReadonlyArray<readonly [number, number]> = [
-  [38, 43],
-  [53, 43],
-  [45.5, 56],
-  [30, 56],
-  [61, 56],
-  [45.5, 30],
+  [32, 43],
+  [54, 43],
+  [43, 56],
+  [21, 56],
+  [65, 56],
+  [43, 30],
 ];
 /* 판정 중에는 판정판과 손패를 가리지 않게 양옆 두 줄로 선다 */
 export const TAG_SPOTS_ROLL: ReadonlyArray<readonly [number, number]> = [

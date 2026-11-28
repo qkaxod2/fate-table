@@ -52,6 +52,7 @@ export function GmBar({
   lastUndoable,
   onOpen,
   onArt,
+  docked = false,
 }: {
   state: RoomState;
   run: Run;
@@ -59,8 +60,11 @@ export function GmBar({
   lastUndoable: { seq: number; text: string } | null;
   onOpen: (o: GmOpen) => void;
   onArt: () => void;
+  /** 오른쪽 패널의 GM 도구 칸에 붙여 둘 때: 도구 목록을 늘 펼쳐 둔다 */
+  docked?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [opened, setOpen] = useState(false);
+  const open = docked || opened;
   const wrap = useRef<HTMLDivElement>(null);
   const toggle = useRef<HTMLButtonElement>(null);
   const drawerId = useId();
@@ -71,7 +75,7 @@ export function GmBar({
 
   // 서랍: 바깥을 누르거나 Esc면 닫힌다. 열리면 첫 도구에 초점
   useEffect(() => {
-    if (!open) return;
+    if (!opened) return;
     wrap.current
       ?.querySelector<HTMLElement>('[data-drawer] button')
       ?.focus({ preventScroll: true });
@@ -90,7 +94,7 @@ export function GmBar({
       document.removeEventListener('pointerdown', onDown);
       window.removeEventListener('keydown', onKey, true);
     };
-  }, [open]);
+  }, [opened]);
 
   const pick = (fn: () => void) => {
     shut(false);
@@ -98,9 +102,10 @@ export function GmBar({
   };
 
   return (
-    <div className={styles.gm} ref={wrap}>
+    <div className={styles.gm} ref={wrap} data-docked={docked || undefined}>
       <nav className={styles.bar} aria-label="GM 도구">
         <button
+          hidden={docked}
           ref={toggle}
           type="button"
           className={styles.drawerBtn}
