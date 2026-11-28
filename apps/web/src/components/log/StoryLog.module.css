@@ -241,6 +241,68 @@
   }
 }
 
+/*
+ * 패널 대사: 화자마다 고유 색 띠를 왼쪽에 두르고, 같은 화자가 이어 말하면 한 묶음으로.
+ * 묶음 첫 줄에만 얼굴 · 이름을 단다.
+ */
+.line[data-who] {
+  border-left: 3px solid color-mix(in srgb, var(--who) 75%, transparent);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--who) 9%, transparent),
+    transparent 70%
+  );
+}
+
+.line[data-who='head'] {
+  margin-top: var(--s-2);
+  padding-top: 6px;
+  border-top-left-radius: 2px;
+}
+
+.line[data-who='cont'] {
+  margin-top: calc(var(--s-1) * -1);
+}
+
+.spoken {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.speaker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.speaker > img,
+.speaker > span {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--who);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--who) 25%, #141210);
+  color: #fff;
+  font: 700 11px var(--f-ui);
+  object-fit: cover;
+  object-position: top;
+}
+
+.speaker > b {
+  color: var(--who);
+  font: 700 13px var(--f-ui);
+  letter-spacing: 0.01em;
+}
+
+.spoken > .said {
+  color: var(--fg);
+}
+
 /* ---------- 책 본문 (design-system.md 20절) ---------- */
 .margin {
   display: none;

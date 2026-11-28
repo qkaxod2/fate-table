@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { LogLine } from '@/lib/copy';
 import { reducedMotion } from '@/lib/motion';
 import { RichText } from '../ui/RichText';
@@ -20,6 +20,8 @@ interface Props {
    * 굴림·운명점 기록은 펜으로 적은 여백 메모. 마지막 GM 대사는 한 자씩 적힌다.
    */
   variant?: 'panel' | 'book';
+  /** panel: 화자 이름 → 얼굴 그림. 대사 묶음 머리에 작은 얼굴로 붙는다 */
+  faces?: ReadonlyMap<string, string | undefined>;
 }
 
 /** "하윤: 대사" → 화자와 대사 */
@@ -29,6 +31,31 @@ function splitSpeaker(text: string): [string | null, string] {
 }
 
 type Tab = 'story' | 'system';
+
+/** 어두운 바탕에서 서로 잘 갈리는 화자 색 */
+const SPEAKER_HUES = [
+  '#f0a868',
+  '#7cc4f0',
+  '#a8dc7a',
+  '#f08cb8',
+  '#c3a0f5',
+  '#f2d36b',
+  '#6fd8c0',
+  '#f28f7e',
+] as const;
+
+/** 기록에 처음 나온 순서대로 화자에게 색을 준다 (몇 명 안 될 때 서로 겹치지 않게) */
+function speakerHues(lines: readonly LogLine[]): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const l of lines) {
+    if (l.kind !== 'chat') continue;
+    const who = splitSpeaker(l.text)[0];
+    if (who && !out.has(who)) out.set(who, SPEAKER_HUES[out.size % SPEAKER_HUES.length]!);
+  }
+  return out;
+}
+
+const NO_FACES: ReadonlyMap<string, string | undefined> = new Map();
 
 /** 이야기(굴림·대사·채팅)와 시스템(입장·생성·되돌리기 같은 알림)을 탭으로 나눈다 */
 /** 맨 아래에서 이만큼은 늘 실제로 배치한다 (그 위는 화면 밖이면 배치를 건너뛴다) */
@@ -79,6 +106,7 @@ export const StoryLog = memo(function StoryLog({
   onUndo,
   sending = NO_SENDING,
   variant = 'panel',
+  faces = NO_FACES,
 }: Props) {
   const [tab, setTab] = useState<Tab>('story');
   // 펼쳐 본 지난 장면 (장면 첫 줄의 seq)
@@ -91,6 +119,7 @@ export const StoryLog = memo(function StoryLog({
     system: live.filter((l) => l.kind === 'system'),
   };
   const shown = byTab[tab];
+  const hues = variant === 'panel' ? speakerHues(byTab.story) : null;
   const items: LogItem[] =
     tab === 'story'
       ? foldScenes(shown, openScenes)
@@ -177,6 +206,12 @@ export const StoryLog = memo(function StoryLog({
             );
           const l = it.line;
           const prev = items[i - 1];
+          // 패널: 대사는 화자별로 묶어 첫 줄에만 얼굴 · 이름을 단다
+          const who = variant === 'panel' && l.kind === 'chat' ? splitSpeaker(l.text)[0] : null;
+          const prevWho =
+            prev && 'line' in prev && prev.line.kind === 'chat' && prev.line.tag === l.tag
+              ? splitSpeaker(prev.line.text)[0]
+              : null;
           return (
             <Line
               key={l.seq}
@@ -186,6 +221,10 @@ export const StoryLog = memo(function StoryLog({
               fx={l.fx}
               tag={l.tag}
               book={variant === 'book'}
+              who={who}
+              head={!!who && who !== prevWho}
+              face={who ? faces.get(who) : undefined}
+              hue={who ? hues?.get(who) : undefined}
               open={
                 variant === 'book' &&
                 l.kind === 'gm' &&
@@ -223,6 +262,10 @@ const Line = memo(function Line({
   fx,
   tag,
   book,
+  who,
+  head,
+  face,
+  hue,
   open,
   typing,
   far,
@@ -234,6 +277,12 @@ const Line = memo(function Line({
   fx: LogLine['fx'];
   tag?: LogLine['tag'];
   book: boolean;
+  /** panel 대사의 화자 (없으면 null) */
+  who: string | null;
+  /** 같은 화자 묶음의 첫 줄 */
+  head: boolean;
+  face: string | undefined;
+  hue: string | undefined;
   open: boolean;
   typing: boolean;
   /** 맨 아래에서 멀리 떨어진 줄: 화면 밖이면 배치를 건너뛴다 */
@@ -248,6 +297,8 @@ const Line = memo(function Line({
       data-open={open || undefined}
       data-far={far || undefined}
       data-tag={tag}
+      data-who={who ? (head ? 'head' : 'cont') : undefined}
+      style={hue ? ({ '--who': hue } as CSSProperties) : undefined}
       title={
         tag === 'whisper' ? '귓속말: 나와 GM만 봄' : tag === 'ooc' ? '잡담 (캐릭터 밖)' : undefined
       }
@@ -259,6 +310,18 @@ const Line = memo(function Line({
       )}
       {book ? (
         <BookLine line={line} typing={typing} />
+      ) : who ? (
+        <span className={styles.spoken}>
+          {head && (
+            <span className={styles.speaker}>
+              {face ? <img src={face} alt="" /> : <span aria-hidden>{[...who][0]}</span>}
+              <b>{who}</b>
+            </span>
+          )}
+          <span className={styles.said}>
+            <RichText text={splitSpeaker(text)[1]} fx={fx} />
+          </span>
+        </span>
       ) : (
         <span>{kind === 'chat' || kind === 'gm' ? <RichText text={text} fx={fx} /> : text}</span>
       )}
