@@ -1,0 +1,137 @@
+/* 자료 한 장: 종이 위에 그림과 본문. 그림은 화면에 맞게 줄이고 누르면 원본을 연다 */
+.paper {
+  display: grid;
+  gap: var(--s-3);
+}
+
+.figure {
+  display: block;
+  overflow: hidden;
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--r-ctl);
+  background: color-mix(in srgb, var(--shade) 12%, transparent);
+  cursor: zoom-in;
+}
+
+.figure img {
+  display: block;
+  width: 100%;
+  max-height: 62dvh;
+  object-fit: contain;
+}
+
+.body {
+  margin: 0;
+  color: var(--ink-1);
+  font: 400 16px/1.75 var(--f-story);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.empty {
+  margin: 0;
+  color: var(--ink-3);
+  font: 500 13px var(--f-ui);
+}
+
+.back {
+  padding: 6px 12px;
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--r-ctl);
+  background: none;
+  color: var(--ink-2);
+  font: 600 13px var(--f-ui);
+  cursor: pointer;
+}
+
+.back:hover {
+  color: var(--ink-1);
+}
+
+.shelf {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shelf li {
+  display: flex;
+  gap: var(--s-2);
+  align-items: center;
+}
+
+.item {
+  display: flex;
+  flex: 1;
+  gap: var(--s-2);
+  align-items: center;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--r-ctl);
+  background: none;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.item:hover,
+.item:focus-visible {
+  border-color: var(--ink-3);
+}
+
+.thumb {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--shade) 14%, transparent);
+  color: var(--ink-3);
+  font-size: 20px;
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.itemText {
+  display: grid;
+  min-width: 0;
+}
+
+.itemText b {
+  overflow: hidden;
+  font: 600 14.5px var(--f-ui);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemText small {
+  overflow: hidden;
+  color: var(--ink-3);
+  font: 500 12px var(--f-ui);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hide {
+  flex: none;
+  padding: 4px 10px;
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--r-ctl);
+  background: none;
+  color: var(--ink-2);
+  font: 600 13px var(--f-ui);
+  cursor: pointer;
+}
+
+.hide:hover {
+  color: var(--seal);
+}

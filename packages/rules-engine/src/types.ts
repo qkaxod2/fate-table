@@ -282,6 +282,20 @@ export interface RoomState {
   tokens: Record<string, string>;
   /** 배경 음악. 없으면 조용하다 */
   music?: Music;
+  /** GM이 보여 준 자료(핸드아웃). 플레이어는 자기에게 보여 준 것만 갖는다 */
+  handouts?: Record<string, Handout>;
+}
+
+/** 자료(핸드아웃): 단서 · 편지 · 지도처럼 GM이 띄워 주는 글과 그림. GM 메모는 방에 오지 않는다 */
+export interface Handout {
+  id: string;
+  title: string;
+  body?: string;
+  imageUrl?: string;
+  /** 'all'이면 모두에게, 아니면 받은 사람 userId (플레이어 화면에는 자기만 있다) */
+  shownTo: 'all' | string[];
+  /** 마지막으로 보여 준 이벤트 seq */
+  seq: number;
 }
 
 export interface Actor {
