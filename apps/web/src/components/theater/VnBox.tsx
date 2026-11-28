@@ -81,7 +81,7 @@ export function VnBox({ lines, undone }: { lines: LogLine[]; undone: ReadonlySet
 
   return (
     <div className={styles.box} data-tab={tab}>
-      <div className={styles.bar} role="tablist" aria-label="대사창">
+      <div className={styles.tabs} role="tablist" aria-label="대사창">
         {TABS.map(([t, label]) => (
           <button
             key={t}
@@ -95,48 +95,44 @@ export function VnBox({ lines, undone }: { lines: LogLine[]; undone: ReadonlySet
             {unread(t) > 0 && <span className={styles.badge}>{unread(t)}</span>}
           </button>
         ))}
-        {tab === 'story' && story.length > 0 && (
-          <span className={styles.nav}>
-            <button
-              type="button"
-              onClick={() => go(-1)}
-              disabled={idx <= 0}
-              aria-label="앞 줄"
-              title="앞 줄"
-            >
-              ◀
-            </button>
-            <span className={styles.count}>
-              {idx + 1} / {story.length}
-            </span>
-            <button
-              type="button"
-              onClick={() => go(1)}
-              disabled={at === null}
-              aria-label="다음 줄"
-              title="다음 줄"
-            >
-              ▶
-            </button>
-          </span>
-        )}
       </div>
       {tab === 'story' ? (
         <div className={styles.stage} aria-live="polite">
           {!cur ? (
             <p className={styles.empty}>이야기가 여기 한 줄씩 나옵니다</p>
           ) : (
-            <div
-              key={cur.seq}
-              className={styles.line}
-              data-kind={cur.kind}
-              data-said={!!who || undefined}
-            >
+            <div key={cur.seq} className={styles.line} data-kind={cur.kind}>
               {who && <span className={styles.who}>{who}</span>}
               <p>
                 <RichText text={said} fx={cur.fx} />
+                {at === null && <span className={styles.caret} aria-hidden />}
               </p>
             </div>
+          )}
+          {story.length > 0 && (
+            <span className={styles.nav}>
+              <button
+                type="button"
+                onClick={() => go(-1)}
+                disabled={idx <= 0}
+                aria-label="앞 줄"
+                title="앞 줄"
+              >
+                ‹
+              </button>
+              <span className={styles.count}>
+                {idx + 1} / {story.length}
+              </span>
+              <button
+                type="button"
+                onClick={() => go(1)}
+                disabled={at === null}
+                aria-label="다음 줄"
+                title="다음 줄"
+              >
+                ›
+              </button>
+            </span>
           )}
         </div>
       ) : (

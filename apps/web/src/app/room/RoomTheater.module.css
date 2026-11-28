@@ -621,35 +621,84 @@
   order: -1;
 }
 
-/* 가운데 대사창: 오른쪽 행동 칸 없이 한 칸, 행동 버튼은 아래 한 줄 */
-.shell[data-wide] :is(section[data-vn]) {
+/* 가운데 대사창: 겉 칸은 투명하게 두고, 대사 판(VnBox)과 행동 줄을 따로 띄운다 */
+.shell[data-wide] section[data-vn] {
   grid-template-columns: minmax(0, 1fr);
-  width: min(880px, calc(100% - 48px));
+  gap: 10px;
+  width: min(940px, calc(100% - 64px));
   min-height: 0;
+  /* 판 윗변에 걸친 이름표 · 탭 몫만큼 위를 비워 위의 이름판과 겹치지 않게 */
+  padding-top: 18px;
+  border: 0;
+  background: none;
+  box-shadow: none;
 }
 
+/* 행동 줄: 대사 판 아래 가운데, 낮은 알약 단추들 */
 .shell[data-wide] section[data-vn] > .menu {
-  border-top: 1px solid var(--table-line);
-  border-left: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+}
+
+.shell[data-wide] section[data-vn] > .menu > * {
+  height: auto;
+  padding: 0;
 }
 
 .shell[data-wide] section[data-vn] > .menu ol {
   display: flex;
   gap: 6px;
-}
-
-.shell[data-wide] section[data-vn] > .menu ol > li {
-  flex: 1;
+  padding: 5px;
+  border: 1px solid rgb(226 194 126 / 0.18);
+  border-radius: 999px;
+  background: rgb(14 13 12 / 0.82);
+  box-shadow: 0 12px 30px -16px #000;
 }
 
 .shell[data-wide] section[data-vn] > .menu ol button {
   grid-template-columns: auto auto;
   justify-content: center;
+  gap: 8px;
+  padding: 7px 18px;
+  border-radius: 999px;
 }
 
-/* 행동 줄의 긴 설명은 넓은 화면 한 줄에선 뺀다 (단축키 숫자는 남긴다) */
+.shell[data-wide] section[data-vn] > .menu ol button > :first-child {
+  font-size: 14.5px;
+}
+
+/* 행동 줄의 긴 설명은 넓은 화면 한 줄에선 뺀다 (단축키 숫자는 작은 글쇠로) */
 .shell[data-wide] section[data-vn] > .menu ol button > :nth-child(2) {
   display: none;
+}
+
+.shell[data-wide] section[data-vn] > .menu ol kbd {
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  opacity: 0.55;
+  font-size: 10px;
+}
+
+/* 접근법 고르기 · 굴림 단계도 같은 어두운 판 위에 */
+.shell[data-wide] section[data-vn] > .menu > :first-child:not(:has(ol)) {
+  padding: 10px 14px;
+  border: 1px solid rgb(226 194 126 / 0.18);
+  border-radius: 14px;
+  background: rgb(14 13 12 / 0.88);
+}
+
+/* 캐릭터 데려오기는 행동 줄 옆 작은 글자 단추로 */
+.shell[data-wide] section[data-vn] > .menu > :last-child:not(:first-child) {
+  align-self: center;
+  margin: 0;
+  font-size: 12px;
 }
 
 /* 패널 폭에서는 입력 칸을 맨 위 한 줄로, 종류 · 연출 · 서식 단추는 그 아래로 */
