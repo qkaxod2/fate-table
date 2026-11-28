@@ -50,7 +50,17 @@ export interface SavedBackdrop {
   url: string;
 }
 
-type Kind = 'npc' | 'scene' | 'backdrop';
+/** 자료(핸드아웃): 플레이어에게 띄워 줄 단서 · 편지 · 지도. gmNotes는 GM만 본다 (방에 보내지 않는다) */
+export interface SavedHandout {
+  key: string;
+  savedAt: string;
+  title: string;
+  body: string;
+  imageUrl?: string;
+  gmNotes: string;
+}
+
+type Kind = 'npc' | 'scene' | 'backdrop' | 'handout';
 
 async function client() {
   const sb = getSupabase();
@@ -104,6 +114,37 @@ export function saveBackdrop(name: string, url: string): Promise<SavedBackdrop> 
     url,
   };
   return save('backdrop', item.key, item).then(() => item);
+}
+
+export const listHandouts = () => list<SavedHandout>('handout');
+export const deleteHandout = (key: string) => remove('handout', key);
+
+export function saveHandout(
+  h: Omit<SavedHandout, 'key' | 'savedAt'> & { key?: string },
+): Promise<SavedHandout> {
+  const item: SavedHandout = {
+    key: h.key ?? crypto.randomUUID(),
+    savedAt: new Date().toISOString(),
+    title: h.title.trim().slice(0, 60),
+    body: h.body.trim().slice(0, 4000),
+    ...(h.imageUrl ? { imageUrl: h.imageUrl } : {}),
+    gmNotes: h.gmNotes.trim().slice(0, 4000),
+  };
+  return save('handout', item.key, item).then(() => item);
+}
+
+/** 보관한 자료를 방에 보여 주는 명령 (GM 메모는 뺀다). to가 비면 모두에게 */
+export function showHandoutCommand(h: SavedHandout, to: string[]): Command {
+  return {
+    type: 'handout.show',
+    payload: {
+      handoutId: h.key,
+      title: h.title,
+      ...(h.body ? { body: h.body } : {}),
+      ...(h.imageUrl ? { imageUrl: h.imageUrl } : {}),
+      to,
+    },
+  };
 }
 
 /** 파일 이름에서 배경 이름을 뽑는다: 확장자·앞 번호·밑줄을 덜어낸다 */

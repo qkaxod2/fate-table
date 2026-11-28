@@ -634,6 +634,19 @@ const handlers: Handlers = {
   },
   'music.paused': (s, p) => ({ ...s, music: p.music }),
   'gm.note': (s) => s,
+  'handout.shown': (s, p, e) => {
+    const was = s.handouts?.[p.handout.id];
+    const shownTo: 'all' | string[] =
+      p.to === null || was?.shownTo === 'all'
+        ? 'all'
+        : [...new Set([...(was?.shownTo ?? []), p.to])];
+    return {
+      ...s,
+      handouts: { ...s.handouts, [p.handout.id]: { ...p.handout, shownTo, seq: e.seq } },
+    };
+  },
+  'handout.hidden': (s, p) =>
+    s.handouts?.[p.handoutId] ? { ...s, handouts: withoutKey(s.handouts, p.handoutId) } : s,
   'narration.posted': (s) => s,
   'sfx.played': (s) => s,
   'stage.fx_played': (s) => s,

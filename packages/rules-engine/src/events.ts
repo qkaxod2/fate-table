@@ -168,6 +168,12 @@ export interface EventPayloads {
   'music.paused': { music: Music };
   'dice.secret_rolled': { dice: Dice; modifier: number; label?: string };
   'gm.note': { text: string };
+  /** 자료 공개. to가 null이면 모두에게(public), 아니면 그 한 사람에게(owner) 가는 이벤트 */
+  'handout.shown': {
+    handout: { id: string; title: string; body?: string; imageUrl?: string };
+    to: string | null;
+  };
+  'handout.hidden': { handoutId: string };
   'narration.posted': { text: string };
   'sfx.played': { assetId: string };
   /** GM의 무대 연출: 흔들기 · 번쩍 · 어둠 · 캐릭터 떨림 · 타격 */

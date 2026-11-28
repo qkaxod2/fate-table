@@ -289,6 +289,18 @@ export function describe(e: RoomEvent, state: RoomState): LogLine | null {
       return line('system', `${term('aspect')}이 사라졌다`);
     case 'gm.note':
       return { ...line('system', `📝 메모: ${e.payload.text}`), undoable: false };
+    case 'handout.shown': {
+      const to = e.payload.to;
+      const who = to === null ? '' : (state.members[to]?.nickname ?? '누군가');
+      return line(
+        'gm',
+        to === null
+          ? `📜 GM이 자료를 보여 줬다: 「${e.payload.handout.title}」`
+          : `📜 GM이 ${who}에게만 보여 준 자료: 「${e.payload.handout.title}」`,
+      );
+    }
+    case 'handout.hidden':
+      return line('system', `📜 GM이 자료를 거뒀다`);
     case 'event.undone':
       return {
         ...line('system', `↶ GM이 방금 일을 되돌렸다`),

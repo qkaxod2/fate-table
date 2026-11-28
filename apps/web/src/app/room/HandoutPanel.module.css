@@ -1,0 +1,96 @@
+/* GM 자료 보관함 한 줄: 작은 그림 · 제목과 상태 · 버튼 */
+.row {
+  flex-wrap: wrap;
+}
+
+.row > .thumb {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--shade) 14%, transparent);
+  color: var(--ink-3);
+  font-size: 20px;
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.status[data-shown] {
+  color: var(--seal);
+}
+
+.row > .actions {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.buttons[data-start] {
+  justify-content: flex-start;
+}
+
+.actions > button,
+.buttons > button {
+  min-height: 34px;
+  align-self: auto;
+  width: auto;
+  margin: 0;
+}
+
+.preview {
+  display: block;
+  overflow: hidden;
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--r-ctl);
+  background: color-mix(in srgb, var(--shade) 12%, transparent);
+}
+
+.preview img {
+  display: block;
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+}
+
+.pick {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 6px;
+}
+
+.pick button {
+  aspect-ratio: 16 / 10;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+}
+
+.pick button[aria-pressed='true'],
+.pick button:hover {
+  border-color: var(--seal);
+}
+
+.pick img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

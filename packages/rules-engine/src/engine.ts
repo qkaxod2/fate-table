@@ -121,6 +121,8 @@ const GM_ONLY: ReadonlySet<CommandType> = new Set<CommandType>([
   'zone.update',
   'zone.remove',
   'gm.note',
+  'handout.show',
+  'handout.hide',
   'music.set',
   'music.pause',
   'dice.secret',
@@ -883,6 +885,26 @@ const resolvers: Resolvers = {
     return one(ev('music.paused', a, { music: { ...rest, at: m.at + (now - (pausedAt ?? now)) } }));
   },
   'gm.note': (_s, p, a) => one(ev('gm.note', a, p, 'gm')),
+  'handout.show': (s, p, a) => {
+    const handout = {
+      id: p.handoutId,
+      title: p.title,
+      ...(p.body ? { body: p.body } : {}),
+      ...(p.imageUrl ? { imageUrl: p.imageUrl } : {}),
+    };
+    if (p.to.length === 0) return one(ev('handout.shown', a, { handout, to: null }));
+    const to = [...new Set(p.to)];
+    for (const u of to) {
+      const m = s.members[u];
+      if (!m || m.role === 'gm') throw new CommandError('NOT_FOUND', 'member not found');
+    }
+    // 한 사람마다 그 사람(과 GM)만 보는 이벤트 하나
+    return one(...to.map((u) => ev('handout.shown', a, { handout, to: u }, 'owner', u)));
+  },
+  'handout.hide': (s, p, a) => {
+    need(s.handouts?.[p.handoutId], 'handout');
+    return one(ev('handout.hidden', a, p));
+  },
   'narration.post': (_s, p, a) => one(ev('narration.posted', a, p)),
   'sfx.play': (_s, p, a) => one(ev('sfx.played', a, p)),
   // 화면 효과일 뿐이라 상태를 보지 않는다 (없는 캐릭터면 화면에서 그냥 지나간다)

@@ -17,12 +17,13 @@ import { FormatBar, formatShortcut } from '@/components/ui/FormatBar';
 import { useClosing } from '@/lib/motion';
 import styles from './GmConsole.module.css';
 import { NpcLibrary, PrepPanel } from './GmPrep';
+import { HandoutPanel } from './HandoutPanel';
 import { saveNpc } from '@/lib/gmLibrary';
 
 type Run = (cmd: Command) => Promise<RoomEvent[]>;
 
 export type GmTool =
-  'scene' | 'prep' | 'aspect' | 'npc' | 'conflict' | 'compel' | 'note' | 'session';
+  'scene' | 'prep' | 'aspect' | 'npc' | 'handout' | 'conflict' | 'compel' | 'note' | 'session';
 export interface GmOpen {
   tool: GmTool;
   /** 강요: 무대 특성 카드에서 눌렀을 때 미리 고른 특성 */
@@ -34,6 +35,7 @@ const TOOLS: ReadonlyArray<readonly [GmTool, string, string]> = [
   ['prep', '준비함', '미리 준비한 장면을 한 번에 열기 (배경·특성·NPC·메모)'],
   ['aspect', term('aspect'), '장면 특성 붙이기, 숨긴 특성 공개'],
   ['npc', 'NPC', '적이나 조연 바로 만들기'],
+  ['handout', '자료', '단서 · 편지 · 지도를 모두에게, 또는 고른 사람에게만 보여 주기'],
   ['conflict', '갈등·경합', '차례가 있는 싸움, 3승 겨루기, 여러 단계 도전'],
   ['compel', term('compel'), '특성 때문에 일을 꼬이게 하고 운명점 주기'],
   ['note', '메모', '나만 보는 메모'],
@@ -426,6 +428,7 @@ export function GmPanel({
       {open.tool === 'prep' && <PrepPanel {...props} />}
       {open.tool === 'aspect' && <AspectPanel {...props} />}
       {open.tool === 'npc' && <NpcPanel {...props} />}
+      {open.tool === 'handout' && <HandoutPanel state={state} run={run} pending={pending} />}
       {open.tool === 'conflict' && <ConflictPanel {...props} />}
       {open.tool === 'compel' && (
         <CompelPanel {...props} {...(open.aspectId ? { aspectId: open.aspectId } : {})} />

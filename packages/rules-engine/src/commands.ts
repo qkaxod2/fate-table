@@ -243,6 +243,21 @@ export const CommandSchema = z.discriminatedUnion('type', [
   /** 유튜브 음악을 모두에게 잠시 멈추거나 다시 튼다 */
   cmd('music.pause', { paused: z.boolean() }),
   cmd('gm.note', { text: visible(4000) }),
+  /** 자료(핸드아웃) 보여 주기: to가 비면 모두에게, 있으면 그 참가자들에게만. 같은 id로 다시 보내면 고친 내용으로 바뀐다 */
+  cmd('handout.show', {
+    handoutId: id,
+    title: visible(60),
+    body: z.string().trim().max(4000).optional(),
+    imageUrl: z
+      .string()
+      .url()
+      .max(500)
+      .refine((u) => u.startsWith('https://'), { message: 'https' })
+      .optional(),
+    to: z.array(id).max(12).default([]),
+  }),
+  /** 보여 준 자료를 거둔다 (모두의 자료함에서 빠진다) */
+  cmd('handout.hide', { handoutId: id }),
   cmd('narration.post', { text: visible(4000) }),
   cmd('sfx.play', { assetId: id }),
   cmd('stage.fx', { kind: z.enum(STAGE_FX), characterId: id.optional() }),

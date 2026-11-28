@@ -132,6 +132,13 @@ export function roomCommands({
       },
     },
     {
+      words: ['자료', '핸드아웃', 'handout'],
+      label: '자료 보여 주기',
+      hint: '단서 · 편지 · 지도를 모두에게 또는 고른 사람에게',
+      gmOnly: true,
+      act: () => openGm({ tool: 'handout' }),
+    },
+    {
       words: ['대사', '묘사', 'say'],
       label: 'GM 대사 보내기',
       hint: '모두의 책 본문에 기록',

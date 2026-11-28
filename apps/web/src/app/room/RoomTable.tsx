@@ -67,6 +67,7 @@ import {
 } from '@/components/scene/stageBeat';
 import { StageFx } from '@/components/scene/StageFx';
 import { MoodPanel } from '@/components/ambience/MoodPanel';
+import { HandoutShelf, HandoutView } from '@/components/handout/Handout';
 import { usePlaylistChain } from '@/components/ambience/usePlaylist';
 import { DiscordDialog } from './DiscordDialog';
 import { useMusic } from '@/fx/music';
@@ -139,6 +140,8 @@ const DONE_COPY: Partial<Record<Command['type'], string>> = {
   'gm.note': '메모 남김',
   'media.attach': '그림 바뀜',
   'scene.mood': '분위기 바뀜',
+  'handout.show': '자료 보여 줌',
+  'handout.hide': '자료 거둠',
 };
 
 const signed = (n: number) => `${n >= 0 ? '+' : ''}${n}`;
@@ -848,6 +851,27 @@ export function RoomTable({
       chat: (t) => void sendChat(t),
     });
 
+  // ---------- 자료(핸드아웃) ----------
+  // 플레이어: GM이 새로 보여 준 자료는 바로 한 장 펼친다 (처음 불러온 지난 자료는 자료함에만)
+  const [shelfOpen, setShelfOpen] = useState(false);
+  const [handoutPop, setHandoutPop] = useState<string | null>(null);
+  const handoutCount = Object.keys(state.handouts ?? {}).length;
+  const lastHandoutSeq = useMemo(() => {
+    for (let i = liveEvents.length - 1; i >= 0; i--)
+      if (liveEvents[i]!.type === 'handout.shown') return liveEvents[i]!.seq;
+    return 0;
+  }, [liveEvents]);
+  const [handoutFrom, setHandoutFrom] = useState(lastHandoutSeq);
+  if (lastHandoutSeq !== handoutFrom) {
+    setHandoutFrom(lastHandoutSeq);
+    const e = liveEvents.find((x) => x.seq === lastHandoutSeq);
+    if (!isGm && lastHandoutSeq > handoutFrom && e?.type === 'handout.shown') {
+      setHandoutPop(e.payload.handout.id);
+      setShelfOpen(false);
+    }
+  }
+  const poppedHandout = handoutPop ? state.handouts?.[handoutPop] : undefined;
+
   // ---------- 스탠딩 ----------
   // 새로 들어온 이벤트에서 무대의 한 박자(말 · 맞음 · 쓰러짐 · 강요 수락)를 뽑는다.
   // 처음 기록을 불러올 때는 지난 일이므로 건너뛴다
@@ -1261,11 +1285,22 @@ export function RoomTable({
       {presenceLine}
     </p>
   );
-  const mySheet = me && (
+  const mySheet = (me || handoutCount > 0 || isGm) && (
     <div className={th.sys}>
-      <button type="button" onClick={() => setSheetId(me.id)}>
-        내 시트
-      </button>
+      {me && (
+        <button type="button" onClick={() => setSheetId(me.id)}>
+          내 시트
+        </button>
+      )}
+      {(handoutCount > 0 || isGm) && (
+        <button
+          type="button"
+          onClick={() => setShelfOpen(true)}
+          title={isGm ? '보여 준 자료와 받은 사람' : 'GM이 보여 준 단서 · 편지 · 지도'}
+        >
+          📜 자료함{handoutCount > 0 ? ` ${handoutCount}` : ''}
+        </button>
+      )}
     </div>
   );
 
@@ -2202,6 +2237,24 @@ export function RoomTable({
               setSheetId(null);
             }}
           />
+        )}
+
+        {shelfOpen && (
+          <HandoutShelf
+            state={state}
+            isGm={isGm}
+            onClose={() => setShelfOpen(false)}
+            {...(isGm
+              ? {
+                  onHide: (id: string) =>
+                    void run({ type: 'handout.hide', payload: { handoutId: id } }),
+                }
+              : {})}
+          />
+        )}
+
+        {poppedHandout && !shelfOpen && (
+          <HandoutView handout={poppedHandout} onClose={() => setHandoutPop(null)} />
         )}
 
         {discordOpen && (
