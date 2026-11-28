@@ -590,22 +590,6 @@
   padding: 14px;
 }
 
-.railBtn {
-  height: 32px;
-  padding: 0 12px;
-  border: 1px solid var(--table-line);
-  border-radius: 8px;
-  background: none;
-  color: var(--on-table);
-  font: 600 13px var(--f-ui);
-  cursor: pointer;
-}
-
-.railBtn:hover,
-.railBtn[aria-pressed='true'] {
-  border-color: var(--brass-hi);
-}
-
 .railInput {
   padding: 10px 12px 12px;
   border-top: 1px solid var(--table-line);
