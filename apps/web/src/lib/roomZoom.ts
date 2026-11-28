@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 
 /**
  * 방 화면 확대·축소.
@@ -47,6 +47,59 @@ export function useRoomZoom() {
   );
 
   return { zoom, step };
+}
+
+/** 휠 한 칸(마우스 휠은 보통 100)을 이만큼 모아야 한 단계 움직인다. 트랙패드의 잔 움직임은 모아서 센다 */
+const WHEEL_NOTCH = 60;
+
+/**
+ * 휠로 방 화면 크기 조절.
+ * - Ctrl(맥은 ⌘)+휠, 트랙패드 두 손가락 집기: 방 어디서든. 브라우저 자체 확대 대신 방 화면만 바꾼다.
+ * - 그냥 휠: 장면 그림 위처럼 굴릴 것이 없는 곳에서만. 이야기 기록·창처럼 스크롤되는 곳 위에서는 원래대로 스크롤한다.
+ * 휴대폰 배치(줌을 안 쓰는 화면)에서는 아무것도 하지 않는다.
+ */
+export function useWheelZoom(target: RefObject<HTMLElement | null>, step: (dir: -1 | 1) => void) {
+  const stepRef = useRef(step);
+  useEffect(() => {
+    stepRef.current = step;
+  }, [step]);
+
+  useEffect(() => {
+    const el = target.current;
+    if (!el) return;
+    let acc = 0;
+    let lastAt = 0;
+    const onWheel = (e: WheelEvent) => {
+      if (e.deltaY === 0 || window.matchMedia('(max-width: 760px)').matches) return;
+      const withKey = e.ctrlKey || e.metaKey;
+      if (!withKey && (e.shiftKey || e.altKey || scrollsInside(e.target, el, e.deltaY))) return;
+      e.preventDefault();
+      // 잠깐 멈췄다 다시 굴리면 새로 센다
+      if (e.timeStamp - lastAt > 300) acc = 0;
+      lastAt = e.timeStamp;
+      // 줄 단위(파이어폭스)는 픽셀로 바꿔 센다
+      acc += e.deltaMode === 1 ? e.deltaY * 33 : e.deltaY;
+      if (Math.abs(acc) < WHEEL_NOTCH) return;
+      stepRef.current(acc < 0 ? 1 : -1);
+      acc = 0;
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [target]);
+}
+
+/** 휠을 굴린 곳에서 무대까지 올라가며, 그 방향으로 더 스크롤할 수 있는 칸이 있는지 */
+function scrollsInside(from: EventTarget | null, stage: HTMLElement, dy: number): boolean {
+  for (let n = from instanceof Element ? from : null; n && n !== stage; n = n.parentElement) {
+    // 열린 창·고르기 줄 같은 입력 칸 위에서는 휠을 빼앗지 않는다
+    if (n.matches('input, textarea, select, [role="dialog"], dialog')) return true;
+    if (n.scrollHeight <= n.clientHeight + 1) continue;
+    const oy = getComputedStyle(n).overflowY;
+    if (oy !== 'auto' && oy !== 'scroll') continue;
+    // 스크롤할 수 있는 칸 위면 끝에 닿았어도 줌으로 넘기지 않는다 (기록을 읽다 갑자기 커지지 않게)
+    return true;
+  }
+  return false;
 }
 
 /** 줌이 걸린 요소 안에서 화면 픽셀(clientX·innerHeight)을 요소 안 CSS 픽셀로 바꿀 때 나눌 값 */
