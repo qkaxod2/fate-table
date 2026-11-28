@@ -343,7 +343,6 @@ export function ShortcutHelp({ isGm, onClose }: { isGm: boolean; onClose: () => 
     [['F', 'R'], '고른 특성으로 +2 · 다시 굴리기'],
     [['Enter'], '이대로 확정'],
     ...(isGm ? ([[['Ctrl', 'Z'], '마지막 기록 되돌리기']] as Array<[string[], string]>) : []),
-    [['-', '+', '0'], '방 화면 작게 · 크게 · 원래대로'],
     [['?'], '이 목록'],
     [['Esc'], '창 닫기'],
   ];

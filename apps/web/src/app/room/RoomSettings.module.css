@@ -111,54 +111,6 @@
   font-size: 12px;
 }
 
-/* 화면 크기: − 100% + (가운데 숫자를 누르면 원래대로) */
-.zoomRow {
-  cursor: default;
-}
-
-.zoom {
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid var(--paper-edge);
-  border-radius: 6px;
-  background: var(--plate);
-}
-
-.zoom button {
-  min-width: 30px;
-  height: 28px;
-  padding: 0 6px;
-  border: 0;
-  background: none;
-  color: var(--ink-1);
-  font: 600 14px var(--f-ui);
-  cursor: pointer;
-}
-
-.zoom button:hover:not(:disabled) {
-  color: var(--seal);
-}
-
-.zoom button:disabled {
-  color: var(--ink-3);
-  opacity: 0.5;
-  cursor: default;
-}
-
-.zoom .zoomVal {
-  min-width: 52px;
-  border-inline: 1px solid var(--paper-edge);
-  font: 600 12px var(--f-ui);
-  font-variant-numeric: tabular-nums;
-}
-
-/* 휴대폰 배치는 줌을 쓰지 않는다 */
-@media (max-width: 760px) {
-  .zoomRow {
-    display: none;
-  }
-}
-
 /* 효과음: 작은 켜고 끄기 스위치 (켜짐은 주홍 + 오른쪽 손잡이) */
 .switch {
   position: relative;

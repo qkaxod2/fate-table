@@ -12,7 +12,6 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import { playSfx } from '@/fx/sfx';
-import { zoomOf } from '@/lib/roomZoom';
 import styles from './ZoneMap.module.css';
 
 interface Props {
@@ -442,10 +441,8 @@ function useTokenGlide(
       seen.set(id, now);
       const before = last.current.get(id);
       if (still || !before || before.zone === now.zone) continue;
-      // 방 화면을 줌했으면 화면 픽셀 차이를 요소 안 CSS 픽셀로 바꿔 옮긴다
-      const z = zoomOf(el);
-      const dx = (before.x - now.x) / z;
-      const dy = (before.y - now.y) / z;
+      const dx = before.x - now.x;
+      const dy = before.y - now.y;
       if (Math.abs(dx) + Math.abs(dy) < 2) continue;
       // 지나가는 길에 다른 구역 밑으로 숨지 않도록 도착 구역을 잠깐 위로 올린다
       const zone = el.closest<HTMLElement>('[data-zone]');
