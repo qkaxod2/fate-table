@@ -103,6 +103,7 @@ import rt from './RoomTheater.module.css';
 import styles from './room.module.css';
 import { Trackers } from './Trackers';
 import { ZoneMap } from './ZoneMap';
+import { useFieldCamera } from './useFieldCamera';
 
 type Prompt = { kind: 'aspect'; freeInvokes: 1 | 2 } | { kind: 'boost'; ownerId: string } | null;
 
@@ -830,6 +831,7 @@ export function RoomTable({
   // 말을 주고받는 두 사람: [왼쪽, 오른쪽]과 지금 말하는 쪽. 한동안 조용하면 내려간다
   const [talk, setTalk] = useState<{ ids: [string, string | null]; focus: string } | null>(null);
   const stageEl = useRef<HTMLElement>(null);
+  const camera = useFieldCamera(stageEl, state.scene?.id);
   const dialogueEl = useDialogueTop<HTMLElement>();
   // 무대 전체 효과 (흔들림 · 번쩍 · 어둠 · 맞음 · 쓰러짐 · 갈등 시작)
   const [stageFx, setStageFx] = useState<{ seq: number; kind: StageFxKind } | null>(null);
@@ -1070,13 +1072,23 @@ export function RoomTable({
       className={`${th.theater} ${styles.callable}`}
       data-mode={rollMode ? 'roll' : 'story'}
       data-call={myCall ?? undefined}
+      data-cam={camera.moved || undefined}
+      data-panning={camera.panning || undefined}
+      style={camera.style}
+      onPointerDown={camera.onPointerDown}
+      onDoubleClick={camera.onDoubleClick}
     >
       <Toaster />
-      <div className={`${th.bg} ${rt.bg}`} style={{ backgroundImage: `url(${sceneArt})` }}>
+      {/* 장면 필드: 배경 그림 · 스탠딩 · 장면 특성은 UI 밑에 따로 떠 있고, 카메라(useFieldCamera)로 당기고 민다 */}
+      <div
+        className={`${th.bg} ${rt.bg} ${rt.field}`}
+        style={{ backgroundImage: `url(${sceneArt})` }}
+        data-field-bg=""
+      >
         <SceneFade background={`url(${sceneArt})`} />
       </div>
       <StageFx fx={stageFx} stage={stageEl} />
-      <div className={rt.cast}>
+      <div className={`${rt.cast} ${rt.field}`}>
         <StageCast
           {...(castLeft
             ? {
@@ -1303,8 +1315,19 @@ export function RoomTable({
         </div>
       )}
 
+      {camera.moved && (
+        <button
+          type="button"
+          className={rt.camReset}
+          onClick={camera.reset}
+          title="장면 카메라를 처음 자리로 (빈 장면 두 번 누르기)"
+        >
+          장면 {Math.round(camera.cam.z * 100)}% · 원래대로
+        </button>
+      )}
+
       {/* 장면에 깔린 특성: 장면 여기저기에 붙는다. 판정 중에는 판정판 둘레로 옮겨 간다 */}
-      <div className={th.tags}>
+      <div className={`${th.tags} ${rt.field}`}>
         {tagAspects.map((a, i, all) => {
           const enter = dealt(a);
           // 여러 장이 한꺼번에 깔리면 새로 붙는 것끼리 차례로
