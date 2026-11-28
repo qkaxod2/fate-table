@@ -1322,19 +1322,7 @@ export function RoomTable({
       </div>
       <div className={rt.railParty}>{partyList}</div>
       {isGm && gmTools ? (
-        <div className={rt.railGm}>
-          {gmBar}
-          {state.scene && (
-            <button
-              type="button"
-              className={rt.railBtn}
-              aria-pressed={moodOpen}
-              onClick={() => setMoodOpen((o) => !o)}
-            >
-              배경 · 분위기
-            </button>
-          )}
-        </div>
+        <div className={rt.railGm}>{gmBar}</div>
       ) : (
         <div className={rt.railLog}>
           <StoryLog
@@ -1446,7 +1434,7 @@ export function RoomTable({
           >
             {copied ? '복사됨 ✓' : `초대 ${inviteCode}`}
           </button>
-          {isGm && state.scene && !wide && (
+          {isGm && state.scene && (
             <button
               type="button"
               aria-pressed={moodOpen}
