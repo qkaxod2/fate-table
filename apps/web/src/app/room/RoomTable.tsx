@@ -1322,9 +1322,7 @@ export function RoomTable({
       </div>
       <div className={rt.railParty}>{partyList}</div>
       {isGm && gmTools ? (
-        <div className={rt.railGm}>
-          {gmBar}
-        </div>
+        <div className={rt.railGm}>{gmBar}</div>
       ) : (
         <div className={rt.railLog}>
           <StoryLog
