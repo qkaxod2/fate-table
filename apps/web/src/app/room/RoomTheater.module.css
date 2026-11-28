@@ -701,29 +701,55 @@
   font-size: 12px;
 }
 
-/* 패널 폭에서는 입력 칸을 맨 위 한 줄로, 종류 · 연출 · 서식 단추는 그 아래로 */
-.railInput > .composer {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  row-gap: 8px;
+/*
+ * 패널 폭에서는 입력 칸을 맨 위 한 줄로, 종류 · 연출 · 서식 단추는 그 아래로.
+ * room.module.css의 .composer · .composer[data-gm] 규칙과 겹치므로 .rail을 앞에 붙여
+ * 번들에서 CSS 순서가 바뀌어도 이쪽이 이기게 한다.
+ */
+.rail .railInput > .composer {
   margin: 0;
+  padding: 0;
+  border: 0;
 }
 
-.railInput > .composer > :last-child {
+.rail .railInput > .composer:not([data-gm]) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: 8px;
+}
+
+.rail .railInput > .composer:not([data-gm]) > :last-child {
   flex: 1 1 100%;
   order: -1;
 }
 
-.railInput > .composer [role='tablist'] {
-  flex-direction: row;
+/* GM: 입력 칸 / [대사|말하기] · 연출 · 목소리 / 받는 사람 (말하기일 때만) / 서식 · 보내기 */
+.rail .railInput > .composer[data-gm] {
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'field field field field'
+    'tabs fxm voice voice'
+    'chan chan chan chan'
+    'fmt fmt fmt send';
+  /* 대사 모드에선 받는 사람 줄이 비니 그 줄 틈은 접는다 */
+  grid-template-rows: auto auto minmax(0, auto) auto;
+  gap: 8px;
 }
 
-.railInput form > textarea {
-  flex: 1 1 100%;
+.rail .railInput > .composer[data-gm] .voice {
+  justify-self: start;
+  max-width: 100%;
 }
 
-.railInput form > div {
+.rail .railInput > .composer[data-gm] [role='toolbar'],
+.rail .railInput > .composer[data-gm] form > div {
+  grid-area: fmt;
+  min-width: 0;
+}
+
+/* 플레이어: 서식 단추가 남는 폭을 먹어 보내기를 오른쪽 끝에 붙인다 */
+.rail .railInput > .composer:not([data-gm]) [role='toolbar'] {
   flex: 1 1 auto;
   min-width: 0;
 }
