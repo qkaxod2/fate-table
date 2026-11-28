@@ -1079,7 +1079,7 @@ export function RoomTable({
       onDoubleClick={camera.onDoubleClick}
     >
       <Toaster />
-      {/* 장면 필드: 배경 그림 · 스탠딩 · 장면 특성은 UI 밑에 따로 떠 있고, 카메라(useFieldCamera)로 당기고 민다 */}
+      {/* 장면 필드: 배경 그림 · 장면 특성은 UI 밑에 따로 떠 있고, 카메라(useFieldCamera)로 당기고 민다. 스탠딩은 UI에 붙어 카메라와 상관없이 제자리 */}
       <div
         className={`${th.bg} ${rt.bg} ${rt.field}`}
         style={{ backgroundImage: `url(${sceneArt})` }}
@@ -1088,7 +1088,7 @@ export function RoomTable({
         <SceneFade background={`url(${sceneArt})`} />
       </div>
       <StageFx fx={stageFx} stage={stageEl} />
-      <div className={`${rt.cast} ${rt.field}`}>
+      <div className={rt.cast}>
         <StageCast
           {...(castLeft
             ? {

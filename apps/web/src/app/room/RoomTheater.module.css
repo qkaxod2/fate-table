@@ -10,19 +10,14 @@
 }
 
 /*
- * 장면 필드 카메라 (useFieldCamera): 배경 그림 · 스탠딩 · 장면 특성에만 같은 카메라를 건다.
- * 세 겹 모두 무대 기준 같은 점(대사창 위 공간의 가운데)을 중심으로 커지고 작아진다.
+ * 장면 필드 카메라 (useFieldCamera): 배경 그림 · 장면 특성에만 같은 카메라를 건다 (스탠딩은 UI에 붙어 제자리).
+ * 두 겹 모두 무대 기준 같은 점(대사창 위 공간의 가운데)을 중심으로 커지고 작아진다.
  * 밀어내면 필드가 탁자 위에 뜬 판처럼 보이게 가장자리와 그림자를 둔다.
  */
 .field {
   transform: translate(var(--cam-x, 0px), var(--cam-y, 0px)) scale(var(--cam-z, 1));
   transform-origin: 50% calc((100dvh - var(--dlg)) / 2);
   transition: transform 0.18s var(--ease-out);
-}
-
-/* 스탠딩 칸은 위에서 70px 내려와 있으니 기준점도 그만큼 올린다 */
-.cast.field {
-  transform-origin: 50% calc((100dvh - var(--dlg)) / 2 - 70px);
 }
 
 :global([data-panning]) > .field {
@@ -61,8 +56,7 @@
 }
 
 @media (max-width: 760px) {
-  .field,
-  .cast.field {
+  .field {
     transform: none;
   }
   .camReset {
