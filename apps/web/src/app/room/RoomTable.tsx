@@ -93,7 +93,7 @@ import { DamagePrompt } from './DamagePrompt';
 import { FormatBar, formatShortcut } from '@/components/ui/FormatBar';
 import { GmBar, GmPanel, NarrationInput, SceneStarter, type GmOpen } from './GmConsole';
 import { RoomSettings } from './RoomSettings';
-import { useRoomZoom, useWheelZoom } from '@/lib/roomZoom';
+import { useRoomZoom } from '@/lib/roomZoom';
 import { SoundControl } from '@/components/ui/SoundControl';
 import { getSupabase } from '@/lib/supabase';
 import { downloadText, exportFileName, logToMarkdown } from '@/lib/logExport';
@@ -836,7 +836,6 @@ export function RoomTable({
   // 말을 주고받는 두 사람: [왼쪽, 오른쪽]과 지금 말하는 쪽. 한동안 조용하면 내려간다
   const [talk, setTalk] = useState<{ ids: [string, string | null]; focus: string } | null>(null);
   const stageEl = useRef<HTMLElement>(null);
-  useWheelZoom(stageEl, zoomStep);
   const dialogueEl = useDialogueTop<HTMLElement>();
   // 무대 전체 효과 (흔들림 · 번쩍 · 어둠 · 맞음 · 쓰러짐 · 갈등 시작)
   const [stageFx, setStageFx] = useState<{ seq: number; kind: StageFxKind } | null>(null);
