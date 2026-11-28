@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { zoomOf } from '@/lib/roomZoom';
 import styles from './theater.module.css';
 
 const KEY = 'fate:dialogue-h';
@@ -10,12 +9,9 @@ const STEP = 32;
 /** 이만큼 넘게 움직여야 끌기로 본다 (그보다 작으면 누른 것) */
 const DRAG = 4;
 
-/**
- * 펼친 글 칸이 쓸 수 있는 가장 큰 높이: 화면의 70% (위쪽 제목·도구는 남긴다).
- * 방 화면을 줌했으면(z) 화면 픽셀을 무대 안 CSS 픽셀로 바꿔 센다
- */
-const maxH = (z = 1) => Math.max(MIN, Math.round((window.innerHeight / z) * 0.7));
-const clamp = (h: number, z = 1) => Math.min(maxH(z), Math.max(MIN, Math.round(h)));
+/** 펼친 글 칸이 쓸 수 있는 가장 큰 높이: 화면의 70% (위쪽 제목·도구는 남긴다) */
+const maxH = () => Math.max(MIN, Math.round(window.innerHeight * 0.7));
+const clamp = (h: number) => Math.min(maxH(), Math.max(MIN, Math.round(h)));
 
 function readSaved(): number | null {
   try {
@@ -75,7 +71,7 @@ export function DialogueGrip({
   };
 
   const set = (next: number | null) => {
-    const v = next === null ? null : clamp(next, zoomOf(ref.current));
+    const v = next === null ? null : clamp(next);
     apply(v);
     save(v);
   };
@@ -84,21 +80,20 @@ export function DialogueGrip({
     if (e.button !== 0) return;
     const el = e.currentTarget;
     const startY = e.clientY;
-    const z = zoomOf(el);
     let startH = 0;
     let last: number | null = null;
     dragged.current = false;
     const move = (ev: PointerEvent) => {
-      const dy = (startY - ev.clientY) / z;
+      const dy = startY - ev.clientY;
       if (!dragged.current) {
         if (Math.abs(dy) < DRAG) return;
         dragged.current = true;
         el.setPointerCapture(ev.pointerId);
         // 접힌 채로 끌면 펼치고, 펼친 높이에서부터 늘린다
         if (!open) onOpenChange(true);
-        startH = open ? current() : (hRef.current ?? Math.round((window.innerHeight / z) * 0.45));
+        startH = open ? current() : (hRef.current ?? Math.round(window.innerHeight * 0.45));
       }
-      last = clamp(startH + dy, z);
+      last = clamp(startH + dy);
       apply(last);
     };
     const up = () => {

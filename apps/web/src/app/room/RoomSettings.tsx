@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { DICE_MODES, saveDiceMode, type DiceMode } from '@/components/roll/DiceTray';
-import { ZOOM_STEPS } from '@/lib/roomZoom';
 import styles from './RoomSettings.module.css';
 
 /** 단축키 표기: 맥에서는 ⌘ */
@@ -11,15 +10,13 @@ export const IS_MAC =
 
 /**
  * 머리글의 "설정" 한 단추 안에 화면 설정과 나가기를 모은다.
- * 주사위 연출 · 화면 크기 · 명령 창 · 단축키, 그리고 맨 아래 따로 떨어진 나가기(GM은 방 지우기).
+ * 주사위 연출 · 명령 창 · 단축키, 그리고 맨 아래 따로 떨어진 나가기(GM은 방 지우기).
  * 되돌릴 수 없는 방 지우기가 도구 바로 옆에 놓이지 않게 한다.
  */
 export function RoomSettings({
   isGm,
   diceMode,
   onDiceMode,
-  zoom,
-  onZoom,
   onPalette,
   onHelp,
   onExport,
@@ -32,10 +29,6 @@ export function RoomSettings({
   isGm: boolean;
   diceMode: DiceMode;
   onDiceMode: (m: DiceMode) => void;
-  /** 방 화면 크기 (1 = 100%) */
-  zoom: number;
-  /** -1 작게, +1 크게, 0 원래대로 */
-  onZoom: (dir: -1 | 0 | 1) => void;
   onPalette: () => void;
   onHelp: () => void;
   /** 이야기 기록을 마크다운 파일로 받기 */
@@ -113,38 +106,6 @@ export function RoomSettings({
               ))}
             </select>
           </label>
-          <div className={`${styles.row} ${styles.zoomRow}`}>
-            <span>화면 크기</span>
-            <div className={styles.zoom} role="group" aria-label="화면 크기">
-              <button
-                type="button"
-                onClick={() => onZoom(-1)}
-                disabled={zoom <= ZOOM_STEPS[0]}
-                aria-label="작게"
-                title="작게 ( - )"
-              >
-                −
-              </button>
-              <button
-                type="button"
-                className={styles.zoomVal}
-                onClick={() => onZoom(0)}
-                title="원래 크기로 ( 0 )"
-                aria-label={`지금 ${Math.round(zoom * 100)}%, 누르면 원래 크기로`}
-              >
-                {Math.round(zoom * 100)}%
-              </button>
-              <button
-                type="button"
-                onClick={() => onZoom(1)}
-                disabled={zoom >= ZOOM_STEPS[ZOOM_STEPS.length - 1]!}
-                aria-label="크게"
-                title="크게 ( + )"
-              >
-                +
-              </button>
-            </div>
-          </div>
           <button type="button" className={styles.row} onClick={then(onPalette)}>
             <span>명령 창</span>
             <kbd>{IS_MAC ? '⌘ K' : 'Ctrl K'}</kbd>

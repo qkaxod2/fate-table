@@ -93,7 +93,6 @@ import { DamagePrompt } from './DamagePrompt';
 import { FormatBar, formatShortcut } from '@/components/ui/FormatBar';
 import { GmBar, GmPanel, NarrationInput, SceneStarter, type GmOpen } from './GmConsole';
 import { RoomSettings } from './RoomSettings';
-import { useRoomZoom, useWheelZoom } from '@/lib/roomZoom';
 import { SoundControl } from '@/components/ui/SoundControl';
 import { getSupabase } from '@/lib/supabase';
 import { downloadText, exportFileName, logToMarkdown } from '@/lib/logExport';
@@ -777,7 +776,6 @@ export function RoomTable({
   // ---------- 단축키 ----------
   const [palette, setPalette] = useState(false);
   const [help, setHelp] = useState(false);
-  const { zoom, step: zoomStep } = useRoomZoom();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const typing = isTyping(e.target);
@@ -798,10 +796,6 @@ export function RoomTable({
       } else if (e.key === '?') {
         e.preventDefault();
         setHelp((v) => !v);
-      } else if (!e.ctrlKey && !e.metaKey && !e.altKey && ['-', '=', '+', '0'].includes(e.key)) {
-        // 방 화면 확대·축소 (Ctrl과 함께 누르면 브라우저 자체 확대·축소라 건드리지 않는다)
-        e.preventDefault();
-        zoomStep(e.key === '-' ? -1 : e.key === '0' ? 0 : 1);
       } else if (
         isGm &&
         (e.ctrlKey || e.metaKey) &&
@@ -815,7 +809,7 @@ export function RoomTable({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [isGm, lastUndoable, pending, run, zoomStep]);
+  }, [isGm, lastUndoable, pending, run]);
   const paletteEntries = () =>
     roomCommands({
       state,
@@ -836,7 +830,6 @@ export function RoomTable({
   // 말을 주고받는 두 사람: [왼쪽, 오른쪽]과 지금 말하는 쪽. 한동안 조용하면 내려간다
   const [talk, setTalk] = useState<{ ids: [string, string | null]; focus: string } | null>(null);
   const stageEl = useRef<HTMLElement>(null);
-  useWheelZoom(stageEl, zoomStep);
   const dialogueEl = useDialogueTop<HTMLElement>();
   // 무대 전체 효과 (흔들림 · 번쩍 · 어둠 · 맞음 · 쓰러짐 · 갈등 시작)
   const [stageFx, setStageFx] = useState<{ seq: number; kind: StageFxKind } | null>(null);
@@ -1077,7 +1070,6 @@ export function RoomTable({
       className={`${th.theater} ${styles.callable}`}
       data-mode={rollMode ? 'roll' : 'story'}
       data-call={myCall ?? undefined}
-      style={zoom === 1 ? undefined : ({ '--z': zoom } as CSSProperties)}
     >
       <Toaster />
       <div className={`${th.bg} ${rt.bg}`} style={{ backgroundImage: `url(${sceneArt})` }}>
@@ -1174,8 +1166,6 @@ export function RoomTable({
             isGm={isGm}
             diceMode={diceMode}
             onDiceMode={setDiceMode}
-            zoom={zoom}
-            onZoom={zoomStep}
             onPalette={() => setPalette(true)}
             onHelp={() => setHelp(true)}
             onExport={() => {

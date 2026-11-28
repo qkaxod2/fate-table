@@ -10,12 +10,7 @@
   /* 대사창 윗변이 화면 아래에서 얼마나 올라와 있는지. useDialogueTop이 실제 높이로 채운다 */
   --dlg: 286px;
   position: relative;
-  /*
-   * 방 화면 확대·축소 (lib/roomZoom.ts): --z를 zoom으로 건다. 줌 안에서는 vh·vw도 함께 커지거나
-   * 작아지므로, 이 무대 안의 vh·vw 길이는 모두 --z로 나눠 화면을 꽉 채운다
-   */
-  zoom: var(--z, 1);
-  height: calc(100dvh / var(--z, 1));
+  height: 100dvh;
   min-height: 600px;
   overflow: hidden;
   background: var(--table);
@@ -80,7 +75,7 @@
   position: absolute;
   bottom: calc(var(--dlg) - 36px);
   z-index: -1;
-  height: min(calc(calc(100dvh / var(--z, 1)) - var(--dlg) - 20px), 760px);
+  height: min(calc(100dvh - var(--dlg) - 20px), 760px);
   max-width: none;
   mask-image:
     linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent),
@@ -95,7 +90,7 @@
 }
 
 .hero {
-  left: max(calc(2vw / var(--z, 1)), 20px);
+  left: max(2vw, 20px);
 }
 
 .hero[data-focus] {
@@ -103,8 +98,8 @@
 }
 
 .foe {
-  right: max(calc(2vw / var(--z, 1)), 20px);
-  height: min(calc(calc(100dvh / var(--z, 1)) - var(--dlg) - 50px), 720px);
+  right: max(2vw, 20px);
+  height: min(calc(100dvh - var(--dlg) - 50px), 720px);
   filter: brightness(0.86);
 }
 
@@ -125,13 +120,13 @@
 }
 
 .theater[data-mode='roll'] .hero {
-  translate: calc(-6vw / var(--z, 1)) -70px;
+  translate: -6vw -70px;
   scale: 0.86;
   filter: brightness(0.75);
 }
 
 .theater[data-mode='roll'] .foe {
-  translate: calc(5vw / var(--z, 1)) -50px;
+  translate: 5vw -50px;
   scale: 0.9;
 }
 
@@ -201,20 +196,19 @@
 }
 
 .myPlate {
-  left: max(calc(6vw / var(--z, 1)), 40px);
+  left: max(6vw, 40px);
 }
 
 .foePlate {
-  right: max(calc(6vw / var(--z, 1)), 40px);
+  right: max(6vw, 40px);
 }
 
 .theater[data-mode='roll'] .myPlate {
-  translate: calc(-2vw / var(--z, 1))
-    calc(-1 * (calc(100dvh / var(--z, 1)) - var(--dlg) - 16px - 230px));
+  translate: -2vw calc(-1 * (100dvh - var(--dlg) - 16px - 230px));
 }
 
 .theater[data-mode='roll'] .foePlate {
-  translate: 0 calc(-1 * (calc(100dvh / var(--z, 1)) - var(--dlg) - 16px - 190px));
+  translate: 0 calc(-1 * (100dvh - var(--dlg) - 16px - 190px));
 }
 
 /* ---------- 장면 꼬리표: 장면 여기저기에 붙는다 ---------- */
@@ -223,17 +217,6 @@
   inset: 0;
   z-index: 2;
   pointer-events: none;
-}
-
-/*
- * 이야기 중에는 꼬리표 자리(TAG_SPOTS의 %)를 대사창 위 공간 안에서 센다.
- * 화면 전체로 세면 아랫줄 꼬리표가 대사창 뒤로 들어가 가려졌다 (판정 중에는 대사창이 내려가니 그대로)
- */
-@media (min-width: 761px) {
-  .theater:not([data-mode='roll']) .tags {
-    top: 40px;
-    bottom: var(--dlg);
-  }
 }
 
 .tag {
@@ -326,7 +309,7 @@
 .intent {
   position: absolute;
   top: 210px;
-  right: max(calc(6vw / var(--z, 1)), 40px);
+  right: max(6vw, 40px);
   z-index: 4;
   padding: 8px 12px;
   border: 1px solid var(--table-line);
@@ -527,7 +510,7 @@
   z-index: 8;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 300px;
-  width: min(1180px, calc(calc(100vw / var(--z, 1)) - 48px));
+  width: min(1180px, calc(100vw - 48px));
   min-height: 264px;
   translate: -50% 0;
   border: 1px solid var(--table-line);
@@ -588,7 +571,7 @@
 .dialogue[data-log] .text {
   --tabs-h: 38px;
   flex: none;
-  height: min(var(--say-h, min(calc(52dvh / var(--z, 1)), 460px)), calc(70dvh / var(--z, 1)));
+  height: min(var(--say-h, min(52dvh, 460px)), 70dvh);
   mask-image: linear-gradient(
     180deg,
     #000 var(--tabs-h),
@@ -600,7 +583,7 @@
 /* 행동 메뉴가 비는 GM(움직일 캐릭터 없음)은 오른쪽 칸 없이 한 칸으로 좁게 */
 .dialogue[data-solo] {
   grid-template-columns: minmax(0, 1fr);
-  width: min(880px, calc(calc(100vw / var(--z, 1)) - 48px));
+  width: min(880px, calc(100vw - 48px));
 }
 
 .dialogue[data-solo] .menu {
@@ -709,20 +692,18 @@
 /* ---------- 휴대폰: 그림은 위, 대사창은 아래, 손패는 가로로 넘긴다 ---------- */
 @media (max-width: 760px) {
   .theater {
-    /* 휴대폰 배치는 줌을 쓰지 않는다 */
-    --z: 1 !important;
     min-height: 0;
   }
   .cast {
-    bottom: min(var(--dlg, calc(46dvh / var(--z, 1))), calc(46dvh / var(--z, 1)));
-    height: calc(46dvh / var(--z, 1));
+    bottom: min(var(--dlg, 46dvh), 46dvh);
+    height: 46dvh;
   }
   .hero {
-    left: calc(-6vw / var(--z, 1));
+    left: -6vw;
   }
   .foe {
-    right: calc(-10vw / var(--z, 1));
-    height: calc(42dvh / var(--z, 1));
+    right: -10vw;
+    height: 42dvh;
   }
   .top {
     top: 10px;
@@ -740,7 +721,7 @@
   }
   .myPlate,
   .foePlate {
-    bottom: calc(min(var(--dlg, calc(46dvh / var(--z, 1))), calc(46dvh / var(--z, 1))) + 8px);
+    bottom: calc(min(var(--dlg, 46dvh), 46dvh) + 8px);
     scale: 0.82;
   }
   .myPlate {
@@ -761,7 +742,7 @@
     grid-template-columns: 1fr;
     width: 100%;
     min-height: 0;
-    max-height: calc(46dvh / var(--z, 1));
+    max-height: 46dvh;
     border-width: 1px 0 0;
     overflow: auto;
     border-radius: 12px 12px 0 0;
@@ -781,10 +762,10 @@
     height: 92px;
   }
   .dialogue[data-log] {
-    max-height: calc(82dvh / var(--z, 1));
+    max-height: 82dvh;
   }
   .dialogue[data-log] .text {
-    height: min(var(--say-h, calc(50dvh / var(--z, 1))), calc(60dvh / var(--z, 1)));
+    height: min(var(--say-h, 50dvh), 60dvh);
   }
   .dialogue[data-solo] {
     width: 100%;
