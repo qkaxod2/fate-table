@@ -322,6 +322,11 @@ export function RoomTable({
   // 되돌린 이벤트는 기록에 줄을 긋고, 굴림 패널 계산에서는 뺀다
   const undone = useMemo(() => undoneSeqs(events), [events]);
   const liveEvents = useMemo(() => events.filter((e) => !undone.has(e.seq)), [events, undone]);
+  // 기록 패널에서 대사 묶음 머리에 붙일 얼굴 (캐릭터 이름 → 초상)
+  const faces = useMemo(
+    () => new Map(Object.values(state.characters).map((c) => [c.name, c.portraitUrl])),
+    [state.characters],
+  );
   const rollId = lastRollIdOf(liveEvents);
   // 장면이 바뀌며 취소된 판정은 무대에 남기지 않는다
   const roll =
@@ -1300,6 +1305,7 @@ export function RoomTable({
           <StoryLog
             lines={lines}
             undone={undone}
+            faces={faces}
             sending={logSending}
             {...(isGm ? { onUndo: undoLine } : {})}
           />
